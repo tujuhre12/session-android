@@ -17,20 +17,24 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
+import network.loki.messenger.libsession_util.ReadableUserProfile
+import network.loki.messenger.libsession_util.util.Contact
 import network.loki.messenger.libsession_util.util.ExpiryMode
+import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.GroupRecord
+import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.BasicRecipient
+import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientSettings
 import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRecipientAvatar
-import org.session.libsession.utilities.recipients.RecipientSettings
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayNameOrFallback
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
@@ -199,10 +203,7 @@ class RecipientRepository @Inject constructor(
         return observeRecipient(address).first()
     }
 
-    @Deprecated(
-        "Use the suspend version of getRecipient instead",
-        ReplaceWith("getRecipient(address)")
-    )
+    @DelicateCoroutinesApi
     fun getRecipientSync(address: Address): Recipient? {
         val flow = observeRecipient(address)
 
@@ -310,10 +311,7 @@ class RecipientRepository @Inject constructor(
      * Returns a recipient for the given address, or an empty recipient if not found.
      * This is useful to avoid null checks in the UI.
      */
-    @Deprecated(
-        "Use the suspend version of getRecipient instead",
-        ReplaceWith("getRecipient(address)")
-    )
+    @DelicateCoroutinesApi
     fun getRecipientSyncOrEmpty(address: Address): Recipient {
         return getRecipientSync(address) ?: empty(address)
     }
@@ -321,6 +319,69 @@ class RecipientRepository @Inject constructor(
     suspend fun getRecipientOrEmpty(address: Address): Recipient {
         return getRecipient(address) ?: empty(address)
     }
+
+    fun getAllConfigBasedUnapprovedRecipients(): List<Address> {
+        return getConfigBasedConversations(
+            nts = { false },
+            contactFilter = { !it.approved && !it.blocked },
+            groupFilter = { it.invited },
+            communityFilter = { false },
+            legacyFilter = { false },
+        )
+    }
+
+    fun getAllConfigBasedApprovedRecipients(): List<Address> {
+        return getConfigBasedConversations(
+            contactFilter = { it.approved && !it.blocked },
+            groupFilter = { !it.invited }
+        )
+    }
+
+    fun getConfigBasedConversations(
+        nts: (ReadableUserProfile) -> Boolean = { true },
+        contactFilter: (Contact) -> Boolean = { true },
+        groupFilter: (GroupInfo.ClosedGroupInfo) -> Boolean = { true },
+        legacyFilter: (GroupInfo.LegacyGroupInfo) -> Boolean = { true },
+        communityFilter: (GroupInfo.CommunityGroupInfo) -> Boolean = { true }
+    ): List<Address> {
+        val (shouldHaveNts, contacts, groups) = configFactory.withUserConfigs { configs ->
+            Triple(
+                configs.userProfile.getNtsPriority() >= 0 && nts(configs.userProfile),
+                configs.contacts.all(),
+                configs.userGroups.all(),
+            )
+        }
+
+        val ntsSequence = sequenceOf(
+            preferences.getLocalNumber()
+                ?.takeIf { shouldHaveNts }
+                ?.let(Address::fromSerialized))
+            .filterNotNull()
+
+        val contactsSequence = contacts.asSequence()
+            .filter { it.priority >= 0 && contactFilter(it) }
+            .map { Address.fromSerialized(it.id) }
+
+        val groupsSequence = groups.asSequence()
+            .filterIsInstance<GroupInfo.ClosedGroupInfo>()
+            .filter { it.priority >= 0 && groupFilter(it) }
+            .map { Address.fromSerialized(it.groupAccountId) }
+
+        val legacyGroupsSequence = groups.asSequence()
+            .filterIsInstance<GroupInfo.LegacyGroupInfo>()
+            .filter { it.priority >= 0 && legacyFilter(it) }
+            .map { Address.fromSerialized(GroupUtil.doubleEncodeGroupID(it.accountId)) }
+
+        val communityGroupsSequence = groups.asSequence()
+            .filterIsInstance<GroupInfo.CommunityGroupInfo>()
+            .filter(communityFilter)
+            .map { Address.fromSerialized(GroupUtil.getEncodedOpenGroupID(it.groupId.toByteArray())) }
+
+        return (ntsSequence + contactsSequence + groupsSequence + legacyGroupsSequence + communityGroupsSequence).toList()
+    }
+
+    private val GroupInfo.CommunityGroupInfo.groupId: String
+        get() = "${community.baseUrl}.${community.room}"
 
     companion object {
         private const val TAG = "RecipientRepository"

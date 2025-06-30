@@ -141,7 +141,7 @@ class HomeViewModel @Inject constructor(
     ).flowOn(Dispatchers.Default)
 
     private fun unapprovedConversationCount() = reloadTriggersAndContentChanges()
-        .map { threadDb.unapprovedConversationList.use { cursor -> cursor.count } }
+        .map { threadDb.unapprovedConversationList?.use { cursor -> cursor.count } ?: 0 }
 
     @Suppress("OPT_IN_USAGE")
     private fun observeConversationList(): Flow<List<ThreadRecord>> = reloadTriggersAndContentChanges()

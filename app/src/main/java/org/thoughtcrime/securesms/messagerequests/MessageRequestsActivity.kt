@@ -26,7 +26,7 @@ import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import org.thoughtcrime.securesms.util.push
 
 @AndroidEntryPoint
-class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClickListener, LoaderManager.LoaderCallbacks<Cursor> {
+class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClickListener, LoaderManager.LoaderCallbacks<Cursor?> {
 
     private lateinit var binding: ActivityMessageRequestsBinding
     private lateinit var glide: RequestManager
@@ -66,16 +66,16 @@ class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClick
         LoaderManager.getInstance(this).restartLoader(0, null, this)
     }
 
-    override fun onCreateLoader(id: Int, bundle: Bundle?): Loader<Cursor> {
-        return MessageRequestsLoader(this@MessageRequestsActivity)
+    override fun onCreateLoader(id: Int, bundle: Bundle?): Loader<Cursor?> {
+        return MessageRequestsLoader(threadDb, this)
     }
 
-    override fun onLoadFinished(loader: Loader<Cursor>, cursor: Cursor?) {
+    override fun onLoadFinished(loader: Loader<Cursor?>, cursor: Cursor?) {
         adapter.changeCursor(cursor)
         updateEmptyState()
     }
 
-    override fun onLoaderReset(cursor: Loader<Cursor>) {
+    override fun onLoaderReset(cursor: Loader<Cursor?>) {
         adapter.changeCursor(null)
     }
 
