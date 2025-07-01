@@ -84,8 +84,6 @@ object FilenameUtils {
     @JvmStatic
     @JvmOverloads // Force creation of two versions of this method - one with and one without the mimeType param
     fun getFilenameFromUri(context: Context, uri: Uri?, mimeType: String? = null, attachment: Attachment? = null): String {
-        Exception().printStackTrace()
-
         var extractedFilename: String? = null
 
         if (uri != null) {
