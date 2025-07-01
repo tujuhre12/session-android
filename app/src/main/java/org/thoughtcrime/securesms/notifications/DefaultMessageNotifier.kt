@@ -206,7 +206,7 @@ class DefaultMessageNotifier(
         var telcoCursor: Cursor? = null
 
         try {
-            telcoCursor = get(context).mmsSmsDatabase().unread // TODO: add a notification specific lighter query here
+            telcoCursor = get(context).mmsSmsDatabase().getUnreadOrUnseenReactions() // TODO: add a notification specific lighter query here
 
             if ((telcoCursor == null || telcoCursor.isAfterLast) || getLocalNumber(context) == null) {
                 updateBadge(context, 0)

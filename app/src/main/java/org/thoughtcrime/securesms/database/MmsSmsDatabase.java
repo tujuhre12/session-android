@@ -377,10 +377,15 @@ public class MmsSmsDatabase extends Database {
     }
   }
 
-  public Cursor getUnread() {
-    String order           = MmsSmsColumns.NORMALIZED_DATE_SENT + " ASC";
-    String selection       = "(" + MmsSmsColumns.READ + " = 0 OR " + MmsSmsColumns.REACTIONS_UNREAD + " = 1) AND " + MmsSmsColumns.NOTIFIED + " = 0";
+  /**
+   * Gets all the messages who are unread and haven't yet been notified for, OR
+   * messages with unread reactions
+   */
+  public Cursor getUnreadOrUnseenReactions() {
+    String selection = "(" + MmsSmsColumns.READ + " = 0 AND " + MmsSmsColumns.NOTIFIED + " = 0)" +
+                    " OR " + MmsSmsColumns.REACTIONS_UNREAD + " = 1";
 
+    String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " ASC";
     return queryTables(PROJECTION, selection, order, null);
   }
 
