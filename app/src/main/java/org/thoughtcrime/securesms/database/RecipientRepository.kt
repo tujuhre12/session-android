@@ -323,7 +323,7 @@ class RecipientRepository @Inject constructor(
     fun getAllConfigBasedUnapprovedRecipients(): List<Address> {
         return getConfigBasedConversations(
             nts = { false },
-            contactFilter = { !it.approved && !it.blocked },
+            contactFilter = { !it.approved && it.approvedMe && !it.blocked },
             groupFilter = { it.invited },
             communityFilter = { false },
             legacyFilter = { false },
