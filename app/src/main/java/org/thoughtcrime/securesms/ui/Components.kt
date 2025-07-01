@@ -5,13 +5,17 @@ import androidx.annotation.StringRes
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
-
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -61,9 +65,11 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
@@ -71,6 +77,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -79,8 +86,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -104,9 +111,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
-import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel
-import org.thoughtcrime.securesms.openUrl
-import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
@@ -118,6 +122,13 @@ import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
+import org.thoughtcrime.securesms.ui.theme.primaryBlue
+import org.thoughtcrime.securesms.ui.theme.primaryGreen
+import org.thoughtcrime.securesms.ui.theme.primaryOrange
+import org.thoughtcrime.securesms.ui.theme.primaryPink
+import org.thoughtcrime.securesms.ui.theme.primaryPurple
+import org.thoughtcrime.securesms.ui.theme.primaryRed
+import org.thoughtcrime.securesms.ui.theme.primaryYellow
 import org.thoughtcrime.securesms.ui.theme.transparentButtonColors
 import kotlin.math.roundToInt
 
@@ -1350,4 +1361,48 @@ fun Modifier.safeContentWidth(
                 else -> regularExtraPadding
             }
         )
+}
+
+/**
+ * Animated gradient drawable that cycle through the gradient colors in a linear animation
+ */
+@Composable
+fun AnimatedGradientDrawable(
+    @DrawableRes vectorRes: Int,
+    modifier: Modifier = Modifier,
+    gradientColors: List<Color> = listOf(
+        primaryGreen, primaryBlue, primaryPurple,
+        primaryPink, primaryRed, primaryOrange, primaryYellow
+    )
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "vector_vertical")
+    val animatedOffset by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 200f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(3000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        )
+    )
+
+    Icon(
+        painter = painterResource(id = vectorRes),
+        contentDescription = null,
+        modifier = modifier
+            .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+            .drawWithContent {
+                val gradientBrush = Brush.linearGradient(
+                    colors = gradientColors,
+                    start = Offset(0f, animatedOffset),
+                    end = Offset(0f, animatedOffset + 100f),
+                    tileMode = TileMode.Mirror
+                )
+
+                drawContent()
+                drawRect(
+                    brush = gradientBrush,
+                    blendMode = BlendMode.SrcAtop
+                )
+            }
+    )
 }
