@@ -222,7 +222,7 @@ fun RemoteFile.toUserPic(): UserPic? {
 }
 
 inline fun Recipient?.displayNameOrFallback(fallbackName: () -> String? = { null }, address: String): String {
-    return this?.displayName
-        ?: fallbackName()?.takeIf { it.isNotBlank() }
+    return (this?.displayName ?: fallbackName())
+        ?.takeIf { it.isNotBlank() }
         ?: truncateIdForDisplay(address)
 }

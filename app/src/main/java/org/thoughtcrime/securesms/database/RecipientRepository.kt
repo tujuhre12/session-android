@@ -203,6 +203,11 @@ class RecipientRepository @Inject constructor(
         return observeRecipient(address).first()
     }
 
+    /**
+     * Returns a [Recipient] for the given address, or null if not found.
+     *
+     * Note that this method might be querying database directly so use with caution.
+     */
     @DelicateCoroutinesApi
     fun getRecipientSync(address: Address): Recipient? {
         val flow = observeRecipient(address)
@@ -270,7 +275,7 @@ class RecipientRepository @Inject constructor(
 
             // Is this in our contact?
             !address.isGroupOrCommunity &&
-                    AccountId.fromStringOrNull(address.address)?.prefix == IdPrefix.STANDARD -> {
+                    IdPrefix.fromValue(address.address) == IdPrefix.STANDARD -> {
                 configFactory.withUserConfigs { configs ->
                     configs.contacts.get(address.address)
                 }?.let { contact ->
@@ -320,7 +325,7 @@ class RecipientRepository @Inject constructor(
         return getRecipient(address) ?: empty(address)
     }
 
-    fun getAllConfigBasedUnapprovedRecipients(): List<Address> {
+    fun getAllConfigBasedUnapprovedConversations(): List<Address> {
         return getConfigBasedConversations(
             nts = { false },
             contactFilter = { !it.approved && it.approvedMe && !it.blocked },
@@ -330,7 +335,7 @@ class RecipientRepository @Inject constructor(
         )
     }
 
-    fun getAllConfigBasedApprovedRecipients(): List<Address> {
+    fun getAllConfigBasedApprovedConversations(): List<Address> {
         return getConfigBasedConversations(
             contactFilter = { it.approved && !it.blocked },
             groupFilter = { !it.invited }

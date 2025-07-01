@@ -28,7 +28,7 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.home.search.getSearchName
+import org.thoughtcrime.securesms.home.search.searchName
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 
@@ -109,12 +109,12 @@ open class SelectContactsViewModel @AssistedInject constructor(
     ): List<ContactItem> {
         val items = mutableListOf<ContactItem>()
         for (contact in contacts) {
-            if (query.isBlank() || contact.getSearchName().contains(query, ignoreCase = true)) {
+            if (query.isBlank() || contact.searchName.contains(query, ignoreCase = true)) {
                 val accountId = AccountId(contact.address.toString())
                 val avatarData = avatarUtils.getUIDataFromRecipient(contact)
                 items.add(
                     ContactItem(
-                        name = contact.getSearchName(),
+                        name = contact.searchName,
                         accountID = accountId,
                         avatarUIData = avatarData,
                         selected = selectedAccountIDs.contains(accountId)

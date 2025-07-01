@@ -392,11 +392,10 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
         return contacts
             // Remove ourself, we're shown above.
-            .filter { it.accountID != publicKey }
+            .filter { it.address.address != publicKey }
             // Get the name that we will display and sort by, and uppercase it to
             // help with sorting and we need the char uppercased later.
-            .map { (it.nickname?.takeIf(String::isNotEmpty) ?: it.name?.takeIf(String::isNotEmpty))
-                .let { name -> NamedValue(name?.uppercase(), it) } }
+            .map { NamedValue(it.displayName.uppercase(), it) }
             // Digits are all grouped under a #, the rest are grouped by their first character.uppercased()
             // If there is no name, they go under Unknown
             .groupBy { it.name?.run { first().takeUnless(Char::isDigit)?.toString() ?: numbersTitle } ?: unknownTitle }
@@ -412,14 +411,20 @@ class HomeActivity : ScreenLockActionBarActivity(),
             .flatMap { (key, contacts) ->
                 listOf(
                     GlobalSearchAdapter.Model.SubHeader(key)
-                ) + contacts.sortedBy { it.name ?: it.value.accountID }.map { it.value }.map { GlobalSearchAdapter.Model.Contact(it, it.accountID == publicKey) }
+                ) + contacts.sortedBy { it.name ?: it.value.address.address }
+                    .map {
+                        GlobalSearchAdapter.Model.Contact(
+                            contact = it.value,
+                            isSelf = it.value.address.address == publicKey
+                        )
+                    }
             }
     }
 
     private val GlobalSearchResult.contactAndGroupList: List<GlobalSearchAdapter.Model> get() =
-        contacts.map { GlobalSearchAdapter.Model.Contact(it, it.accountID == publicKey) } +
+        contacts.map { GlobalSearchAdapter.Model.Contact(it, it.address.address == publicKey) } +
             threads.map {
-                GlobalSearchAdapter.Model.GroupConversation(this@HomeActivity, it)
+                GlobalSearchAdapter.Model.GroupConversation(it)
             }
 
     private val GlobalSearchResult.messageResults: List<GlobalSearchAdapter.Model> get() {

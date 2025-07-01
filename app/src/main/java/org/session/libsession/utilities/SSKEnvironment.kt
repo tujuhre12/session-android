@@ -1,7 +1,6 @@
 package org.session.libsession.utilities
 
 import android.content.Context
-import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.ProfileUpdateHandler
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate

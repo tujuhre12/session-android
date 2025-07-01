@@ -514,7 +514,7 @@ public class ThreadDatabase extends Database {
     // 1. Config based conversations
     // 2. Blinded conversations stored in the database
     final List<Address> blindedConversations = getBlindedConversations(true, false);
-    final List<Address> configBasedConversations = recipientRepository.get().getAllConfigBasedApprovedRecipients();
+    final List<Address> configBasedConversations = recipientRepository.get().getAllConfigBasedApprovedConversations();
 
     final List<Address> allAddresses = new ArrayList<>(blindedConversations.size() + configBasedConversations.size());
     allAddresses.addAll(blindedConversations);
@@ -529,7 +529,7 @@ public class ThreadDatabase extends Database {
     // 1. Config based conversations
     // 2. Blinded conversations stored in the database
     final List<Address> blindedConversations = getBlindedConversations(false, false);
-    final List<Address> configBasedConversations = recipientRepository.get().getAllConfigBasedUnapprovedRecipients();
+    final List<Address> configBasedConversations = recipientRepository.get().getAllConfigBasedUnapprovedConversations();
 
     final List<Address> allAddresses = new ArrayList<>(blindedConversations.size() + configBasedConversations.size());
     allAddresses.addAll(blindedConversations);

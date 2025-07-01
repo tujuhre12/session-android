@@ -1139,11 +1139,6 @@ class ConversationViewModel @AssistedInject constructor(
         }
     }
 
-    fun updateRecipient() {
-        _recipient.updateTo(repository.maybeGetRecipientForThreadId(threadId)?.let(recipientRepository::getRecipientSync))
-        updateAppBarData(recipient)
-    }
-
     fun legacyBannerRecipient(context: Context): Recipient? = recipient?.run {
         storage.getLastLegacyRecipient(address.toString())?.let { recipientRepository.getRecipientSync(fromSerialized(it)) }
     }

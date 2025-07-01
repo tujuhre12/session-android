@@ -19,6 +19,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
+import android.provider.Settings
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.TextUtils
@@ -106,6 +107,7 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
 import org.session.libsession.utilities.concurrent.SimpleTask
 import org.session.libsession.utilities.getColorFromAttr
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.crypto.MnemonicCodec
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
@@ -172,7 +174,7 @@ import org.thoughtcrime.securesms.giph.ui.GiphyActivity
 import org.thoughtcrime.securesms.groups.GroupMembersActivity
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.UserDetailsBottomSheet
-import org.thoughtcrime.securesms.home.search.getSearchName
+import org.thoughtcrime.securesms.home.search.searchName
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewRepository
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewUtil
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewViewModel
@@ -245,14 +247,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     @Inject lateinit var threadDb: ThreadDatabase
     @Inject lateinit var mmsSmsDb: MmsSmsDatabase
     @Inject lateinit var lokiThreadDb: LokiThreadDatabase
-    @Inject lateinit var sessionContactDb: SessionContactDatabase
     @Inject lateinit var groupDb: GroupDatabase
     @Inject lateinit var smsDb: SmsDatabase
     @Inject lateinit var mmsDb: MmsDatabase
     @Inject lateinit var lokiMessageDb: LokiMessageDatabase
     @Inject lateinit var storage: StorageProtocol
     @Inject lateinit var reactionDb: ReactionDatabase
-    @Inject lateinit var mentionViewModelFactory: MentionViewModel.AssistedFactory
     @Inject lateinit var dateUtils: DateUtils
     @Inject lateinit var configFactory: ConfigFactory
     @Inject lateinit var groupManagerV2: GroupManagerV2
@@ -320,9 +320,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private var isLockViewExpanded = false
     private var isShowingAttachmentOptions = false
     // Mentions
-    private val mentionViewModel: MentionViewModel by viewModels {
-        mentionViewModelFactory.create(threadId)
-    }
+    private val mentionViewModel: MentionViewModel by viewModels(extrasProducer = {
+        defaultViewModelCreationExtras.withCreationCallback<MentionViewModel.Factory> {
+            it.create(threadId)
+        }
+    })
+
     private val mentionCandidateAdapter = MentionCandidateAdapter {
         mentionViewModel.onCandidateSelected(it.member.publicKey)
 
@@ -368,7 +371,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val adapter = ConversationAdapter(
             this,
             null,
-            viewModel.recipient,
             storage.getLastSeen(viewModel.threadId),
             false,
             onItemPress = { message, position, view, event ->
@@ -379,7 +381,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             },
             onItemLongPress = { message, position, view ->
                 // long pressing message for blocked users should show unblock dialog
-                if(viewModel.recipient?.blocked == true) unblock()
+                if (viewModel.recipient?.blocked == true) unblock()
                 else {
                     if (!viewModel.isMessageRequestThread) {
                         showConversationReaction(message, view)
@@ -396,7 +398,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             downloadPendingAttachment = viewModel::downloadPendingAttachment,
             retryFailedAttachments = viewModel::retryFailedAttachments,
             glide = glide,
-            lifecycleCoroutineScope = lifecycleScope
         )
         adapter.visibleMessageViewDelegate = this
 
@@ -1445,7 +1446,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val invitingAdmin = viewModel.invitingAdmin
 
         val name = if (recipient.isGroupV2Recipient && invitingAdmin != null) {
-            invitingAdmin.getSearchName()
+            invitingAdmin.searchName
         } else {
             recipient.displayName
         }
@@ -2517,7 +2518,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                         // initially denied it but then have a change of heart when they realise they can't
                         // proceed without it.
                         dangerButton(R.string.theContinue) {
-                            val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                             val uri = Uri.fromParts("package", packageName, null)
                             intent.setData(uri)

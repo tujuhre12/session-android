@@ -11,13 +11,11 @@ import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import nl.komponents.kovenant.combine.Tuple2
 import org.session.libsession.messaging.MessagingModuleConfiguration
-import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.getColorFromAttr
-import org.session.libsession.utilities.truncateIdForDisplay
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.util.RoundedBackgroundSpan
 import org.thoughtcrime.securesms.util.getAccentColor
