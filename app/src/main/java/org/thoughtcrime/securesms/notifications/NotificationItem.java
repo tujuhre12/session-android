@@ -69,11 +69,9 @@ public class NotificationItem {
   }
 
   public PendingIntent getPendingIntent(Context context) {
-    Intent     intent           = new Intent(context, ConversationActivityV2.class);
-    Recipient notifyRecipients = threadRecipient != null ? threadRecipient : conversationRecipient;
-    if (notifyRecipients != null) intent.putExtra(ConversationActivityV2.ADDRESS, notifyRecipients.getAddress());
 
-    intent.putExtra(ConversationActivityV2.THREAD_ID, threadId);
+    Recipient notifyRecipients = threadRecipient != null ? threadRecipient : conversationRecipient;
+    final Intent intent = ConversationActivityV2.Companion.createIntent(context, notifyRecipients.getAddress());
     intent.setData((Uri.parse("custom://"+System.currentTimeMillis())));
 
     int intentFlags = PendingIntent.FLAG_UPDATE_CURRENT;

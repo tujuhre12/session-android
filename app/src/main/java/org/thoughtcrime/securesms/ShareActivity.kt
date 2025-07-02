@@ -32,7 +32,6 @@ import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.DistributionTypes
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.ViewUtil
 import org.session.libsignal.utilities.Log
@@ -206,21 +205,12 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
             contactsFragment.requireView().visibility = View.VISIBLE
             progressWheel.visibility = View.GONE
         } else {
-            createConversation(threadId, address, distributionType)
+            createConversation(address)
         }
     }
 
-    private fun createConversation(threadId: Long, address: Address?, distributionType: Int) {
-        val intent = getBaseShareIntent(ConversationActivityV2::class.java)
-        intent.putExtra(ConversationActivityV2.ADDRESS, address)
-        intent.putExtra(ConversationActivityV2.THREAD_ID, threadId)
-
-        isPassingAlongMedia = true
-        startActivity(intent)
-    }
-
-    private fun getBaseShareIntent(target: Class<*>): Intent {
-        val intent = Intent(this, target)
+    private fun createConversation(address: Address) {
+        val intent = ConversationActivityV2.createIntent(this, address)
 
         if (resolvedExtra != null) {
             intent.setDataAndType(resolvedExtra, mimeType)
@@ -229,7 +219,8 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
             intent.setType("text/plain")
         }
 
-        return intent
+        isPassingAlongMedia = true
+        startActivity(intent)
     }
 
     private fun getMimeType(uri: Uri?): String? {
@@ -241,8 +232,7 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
     }
 
     override fun onContactSelected(number: String) {
-        val existingThread = get(this).threadDatabase().getThreadIdIfExistsFor(number)
-        createConversation(existingThread, Address.fromSerialized(number), DistributionTypes.DEFAULT)
+        createConversation(Address.fromSerialized(number))
     }
 
     override fun onContactDeselected(number: String?) { /* Nothing */ }

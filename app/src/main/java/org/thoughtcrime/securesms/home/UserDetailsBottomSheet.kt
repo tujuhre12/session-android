@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
@@ -18,7 +17,6 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.FragmentUserDetailsBottomSheetBinding
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.BasicRecipient
 import org.session.libsession.utilities.recipients.Recipient
@@ -109,15 +107,13 @@ class UserDetailsBottomSheet: BottomSheetDialogFragment() {
                 true
             }
             messageButton.setOnClickListener {
-                val threadId = MessagingModuleConfiguration.shared.storage.getThreadId(recipient.address)
-                val intent = Intent(
-                    context,
-                    ConversationActivityV2::class.java
+                startActivity(
+                    ConversationActivityV2.createIntent(
+                        requireContext(),
+                        address = recipient.address,
+                        fromGroupThreadId = threadID
+                    )
                 )
-                intent.putExtra(ConversationActivityV2.ADDRESS, recipient.address)
-                intent.putExtra(ConversationActivityV2.THREAD_ID, threadId ?: -1)
-                intent.putExtra(ConversationActivityV2.FROM_GROUP_THREAD_ID, threadID)
-                startActivity(intent)
                 dismiss()
             }
         }

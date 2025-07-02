@@ -18,6 +18,7 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
+import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
 import org.thoughtcrime.securesms.database.GroupDatabase
@@ -128,8 +129,7 @@ class CreateGroupViewModel @AssistedInject constructor(
 
                 }
                 else -> {
-                    val threadId = withContext(Dispatchers.Default) { storage.getOrCreateThreadIdFor(recipient.address) }
-                    mutableEvents.emit(CreateGroupEvent.NavigateToConversation(threadId))
+                    mutableEvents.emit(CreateGroupEvent.NavigateToConversation(recipient.address))
                 }
             }
 
@@ -150,7 +150,7 @@ class CreateGroupViewModel @AssistedInject constructor(
 }
 
 sealed interface CreateGroupEvent {
-    data class NavigateToConversation(val threadID: Long): CreateGroupEvent
+    data class NavigateToConversation(val address: Address): CreateGroupEvent
 
     data class Error(val message: String): CreateGroupEvent
 }

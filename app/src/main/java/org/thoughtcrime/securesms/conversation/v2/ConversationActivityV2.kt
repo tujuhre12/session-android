@@ -24,7 +24,6 @@ import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.TextUtils
 import android.text.style.ImageSpan
-import android.util.Pair
 import android.util.TypedValue
 import android.view.ActionMode
 import android.view.MotionEvent
@@ -96,7 +95,6 @@ import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
-import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.MediaTypes
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.CONVERSATION_NAME_KEY
@@ -107,10 +105,7 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
 import org.session.libsession.utilities.concurrent.SimpleTask
 import org.session.libsession.utilities.getColorFromAttr
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.crypto.MnemonicCodec
-import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.ListenableFuture
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.hexEncodedPrivateKey
@@ -161,7 +156,6 @@ import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.ReactionDatabase
-import org.thoughtcrime.securesms.database.SessionContactDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.GroupThreadStatus
@@ -217,7 +211,6 @@ import org.thoughtcrime.securesms.webrtc.WebRtcCallActivity.Companion.ACTION_STA
 import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge.Companion.EXTRA_RECIPIENT_ADDRESS
 import java.io.File
 import java.util.LinkedList
-import java.util.Locale
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
@@ -281,27 +274,34 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             .get(LinkPreviewViewModel::class.java)
     }
 
-    private val threadId: Long by lazy {
-        var threadId = intent.getLongExtra(THREAD_ID, -1L)
-        if (threadId == -1L) {
-            intent.getParcelableExtra<Address>(ADDRESS)?.let { it ->
-                threadId = threadDb.getThreadIdIfExistsFor(it.toString())
-                if (threadId == -1L) {
-                    val accountId = AccountId(it.toString())
-                    val openGroup = lokiThreadDb.getOpenGroupChat(intent.getLongExtra(FROM_GROUP_THREAD_ID, -1))
-                    val address = if (accountId.prefix == IdPrefix.BLINDED && openGroup != null) {
-                        storage.getOrCreateBlindedIdMapping(accountId.hexString, openGroup.server, openGroup.publicKey).accountId?.let {
-                            fromSerialized(it)
-                        } ?: GroupUtil.getEncodedOpenGroupInboxID(openGroup, accountId)
-                    } else {
-                        it
-                    }
-                    threadId = storage.getOrCreateThreadIdFor(address)
-                }
-            } ?: finish()
+    private val address: Address by lazy {
+        requireNotNull(IntentCompat.getParcelableExtra<Address>(intent, ADDRESS, Address::class.java)) {
+            "Address must be provided in the intent extras"
         }
+    }
 
-        threadId
+    private val threadId: Long by lazy {
+        TODO()
+//        var threadId = intent.getLongExtra(THREAD_ID, -1L)
+//        if (threadId == -1L) {
+//            intent.getParcelableExtra<Address>(ADDRESS)?.let { it ->
+//                threadId = threadDb.getThreadIdIfExistsFor(it.toString())
+//                if (threadId == -1L) {
+//                    val accountId = AccountId(it.toString())
+//                    val openGroup = lokiThreadDb.getOpenGroupChat(intent.getLongExtra(FROM_GROUP_THREAD_ID, -1))
+//                    val address = if (accountId.prefix == IdPrefix.BLINDED && openGroup != null) {
+//                        storage.getOrCreateBlindedIdMapping(accountId.hexString, openGroup.server, openGroup.publicKey).accountId?.let {
+//                            fromSerialized(it)
+//                        } ?: GroupUtil.getEncodedOpenGroupInboxID(openGroup, accountId)
+//                    } else {
+//                        it
+//                    }
+//                    threadId = storage.getOrCreateThreadIdFor(address)
+//                }
+//            } ?: finish()
+//        }
+//
+//        threadId
     }
 
     private val viewModel: ConversationViewModel by viewModels(extrasProducer = {
@@ -498,17 +498,40 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     // region Settings
     companion object {
         // Extras
-        const val THREAD_ID = "thread_id"
-        const val ADDRESS = "address"
-        const val FROM_GROUP_THREAD_ID = "from_group_thread_id"
-        const val SCROLL_MESSAGE_ID = "scroll_message_id"
-        const val SCROLL_MESSAGE_AUTHOR = "scroll_message_author"
+        private const val ADDRESS = "address"
+        private const val FROM_GROUP_THREAD_ID = "from_group_thread_id"
+        private const val SCROLL_MESSAGE_ID = "scroll_message_id"
+        private const val SCROLL_MESSAGE_AUTHOR = "scroll_message_author"
+
+
         const val SHOW_SEARCH = "show_search"
+
         // Request codes
         const val PICK_DOCUMENT = 2
         const val TAKE_PHOTO = 7
         const val PICK_GIF = 10
         const val PICK_FROM_LIBRARY = 12
+
+        @JvmOverloads
+        fun createIntent(
+            context: Context,
+            address: Address,
+            fromGroupThreadId: Long? = null,
+            // If provided, this will scroll to the message with the given timestamp and author (TODO: use message id instead)
+            scrollToMessage: Pair<Long, Address>? = null
+        ): Intent {
+            return Intent(context, ConversationActivityV2::class.java).apply {
+                putExtra(ADDRESS, address)
+                fromGroupThreadId?.let {
+                    putExtra(FROM_GROUP_THREAD_ID, it)
+                }
+
+                scrollToMessage?.let { (timestamp, author) ->
+                    putExtra(SCROLL_MESSAGE_ID, timestamp)
+                    putExtra(SCROLL_MESSAGE_AUTHOR, author)
+                }
+            }
+        }
     }
     // endregion
 
@@ -660,8 +683,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 when (event) {
                     is ConversationUiEvent.NavigateToConversation -> {
                         finish()
-                        startActivity(Intent(this@ConversationActivityV2, ConversationActivityV2::class.java)
-                            .putExtra(THREAD_ID, event.threadId)
+                        startActivity(
+                            createIntent(this@ConversationActivityV2, event.address)
                         )
                     }
 

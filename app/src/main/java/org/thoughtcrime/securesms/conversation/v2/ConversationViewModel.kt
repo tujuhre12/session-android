@@ -1247,7 +1247,7 @@ class ConversationViewModel @AssistedInject constructor(
             }
 
             is Commands.NavigateToConversation -> {
-                _uiEvents.tryEmit(ConversationUiEvent.NavigateToConversation(command.threadId))
+                _uiEvents.tryEmit(ConversationUiEvent.NavigateToConversation(command.address))
             }
         }
     }
@@ -1377,8 +1377,7 @@ class ConversationViewModel @AssistedInject constructor(
     }
 
     fun getUsername(accountId: String) = recipientRepository
-        .getRecipientSync(fromSerialized(accountId))
-        .displayNameOrFallback(address = accountId)
+        .getRecipientDisplayNameSync(fromSerialized(accountId))
 
     fun onSearchOpened(){
         _appBarData.update { _appBarData.value.copy(showSearch = true) }
@@ -1497,7 +1496,7 @@ class ConversationViewModel @AssistedInject constructor(
         data object HideRecreateGroupConfirm : Commands
         data object HideRecreateGroup : Commands
         data object HideSessionProCTA : Commands
-        data class NavigateToConversation(val threadId: Long) : Commands
+        data class NavigateToConversation(val address: Address) : Commands
     }
 }
 
@@ -1534,7 +1533,7 @@ sealed interface InputBarContentState {
 
 
 sealed interface ConversationUiEvent {
-    data class NavigateToConversation(val threadId: Long) : ConversationUiEvent
+    data class NavigateToConversation(val address: Address) : ConversationUiEvent
     data class ShowDisappearingMessages(val threadId: Long) : ConversationUiEvent
     data class ShowNotificationSettings(val threadId: Long) : ConversationUiEvent
     data class ShowGroupMembers(val groupId: String) : ConversationUiEvent

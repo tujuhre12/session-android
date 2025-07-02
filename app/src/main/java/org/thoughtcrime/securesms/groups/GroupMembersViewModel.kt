@@ -24,8 +24,8 @@ import org.thoughtcrime.securesms.util.AvatarUtils
 @HiltViewModel(assistedFactory = GroupMembersViewModel.Factory::class)
 class GroupMembersViewModel @AssistedInject constructor(
     @Assisted private val groupId: AccountId,
-    @ApplicationContext private val context: Context,
-    private val storage: StorageProtocol,
+    @param:ApplicationContext private val context: Context,
+    storage: StorageProtocol,
     configFactory: ConfigFactoryProtocol,
     avatarUtils: AvatarUtils,
     recipientRepository: RecipientRepository,
@@ -42,16 +42,10 @@ class GroupMembersViewModel @AssistedInject constructor(
     fun onMemberClicked(accountId: AccountId) {
         viewModelScope.launch(Dispatchers.Default) {
             val address = Address.fromSerialized(accountId.hexString)
-            val threadId = storage.getThreadId(address)
 
-            val intent = Intent(
-                context,
-                ConversationActivityV2::class.java
-            )
-            intent.putExtra(ConversationActivityV2.ADDRESS, address)
-            intent.putExtra(ConversationActivityV2.THREAD_ID, threadId)
-
-            _navigationActions.send(intent)
+            _navigationActions.send(ConversationActivityV2.createIntent(
+                context, address
+            ))
         }
     }
 }

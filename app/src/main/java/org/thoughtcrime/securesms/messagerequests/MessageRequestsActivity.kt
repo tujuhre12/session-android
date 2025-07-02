@@ -80,9 +80,7 @@ class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClick
     }
 
     override fun onConversationClick(thread: ThreadRecord) {
-        val intent = Intent(this, ConversationActivityV2::class.java)
-        intent.putExtra(ConversationActivityV2.THREAD_ID, thread.threadId)
-        push(intent)
+        push(ConversationActivityV2.createIntent(this, thread.recipient.address))
     }
 
     override fun onBlockConversationClick(thread: ThreadRecord) {

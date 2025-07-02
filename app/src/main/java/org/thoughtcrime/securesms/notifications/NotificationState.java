@@ -161,9 +161,7 @@ public class NotificationState {
   public PendingIntent getQuickReplyIntent(Context context, Recipient recipient) {
     if (threads.size() != 1) throw new AssertionError("We only support replies to single thread notifications! " + threads.size());
 
-    Intent     intent           = new Intent(context, ConversationActivityV2.class);
-    intent.putExtra(ConversationActivityV2.ADDRESS, recipient.getAddress());
-    intent.putExtra(ConversationActivityV2.THREAD_ID, (long)threads.toArray()[0]);
+    final Intent intent = ConversationActivityV2.Companion.createIntent(context, recipient.getAddress());
     intent.setData((Uri.parse("custom://"+System.currentTimeMillis())));
 
     int intentFlags = PendingIntent.FLAG_UPDATE_CURRENT;

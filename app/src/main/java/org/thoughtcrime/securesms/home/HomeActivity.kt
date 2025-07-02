@@ -130,47 +130,35 @@ class HomeActivity : ScreenLockActionBarActivity(),
         GlobalSearchAdapter(
             dateUtils = dateUtils,
             onContactClicked = { model ->
-                when (model) {
-                    is GlobalSearchAdapter.Model.Message -> push<ConversationActivityV2> {
-                        model.messageResult.run {
-                            putExtra(ConversationActivityV2.THREAD_ID, threadId)
-                            putExtra(ConversationActivityV2.SCROLL_MESSAGE_ID, sentTimestampMs)
-                            putExtra(
-                                ConversationActivityV2.SCROLL_MESSAGE_AUTHOR,
-                                messageRecipient.address
-                            )
-                        }
-                    }
-
-                    is GlobalSearchAdapter.Model.SavedMessages -> push<ConversationActivityV2> {
-                        putExtra(
-                            ConversationActivityV2.ADDRESS,
-                            Address.fromSerialized(model.currentUserPublicKey)
+                val intent = when (model) {
+                    is GlobalSearchAdapter.Model.Message -> ConversationActivityV2
+                        .createIntent(this,
+                            address = model.messageResult.conversationRecipient.address,
+                            scrollToMessage = model.messageResult.sentTimestampMs to model.messageResult.messageRecipient.address
                         )
-                    }
 
-                    is GlobalSearchAdapter.Model.Contact -> push<ConversationActivityV2> {
-                        putExtra(
-                            ConversationActivityV2.ADDRESS,
-                            model.contact.hexString.let(Address::fromSerialized)
+                    is GlobalSearchAdapter.Model.SavedMessages -> ConversationActivityV2
+                        .createIntent(this,
+                            address = Address.fromSerialized(model.currentUserPublicKey)
                         )
+
+                    is GlobalSearchAdapter.Model.Contact -> ConversationActivityV2
+                        .createIntent(this,
+                            address = Address.fromSerialized(model.contact.hexString)
+                        )
+
+                    is GlobalSearchAdapter.Model.GroupConversation -> ConversationActivityV2
+                        .createIntent(this,
+                            address = Address.fromSerialized(model.groupId)
+                        )
+
+                    else -> {
+                        Log.d("Loki", "callback with model: $model")
+                        return@GlobalSearchAdapter
                     }
-
-                    is GlobalSearchAdapter.Model.GroupConversation -> model.groupId
-                        .let { Address.fromSerialized(it) }
-                        .let(threadDb::getThreadIdIfExistsFor)
-                        .takeIf { it >= 0 }
-                        ?.let {
-                            push<ConversationActivityV2> {
-                                putExtra(
-                                    ConversationActivityV2.THREAD_ID,
-                                    it
-                                )
-                            }
-                        }
-
-                    else -> Log.d("Loki", "callback with model: $model")
                 }
+
+                push(intent)
             },
             onContactLongPressed = { model ->
                 onSearchContactLongPress(model.contact.hexString, model.name)
@@ -512,9 +500,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
     }
 
     override fun onConversationClick(thread: ThreadRecord) {
-        val intent = Intent(this, ConversationActivityV2::class.java)
-        intent.putExtra(ConversationActivityV2.THREAD_ID, thread.threadId)
-        push(intent)
+        push(ConversationActivityV2.createIntent(this, address = thread.recipient.address))
     }
 
     override fun onLongConversationClick(thread: ThreadRecord) {

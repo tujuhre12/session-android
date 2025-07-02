@@ -209,10 +209,13 @@ class VisibleMessageView : FrameLayout {
                         val openGroup = lokiThreadDb.getOpenGroupChat(message.threadId)
                         if (IdPrefix.fromValue(sender.address.address) == IdPrefix.BLINDED && openGroup?.canWrite == true) {
                             // TODO: support v2 soon
-                            val intent = Intent(context, ConversationActivityV2::class.java)
-                            intent.putExtra(ConversationActivityV2.FROM_GROUP_THREAD_ID, message.threadId)
-                            intent.putExtra(ConversationActivityV2.ADDRESS, sender.address)
-                            context.startActivity(intent)
+                            context.startActivity(
+                                ConversationActivityV2.createIntent(
+                                    context = context,
+                                    address = sender.address,
+                                    fromGroupThreadId = message.threadId
+                                )
+                            )
                         }
                     } else {
                         maybeShowUserDetails(sender.address.address, message.threadId)

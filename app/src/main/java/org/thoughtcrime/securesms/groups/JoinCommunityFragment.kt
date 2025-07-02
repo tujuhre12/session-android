@@ -3,7 +3,6 @@ package org.thoughtcrime.securesms.groups
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -113,12 +112,13 @@ class JoinCommunityFragment : Fragment() {
                         )
                         val storage = MessagingModuleConfiguration.shared.storage
                         storage.onOpenGroupAdded(sanitizedServer, openGroup.room)
-                        val threadID =
-                            GroupManager.getOpenGroupThreadID(openGroupID, requireContext())
                         val groupID = GroupUtil.getEncodedOpenGroupID(openGroupID.toByteArray())
 
                         withContext(Dispatchers.Main) {
-                            openConversationActivity(requireContext(), threadID, Address.fromSerialized(groupID))
+                            openConversationActivity(
+                                requireContext(),
+                                Address.fromSerialized(groupID)
+                            )
                             delegate.onDialogClosePressed()
                         }
                     } catch (e: Exception) {
@@ -149,11 +149,10 @@ class JoinCommunityFragment : Fragment() {
         mediator.attach()
     }
 
-    private fun openConversationActivity(context: Context, threadId: Long, address: Address) {
-        val intent = Intent(context, ConversationActivityV2::class.java)
-        intent.putExtra(ConversationActivityV2.THREAD_ID, threadId)
-        intent.putExtra(ConversationActivityV2.ADDRESS, address)
-        context.startActivity(intent)
+    private fun openConversationActivity(context: Context, address: Address) {
+        context.startActivity(
+            ConversationActivityV2.createIntent(context, address)
+        )
     }
 
 }
