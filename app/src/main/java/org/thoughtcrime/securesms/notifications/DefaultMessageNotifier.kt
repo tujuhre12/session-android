@@ -284,7 +284,7 @@ class DefaultMessageNotifier(
         }.sorted().joinToString("|")
 
         val existingNotifications = ServiceUtil.getNotificationManager(context).activeNotifications
-        val existingSignature = existingNotifications.find { it.id == notificationId }?.notification?.extras?.getString("content_signature")
+        val existingSignature = existingNotifications.find { it.id == notificationId }?.notification?.extras?.getString(CONTENT_SIGNATURE)
 
         if (existingSignature == contentSignature) {
             Log.i(TAG, "Skipping duplicate single thread notification for ID $notificationId")
@@ -403,7 +403,7 @@ class DefaultMessageNotifier(
         }.sorted().joinToString("|")
 
         val existingNotifications = ServiceUtil.getNotificationManager(context).activeNotifications
-        val existingSignature = existingNotifications.find { it.id == SUMMARY_NOTIFICATION_ID }?.notification?.extras?.getString("content_signature")
+        val existingSignature = existingNotifications.find { it.id == SUMMARY_NOTIFICATION_ID }?.notification?.extras?.getString(CONTENT_SIGNATURE)
 
         if (existingSignature == contentSignature) {
             Log.i(TAG, "Skipping duplicate multi-thread notification")
