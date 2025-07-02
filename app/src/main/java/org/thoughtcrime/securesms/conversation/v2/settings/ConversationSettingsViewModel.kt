@@ -776,10 +776,12 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
     private fun pinConversation(){
         // check the pin limit before continuing
-        if(storage.getTotalPinned() >= proStatusManager.getPinnedConversationLimit()){
+        val totalPins = storage.getTotalPinned()
+        val maxPins = proStatusManager.getPinnedConversationLimit()
+        if(totalPins >= maxPins){
             // the user has reached the pin limit, show the CTA
             _dialogState.update {
-                it.copy(showPinCTA = true)
+                it.copy(pinCTA = PinProCTA(overTheLimit = totalPins > maxPins))
             }
         } else {
             viewModelScope.launch {
@@ -1194,7 +1196,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             is Commands.HideGroupEditDialog -> hideGroupEditDialog()
 
             is Commands.HidePinCTADialog -> {
-                _dialogState.update { it.copy(showPinCTA = false) }
+                _dialogState.update { it.copy(pinCTA = null) }
             }
 
             is Commands.RemoveNickname -> {
@@ -1310,7 +1312,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
             is Commands.GoToProUpgradeScreen -> {
                 // hide dialog
-                _dialogState.update { it.copy(showPinCTA = false) }
+                _dialogState.update { it.copy(pinCTA = null) }
 
                 // to go Pro upgrade screen
                 //todo PRO go to screen once it exists
@@ -1490,11 +1492,15 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     )
 
     data class DialogsState(
-        val showPinCTA: Boolean = false,
+        val pinCTA: PinProCTA? = null,
         val showSimpleDialog: SimpleDialogData? = null,
         val nicknameDialog: NicknameDialogData? = null,
         val groupEditDialog: GroupEditDialog? = null,
         val groupAdminClearMessagesDialog: GroupAdminClearMessageDialog? = null,
+    )
+
+    data class PinProCTA(
+        val overTheLimit: Boolean
     )
 
     data class NicknameDialogData(

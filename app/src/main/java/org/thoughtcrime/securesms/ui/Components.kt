@@ -772,16 +772,18 @@ fun AnimatedSessionProCTA(
  */
 @Composable
 fun PinProCTA(
-    modifier: Modifier = Modifier,
+    overTheLimit: Boolean,
     onUpgrade: () -> Unit,
     onCancel: () -> Unit,
+    modifier: Modifier = Modifier,
 ){
     SimpleSessionProCTA(
         modifier = modifier,
         heroImage = R.drawable.cta_hero_char_limit,
-        text = ProStatusManager.PIN_CTA,
+        text = if(overTheLimit) stringResource(R.string.proCallToActionPinnedConversations)
+                else stringResource(R.string.proCallToActionPinnedConversationsMoreThan),
         features = listOf(
-            CTAFeature.Icon(ProStatusManager.PIN_CTA_FEATURE),
+            CTAFeature.Icon(stringResource(R.string.proFeatureListPinnedConversations)),
             CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
             CTAFeature.RainbowIcon(stringResource(R.string.proFeatureListLoadsMore)),
         ),
