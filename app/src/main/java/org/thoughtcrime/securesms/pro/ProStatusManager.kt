@@ -9,12 +9,6 @@ import javax.inject.Singleton
 class ProStatusManager @Inject constructor(
     private val prefs: TextSecurePreferences
 ){
-    companion object {
-        // TEMPORARY STRING !!!!!!!!!!!!!
-        const val PIN_CTA = "Want more than 5 pins? Organize your chats and unlock premium features with Session Pro"
-        const val PIN_CTA_FEATURE = "Pin unlimited conversations"
-    }
-
     private val MAX_CHARACTER_PRO = 10000 // max characters in a message for pro users
     private val MAX_CHARACTER_REGULAR = 2000 // max characters in a message for non pro users
     private val MAX_PIN_REGULAR = 5 // max pinned conversation for non pro users

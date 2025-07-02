@@ -41,6 +41,7 @@ import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.PinProCTA
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
@@ -242,10 +243,14 @@ class HomeViewModel @Inject constructor(
 
     fun setPinned(threadId: Long, pinned: Boolean) {
         // check the pin limit before continuing
-        if(pinned && storage.getTotalPinned() >= proStatusManager.getPinnedConversationLimit()){
+        val totalPins = storage.getTotalPinned()
+        val maxPins = proStatusManager.getPinnedConversationLimit()
+        if(pinned && totalPins >= maxPins){
             // the user has reached the pin limit, show the CTA
             _dialogsState.update {
-                it.copy(showPinCTA = true)
+                it.copy(
+                    pinCTA = PinProCTA(overTheLimit = totalPins > maxPins)
+                )
             }
         } else {
             viewModelScope.launch(Dispatchers.Default) {
@@ -257,12 +262,12 @@ class HomeViewModel @Inject constructor(
     fun onCommand(command: Commands) {
         when (command) {
             is Commands.HidePinCTADialog -> {
-                _dialogsState.update { it.copy(showPinCTA = false) }
+                _dialogsState.update { it.copy(pinCTA = null) }
             }
 
             is Commands.GoToProUpgradeScreen -> {
                 // hide dialog
-                _dialogsState.update { it.copy(showPinCTA = false) }
+                _dialogsState.update { it.copy(pinCTA = null) }
 
                 // to go Pro upgrade screen
                 //todo PRO go to screen once it exists
@@ -272,7 +277,11 @@ class HomeViewModel @Inject constructor(
     }
 
     data class DialogsState(
-        val showPinCTA: Boolean = false,
+        val pinCTA: PinProCTA? = null,
+    )
+
+    data class PinProCTA(
+        val overTheLimit: Boolean
     )
 
     sealed interface Commands {

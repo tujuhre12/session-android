@@ -208,8 +208,9 @@ fun ConversationSettingsDialogs(
     }
 
     // pin CTA
-    if(dialogsState.showPinCTA){
+    if(dialogsState.pinCTA != null){
         PinProCTA(
+            overTheLimit = dialogsState.pinCTA.overTheLimit,
             onUpgrade = {
                 sendCommand(GoToProUpgradeScreen)
             },
