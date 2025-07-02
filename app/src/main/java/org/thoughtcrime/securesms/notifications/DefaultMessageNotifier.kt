@@ -280,7 +280,7 @@ class DefaultMessageNotifier(
         val notifications = notificationState.notifications
         val notificationId = (SUMMARY_NOTIFICATION_ID + (if (bundled) notifications[0].threadId else 0)).toInt()
         val contentSignature = notifications.map {
-            "${it.id}_${it.text}_${it.timestamp}_${it.threadId}"
+            getNotificationSignature(it)
         }.sorted().joinToString("|")
 
         val existingNotifications = ServiceUtil.getNotificationManager(context).activeNotifications
@@ -389,6 +389,10 @@ class DefaultMessageNotifier(
         Log.i(TAG, "Posted notification. $notification")
     }
 
+    private fun getNotificationSignature(notification: NotificationItem): String {
+        return "${notification.id}_${notification.text}_${notification.timestamp}_${notification.threadId}"
+    }
+
     // Note: The `signal` parameter means "play an audio signal for the notification".
     private fun sendMultipleThreadNotification(
         context: Context,
@@ -399,7 +403,7 @@ class DefaultMessageNotifier(
 
         val notifications = notificationState.notifications
         val contentSignature = notifications.map {
-            "${it.id}_${it.text}_${it.timestamp}_${it.threadId}"
+            getNotificationSignature(it)
         }.sorted().joinToString("|")
 
         val existingNotifications = ServiceUtil.getNotificationManager(context).activeNotifications
