@@ -50,7 +50,7 @@ class ProStatusManager @Inject constructor(
     fun getPinnedConversationLimit(): Int {
         if(!isPostPro()) return Int.MAX_VALUE // allow infinite pins while not in post Pro
 
-        return if (isCurrentUserPro()) MAX_PIN_REGULAR else Int.MAX_VALUE
+        return if (isCurrentUserPro()) Int.MAX_VALUE else MAX_PIN_REGULAR
 
     }
 }

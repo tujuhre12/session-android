@@ -2,12 +2,10 @@ package org.thoughtcrime.securesms.home
 
 import android.content.ContentResolver
 import android.content.Context
-import android.widget.Toast
 import androidx.annotation.AttrRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
-import com.squareup.phrase.Phrase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -28,23 +26,20 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.onErrorResume
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigUpdateNotification
-import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsignal.utilities.Log
 import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
@@ -236,6 +231,13 @@ class HomeViewModel @Inject constructor(
     fun leaveGroup(accountId: AccountId) {
         viewModelScope.launch(Dispatchers.Default) {
             groupManager.leaveGroup(accountId)
+        }
+    }
+
+    fun setPinned(threadId: Long, pinned: Boolean) {
+        viewModelScope.launch(Dispatchers.Default) {
+            storage.setPinned(threadId, pinned)
+            tryReload()
         }
     }
 

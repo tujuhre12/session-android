@@ -666,10 +666,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
     }
 
     private fun setConversationPinned(threadId: Long, pinned: Boolean) {
-        lifecycleScope.launch(Dispatchers.Default) {
-            storage.setPinned(threadId, pinned)
-            homeViewModel.tryReload()
-        }
+        homeViewModel.setPinned(threadId, pinned)
     }
 
     private fun markAllAsRead(thread: ThreadRecord) {

@@ -623,7 +623,6 @@ fun SessionProCTA(
                             )
 
                             Image(
-                                modifier = Modifier.shimmerOverlay(),
                                 painter = painterResource(id = R.drawable.ic_pro_badge),
                                 contentScale = ContentScale.FillHeight,
                                 contentDescription = NonTranslatableStringConstants.APP_PRO,
@@ -660,7 +659,7 @@ fun SessionProCTA(
                             horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsSpacing),
                         ) {
                             AccentFillButtonRect(
-                                modifier = Modifier.weight(1f).shimmerOverlay(initialDelay = 600),
+                                modifier = Modifier.weight(1f).shimmerOverlay(),
                                 text = stringResource(R.string.theContinue),
                                 onClick = onUpgrade
                             )
@@ -786,10 +785,7 @@ fun PinProCTA(
             CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
             CTAFeature.RainbowIcon(stringResource(R.string.proFeatureListLoadsMore)),
         ),
-        onUpgrade = {
-            onCancel()
-            onUpgrade()
-        },
+        onUpgrade = onUpgrade,
         onCancel = onCancel
     )
 }
