@@ -385,11 +385,57 @@ public class MmsSmsDatabase extends Database {
    * all outgoing messages with unread reactions
    */
   public Cursor getUnreadOrUnseenReactions() {
-    String selection = "(" + MmsSmsColumns.READ + " = 0 AND " + MmsSmsColumns.NOTIFIED + " = 0)" +
-            " OR " + MmsSmsColumns.REACTIONS_UNREAD + " = 1";
+
+    // ──────────────────────────────────────────────────────────────
+    // 1) Build “is-outgoing” condition that works for both MMS & SMS
+    // ──────────────────────────────────────────────────────────────
+    //   MMS rows  → use MESSAGE_BOX
+    //   SMS rows  → use TYPE
+    //
+    //   TRANSPORT lets us be sure we’re looking at the right column,
+    //   so an incoming MMS/SMS can never be mistaken for outgoing.
+    //
+    String outgoingCondition =
+            /* MMS */
+            "(" + TRANSPORT + " = '" + MMS_TRANSPORT + "' AND " +
+                    "(" + MESSAGE_BOX + " & " +
+                    MmsSmsColumns.Types.BASE_TYPE_MASK + ") IN (" +
+                    buildOutgoingTypesList() + "))" +
+
+                    " OR " +
+
+                    /* SMS */
+                    "(" + TRANSPORT + " = '" + SMS_TRANSPORT + "' AND " +
+                    "(" + SmsDatabase.TYPE + " & " +
+                    MmsSmsColumns.Types.BASE_TYPE_MASK + ") IN (" +
+                    buildOutgoingTypesList() + "))";
+
+    // ──────────────────────────────────────────────────────────────
+    // 2) Selection:
+    //    A) incoming  unread+un-notified,      NOT outgoing
+    //    B) outgoing  with unseen reactions,   IS  outgoing
+    // ──────────────────────────────────────────────────────────────
+    String selection =
+            "(" + READ + " = 0 AND " +
+                    NOTIFIED + " = 0 AND NOT (" + outgoingCondition + "))" +   // A
+                    " OR " +
+                    "(" + MmsSmsColumns.REACTIONS_UNREAD + " = 1 AND (" +            // B
+                    outgoingCondition + "))";
 
     String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " ASC";
     return queryTables(PROJECTION, selection, order, null);
+  }
+
+  /** Builds the comma-separated list of base types that represent
+   *  *outgoing* messages (same helper as before). */
+  private String buildOutgoingTypesList() {
+    long[] types = MmsSmsColumns.Types.OUTGOING_MESSAGE_TYPES;
+    StringBuilder sb = new StringBuilder(types.length * 3);
+    for (int i = 0; i < types.length; i++) {
+      if (i > 0) sb.append(',');
+      sb.append(types[i]);
+    }
+    return sb.toString();
   }
 
   public int getUnreadCount(long threadId) {
