@@ -70,6 +70,7 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory.Companion.MAX_GROUP
 import org.thoughtcrime.securesms.dependencies.ConfigFactory.Companion.MAX_NAME_BYTES
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.HomeActivity
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.SimpleDialogData
@@ -99,6 +100,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private val lokiThreadDatabase: LokiThreadDatabase,
     private val groupManager: GroupManagerV2,
     private val openGroupManager: OpenGroupManager,
+    private val proStatusManager: ProStatusManager,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(

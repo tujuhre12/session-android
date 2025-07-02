@@ -276,7 +276,6 @@ fun ConversationV2Dialogs(
                     sendCommand(ConversationViewModel.Commands.HideSessionProCTA)
                 }
             )
-
         }
     }
 }

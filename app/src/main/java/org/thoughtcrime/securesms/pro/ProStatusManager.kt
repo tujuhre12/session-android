@@ -9,8 +9,15 @@ import javax.inject.Singleton
 class ProStatusManager @Inject constructor(
     private val prefs: TextSecurePreferences
 ){
-    private val MAX_CHARACTER_PRO = 10000
-    private val MAX_CHARACTER_REGULAR = 2000
+    companion object {
+        // TEMPORARY STRING !!!!!!!!!!!!!
+        const val PIN_CTA = "Want more than 5 pins? Organize your chats and unlock premium features with Session Pro"
+        const val PIN_CTA_FEATURE = "Pin unlimited conversations"
+    }
+
+    private val MAX_CHARACTER_PRO = 10000 // max characters in a message for pro users
+    private val MAX_CHARACTER_REGULAR = 2000 // max characters in a message for non pro users
+    private val MAX_PIN_REGULAR = 5 // max pinned conversation for non pro users
 
     fun isCurrentUserPro(): Boolean {
         // if the debug is set, return that
@@ -38,5 +45,12 @@ class ProStatusManager @Inject constructor(
 
     fun getCharacterLimit(): Int {
         return if (isCurrentUserPro()) MAX_CHARACTER_PRO else MAX_CHARACTER_REGULAR
+    }
+
+    fun getPinnedConversationLimit(): Int {
+        if(!isPostPro()) return Int.MAX_VALUE // allow infinite pins while not in post Pro
+
+        return if (isCurrentUserPro()) MAX_PIN_REGULAR else Int.MAX_VALUE
+
     }
 }
