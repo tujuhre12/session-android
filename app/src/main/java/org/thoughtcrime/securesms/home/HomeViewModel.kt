@@ -250,7 +250,6 @@ class HomeViewModel @Inject constructor(
         } else {
             viewModelScope.launch(Dispatchers.Default) {
                 storage.setPinned(threadId, pinned)
-                tryReload()
             }
         }
     }
