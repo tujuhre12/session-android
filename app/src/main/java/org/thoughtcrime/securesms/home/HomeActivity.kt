@@ -556,17 +556,17 @@ class HomeActivity : ScreenLockActionBarActivity(),
             bottomSheet.dismiss()
             // go to the notification settings
             val intent = Intent(this, NotificationSettingsActivity::class.java).apply {
-                putExtra(NotificationSettingsActivity.THREAD_ID, thread.threadId)
+                putExtra(NotificationSettingsActivity.ARG_ADDRESS, thread.recipient.address)
             }
             startActivity(intent)
         }
         bottomSheet.onPinTapped = {
             bottomSheet.dismiss()
-            setConversationPinned(thread.threadId, true)
+            setConversationPinned(thread.recipient.address, true)
         }
         bottomSheet.onUnpinTapped = {
             bottomSheet.dismiss()
-            setConversationPinned(thread.threadId, false)
+            setConversationPinned(thread.recipient.address, false)
         }
         bottomSheet.onMarkAllAsReadTapped = {
             bottomSheet.dismiss()
@@ -632,11 +632,8 @@ class HomeActivity : ScreenLockActionBarActivity(),
         }
     }
 
-    private fun setConversationPinned(threadId: Long, pinned: Boolean) {
-        lifecycleScope.launch(Dispatchers.Default) {
-            storage.setPinned(threadId, pinned)
-            homeViewModel.tryReload()
-        }
+    private fun setConversationPinned(address: Address, pinned: Boolean) {
+        storage.setPinned(address, pinned)
     }
 
     private fun markAllAsRead(thread: ThreadRecord) {

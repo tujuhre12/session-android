@@ -280,33 +280,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
     }
 
-    private val threadId: Long by lazy {
-        TODO()
-//        var threadId = intent.getLongExtra(THREAD_ID, -1L)
-//        if (threadId == -1L) {
-//            intent.getParcelableExtra<Address>(ADDRESS)?.let { it ->
-//                threadId = threadDb.getThreadIdIfExistsFor(it.toString())
-//                if (threadId == -1L) {
-//                    val accountId = AccountId(it.toString())
-//                    val openGroup = lokiThreadDb.getOpenGroupChat(intent.getLongExtra(FROM_GROUP_THREAD_ID, -1))
-//                    val address = if (accountId.prefix == IdPrefix.BLINDED && openGroup != null) {
-//                        storage.getOrCreateBlindedIdMapping(accountId.hexString, openGroup.server, openGroup.publicKey).accountId?.let {
-//                            fromSerialized(it)
-//                        } ?: GroupUtil.getEncodedOpenGroupInboxID(openGroup, accountId)
-//                    } else {
-//                        it
-//                    }
-//                    threadId = storage.getOrCreateThreadIdFor(address)
-//                }
-//            } ?: finish()
-//        }
-//
-//        threadId
-    }
-
     private val viewModel: ConversationViewModel by viewModels(extrasProducer = {
         defaultViewModelCreationExtras.withCreationCallback<ConversationViewModel.Factory> {
-            it.create(threadId)
+            it.create(address)
         }
     })
 
@@ -323,7 +299,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     // Mentions
     private val mentionViewModel: MentionViewModel by viewModels(extrasProducer = {
         defaultViewModelCreationExtras.withCreationCallback<MentionViewModel.Factory> {
-            it.create(threadId)
+            it.create(address)
         }
     })
 
@@ -690,7 +666,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
                     is ConversationUiEvent.ShowDisappearingMessages -> {
                         val intent = Intent(this@ConversationActivityV2, DisappearingMessagesActivity::class.java).apply {
-                            putExtra(DisappearingMessagesActivity.THREAD_ID, event.threadId)
+                            putExtra(DisappearingMessagesActivity.ARG_ADDRESS, event.address)
                         }
                         startActivity(intent)
                     }
@@ -704,7 +680,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
                     is ConversationUiEvent.ShowNotificationSettings -> {
                         val intent = Intent(this@ConversationActivityV2, NotificationSettingsActivity::class.java).apply {
-                            putExtra(NotificationSettingsActivity.THREAD_ID, event.threadId)
+                            putExtra(NotificationSettingsActivity.ARG_ADDRESS, event.address)
                         }
                         startActivity(intent)
                     }
@@ -867,12 +843,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                onSearchQueryClear = {  onSearchQueryUpdated("") },
                onSearchCanceled = ::onSearchClosed,
                onAvatarPressed = {
-                   val intent = ConversationSettingsActivity.createIntent(
-                       context = this,
-                       threadId = viewModel.threadId,
-                       threadAddress = viewModel.recipient?.address
-                   )
-
+                   val intent = ConversationSettingsActivity.createIntent(this, address)
                    settingsLauncher.launch(intent)
                }
            )

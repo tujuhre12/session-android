@@ -93,7 +93,7 @@ private const  val CHARACTER_LIMIT_THRESHOLD = 200
 
 @HiltViewModel(assistedFactory = ConversationViewModel.Factory::class)
 class ConversationViewModel @AssistedInject constructor(
-    @Assisted val threadId: Long,
+    @Assisted val address: Address,
     private val application: Application,
     private val repository: ConversationRepository,
     private val storage: StorageProtocol,
@@ -116,6 +116,8 @@ class ConversationViewModel @AssistedInject constructor(
     private val proStatusManager: ProStatusManager,
     private val recipientRepository: RecipientRepository,
 ) : ViewModel() {
+
+    val threadId: Long = threadDb.getThreadIdIfExistsFor(address)
 
     private val edKeyPair by lazy {
         storage.getUserED25519KeyPair()
@@ -1395,7 +1397,7 @@ class ConversationViewModel @AssistedInject constructor(
                 }
             }
 
-            _uiEvents.tryEmit(ConversationUiEvent.ShowDisappearingMessages(threadId))
+            _uiEvents.tryEmit(ConversationUiEvent.ShowDisappearingMessages(address))
         }
     }
 
@@ -1408,7 +1410,7 @@ class ConversationViewModel @AssistedInject constructor(
     }
 
     private fun showNotificationSettings() {
-        _uiEvents.tryEmit(ConversationUiEvent.ShowNotificationSettings(threadId))
+        _uiEvents.tryEmit(ConversationUiEvent.ShowNotificationSettings(address))
     }
 
     fun onResume() {
@@ -1448,7 +1450,7 @@ class ConversationViewModel @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(threadId: Long): ConversationViewModel
+        fun create(address: Address): ConversationViewModel
     }
 
     data class DialogsState(
@@ -1534,8 +1536,8 @@ sealed interface InputBarContentState {
 
 sealed interface ConversationUiEvent {
     data class NavigateToConversation(val address: Address) : ConversationUiEvent
-    data class ShowDisappearingMessages(val threadId: Long) : ConversationUiEvent
-    data class ShowNotificationSettings(val threadId: Long) : ConversationUiEvent
+    data class ShowDisappearingMessages(val address: Address) : ConversationUiEvent
+    data class ShowNotificationSettings(val address: Address) : ConversationUiEvent
     data class ShowGroupMembers(val groupId: String) : ConversationUiEvent
     data object ShowUnblockConfirmation : ConversationUiEvent
 }

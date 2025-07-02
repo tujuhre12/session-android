@@ -23,7 +23,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -36,6 +36,7 @@ import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.open_groups.OpenGroup
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ExpirationUtil
@@ -62,7 +63,6 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory.Companion.MAX_NAME_
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.repository.ConversationRepository
-import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.SimpleDialogData
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.AvatarUIData
@@ -74,8 +74,8 @@ import kotlin.math.min
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 @HiltViewModel(assistedFactory = ConversationSettingsViewModel.Factory::class)
 class ConversationSettingsViewModel @AssistedInject constructor(
-    @Assisted private val threadId: Long,
-    @ApplicationContext private val context: Context,
+    @Assisted private val address: Address,
+    @param:ApplicationContext private val context: Context,
     private val avatarUtils: AvatarUtils,
     private val repository: ConversationRepository,
     private val configFactory: ConfigFactoryProtocol,
@@ -83,7 +83,6 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private val conversationRepository: ConversationRepository,
     private val textSecurePreferences: TextSecurePreferences,
     private val navigator: ConversationSettingsNavigator,
-    private val threadDb: ThreadDatabase,
     private val groupManagerV2: GroupManagerV2,
     private val prefs: TextSecurePreferences,
     private val lokiThreadDatabase: LokiThreadDatabase,
@@ -91,6 +90,12 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private val openGroupManager: OpenGroupManager,
     private val recipientRepository: RecipientRepository,
 ) : ViewModel() {
+
+    private val threadId by lazy {
+        requireNotNull(storage.getThreadId(address)) {
+            "Thread doesn't exist for this conversation"
+        }
+    }
 
     private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(
         UIState(
@@ -326,11 +331,12 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
     init {
         // update data when we have a recipient and update when there are changes from the thread or recipient
-        viewModelScope.launch(Dispatchers.Default) {
-            (repository.maybeGetRecipientForThreadId(threadId)?.let(recipientRepository::observeRecipient) ?: flowOf(null))
+        viewModelScope.launch {
+            recipientRepository.observeRecipient(address)
+                .filterNotNull()
                 .collect {
                     recipient = it
-                    getStateFromRecipient()
+                    getStateFromRecipient(it)
                 }
         }
     }
@@ -376,8 +382,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
     }
 
-    private suspend fun getStateFromRecipient(){
-        val conversation = recipient ?: return
+    private suspend fun getStateFromRecipient(conversation: Recipient){
         val configContact = configFactory.withUserConfigs { configs ->
             configs.contacts.get(conversation.address.toString())
         }
@@ -469,7 +474,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             )
         } else context.getString(R.string.off)
 
-        val pinned = threadDb.isPinned(threadId)
+        val pinned = recipient?.isPinned == true
 
         val (notificationIconRes, notificationSubtitle) = getNotificationsData(conversation)
 
@@ -479,7 +484,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 val mainOptions = mutableListOf<OptionsItem>()
                 val dangerOptions = mutableListOf<OptionsItem>()
 
-                val ntsHidden = prefs.hasHiddenNoteToSelf()
+                val ntsHidden = conversation.priority == PRIORITY_HIDDEN
 
                 mainOptions.addAll(listOf(
                     optionCopyAccountId,
@@ -747,15 +752,11 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     private fun pinConversation(){
-        viewModelScope.launch {
-            storage.setPinned(threadId, true)
-        }
+        storage.setPinned(address, true)
     }
 
     private fun unpinConversation(){
-        viewModelScope.launch {
-            storage.setPinned(threadId, false)
-        }
+        storage.setPinned(address, false)
     }
 
     private fun confirmBlockUser(){
@@ -852,24 +853,14 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     private fun hideNoteToSelf() {
-        prefs.setHasHiddenNoteToSelf(true)
         configFactory.withMutableUserConfigs {
             it.userProfile.setNtsPriority(PRIORITY_HIDDEN)
-        }
-        // update state to reflect the change
-        viewModelScope.launch {
-            getStateFromRecipient()
         }
     }
 
     fun showNoteToSelf() {
-        prefs.setHasHiddenNoteToSelf(false)
         configFactory.withMutableUserConfigs {
             it.userProfile.setNtsPriority(PRIORITY_VISIBLE)
-        }
-        // update state to reflect the change
-        viewModelScope.launch {
-            getStateFromRecipient()
         }
     }
 
@@ -1396,7 +1387,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(threadId: Long): ConversationSettingsViewModel
+        fun create(address: Address): ConversationSettingsViewModel
     }
 
     data class UIState(

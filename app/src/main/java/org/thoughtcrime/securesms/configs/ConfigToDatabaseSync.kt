@@ -120,17 +120,12 @@ class ConfigToDatabaseSync @Inject constructor(
         val userPublicKey = storage.getUserPublicKey() ?: return
         val address = fromSerialized(userPublicKey)
 
-        if (userProfile.ntsPriority == PRIORITY_HIDDEN) {
-            // hide nts thread if needed
-            preferences.setHasHiddenNoteToSelf(true)
-        } else {
+        if (userProfile.ntsPriority != PRIORITY_HIDDEN) {
             // create note to self thread if needed (?)
             val ourThread = storage.getThreadId(address) ?: storage.getOrCreateThreadIdFor(address).also {
                 storage.setThreadCreationDate(it, 0)
             }
             threadDatabase.setHasSent(ourThread, true)
-            storage.setPinned(ourThread, userProfile.ntsPriority > 0)
-            preferences.setHasHiddenNoteToSelf(false)
         }
     }
 
@@ -261,15 +256,6 @@ class ConfigToDatabaseSync @Inject constructor(
             }
         }
 
-        for (groupInfo in userGroups.communityInfo) {
-            val groupBaseCommunity = groupInfo.community
-            if (groupBaseCommunity.fullUrl() in existingJoinUrls) {
-                // add it
-                val (threadId, _) = existingCommunities.entries.first { (_, v) -> v.joinURL == groupInfo.community.fullUrl() }
-                threadDatabase.setPinned(threadId, groupInfo.priority == PRIORITY_PINNED)
-            }
-        }
-
         val existingClosedGroupThreads: Map<AccountId, Long> = threadDatabase.readerFor(threadDatabase.conversationList).use { reader ->
             buildMap(reader.count) {
                 var current = reader.next
@@ -299,8 +285,6 @@ class ConfigToDatabaseSync @Inject constructor(
 
             groupThreadsToKeep[AccountId(closedGroup.groupAccountId)] = threadId
 
-            storage.setPinned(threadId, closedGroup.priority == PRIORITY_PINNED)
-
             if (closedGroup.destroyed) {
                 handleDestroyedGroup(threadId = threadId)
             }
@@ -320,11 +304,6 @@ class ConfigToDatabaseSync @Inject constructor(
                 if (group.priority == PRIORITY_HIDDEN && existingThread != null) {
                     ClosedGroupManager.silentlyRemoveGroup(context,existingThread,
                         GroupUtil.doubleDecodeGroupId(existingGroup.encodedId), existingGroup.encodedId, localUserPublicKey, delete = true)
-                } else if (existingThread == null) {
-                    Log.w(TAG, "Existing group had no thread to hide")
-                } else {
-                    Log.d(TAG, "Setting existing group pinned status to ${group.priority}")
-                    threadDatabase.setPinned(existingThread, group.priority == PRIORITY_PINNED)
                 }
             } else {
                 val members = group.members.keys.map { fromSerialized(it) }

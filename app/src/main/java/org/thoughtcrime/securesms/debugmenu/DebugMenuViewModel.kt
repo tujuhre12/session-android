@@ -42,7 +42,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DebugMenuViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val textSecurePreferences: TextSecurePreferences,
     private val tokenPageNotificationManager: TokenPageNotificationManager,
     private val configFactory: ConfigFactory,
@@ -64,7 +64,7 @@ class DebugMenuViewModel @Inject constructor(
             showLoadingDialog = false,
             showDeprecatedStateWarningDialog = false,
             hideMessageRequests = textSecurePreferences.hasHiddenMessageRequests(),
-            hideNoteToSelf = textSecurePreferences.hasHiddenNoteToSelf(),
+            hideNoteToSelf = configFactory.withUserConfigs { it.userProfile.getNtsPriority() == PRIORITY_HIDDEN },
             forceDeprecationState = deprecationManager.deprecationStateOverride.value,
             availableDeprecationState = listOf(null) + LegacyGroupDeprecationManager.DeprecationState.entries.toList(),
             deprecatedTime = deprecationManager.deprecatedTime.value,
@@ -135,7 +135,6 @@ class DebugMenuViewModel @Inject constructor(
             }
 
             is Commands.HideNoteToSelf -> {
-                textSecurePreferences.setHasHiddenNoteToSelf(command.hide)
                 configFactory.withMutableUserConfigs {
                     it.userProfile.setNtsPriority(if(command.hide) PRIORITY_HIDDEN else PRIORITY_VISIBLE)
                 }

@@ -1,12 +1,14 @@
 package org.session.libsession.utilities.recipients
 
+import androidx.annotation.IntDef
+import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
+import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.Bytes
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.thoughtcrime.securesms.database.RecipientDatabase
-import org.thoughtcrime.securesms.database.model.NotifyType
 import java.time.ZonedDateTime
 
 data class Recipient(
@@ -53,6 +55,10 @@ data class Recipient(
         else -> false
     }
 
+    val priority: Long get() = basic.priority
+
+    val isPinned: Boolean get() = priority == PRIORITY_PINNED
+
     @JvmOverloads
     fun isMuted(now: ZonedDateTime = ZonedDateTime.now()): Boolean {
         return mutedUntil?.isAfter(now) == true
@@ -82,6 +88,7 @@ sealed interface BasicRecipient {
     val isLocalNumber: Boolean
     val displayName: String
     val avatar: RemoteFile?
+    val priority: Long
 
     /**
      * A recipient that is backed by the config system.
@@ -94,6 +101,7 @@ sealed interface BasicRecipient {
         override val avatar: RemoteFile? = null,
         override val isLocalNumber: Boolean = false,
         val blocked: Boolean = false,
+        override val priority: Long = PRIORITY_VISIBLE,
     ) : BasicRecipient
 
     /**
@@ -105,6 +113,7 @@ sealed interface BasicRecipient {
         override val avatar: RemoteFile.Encrypted?,
         val expiryMode: ExpiryMode,
         val acceptsCommunityMessageRequests: Boolean,
+        override val priority: Long,
     ) : ConfigBasedRecipient {
         override val displayName: String
             get() = name
@@ -124,7 +133,8 @@ sealed interface BasicRecipient {
         val approved: Boolean,
         val approvedMe: Boolean,
         val blocked: Boolean,
-        val expiryMode: ExpiryMode
+        val expiryMode: ExpiryMode,
+        override val priority: Long,
     ) : ConfigBasedRecipient {
         override val displayName: String
             get() = nickname?.takeIf { it.isNotBlank() } ?: name
@@ -142,6 +152,7 @@ sealed interface BasicRecipient {
         override val avatar: RemoteFile.Encrypted?,
         val expiryMode: ExpiryMode,
         val approved: Boolean,
+        override val priority: Long,
     ) : ConfigBasedRecipient {
         override val displayName: String
             get() = name
@@ -213,6 +224,11 @@ class RecipientSettings(
             null
         }
 }
+
+@Retention(AnnotationRetention.SOURCE)
+@IntDef(RecipientDatabase.NOTIFY_TYPE_MENTIONS, RecipientDatabase.NOTIFY_TYPE_ALL, RecipientDatabase.NOTIFY_TYPE_NONE)
+annotation class NotifyType
+
 
 fun RemoteFile.toUserPic(): UserPic? {
     return when (this) {

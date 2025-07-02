@@ -2,7 +2,6 @@ package org.thoughtcrime.securesms.home
 
 import android.content.ContentResolver
 import android.content.Context
-import androidx.annotation.AttrRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
@@ -29,6 +28,7 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import org.session.libsession.database.StorageProtocol
@@ -38,6 +38,7 @@ import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import org.session.libsession.utilities.currentUserName
+import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -51,14 +52,13 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    @ApplicationContext
-    private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val threadDb: ThreadDatabase,
     private val contentResolver: ContentResolver,
     private val prefs: TextSecurePreferences,
     private val typingStatusRepository: TypingStatusRepository,
     private val configFactory: ConfigFactory,
-    private val callManager: CallManager,
+    callManager: CallManager,
     private val storage: StorageProtocol,
     private val groupManager: GroupManagerV2
 ) : ViewModel() {
@@ -123,10 +123,12 @@ class HomeViewModel @Inject constructor(
         .map { prefs.hasHiddenMessageRequests() }
         .onStart { emit(prefs.hasHiddenMessageRequests()) }
 
-    private fun hasHiddenNoteToSelf() = TextSecurePreferences.events
-        .filter { it == TextSecurePreferences.HAS_HIDDEN_NOTE_TO_SELF }
-        .map { prefs.hasHiddenNoteToSelf() }
-        .onStart { emit(prefs.hasHiddenNoteToSelf()) }
+    private fun hasHiddenNoteToSelf(): Flow<Boolean> =
+        configFactory.userConfigsChanged()
+            .debounce(1000L)
+            .onStart { emit(Unit) }
+            .map { configFactory.withUserConfigs { it.userProfile.getNtsPriority() == PRIORITY_HIDDEN } }
+
 
     private fun observeTypingStatus(): Flow<Set<Long>> = typingStatusRepository
                     .typingThreads
@@ -146,11 +148,23 @@ class HomeViewModel @Inject constructor(
     @Suppress("OPT_IN_USAGE")
     private fun observeConversationList(): Flow<List<ThreadRecord>> = reloadTriggersAndContentChanges()
         .mapLatest { _ ->
-            threadDb.approvedConversationList.use { openCursor ->
-                threadDb.readerFor(openCursor).run { generateSequence { next }.toList() }
+            withContext(Dispatchers.Default) {
+                val records = threadDb.approvedConversationList.use { openCursor ->
+                    threadDb.readerFor(openCursor).run { generateSequence { next }.toMutableList() }
+                }
+
+                // Sort the threads by priority and last message timestamp
+                records.sortWith(threadRecordComparator)
+
+                records
             }
         }
-        .flowOn(Dispatchers.IO)
+
+    private val threadRecordComparator = compareByDescending<ThreadRecord> { it.recipient.isPinned }
+        .thenByDescending { it.recipient.priority }
+        .thenByDescending { it.lastMessage?.timestamp ?: 0L }
+        .thenByDescending { it.date }
+        .thenBy { it.recipient.displayName }
 
     @OptIn(FlowPreview::class)
     private fun reloadTriggersAndContentChanges(): Flow<*> = merge(
@@ -184,11 +198,6 @@ class HomeViewModel @Inject constructor(
         val items: List<Item>,
     )
 
-    data class MessageSnippetOverride(
-        val text: CharSequence,
-        @AttrRes val colorAttr: Int,
-    )
-
     sealed interface Item {
         data class Thread(
             val thread: ThreadRecord,
@@ -205,7 +214,6 @@ class HomeViewModel @Inject constructor(
 
 
     fun hideNoteToSelf() {
-        prefs.setHasHiddenNoteToSelf(true)
         configFactory.withMutableUserConfigs {
             it.userProfile.setNtsPriority(PRIORITY_HIDDEN)
         }

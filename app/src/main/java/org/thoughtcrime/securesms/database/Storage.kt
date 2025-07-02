@@ -1098,11 +1098,9 @@ open class Storage @Inject constructor(
             if (contact.priority == PRIORITY_HIDDEN) {
                 getThreadId(address)?.let(::deleteConversation)
             } else {
-                (
-                    getThreadId(address) ?: getOrCreateThreadIdFor(address).also {
-                        setThreadCreationDate(it, 0)
-                    }
-                ).also { setPinned(it, contact.priority == PRIORITY_PINNED) }
+                getOrCreateThreadIdFor(address).also {
+                    setThreadCreationDate(it, 0)
+                }
             }
         }
 
@@ -1151,10 +1149,7 @@ open class Storage @Inject constructor(
         return mmsSmsDb.getConversationCount(threadID)
     }
 
-    override fun setPinned(threadID: Long, isPinned: Boolean) {
-        val threadDB = threadDatabase
-        threadDB.setPinned(threadID, isPinned)
-        val address = getRecipientForThread(threadID) ?: return
+    override fun setPinned(address: Address, isPinned: Boolean) {
         val isLocalNumber = address == getUserPublicKey()?.let { fromSerialized(it) }
         configFactory.withMutableUserConfigs { configs ->
             if (isLocalNumber) {
@@ -1181,7 +1176,7 @@ open class Storage @Inject constructor(
                     }
 
                     address.isCommunity -> {
-                        val openGroup = getOpenGroup(threadID) ?: return@withMutableUserConfigs
+                        val openGroup = getOpenGroup(address) ?: return@withMutableUserConfigs
                         val (baseUrl, room, pubKeyHex) = BaseCommunityInfo.parseFullUrl(openGroup.joinURL)
                             ?: return@withMutableUserConfigs
                         val newGroupInfo = configs.userGroups.getOrConstructCommunityInfo(
@@ -1194,11 +1189,6 @@ open class Storage @Inject constructor(
                 }
             }
         }
-    }
-
-    override fun isPinned(threadID: Long): Boolean {
-        val threadDB = threadDatabase
-        return threadDB.isPinned(threadID)
     }
 
     override fun setThreadCreationDate(threadId: Long, newDate: Long) {
@@ -1678,35 +1668,33 @@ open class Storage @Inject constructor(
         return recipientRepository.getRecipientSync(recipient)?.expiryMode ?: ExpiryMode.NONE
     }
 
-    override fun setExpirationConfiguration(threadId: Long, expiryMode: ExpiryMode) {
-        val recipient = getRecipientForThread(threadId) ?: return
-
+    override fun setExpirationConfiguration(address: Address, expiryMode: ExpiryMode) {
         if (expiryMode == ExpiryMode.NONE) {
             // Clear the legacy recipients on updating config to be none
-            lokiAPIDatabase.setLastLegacySenderAddress(recipient.toString(), null)
+            lokiAPIDatabase.setLastLegacySenderAddress(address.toString(), null)
         }
 
-        if (recipient.isLegacyGroup) {
-            val groupPublicKey = GroupUtil.addressToGroupAccountId(recipient)
+        if (address.isLegacyGroup) {
+            val groupPublicKey = GroupUtil.addressToGroupAccountId(address)
 
             configFactory.withMutableUserConfigs {
                 val groupInfo = it.userGroups.getLegacyGroupInfo(groupPublicKey)
                     ?.copy(disappearingTimer = expiryMode.expirySeconds) ?: return@withMutableUserConfigs
                 it.userGroups.set(groupInfo)
             }
-        } else if (recipient.isGroupV2) {
-            val groupSessionId = AccountId(recipient.toString())
+        } else if (address.isGroupV2) {
+            val groupSessionId = AccountId(address.toString())
             configFactory.withMutableGroupConfigs(groupSessionId) { configs ->
                 configs.groupInfo.setExpiryTimer(expiryMode.expirySeconds)
             }
 
-        } else if (recipient.address == getUserPublicKey()) {
+        } else if (address.address == getUserPublicKey()) {
             configFactory.withMutableUserConfigs {
                 it.userProfile.setNtsExpiry(expiryMode)
             }
-        } else if (recipient.isContact) {
+        } else if (address.isContact) {
             configFactory.withMutableUserConfigs {
-                val contact = it.contacts.get(recipient.address.toString())?.copy(expiryMode = expiryMode) ?: return@withMutableUserConfigs
+                val contact = it.contacts.get(address.toString())?.copy(expiryMode = expiryMode) ?: return@withMutableUserConfigs
                 it.contacts.set(contact)
             }
         }

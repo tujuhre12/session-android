@@ -230,15 +230,13 @@ public class ThreadRecord extends DisplayRecord {
 
     public long getDate()                { return getDateReceived(); }
 
-    public boolean isArchived()          { return archived; }
-
     public int getDistributionType()     { return distributionType; }
 
     public long getExpiresIn()           { return expiresIn; }
 
     public long getLastSeen()            { return lastSeen; }
 
-    public boolean isPinned()            { return pinned; }
+    public boolean isPinned()            { return getRecipient().isPinned(); }
 
     public int getInitialRecipientHash() { return initialRecipientHash; }
 

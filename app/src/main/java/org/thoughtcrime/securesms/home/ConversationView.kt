@@ -52,11 +52,7 @@ class ConversationView : LinearLayout {
     // region Updating
     fun bind(thread: ThreadRecord, isTyping: Boolean) {
         this.thread = thread
-        if (thread.isPinned) {
-            binding.iconPinned.isVisible = true
-        } else {
-            binding.iconPinned.isVisible = false
-        }
+        binding.iconPinned.isVisible = thread.isPinned
 
         binding.root.background = if (thread.unreadCount > 0) {
             ContextCompat.getDrawable(context, R.drawable.conversation_unread_background)

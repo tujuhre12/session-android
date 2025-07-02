@@ -17,7 +17,6 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.avatars.AvatarHelper
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ProfileKeyUtil
 import org.session.libsession.utilities.ProfilePictureUtilities
@@ -26,7 +25,6 @@ import org.session.libsession.utilities.currentUserName
 import org.session.libsignal.utilities.ExternalStorageUtil.getImageDir
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.NoExternalStorageException
-import org.session.libsignal.utilities.Util.SECURE_RANDOM
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.TempAvatar
@@ -199,7 +197,7 @@ class SettingsViewModel @Inject constructor(
 
             try {
                 // Grab the profile key and kick of the promise to update the profile picture
-                val encodedProfileKey = ProfileKeyUtil.generateEncodedProfileKey(context)
+                val encodedProfileKey = ProfileKeyUtil.generateEncodedProfileKey()
                 val url = ProfilePictureUtilities.upload(profilePicture, encodedProfileKey, context)
 
                 // If the online portion of the update succeeded then update the local state
@@ -218,15 +216,10 @@ class SettingsViewModel @Inject constructor(
                     // update dialog state
                     _avatarDialogState.value = AvatarDialogState.NoAvatar
                 } else {
-                    ProfileKeyUtil.setEncodedProfileKey(context, encodedProfileKey)
-
-                    // Attempt to grab the details we require to update the profile picture
-                    val profileKey = ProfileKeyUtil.getProfileKey(context)
-
                     // If we have a URL and a profile key then set the user's profile picture
-                    if (url.isNotEmpty() && profileKey.isNotEmpty()) {
+                    if (url.isNotBlank() && encodedProfileKey.isNotBlank()) {
                         configFactory.withMutableUserConfigs {
-                            it.userProfile.setPic(UserPic(url, profileKey))
+                            it.userProfile.setPic(UserPic(url, ProfileKeyUtil.getProfileKeyFromEncodedString(encodedProfileKey)))
                         }
                     }
 

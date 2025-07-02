@@ -182,8 +182,7 @@ interface StorageProtocol {
     fun trimThread(threadID: Long, threadLimit: Int)
     fun trimThreadBefore(threadID: Long, timestamp: Long)
     fun getMessageCount(threadID: Long): Long
-    fun setPinned(threadID: Long, isPinned: Boolean)
-    fun isPinned(threadID: Long): Boolean
+    fun setPinned(address: Address, isPinned: Boolean)
     fun deleteConversation(threadID: Long)
     fun setThreadCreationDate(threadId: Long, newDate: Long)
     fun getLastLegacyRecipient(threadRecipient: String): String?
@@ -255,7 +254,7 @@ interface StorageProtocol {
     fun setBlocked(recipients: Iterable<Address>, isBlocked: Boolean, fromConfigUpdate: Boolean = false)
     fun blockedContacts(): List<Recipient>
     fun getExpirationConfiguration(threadId: Long): ExpiryMode
-    fun setExpirationConfiguration(threadId: Long, expiryMode: ExpiryMode)
+    fun setExpirationConfiguration(address: Address, expiryMode: ExpiryMode)
     fun getExpiringMessages(messageIds: List<Long> = emptyList()): List<Pair<Long, Long>>
 
     // Shared configs

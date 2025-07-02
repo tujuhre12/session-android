@@ -29,8 +29,8 @@ class DisappearingMessages @Inject constructor(
     private val groupManagerV2: GroupManagerV2,
     private val clock: SnodeClock,
 ) {
-    fun set(threadId: Long, address: Address, mode: ExpiryMode, isGroup: Boolean) {
-        storage.setExpirationConfiguration(threadId, mode)
+    fun set(address: Address, mode: ExpiryMode, isGroup: Boolean) {
+        storage.setExpirationConfiguration(address, mode)
 
         if (address.isGroupV2) {
             groupManagerV2.setExpirationTimer(AccountId(address.toString()), mode)
@@ -62,7 +62,7 @@ class DisappearingMessages @Inject constructor(
                 text = if (message.expiresIn == 0L) R.string.confirm else R.string.set,
                 contentDescriptionRes = if (message.expiresIn == 0L) R.string.AccessibilityId_confirm else R.string.AccessibilityId_setButton
         ) {
-            set(message.threadId, message.recipient.address, message.expiryMode, message.recipient.address.isGroup)
+            set(message.recipient.address, message.expiryMode, message.recipient.address.isGroup)
         }
         cancelButton()
     }

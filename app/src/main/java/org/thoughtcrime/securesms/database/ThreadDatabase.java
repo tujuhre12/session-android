@@ -104,6 +104,8 @@ public class ThreadDatabase extends Database {
   public  static final String EXPIRES_IN             = "expires_in";
   public  static final String LAST_SEEN              = "last_seen";
   public static final String HAS_SENT                = "has_sent";
+
+  @Deprecated(forRemoval = true)
   public  static final String IS_PINNED              = "is_pinned";
 
   public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " ("                    +
@@ -755,30 +757,6 @@ public class ThreadDatabase extends Database {
     } finally {
       notifyConversationListListeners();
       notifyConversationListeners(threadId);
-    }
-  }
-
-  public void setPinned(long threadId, boolean pinned) {
-    ContentValues contentValues = new ContentValues(1);
-    contentValues.put(IS_PINNED, pinned ? 1 : 0);
-
-    getWritableDatabase().update(TABLE_NAME, contentValues, ID_WHERE,
-            new String[] {String.valueOf(threadId)});
-
-    notifyConversationListeners(threadId);
-    notifyConversationListListeners();
-  }
-
-  public boolean isPinned(long threadId) {
-    SQLiteDatabase db = getReadableDatabase();
-    Cursor         cursor = db.query(TABLE_NAME, new String[]{IS_PINNED}, ID_WHERE, new String[]{String.valueOf(threadId)}, null, null, null);
-    try {
-      if (cursor != null && cursor.moveToFirst()) {
-        return cursor.getInt(0) == 1;
-      }
-      return false;
-    } finally {
-      if (cursor != null) cursor.close();
     }
   }
 

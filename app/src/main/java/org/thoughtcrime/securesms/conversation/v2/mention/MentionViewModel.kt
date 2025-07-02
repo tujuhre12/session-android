@@ -52,7 +52,7 @@ import org.thoughtcrime.securesms.util.observeChanges
 @HiltViewModel(assistedFactory = MentionViewModel.Factory::class)
 class MentionViewModel @AssistedInject constructor(
     application: Application,
-    @Assisted threadID: Long,
+    @Assisted address: Address,
     contentResolver: ContentResolver,
     threadDatabase: ThreadDatabase,
     groupDatabase: GroupDatabase,
@@ -85,12 +85,10 @@ class MentionViewModel @AssistedInject constructor(
 
     @Suppress("OPT_IN_USAGE")
     private val members: StateFlow<List<Member>?> =
-        (contentResolver.observeChanges(Conversation.getUriForThread(threadID)) as Flow<Any?>)
-            .debounce(500L)
-            .onStart { emit(Unit) }
+        recipientRepository.observeRecipient(address)
             .mapLatest {
-                val address = checkNotNull(threadDatabase.getRecipientForThreadId(threadID)) {
-                    "Recipient not found for thread ID: $threadID"
+                val threadID = withContext(Dispatchers.Default) {
+                    threadDatabase.getThreadIdIfExistsFor(address)
                 }
 
                 val memberIDs = when {
@@ -297,6 +295,6 @@ class MentionViewModel @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(threadId: Long): MentionViewModel
+        fun create(address: Address): MentionViewModel
     }
 }

@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.withContext
+import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
 import network.loki.messenger.libsession_util.ReadableUserProfile
 import network.loki.messenger.libsession_util.util.Contact
@@ -42,6 +43,7 @@ import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import java.lang.ref.WeakReference
 import java.time.Instant
+import java.time.ZoneId
 import java.time.ZonedDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -166,22 +168,39 @@ class RecipientRepository @Inject constructor(
                     address.isLegacyGroup -> {
                         changeSource = merge(
                             groupDatabase.updateNotification,
-                            recipientDatabase.updateNotifications.filter { it == address }
+                            recipientDatabase.updateNotifications.filter { it == address },
+                            configFactory.userConfigsChanged(),
                         )
 
                         val group: GroupRecord? =
                             groupDatabase.getGroup(address.toGroupString()).orNull()
 
-                        value = group?.let { createLegacyGroupRecipient(address, it, settings) }
+                        val groupConfig = configFactory.withUserConfigs {
+                            it.userGroups.getLegacyGroupInfo(GroupUtil.doubleDecodeGroupId(address.address))
+                        }
+
+                        value = group?.let { createLegacyGroupRecipient(address, groupConfig, it, settings) }
                     }
 
                     address.isCommunity -> {
                         value = openGroupFetcher(address)
-                            ?.let { createCommunityRecipient(address, it, settings) }
+                            ?.let { openGroup ->
+                                val groupConfig = configFactory.withUserConfigs {
+                                    it.userGroups.getCommunityInfo(openGroup.server, openGroup.room)
+                                }
+
+                                createCommunityRecipient(
+                                    address,
+                                    groupConfig,
+                                    openGroup,
+                                    settings
+                                )
+                            }
 
                         changeSource = merge(
                             lokiThreadDatabase.changeNotification,
-                            recipientDatabase.updateNotifications.filter { it == address }
+                            recipientDatabase.updateNotifications.filter { it == address },
+                            configFactory.userConfigsChanged(),
                         )
                     }
 
@@ -269,6 +288,7 @@ class RecipientRepository @Inject constructor(
                         avatar = configs.userProfile.getPic().toRecipientAvatar(),
                         expiryMode = configs.userProfile.getNtsExpiry(),
                         acceptsCommunityMessageRequests = configs.userProfile.getCommunityMessageRequests(),
+                        priority = configs.userProfile.getNtsPriority(),
                     )
                 }
             }
@@ -287,7 +307,8 @@ class RecipientRepository @Inject constructor(
                         approved = contact.approved,
                         approvedMe = contact.approvedMe,
                         blocked = contact.blocked,
-                        expiryMode = contact.expiryMode
+                        expiryMode = contact.expiryMode,
+                        priority = contact.priority,
                     )
                 }
             }
@@ -302,7 +323,8 @@ class RecipientRepository @Inject constructor(
                         avatar = configs.groupInfo.getProfilePic().toRecipientAvatar(),
                         expiryMode = configs.groupInfo.expiryMode,
                         name = configs.groupInfo.getName() ?: groupInfo.name,
-                        approved = !groupInfo.invited
+                        approved = !groupInfo.invited,
+                        priority = groupInfo.priority
                     )
                 }
             }
@@ -403,7 +425,7 @@ class RecipientRepository @Inject constructor(
 
         private val RecipientSettings.muteUntilDate: ZonedDateTime?
             get() = if (muteUntil > 0) {
-                ZonedDateTime.from(Instant.ofEpochMilli(muteUntil))
+                Instant.ofEpochMilli(muteUntil).atZone(ZoneId.of("UTC"))
             } else {
                 null
             }
@@ -449,6 +471,7 @@ class RecipientRepository @Inject constructor(
 
         private fun createCommunityRecipient(
             address: Address,
+            config: GroupInfo.CommunityGroupInfo?,
             community: OpenGroup,
             settings: RecipientSettings?,
         ): Recipient {
@@ -463,6 +486,7 @@ class RecipientRepository @Inject constructor(
                             fileId = it,
                         )
                     },
+                    priority = config?.priority ?: PRIORITY_VISIBLE,
                 ),
                 mutedUntil = settings?.muteUntilDate,
                 autoDownloadAttachments = settings?.autoDownloadAttachments,
@@ -474,6 +498,7 @@ class RecipientRepository @Inject constructor(
 
         private fun createLegacyGroupRecipient(
             address: Address,
+            config: GroupInfo.LegacyGroupInfo?,
             group: GroupRecord, // Local db data
             settings: RecipientSettings?, // Local db data
         ): Recipient {
@@ -489,7 +514,8 @@ class RecipientRepository @Inject constructor(
                         )
                     } else {
                         null
-                    }
+                    },
+                    priority = config?.priority ?: PRIORITY_VISIBLE,
                 ),
                 mutedUntil = settings?.muteUntilDate,
                 autoDownloadAttachments = settings?.autoDownloadAttachments,

@@ -32,9 +32,9 @@ class LokiThreadDatabase @Inject constructor(
         val createPublicChatTableCommand = "CREATE TABLE $publicChatTable ($threadID INTEGER PRIMARY KEY, $publicChat TEXT);"
     }
 
-    private val mutableChangeNotification = MutableSharedFlow<Unit>()
+    private val mutableChangeNotification = MutableSharedFlow<Long>()
 
-    val changeNotification: SharedFlow<Unit> get() = mutableChangeNotification
+    val changeNotification: SharedFlow<Long> get() = mutableChangeNotification
 
     private val cacheByThreadId = LruCache<Long, OpenGroup>(32)
 
@@ -99,7 +99,7 @@ class LokiThreadDatabase @Inject constructor(
         contentValues.put(Companion.threadID, threadID)
         contentValues.put(publicChat, JsonUtil.toJson(openGroup.toJson()))
         database.insertOrUpdate(publicChatTable, contentValues, "${Companion.threadID} = ?", arrayOf(threadID.toString()))
-        mutableChangeNotification.tryEmit(Unit)
+        mutableChangeNotification.tryEmit(threadID)
     }
 
     fun removeOpenGroupChat(threadID: Long) {
@@ -109,7 +109,7 @@ class LokiThreadDatabase @Inject constructor(
         database.delete(publicChatTable,"${Companion.threadID} = ?", arrayOf(threadID.toString()))
 
         cacheByThreadId.remove(threadID)
-        mutableChangeNotification.tryEmit(Unit)
+        mutableChangeNotification.tryEmit(threadID)
     }
 
 }

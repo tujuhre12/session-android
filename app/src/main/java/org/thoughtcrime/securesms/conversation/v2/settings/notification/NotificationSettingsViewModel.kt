@@ -20,6 +20,7 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.LocalisedTimeUtil
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_TIME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_LARGE_KEY
 import org.session.libsession.utilities.recipients.Recipient
@@ -39,7 +40,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @HiltViewModel(assistedFactory = NotificationSettingsViewModel.Factory::class)
 class NotificationSettingsViewModel @AssistedInject constructor(
-    @Assisted private val threadId: Long,
+    @Assisted private val address: Address,
     @ApplicationContext private val context: Context,
     private val recipientDatabase: RecipientDatabase,
     private val repository: ConversationRepository,
@@ -64,10 +65,6 @@ class NotificationSettingsViewModel @AssistedInject constructor(
     init {
         // update data when we have a recipient and update when there are changes from the thread or recipient
         viewModelScope.launch(Dispatchers.Default) {
-            val address = repository.maybeGetRecipientForThreadId(threadId)
-                ?: // if we don't have a recipient, we can't do anything
-                return@launch
-
             recipientRepository.observeRecipient(address).collectLatest {
                 thread = it
 
@@ -299,6 +296,6 @@ class NotificationSettingsViewModel @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(threadId: Long): NotificationSettingsViewModel
+        fun create(address: Address): NotificationSettingsViewModel
     }
 }
