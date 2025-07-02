@@ -11,6 +11,9 @@ import android.os.Bundle
 import android.view.ViewGroup.MarginLayoutParams
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -241,6 +244,18 @@ class HomeActivity : ScreenLockActionBarActivity(),
         // Set up empty state view
         binding.emptyStateContainer.setThemedContent {
             EmptyView(isNewAccount)
+        }
+
+        // set the compose dialog content
+        binding.dialogs.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setThemedContent {
+                val dialogsState by homeViewModel.dialogsState.collectAsState()
+                HomeDialogs(
+                    dialogsState = dialogsState,
+                    sendCommand = homeViewModel::onCommand
+                )
+            }
         }
 
         // Set up new conversation button

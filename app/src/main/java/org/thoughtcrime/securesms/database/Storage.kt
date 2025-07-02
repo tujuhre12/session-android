@@ -1334,7 +1334,7 @@ open class Storage @Inject constructor(
                     }
                 }
             }
-            
+
             totalPins
         }
     }
