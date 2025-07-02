@@ -38,7 +38,6 @@ class MessageRequestView : LinearLayout {
 
         binding.displayNameTextView.text = senderDisplayName
         binding.timestampTextView.text = dateUtils.getDisplayFormattedTimeSpanString(
-            Locale.getDefault(),
             thread.date
         )
         val snippet = highlightMentions(

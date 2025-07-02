@@ -819,6 +819,8 @@ class MmsDatabase @Inject constructor(
         val db = writableDatabase
         val partsDatabase = get(context).attachmentDatabase()
         val allAttachments: MutableList<Attachment?> = LinkedList()
+        val thumbnailJobs: MutableList<AttachmentId> = ArrayList()  // Collector for thumbnail jobs
+
         val contactAttachments =
             Stream.of(sharedContacts).map { obj: Contact -> obj.avatarAttachment }
                 .filter { a: Attachment? -> a != null }
@@ -827,22 +829,30 @@ class MmsDatabase @Inject constructor(
             Stream.of(linkPreviews).filter { lp: LinkPreview -> lp.getThumbnail().isPresent }
                 .map { lp: LinkPreview -> lp.getThumbnail().get() }
                 .toList()
+
         allAttachments.addAll(attachments)
         allAttachments.addAll(contactAttachments)
         allAttachments.addAll(previewAttachments)
+
         contentValues.put(BODY, body)
         contentValues.put(PART_COUNT, allAttachments.size)
+
         db.beginTransaction()
         return try {
             val messageId = db.insert(TABLE_NAME, null, contentValues)
+
+            // Pass thumbnailJobs collector to attachment insertion
             val insertedAttachments = partsDatabase.insertAttachmentsForMessage(
                 messageId,
                 allAttachments,
-                quoteAttachments
+                quoteAttachments,
+                thumbnailJobs  // This will collect all attachment IDs that need thumbnails
             )
+
             val serializedContacts =
                 getSerializedSharedContacts(insertedAttachments, sharedContacts)
             val serializedPreviews = getSerializedLinkPreviews(insertedAttachments, linkPreviews)
+
             if (!serializedContacts.isNullOrEmpty()) {
                 val contactValues = ContentValues()
                 contactValues.put(SHARED_CONTACTS, serializedContacts)
@@ -857,6 +867,7 @@ class MmsDatabase @Inject constructor(
                     Log.w(TAG, "Failed to update message with shared contact data.")
                 }
             }
+
             if (!serializedPreviews.isNullOrEmpty()) {
                 val contactValues = ContentValues()
                 contactValues.put(LINK_PREVIEWS, serializedPreviews)
@@ -871,10 +882,21 @@ class MmsDatabase @Inject constructor(
                     Log.w(TAG, "Failed to update message with link preview data.")
                 }
             }
+
             db.setTransactionSuccessful()
             messageId
         } finally {
             db.endTransaction()
+
+            // Process thumbnail jobs AFTER transaction commits
+            val attachmentDatabase = get(context).attachmentDatabase()
+            thumbnailJobs.forEach { attachmentId ->
+                Log.i(TAG, "Submitting thumbnail generation job for attachment: $attachmentId")
+                attachmentDatabase.thumbnailExecutor.submit(
+                    attachmentDatabase.ThumbnailFetchCallable(attachmentId)
+                )
+            }
+
             notifyConversationListeners(contentValues.getAsLong(THREAD_ID))
         }
     }

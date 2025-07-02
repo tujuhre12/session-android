@@ -110,6 +110,220 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         storage.getOpenGroup(threadId)
     }
 
+    private val optionCopyAccountId: OptionsItem by lazy{
+        OptionsItem(
+            name = context.getString(R.string.accountIDCopy),
+            icon = R.drawable.ic_copy,
+            qaTag = R.string.qa_conversation_settings_copy_account,
+            onClick = ::copyAccountId
+        )
+    }
+
+    private val optionSearch: OptionsItem by lazy{
+        OptionsItem(
+            name = context.getString(R.string.searchConversation),
+            icon = R.drawable.ic_search,
+            qaTag = R.string.qa_conversation_settings_search,
+            onClick = ::goBackToSearch
+        )
+    }
+
+
+    private fun optionDisappearingMessage(subtitle: String?): OptionsItem {
+        return OptionsItem(
+            name = context.getString(R.string.disappearingMessages),
+            subtitle = subtitle,
+            icon = R.drawable.ic_timer,
+            qaTag = R.string.qa_conversation_settings_disappearing,
+            subtitleQaTag = R.string.qa_conversation_settings_disappearing_sub,
+            onClick = {
+                navigateTo(ConversationSettingsDestination.RouteDisappearingMessages)
+            }
+        )
+    }
+
+    private val optionPin: OptionsItem by lazy {
+        OptionsItem(
+            name = context.getString(R.string.pinConversation),
+            icon = R.drawable.ic_pin,
+            qaTag = R.string.qa_conversation_settings_pin,
+            onClick = ::pinConversation
+        )
+    }
+
+    private val optionUnpin: OptionsItem by lazy {
+        OptionsItem(
+            name = context.getString(R.string.pinUnpinConversation),
+            icon = R.drawable.ic_pin_off,
+            qaTag = R.string.qa_conversation_settings_pin,
+            onClick = ::unpinConversation
+        )
+    }
+
+    private fun optionNotifications(iconRes: Int, subtitle: String?): OptionsItem {
+        return OptionsItem(
+            name = context.getString(R.string.sessionNotifications),
+            subtitle = subtitle,
+            icon = iconRes,
+            qaTag = R.string.qa_conversation_settings_notifications,
+            subtitleQaTag = R.string.qa_conversation_settings_notifications_sub,
+            onClick = {
+                navigateTo(ConversationSettingsDestination.RouteNotifications)
+            }
+        )
+    }
+
+    private val optionAttachments: OptionsItem by lazy{
+        OptionsItem(
+            name = context.getString(R.string.attachments),
+            icon = R.drawable.ic_file,
+            qaTag = R.string.qa_conversation_settings_attachments,
+            onClick = {
+                navigateTo(ConversationSettingsDestination.RouteAllMedia)
+            }
+        )
+    }
+
+    private val optionBlock: OptionsItem by lazy{
+        OptionsItem(
+            name = context.getString(R.string.block),
+            icon = R.drawable.ic_user_round_x,
+            qaTag = R.string.qa_conversation_settings_block,
+            onClick = ::confirmBlockUser
+        )
+    }
+
+    private val optionUnblock: OptionsItem by lazy{
+        OptionsItem(
+            name = context.getString(R.string.blockUnblock),
+            icon = R.drawable.ic_user_round_tick,
+            qaTag = R.string.qa_conversation_settings_block,
+            onClick = ::confirmUnblockUser
+        )
+    }
+
+    private val optionClearMessages: OptionsItem by lazy{
+        OptionsItem(
+            name = context.getString(R.string.clearMessages),
+            icon = R.drawable.ic_message_trash_custom,
+            qaTag = R.string.qa_conversation_settings_clear_messages,
+            onClick = ::confirmClearMessages
+        )
+    }
+
+    private val optionDeleteConversation: OptionsItem by lazy{
+        OptionsItem(
+            name = context.getString(R.string.conversationsDelete),
+            icon = R.drawable.ic_trash_2,
+            qaTag = R.string.qa_conversation_settings_delete_conversation,
+            onClick = ::confirmDeleteConversation
+        )
+    }
+
+    private val optionDeleteContact: OptionsItem by lazy{
+        OptionsItem(
+            name = context.getString(R.string.contactDelete),
+            icon = R.drawable.ic_user_round_trash,
+            qaTag = R.string.qa_conversation_settings_delete_contact,
+            onClick = ::confirmDeleteContact
+        )
+    }
+
+    private val optionHideNTS: OptionsItem by lazy{
+        OptionsItem(
+            name = context.getString(R.string.noteToSelfHide),
+            icon = R.drawable.ic_eye_off,
+            qaTag = R.string.qa_conversation_settings_hide_nts,
+            onClick = ::confirmHideNTS
+        )
+    }
+
+    private val optionShowNTS: OptionsItem by lazy{
+        OptionsItem(
+            name = context.getString(R.string.showNoteToSelf),
+            icon = R.drawable.ic_eye,
+            qaTag = R.string.qa_conversation_settings_hide_nts,
+            onClick = ::confirmShowNTS
+        )
+    }
+
+    // Groups
+    private val optionGroupMembers: OptionsItem by lazy{
+        OptionsItem(
+            name = context.getString(R.string.groupMembers),
+            icon = R.drawable.ic_users_round,
+            qaTag = R.string.qa_conversation_settings_group_members,
+            onClick = {
+                navigateTo(ConversationSettingsDestination.RouteGroupMembers(
+                    groupId = groupV2?.groupAccountId ?: "")
+                )
+            }
+        )
+    }
+
+    private val optionInviteMembers: OptionsItem by lazy{
+        OptionsItem(
+            name = context.getString(R.string.membersInvite),
+            icon = R.drawable.ic_user_round_plus,
+            qaTag = R.string.qa_conversation_settings_invite_contacts,
+            onClick = {
+                navigateTo(ConversationSettingsDestination.RouteInviteToCommunity(
+                    communityUrl = community?.joinURL ?: ""
+                ))
+            }
+        )
+    }
+
+    private val optionManageMembers: OptionsItem by lazy{
+        OptionsItem(
+            name = context.getString(R.string.manageMembers),
+            icon = R.drawable.ic_user_round_pen,
+            qaTag = R.string.qa_conversation_settings_manage_members,
+            onClick = {
+                navigateTo(ConversationSettingsDestination.RouteManageMembers(
+                    groupId = groupV2?.groupAccountId ?: "")
+                )
+            }
+        )
+    }
+
+    private val optionLeaveGroup: OptionsItem by lazy{
+        OptionsItem(
+            name = context.getString(R.string.groupLeave),
+            icon = R.drawable.ic_log_out,
+            qaTag = R.string.qa_conversation_settings_leave_group,
+            onClick = ::confirmLeaveGroup
+        )
+    }
+
+    private val optionDeleteGroup: OptionsItem by lazy{
+        OptionsItem(
+            name = context.getString(R.string.groupDelete),
+            icon = R.drawable.ic_trash_2,
+            qaTag = R.string.qa_conversation_settings_delete_group,
+            onClick = ::confirmLeaveGroup
+        )
+    }
+
+    // Community
+    private val optionCopyCommunityURL: OptionsItem by lazy{
+        OptionsItem(
+            name = context.getString(R.string.communityUrlCopy),
+            icon = R.drawable.ic_copy,
+            qaTag = R.string.qa_conversation_settings_copy_community_url,
+            onClick = ::copyCommunityUrl
+        )
+    }
+
+    private val optionLeaveCommunity: OptionsItem by lazy{
+        OptionsItem(
+            name = context.getString(R.string.communityLeave),
+            icon = R.drawable.ic_log_out,
+            qaTag = R.string.qa_conversation_settings_leave_community,
+            onClick = ::confirmLeaveCommunity
+        )
+    }
+
     init {
         // update data when we have a recipient and update when there are changes from the thread or recipient
         viewModelScope.launch(Dispatchers.Default) {
@@ -1183,220 +1397,6 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     @AssistedFactory
     interface Factory {
         fun create(threadId: Long): ConversationSettingsViewModel
-    }
-
-    private val optionCopyAccountId: OptionsItem by lazy{
-        OptionsItem(
-            name = context.getString(R.string.accountIDCopy),
-            icon = R.drawable.ic_copy,
-            qaTag = R.string.qa_conversation_settings_copy_account,
-            onClick = ::copyAccountId
-        )
-    }
-
-    private val optionSearch: OptionsItem by lazy{
-        OptionsItem(
-            name = context.getString(R.string.searchConversation),
-            icon = R.drawable.ic_search,
-            qaTag = R.string.qa_conversation_settings_search,
-            onClick = ::goBackToSearch
-        )
-    }
-
-
-    private fun optionDisappearingMessage(subtitle: String?): OptionsItem {
-        return OptionsItem(
-            name = context.getString(R.string.disappearingMessages),
-            subtitle = subtitle,
-            icon = R.drawable.ic_timer,
-            qaTag = R.string.qa_conversation_settings_disappearing,
-            subtitleQaTag = R.string.qa_conversation_settings_disappearing_sub,
-            onClick = {
-                navigateTo(ConversationSettingsDestination.RouteDisappearingMessages)
-            }
-        )
-    }
-
-    private val optionPin: OptionsItem by lazy {
-        OptionsItem(
-            name = context.getString(R.string.pinConversation),
-            icon = R.drawable.ic_pin,
-            qaTag = R.string.qa_conversation_settings_pin,
-            onClick = ::pinConversation
-        )
-    }
-
-    private val optionUnpin: OptionsItem by lazy {
-        OptionsItem(
-            name = context.getString(R.string.pinUnpinConversation),
-            icon = R.drawable.ic_pin_off,
-            qaTag = R.string.qa_conversation_settings_pin,
-            onClick = ::unpinConversation
-        )
-    }
-
-    private fun optionNotifications(iconRes: Int, subtitle: String?): OptionsItem {
-        return OptionsItem(
-            name = context.getString(R.string.sessionNotifications),
-            subtitle = subtitle,
-            icon = iconRes,
-            qaTag = R.string.qa_conversation_settings_notifications,
-            subtitleQaTag = R.string.qa_conversation_settings_notifications_sub,
-            onClick = {
-                navigateTo(ConversationSettingsDestination.RouteNotifications)
-            }
-        )
-    }
-
-    private val optionAttachments: OptionsItem by lazy{
-        OptionsItem(
-            name = context.getString(R.string.attachments),
-            icon = R.drawable.ic_file,
-            qaTag = R.string.qa_conversation_settings_attachments,
-            onClick = {
-                navigateTo(ConversationSettingsDestination.RouteAllMedia)
-            }
-        )
-    }
-
-    private val optionBlock: OptionsItem by lazy{
-        OptionsItem(
-            name = context.getString(R.string.block),
-            icon = R.drawable.ic_user_round_x,
-            qaTag = R.string.qa_conversation_settings_block,
-            onClick = ::confirmBlockUser
-        )
-    }
-
-    private val optionUnblock: OptionsItem by lazy{
-        OptionsItem(
-            name = context.getString(R.string.blockUnblock),
-            icon = R.drawable.ic_user_round_tick,
-            qaTag = R.string.qa_conversation_settings_block,
-            onClick = ::confirmUnblockUser
-        )
-    }
-
-    private val optionClearMessages: OptionsItem by lazy{
-        OptionsItem(
-            name = context.getString(R.string.clearMessages),
-            icon = R.drawable.ic_message_trash_custom,
-            qaTag = R.string.qa_conversation_settings_clear_messages,
-            onClick = ::confirmClearMessages
-        )
-    }
-
-    private val optionDeleteConversation: OptionsItem by lazy{
-        OptionsItem(
-            name = context.getString(R.string.conversationsDelete),
-            icon = R.drawable.ic_trash_2,
-            qaTag = R.string.qa_conversation_settings_delete_conversation,
-            onClick = ::confirmDeleteConversation
-        )
-    }
-
-    private val optionDeleteContact: OptionsItem by lazy{
-        OptionsItem(
-            name = context.getString(R.string.contactDelete),
-            icon = R.drawable.ic_user_round_trash,
-            qaTag = R.string.qa_conversation_settings_delete_contact,
-            onClick = ::confirmDeleteContact
-        )
-    }
-
-    private val optionHideNTS: OptionsItem by lazy{
-        OptionsItem(
-            name = context.getString(R.string.noteToSelfHide),
-            icon = R.drawable.ic_eye_off,
-            qaTag = R.string.qa_conversation_settings_hide_nts,
-            onClick = ::confirmHideNTS
-        )
-    }
-
-    private val optionShowNTS: OptionsItem by lazy{
-        OptionsItem(
-            name = context.getString(R.string.showNoteToSelf),
-            icon = R.drawable.ic_eye,
-            qaTag = R.string.qa_conversation_settings_hide_nts,
-            onClick = ::confirmShowNTS
-        )
-    }
-
-    // Groups
-    private val optionGroupMembers: OptionsItem by lazy{
-        OptionsItem(
-            name = context.getString(R.string.groupMembers),
-            icon = R.drawable.ic_users_round,
-            qaTag = R.string.qa_conversation_settings_group_members,
-            onClick = {
-                navigateTo(ConversationSettingsDestination.RouteGroupMembers(
-                    groupId = groupV2?.groupAccountId ?: "")
-                )
-            }
-        )
-    } 
-
-    private val optionInviteMembers: OptionsItem by lazy{
-        OptionsItem(
-            name = context.getString(R.string.membersInvite),
-            icon = R.drawable.ic_user_round_plus,
-            qaTag = R.string.qa_conversation_settings_invite_contacts,
-            onClick = {
-                navigateTo(ConversationSettingsDestination.RouteInviteToCommunity(
-                    communityUrl = community?.joinURL ?: ""
-                ))
-            }
-        )
-    }
-
-    private val optionManageMembers: OptionsItem by lazy{
-        OptionsItem(
-            name = context.getString(R.string.manageMembers),
-            icon = R.drawable.ic_user_round_pen,
-            qaTag = R.string.qa_conversation_settings_manage_members,
-            onClick = {
-                navigateTo(ConversationSettingsDestination.RouteManageMembers(
-                    groupId = groupV2?.groupAccountId ?: "")
-                )
-            }
-        )
-    }
-
-    private val optionLeaveGroup: OptionsItem by lazy{
-        OptionsItem(
-            name = context.getString(R.string.groupLeave),
-            icon = R.drawable.ic_log_out,
-            qaTag = R.string.qa_conversation_settings_leave_group,
-            onClick = ::confirmLeaveGroup
-        )
-    }
-
-    private val optionDeleteGroup: OptionsItem by lazy{
-        OptionsItem(
-            name = context.getString(R.string.groupDelete),
-            icon = R.drawable.ic_trash_2,
-            qaTag = R.string.qa_conversation_settings_delete_group,
-            onClick = ::confirmLeaveGroup
-        )
-    }
-
-    // Community
-    private val optionCopyCommunityURL: OptionsItem by lazy{
-        OptionsItem(
-            name = context.getString(R.string.communityUrlCopy),
-            icon = R.drawable.ic_copy,
-            qaTag = R.string.qa_conversation_settings_copy_community_url,
-            onClick = ::copyCommunityUrl
-        )
-    }
-
-    private val optionLeaveCommunity: OptionsItem by lazy{
-        OptionsItem(
-            name = context.getString(R.string.communityLeave),
-            icon = R.drawable.ic_log_out,
-            qaTag = R.string.qa_conversation_settings_leave_community,
-            onClick = ::confirmLeaveCommunity
-        )
     }
 
     data class UIState(

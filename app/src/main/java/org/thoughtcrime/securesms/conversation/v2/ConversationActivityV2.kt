@@ -185,6 +185,7 @@ import org.thoughtcrime.securesms.mms.AudioSlide
 import org.thoughtcrime.securesms.mms.GifSlide
 import org.thoughtcrime.securesms.mms.ImageSlide
 import org.thoughtcrime.securesms.mms.MediaConstraints
+import org.thoughtcrime.securesms.mms.MmsException
 import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.mms.VideoSlide
@@ -2061,25 +2062,36 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         // do the heavy work in the bg
         lifecycleScope.launch(Dispatchers.Default) {
-            // Put the message in the database and send it
-            message.id = MessageId(mmsDb.insertMessageOutbox(
-                outgoingTextMessage,
-                viewModel.threadId,
-                false,
-                runThreadUpdate = true
-            ), mms = true)
+            runCatching {
+                // Put the message in the database and send it
+                message.id = MessageId(
+                    mmsDb.insertMessageOutbox(
+                        outgoingTextMessage,
+                        viewModel.threadId,
+                        false,
+                        runThreadUpdate = true
+                    ), mms = true
+                )
 
-            if (deleteAttachmentFilesAfterSave) {
-                attachments
-                    .asSequence()
-                    .mapNotNull { a -> a.dataUri?.takeIf { it.scheme == "file" }?.path?.let(::File) }
-                    .filter { it.exists() }
-                    .forEach { it.delete() }
+                if (deleteAttachmentFilesAfterSave) {
+                    attachments
+                        .asSequence()
+                        .mapNotNull { a -> a.dataUri?.takeIf { it.scheme == "file" }?.path?.let(::File) }
+                        .filter { it.exists() }
+                        .forEach { it.delete() }
+                }
+
+                waitForApprovalJobToBeSubmitted()
+
+                MessageSender.send(message, recipient.address, quote, linkPreview)
+            }.onFailure {
+                withContext(Dispatchers.Main){
+                    when (it) {
+                        is MmsException -> Toast.makeText(this@ConversationActivityV2, R.string.attachmentsErrorSending, Toast.LENGTH_LONG).show()
+                        else -> Toast.makeText(this@ConversationActivityV2, R.string.errorGeneric, Toast.LENGTH_LONG).show()
+                    }
+                }
             }
-
-            waitForApprovalJobToBeSubmitted()
-
-            MessageSender.send(message, recipient.address, quote, linkPreview)
         }
 
         // Send a typing stopped message
@@ -2292,7 +2304,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     Uri.fromFile(result.file),
                     voiceMessageFilename,
                     result.length,
-                    MediaTypes.AUDIO_AAC,
+                    MediaTypes.AUDIO_MP4,
                     true,
                     result.duration.inWholeMilliseconds)
 
@@ -2368,7 +2380,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             if (TextUtils.isEmpty(body)) { continue }
             if (messageSize > 1) {
                 val formattedTimestamp = dateUtils.getDisplayFormattedTimeSpanString(
-                    Locale.getDefault(),
                     message.timestamp
                 )
                 builder.append("$formattedTimestamp: ")

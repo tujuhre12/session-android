@@ -1,6 +1,7 @@
  package org.thoughtcrime.securesms.preferences
 
 import android.Manifest
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
@@ -210,7 +211,11 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                 hideUrlDialog = { urlToOPen = null },
                 onSheetDismissRequest = { showAvatarPickerOptions = false },
                 onGalleryPicked = {
-                    pickPhotoLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                    try {
+                        pickPhotoLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                    } catch (e: ActivityNotFoundException) {
+                        Toast.makeText(this, R.string.errorUnknown, Toast.LENGTH_SHORT).show()
+                    }
                 },
                 onCameraPicked = {
                     viewModel.createTempFile()?.let{

@@ -157,7 +157,8 @@ class DefaultConversationRepository @Inject constructor(
                 url = openGroup.joinURL
             }
             message.openGroupInvitation = openGroupInvitation
-            val expirationConfig = threadDb.getOrCreateThreadIdFor(contact).let(storage::getExpirationConfiguration)
+            val contactThreadId = threadDb.getOrCreateThreadIdFor(contact)
+            val expirationConfig = contactThreadId.let(storage::getExpirationConfiguration)
             val expireStartedAt = if (expirationConfig is ExpiryMode.AfterSend) message.sentTimestamp!! else 0
             val outgoingTextMessage = OutgoingTextMessage.fromOpenGroupInvitation(
                 openGroupInvitation,
@@ -166,8 +167,11 @@ class DefaultConversationRepository @Inject constructor(
                 expirationConfig.expiryMillis,
                 expireStartedAt
             )
-            message.id = smsDb.insertMessageOutbox(-1, outgoingTextMessage, message.sentTimestamp!!, true).orNull()
-                ?.let { MessageId(it.messageId, false) }
+
+            message.id = MessageId(
+                smsDb.insertMessageOutbox(contactThreadId, outgoingTextMessage, false, message.sentTimestamp!!, true),
+                false
+            )
 
             MessageSender.send(message, contact)
         }

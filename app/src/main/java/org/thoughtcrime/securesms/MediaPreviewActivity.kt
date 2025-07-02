@@ -267,7 +267,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
 
         if (mediaItem != null) {
             val relativeTimeSpan: CharSequence = if (mediaItem.date > 0) {
-                dateUtils.getDisplayFormattedTimeSpanString(Locale.getDefault(), mediaItem.date)
+                dateUtils.getDisplayFormattedTimeSpanString(mediaItem.date)
             } else {
                 getString(R.string.draft)
             }
