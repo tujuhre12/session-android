@@ -125,14 +125,14 @@ fun recordAudio(
 
                 try {
                     val file by lazy {
-                        File.createTempFile("audio_recording_", ".m4a", context.cacheDir)
+                        File.createTempFile("audio_recording_", ".aac", context.cacheDir)
                     }
 
                     recorder.setAudioSource(MediaRecorder.AudioSource.MIC)
                     recorder.setAudioChannels(1)
                     recorder.setAudioSamplingRate(44100)
                     recorder.setAudioEncodingBitRate(32000)
-                    recorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                    recorder.setOutputFormat(MediaRecorder.OutputFormat.AAC_ADTS)
                     recorder.setOutputFile(file)
                     recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
                     recorder.setOnErrorListener { _, what, extra ->

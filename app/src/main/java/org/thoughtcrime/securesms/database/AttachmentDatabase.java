@@ -134,8 +134,6 @@ public class AttachmentDatabase extends Database {
                                                            CAPTION, STICKER_PACK_ID, STICKER_PACK_KEY, STICKER_ID, URL,
                                                            AUDIO_DURATION};
 
-  private static final String[] PROJECTION_AUDIO_EXTRAS = new String[] {AUDIO_VISUAL_SAMPLES};
-
   public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " (" + ROW_ID + " INTEGER PRIMARY KEY, " +
     MMS_ID + " INTEGER, " + "seq" + " INTEGER DEFAULT 0, "                        +
     CONTENT_TYPE + " TEXT, " + NAME + " TEXT, " + "chset" + " INTEGER, "             +
@@ -848,7 +846,7 @@ public class AttachmentDatabase extends Database {
     try (Cursor cursor = getReadableDatabase()
       // We expect all the audio extra values to be present (not null) or reject the whole record.
       .query(TABLE_NAME,
-        PROJECTION_AUDIO_EXTRAS,
+          new String[] {AUDIO_VISUAL_SAMPLES, AUDIO_DURATION},
         PART_ID_WHERE +
         " AND " + AUDIO_VISUAL_SAMPLES + " IS NOT NULL" +
         " AND " + AUDIO_DURATION + " IS NOT NULL" +
