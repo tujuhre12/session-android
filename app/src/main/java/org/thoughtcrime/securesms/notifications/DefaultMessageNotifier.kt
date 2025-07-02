@@ -85,7 +85,7 @@ import org.thoughtcrime.securesms.util.SpanUtil
  *
  * @author Moxie Marlinspike
  */
-private const val CONTENT_HASH = "content_hash"
+private const val CONTENT_SIGNATURE = "content_signature"
 class DefaultMessageNotifier(
     val avatarUtils: AvatarUtils
 ) : MessageNotifier {
@@ -279,17 +279,20 @@ class DefaultMessageNotifier(
         // Bail early if the existing displayed notification has the same content as what we are trying to send now
         val notifications = notificationState.notifications
         val notificationId = (SUMMARY_NOTIFICATION_ID + (if (bundled) notifications[0].threadId else 0)).toInt()
-        val existingNotifications = ServiceUtil.getNotificationManager(context).activeNotifications
-        val existingContent = existingNotifications.find { it.id == notificationId }?.notification?.extras?.getString(CONTENT_HASH)
-        val newContentHash = "${notifications[0].text}_${notifications[0].timestamp}".hashCode().toString()
+        val contentSignature = notifications.map {
+            "${it.id}_${it.text}_${it.timestamp}_${it.threadId}"
+        }.sorted().joinToString("|")
 
-        if (existingContent == newContentHash) {
-            Log.i(TAG, "Skipping duplicate notification")
+        val existingNotifications = ServiceUtil.getNotificationManager(context).activeNotifications
+        val existingSignature = existingNotifications.find { it.id == notificationId }?.notification?.extras?.getString("content_signature")
+
+        if (existingSignature == contentSignature) {
+            Log.i(TAG, "Skipping duplicate single thread notification for ID $notificationId")
             return
         }
 
         val builder = SingleRecipientNotificationBuilder(context, getNotificationPrivacy(context), avatarUtils)
-        builder.putStringExtra(CONTENT_HASH, newContentHash)
+        builder.putStringExtra(CONTENT_SIGNATURE, contentSignature)
 
         val messageOriginator = notifications[0].recipient
         val messageIdTag = notifications[0].timestamp.toString()
@@ -395,20 +398,20 @@ class DefaultMessageNotifier(
         Log.i(TAG, "sendMultiThreadNotification()  signal: $signal")
 
         val notifications = notificationState.notifications
+        val contentSignature = notifications.map {
+            "${it.id}_${it.text}_${it.timestamp}_${it.threadId}"
+        }.sorted().joinToString("|")
+
         val existingNotifications = ServiceUtil.getNotificationManager(context).activeNotifications
-        val existingContent = existingNotifications.find { it.id == SUMMARY_NOTIFICATION_ID }?.notification?.extras?.getString("content_hash")
+        val existingSignature = existingNotifications.find { it.id == SUMMARY_NOTIFICATION_ID }?.notification?.extras?.getString("content_signature")
 
-        // Create a hash based on the notification content (all messages + their timestamps)
-        val contentForHash = notifications.map { "${it.text}_${it.timestamp}" }.joinToString("|")
-        val newContentHash = contentForHash.hashCode().toString()
-
-        if (existingContent == newContentHash) {
+        if (existingSignature == contentSignature) {
             Log.i(TAG, "Skipping duplicate multi-thread notification")
             return
         }
 
         val builder = MultipleRecipientNotificationBuilder(context, getNotificationPrivacy(context))
-        builder.putStringExtra(CONTENT_HASH, newContentHash)
+        builder.putStringExtra(CONTENT_SIGNATURE, contentSignature)
 
         builder.setMessageCount(notificationState.notificationCount, notificationState.threadCount)
         builder.setMostRecentSender(notifications[0].individualRecipient, notifications[0].recipient)
