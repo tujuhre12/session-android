@@ -510,19 +510,19 @@ class DefaultMessageNotifier @Inject constructor(
 
             val threadId = record.threadId
             val threadRecipients = if (threadId != -1L) {
-                threadDatabase.getRecipientForThreadId(threadId)
+                threadDatabase.getRecipientForThreadId(threadId)?.let(recipientRepository::getRecipientSync)
             } else null
 
             // Start by checking various scenario that we should skip
 
             // Skip if muted or calls
-            if (threadRecipients?.isMuted == true) continue
+            if (threadRecipients?.isMuted() == true) continue
             if (record.isIncomingCall || record.isOutgoingCall) continue
 
             // Handle message requests early
             val isMessageRequest = threadRecipients != null &&
                     !threadRecipients.isGroupOrCommunityRecipient &&
-                    !threadRecipients.isApproved &&
+                    !threadRecipients.approved &&
                     !threadDatabase.getLastSeenAndHasSent(threadId).second()
 
             if (isMessageRequest && (threadDatabase.getMessageCount(threadId) > 1 || !hasHiddenMessageRequests(context))) {
@@ -640,7 +640,7 @@ class DefaultMessageNotifier @Inject constructor(
                     val latestReaction = reactionsFromOthers.maxByOrNull { it.dateSent }
 
                     if (latestReaction != null) {
-                        val reactor = Recipient.from(context, fromSerialized(latestReaction.author), false)
+                        val reactor = recipientRepository.getRecipientSyncOrEmpty(fromSerialized(latestReaction.author))
                         val emoji = Phrase.from(context, R.string.emojiReactsNotification)
                             .put(EMOJI_KEY, latestReaction.emoji).format().toString()
 
