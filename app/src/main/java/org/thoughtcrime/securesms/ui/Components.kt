@@ -104,6 +104,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
+import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel
+import org.thoughtcrime.securesms.openUrl
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
@@ -762,6 +765,29 @@ fun AnimatedSessionProCTA(
                 }
             }
         })
+}
+
+/**
+ * Added here for reusability since multiple screens need this dialog
+ */
+@Composable
+fun PinProCTA(
+    modifier: Modifier = Modifier,
+    onUpgrade: () -> Unit,
+    onCancel: () -> Unit,
+){
+    SimpleSessionProCTA(
+        modifier = modifier,
+        heroImage = R.drawable.cta_hero_char_limit,
+        text = ProStatusManager.PIN_CTA,
+        features = listOf(
+            CTAFeature.Icon(ProStatusManager.PIN_CTA_FEATURE),
+            CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
+            CTAFeature.RainbowIcon(stringResource(R.string.proFeatureListLoadsMore)),
+        ),
+        onUpgrade = onUpgrade,
+        onCancel = onCancel
+    )
 }
 
 @Preview

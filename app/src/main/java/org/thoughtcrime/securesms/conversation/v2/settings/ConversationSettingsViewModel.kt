@@ -70,8 +70,8 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory.Companion.MAX_GROUP
 import org.thoughtcrime.securesms.dependencies.ConfigFactory.Companion.MAX_NAME_BYTES
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.HomeActivity
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
-import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.SimpleDialogData
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.AvatarUIData
@@ -99,6 +99,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private val lokiThreadDatabase: LokiThreadDatabase,
     private val groupManager: GroupManagerV2,
     private val openGroupManager: OpenGroupManager,
+    private val proStatusManager: ProStatusManager,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(
@@ -774,8 +775,16 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     private fun pinConversation(){
-        viewModelScope.launch {
-            storage.setPinned(threadId, true)
+        // check the pin limit before continuing
+        if(storage.getTotalPinned() >= proStatusManager.getPinnedConversationLimit()){
+            // the user has reached the pin limit, show the CTA
+            _dialogState.update {
+                it.copy(showPinCTA = true)
+            }
+        } else {
+            viewModelScope.launch {
+                storage.setPinned(threadId, true)
+            }
         }
     }
 
@@ -1184,6 +1193,10 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
             is Commands.HideGroupEditDialog -> hideGroupEditDialog()
 
+            is Commands.HidePinCTADialog -> {
+                _dialogState.update { it.copy(showPinCTA = false) }
+            }
+
             is Commands.RemoveNickname -> {
                 setNickname(null)
 
@@ -1293,6 +1306,14 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
                     hideLoading()
                 }
+            }
+
+            is Commands.GoToProUpgradeScreen -> {
+                // hide dialog
+                _dialogState.update { it.copy(showPinCTA = false) }
+
+                // to go Pro upgrade screen
+                //todo PRO go to screen once it exists
             }
         }
     }
@@ -1425,6 +1446,10 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
         data object ShowGroupEditDialog : Commands
         data object HideGroupEditDialog : Commands
+
+        data object HidePinCTADialog: Commands
+
+        data object GoToProUpgradeScreen: Commands
     }
 
     @AssistedFactory
@@ -1465,6 +1490,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     )
 
     data class DialogsState(
+        val showPinCTA: Boolean = false,
         val showSimpleDialog: SimpleDialogData? = null,
         val nicknameDialog: NicknameDialogData? = null,
         val groupEditDialog: GroupEditDialog? = null,
