@@ -3,12 +3,15 @@ package org.thoughtcrime.securesms.messagerequests
 import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.core.view.isVisible
-import androidx.loader.app.LoaderManager
-import androidx.loader.content.Loader
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityMessageRequestsBinding
 import org.session.libsession.utilities.Address
@@ -24,7 +27,7 @@ import org.thoughtcrime.securesms.util.push
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClickListener, LoaderManager.LoaderCallbacks<List<ThreadRecord>> {
+class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClickListener {
 
     private lateinit var binding: ActivityMessageRequestsBinding
     private lateinit var glide: RequestManager
@@ -56,28 +59,16 @@ class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClick
         binding.root.applySafeInsetsPaddings(
             applyBottom = false,
         )
-    }
 
-    override fun onResume() {
-        super.onResume()
-        LoaderManager.getInstance(this).restartLoader(0, null, this)
-    }
-
-    override fun onCreateLoader(id: Int, bundle: Bundle?): Loader<List<ThreadRecord>> {
-        return MessageRequestsLoader(threadDb, this)
-    }
-
-    override fun onLoadFinished(
-        loader: Loader<List<ThreadRecord>>,
-        data: List<ThreadRecord>
-    ) {
-        adapter.conversations = data
-        updateEmptyState()
-    }
-
-    override fun onLoaderReset(loader: Loader<List<ThreadRecord>?>) {
-        adapter.conversations = emptyList()
-        updateEmptyState()
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.threads
+                    .collectLatest {
+                        adapter.conversations = it
+                        updateEmptyState()
+                    }
+            }
+        }
     }
 
     override fun onConversationClick(thread: ThreadRecord) {
@@ -90,7 +81,6 @@ class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClick
                 Address.fromSerialized(it)
             } ?: thread.recipient.address
             viewModel.blockMessageRequest(thread, recipient)
-            LoaderManager.getInstance(this).restartLoader(0, null, this)
         }
 
         showSessionDialog {
@@ -108,7 +98,6 @@ class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClick
     override fun onDeleteConversationClick(thread: ThreadRecord) {
         fun doDecline() {
             viewModel.deleteMessageRequest(thread)
-            LoaderManager.getInstance(this).restartLoader(0, null, this)
         }
 
         showSessionDialog {
@@ -128,7 +117,6 @@ class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClick
     private fun deleteAll() {
         fun doDeleteAllAndBlock() {
             viewModel.clearAllMessageRequests(false)
-            LoaderManager.getInstance(this).restartLoader(0, null, this)
         }
 
         showSessionDialog {
