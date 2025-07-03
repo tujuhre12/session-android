@@ -1134,11 +1134,6 @@ open class Storage @Inject constructor(
         return threadDB.getLastUpdated(threadID)
     }
 
-    override fun trimThread(threadID: Long, threadLimit: Int) {
-        val threadDB = threadDatabase
-        threadDB.trimThread(threadID, threadLimit)
-    }
-
     override fun trimThreadBefore(threadID: Long, timestamp: Long) {
         val threadDB = threadDatabase
         threadDB.trimThreadBefore(threadID, timestamp)

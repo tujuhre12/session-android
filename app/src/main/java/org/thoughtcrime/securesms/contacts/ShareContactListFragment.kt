@@ -14,9 +14,11 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.databinding.ShareContactListFragmentBinding
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.database.ThreadDatabase
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -27,6 +29,12 @@ class ShareContactListFragment : Fragment(), LoaderManager.LoaderCallbacks<List<
 
     @Inject
     lateinit var deprecationManager: LegacyGroupDeprecationManager
+
+    @Inject
+    lateinit var storage: StorageProtocol
+
+    @Inject
+    lateinit var threadDatabase: ThreadDatabase
 
     private val multiSelect: Boolean by lazy {
         requireActivity().intent.getBooleanExtra(MULTI_SELECT, false)
@@ -93,7 +101,9 @@ class ShareContactListFragment : Fragment(), LoaderManager.LoaderCallbacks<List<
             context = requireActivity(),
             mode = ContactsCursorLoader.DisplayMode.FLAG_ALL,
             filter = cursorFilter,
-            deprecationManager = deprecationManager
+            deprecationManager = deprecationManager,
+            storage = storage,
+            threadDatabase = threadDatabase
         )
     }
 

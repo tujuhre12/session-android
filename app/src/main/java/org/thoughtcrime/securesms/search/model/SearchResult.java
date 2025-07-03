@@ -19,12 +19,12 @@ public class SearchResult {
 
   private final String                    query;
   private final List<BasicRecipient.Contact>     contacts;
-  private final CursorList<GroupRecord>  conversations;
+  private final List<GroupRecord>  conversations;
   private final CursorList<MessageResult> messages;
 
   public SearchResult(@NonNull String                    query,
                       @NonNull List<BasicRecipient.Contact>     contacts,
-                      @NonNull CursorList<GroupRecord>  conversations,
+                      @NonNull List<GroupRecord>  conversations,
                       @NonNull CursorList<MessageResult> messages)
   {
     this.query         = query;

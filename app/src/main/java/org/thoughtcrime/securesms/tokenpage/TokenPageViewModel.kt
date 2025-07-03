@@ -255,23 +255,20 @@ class TokenPageViewModel @Inject constructor(
 
             // Grab the database and reader details we need to count the conversations / groups
             val threadDatabase = DatabaseComponent.get(context).threadDatabase()
-            val cursor = threadDatabase.approvedConversationList
+            val convoList = threadDatabase.approvedConversationList
             val result = mutableSetOf<Recipient>()
 
             // Look through the database to build up our conversation & group counts (still on Dispatchers.IO not the main thread)
-            threadDatabase.readerFor(cursor).use { reader ->
-                while (reader.next != null) {
-                    val thread = reader.current
-                    val recipient = thread.recipient
-                    result.add(recipient)
+            convoList.forEach { thread ->
+                val recipient = thread.recipient
+                result.add(recipient)
 
-                    if (recipient.is1on1) {
-                        num1to1Convos += 1
-                    } else if (recipient.isGroupV2Recipient) {
-                        numGroupV2Convos += 1
-                    } else if (recipient.isLegacyGroupRecipient) {
-                        numLegacyGroupConvos += 1
-                    }
+                if (recipient.is1on1) {
+                    num1to1Convos += 1
+                } else if (recipient.isGroupV2Recipient) {
+                    numGroupV2Convos += 1
+                } else if (recipient.isLegacyGroupRecipient) {
+                    numLegacyGroupConvos += 1
                 }
             }
 

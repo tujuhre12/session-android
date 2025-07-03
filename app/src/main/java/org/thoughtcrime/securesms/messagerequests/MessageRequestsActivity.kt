@@ -1,7 +1,5 @@
 package org.thoughtcrime.securesms.messagerequests
 
-import android.content.Intent
-import android.database.Cursor
 import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.core.view.isVisible
@@ -11,7 +9,6 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityMessageRequestsBinding
 import org.session.libsession.utilities.Address
@@ -24,9 +21,10 @@ import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import org.thoughtcrime.securesms.util.push
+import javax.inject.Inject
 
 @AndroidEntryPoint
-class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClickListener, LoaderManager.LoaderCallbacks<Cursor?> {
+class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClickListener, LoaderManager.LoaderCallbacks<List<ThreadRecord>> {
 
     private lateinit var binding: ActivityMessageRequestsBinding
     private lateinit var glide: RequestManager
@@ -37,7 +35,7 @@ class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClick
     private val viewModel: MessageRequestsViewModel by viewModels()
 
     private val adapter: MessageRequestsAdapter by lazy {
-        MessageRequestsAdapter(context = this, cursor = null, dateUtils = dateUtils, listener = this)
+        MessageRequestsAdapter(dateUtils = dateUtils, listener = this)
     }
 
     override val applyDefaultWindowInsets: Boolean
@@ -51,7 +49,6 @@ class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClick
         glide = Glide.with(this)
 
         adapter.setHasStableIds(true)
-        adapter.glide = glide
         binding.recyclerView.adapter = adapter
 
         binding.clearAllMessageRequestsButton.setOnClickListener { deleteAll() }
@@ -66,17 +63,21 @@ class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClick
         LoaderManager.getInstance(this).restartLoader(0, null, this)
     }
 
-    override fun onCreateLoader(id: Int, bundle: Bundle?): Loader<Cursor?> {
+    override fun onCreateLoader(id: Int, bundle: Bundle?): Loader<List<ThreadRecord>> {
         return MessageRequestsLoader(threadDb, this)
     }
 
-    override fun onLoadFinished(loader: Loader<Cursor?>, cursor: Cursor?) {
-        adapter.changeCursor(cursor)
+    override fun onLoadFinished(
+        loader: Loader<List<ThreadRecord>>,
+        data: List<ThreadRecord>
+    ) {
+        adapter.conversations = data
         updateEmptyState()
     }
 
-    override fun onLoaderReset(cursor: Loader<Cursor?>) {
-        adapter.changeCursor(null)
+    override fun onLoaderReset(loader: Loader<List<ThreadRecord>?>) {
+        adapter.conversations = emptyList()
+        updateEmptyState()
     }
 
     override fun onConversationClick(thread: ThreadRecord) {

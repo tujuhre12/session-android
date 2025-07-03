@@ -108,15 +108,12 @@ class SearchRepository @Inject constructor(
 
     private fun queryConversations(
         query: String,
-    ): CursorList<GroupRecord> {
+    ): List<GroupRecord> {
         val numbers = contactAccessor.getNumbersForThreadSearchFilter(context, query)
         val addresses = numbers.map { fromSerialized(it) }
 
-        val conversations = threadDatabase.getFilteredConversationList(addresses)
-        return if (conversations != null)
-            CursorList(conversations, GroupModelBuilder(threadDatabase, groupDatabase))
-        else
-            CursorList.emptyList()
+        return threadDatabase.getFilteredConversationList(addresses)
+            .map { groupDatabase.getGroup(it.recipient.address.toGroupString()).get() }
     }
 
     private fun queryMessages(query: String): CursorList<MessageResult> {
@@ -157,16 +154,6 @@ class SearchRepository @Inject constructor(
         }
 
         return out.toString()
-    }
-
-    private class GroupModelBuilder(
-        private val threadDatabase: ThreadDatabase,
-        private val groupDatabase: GroupDatabase
-    ) : CursorList.ModelBuilder<GroupRecord> {
-        override fun build(cursor: Cursor): GroupRecord {
-            val threadRecord = threadDatabase.readerFor(cursor).current
-            return groupDatabase.getGroup(threadRecord.recipient.address.toGroupString()).get()
-        }
     }
 
     private inner class MessageModelBuilder() : CursorList.ModelBuilder<MessageResult> {

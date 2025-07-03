@@ -407,13 +407,11 @@ class DefaultConversationRepository @Inject constructor(
 
     override suspend fun clearAllMessageRequests(block: Boolean) = runCatching {
         withContext(Dispatchers.Default) {
-            threadDb.readerFor(threadDb.unapprovedConversationList).use { reader ->
-                while (reader.next != null) {
-                    deleteMessageRequest(reader.current)
-                    val recipient = reader.current.recipient
-                    if (block && !recipient.isGroupV2Recipient) {
-                        setBlocked(recipient.address, true)
-                    }
+            threadDb.unapprovedConversationList.forEach { record ->
+                deleteMessageRequest(record)
+                val recipient = record.recipient
+                if (block && !recipient.isGroupV2Recipient) {
+                    setBlocked(recipient.address, true)
                 }
             }
         }

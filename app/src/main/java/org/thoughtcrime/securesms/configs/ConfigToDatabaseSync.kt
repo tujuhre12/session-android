@@ -7,7 +7,6 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
-import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
 import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
 import network.loki.messenger.libsession_util.ReadableUserGroupsConfig
 import network.loki.messenger.libsession_util.ReadableUserProfile
@@ -256,18 +255,11 @@ class ConfigToDatabaseSync @Inject constructor(
             }
         }
 
-        val existingClosedGroupThreads: Map<AccountId, Long> = threadDatabase.readerFor(threadDatabase.conversationList).use { reader ->
-            buildMap(reader.count) {
-                var current = reader.next
-                while (current != null) {
-                    if (current.recipient?.isGroupV2Recipient == true) {
-                        put(AccountId(current.recipient.address.toString()), current.threadId)
-                    }
+        val existingClosedGroupThreads: Map<AccountId, Long> = threadDatabase.allThreads
+            .asSequence()
+            .filter { (address, _) -> address.isGroupV2 }
+            .associate { (address, threadId) -> AccountId(address.toString()) to threadId }
 
-                    current = reader.next
-                }
-            }
-        }
 
         val groupThreadsToKeep = hashMapOf<AccountId, Long>()
 

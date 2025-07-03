@@ -23,7 +23,6 @@ import static org.thoughtcrime.securesms.database.UtilKt.generatePlaceholders;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.MergeCursor;
 import android.net.Uri;
 
 import androidx.annotation.NonNull;
@@ -33,11 +32,11 @@ import com.annimon.stream.Stream;
 
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
+import org.json.JSONArray;
 import org.session.libsession.messaging.MessagingModuleConfiguration;
 import org.session.libsession.snode.SnodeAPI;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.ConfigFactoryProtocolKt;
-import org.session.libsession.utilities.DelimiterUtil;
 import org.session.libsession.utilities.DistributionTypes;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Util;
@@ -70,6 +69,7 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import dagger.Lazy;
+import kotlin.collections.CollectionsKt;
 import network.loki.messenger.libsession_util.util.GroupInfo;
 
 @Singleton
@@ -216,97 +216,10 @@ public class ThreadDatabase extends Database {
     notifyConversationListListeners();
   }
 
-  public void updateSnippet(long threadId, String snippet, @Nullable Uri attachment, long date, long type, boolean unarchive) {
-    ContentValues contentValues = new ContentValues(4);
-
-    contentValues.put(THREAD_CREATION_DATE, date - date % 1000);
-    if (!snippet.isEmpty()) {
-      contentValues.put(SNIPPET, snippet);
-    }
-    contentValues.put(SNIPPET_TYPE, type);
-    contentValues.put(SNIPPET_URI, attachment == null ? null : attachment.toString());
-
-    if (unarchive) {
-      contentValues.put(ARCHIVED, 0);
-    }
-
-    SQLiteDatabase db = getWritableDatabase();
-    db.update(TABLE_NAME, contentValues, ID + " = ?", new String[] {threadId + ""});
-    notifyConversationListListeners();
-  }
-
   public void deleteThread(long threadId) {
     SQLiteDatabase db = getWritableDatabase();
     db.delete(TABLE_NAME, ID_WHERE, new String[] {threadId + ""});
     notifyConversationListListeners();
-  }
-
-  private void deleteThreads(Set<Long> threadIds) {
-    SQLiteDatabase db = getWritableDatabase();
-    String where      = "";
-
-    for (long threadId : threadIds) { where += ID + " = '" + threadId + "' OR "; }
-
-    where = where.substring(0, where.length() - 4);
-
-    db.delete(TABLE_NAME, where, null);
-    notifyConversationListListeners();
-  }
-
-  private void deleteAllThreads() {
-    SQLiteDatabase db = getWritableDatabase();
-    db.delete(TABLE_NAME, null, null);
-    notifyConversationListListeners();
-  }
-
-  public void trimAllThreads(int length, ProgressListener listener) {
-    Cursor cursor   = null;
-    int threadCount = 0;
-    int complete    = 0;
-
-    try {
-      cursor = this.getConversationList();
-
-      if (cursor != null)
-        threadCount = cursor.getCount();
-
-      while (cursor != null && cursor.moveToNext()) {
-        long threadId = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
-        trimThread(threadId, length);
-
-        listener.onProgress(++complete, threadCount);
-      }
-    } finally {
-      if (cursor != null)
-        cursor.close();
-    }
-  }
-
-  public void trimThread(long threadId, int length) {
-    Log.i("ThreadDatabase", "Trimming thread: " + threadId + " to: " + length);
-    Cursor cursor = null;
-
-    try {
-      cursor = DatabaseComponent.get(context).mmsSmsDatabase().getConversation(threadId, true);
-
-      if (cursor != null && length > 0 && cursor.getCount() > length) {
-        Log.w("ThreadDatabase", "Cursor count is greater than length!");
-        cursor.moveToPosition(length - 1);
-
-        long lastTweetDate = cursor.getLong(cursor.getColumnIndexOrThrow(MmsSmsColumns.NORMALIZED_DATE_RECEIVED));
-
-        Log.i("ThreadDatabase", "Cut off tweet date: " + lastTweetDate);
-
-        DatabaseComponent.get(context).smsDatabase().deleteMessagesInThreadBeforeDate(threadId, lastTweetDate);
-        DatabaseComponent.get(context).mmsDatabase().deleteMessagesInThreadBeforeDate(threadId, lastTweetDate, false);
-
-        update(threadId, false);
-        notifyConversationListeners(threadId);
-      }
-    } finally {
-      if (cursor != null)
-        cursor.close();
-    }
   }
 
   public void trimThreadBefore(long threadId, long timestamp) {
@@ -421,67 +334,38 @@ public class ThreadDatabase extends Database {
       selectionArgs.addAll(excludeAddresses);
     }
 
-    String query = createQuery(selection.toString(), 0);
+    String query = createQuery(selection.toString());
     return db.rawQuery(query, selectionArgs.toArray(new String[0]));
   }
 
-
-  @Nullable
-  public Cursor getFilteredConversationList(@Nullable List<Address> filter) {
-    if (filter == null || filter.isEmpty())
-      return null;
-
-    SQLiteDatabase      db                   = getReadableDatabase();
-    List<List<Address>> partitionedAddresses = Util.partition(filter, 900);
-    List<Cursor>        cursors              = new LinkedList<>();
-
-    for (List<Address> addresses : partitionedAddresses) {
-      StringBuilder selection = new StringBuilder(TABLE_NAME + "." + ADDRESS + " = ?");
-      String[] selectionArgs = new String[addresses.size()];
-
-      for (int i = 0; i < addresses.size() - 1; i++) {
-        selection.append(" OR " + TABLE_NAME + "." + ADDRESS + " = ?");
-      }
-
-      int i= 0;
-      for (Address address : addresses) {
-        selectionArgs[i++] = DelimiterUtil.escape(address.toString(), ' ');
-      }
-
-      String query = createQuery(selection.toString(), 0);
-      cursors.add(db.rawQuery(query, selectionArgs));
+  @NonNull
+  private ArrayList<ThreadRecord> getThreadRecords(@NonNull final Cursor cursor) {
+    final ArrayList<ThreadRecord> threads = new ArrayList<>(cursor.getCount());
+    Reader reader = new Reader(cursor);
+    ThreadRecord thread;
+    while ((thread = reader.getNext()) != null) {
+      threads.add(thread);
     }
 
-    Cursor cursor = cursors.size() > 1 ? new MergeCursor(cursors.toArray(new Cursor[0])) : cursors.get(0);
-    setNotifyConversationListListeners(cursor);
-    return cursor;
+    return threads;
   }
 
-  public Cursor getRecentConversationList(int limit) {
-    SQLiteDatabase db    = getReadableDatabase();
-    String         query = createQuery("", limit);
+  @NonNull
+  public ArrayList<ThreadRecord> getFilteredConversationList(@Nullable List<Address> filter) {
+    if (filter == null || filter.isEmpty())
+      return new ArrayList<>(0);
 
-    return db.rawQuery(query, null);
-  }
-
-  public Cursor getConversationList() {
-    // Conversations will come from two different sources:
-    // 1. Config based conversations
-    // 2. Blinded conversations stored in the database
-    final List<Address> blindedConversations = getBlindedConversations(null, false);
-    final List<Address> configBasedConversations = recipientRepository.get().getConfigBasedConversations(
-            c -> true,
-            c -> !c.getBlocked(),
-            value -> true,
-            value -> true,
-            value -> true
+    final String query = createQuery(
+            TABLE_NAME + "." + ADDRESS + " IN (SELECT value FROM json_each(?))"
     );
 
-    final List<Address> allAddresses = new ArrayList<>(blindedConversations.size() + configBasedConversations.size());
-    allAddresses.addAll(blindedConversations);
-    allAddresses.addAll(configBasedConversations);
+    final String[] selectionArgs = new String[] {
+        new JSONArray(CollectionsKt.map(filter, Address::toString)).toString()
+    };
 
-    return getFilteredConversationList(allAddresses);
+    try(final Cursor cursor = getReadableDatabase().rawQuery(query, selectionArgs)) {
+      return getThreadRecords(cursor);
+    }
   }
 
   private List<Address> getBlindedConversations(@Nullable Boolean approved, @Nullable Boolean blocked) {
@@ -510,41 +394,48 @@ public class ThreadDatabase extends Database {
     }
   }
 
-  @Nullable
-  public Cursor getApprovedConversationList() {
+  /**
+   * @return All threads in the database, with their thread ID and Address. Note that
+   *   threads don't necessarily mean conversations, as whether you have a conversation
+   *   or not depend on the config data. This method returns all threads that exist
+   *   in the database, normally this is useful only for data integrity purposes.
+   */
+  public List<kotlin.Pair<Address, Long>> getAllThreads() {
+    SQLiteDatabase db = getReadableDatabase();
+    String query = "SELECT " + ID + ", " + ADDRESS + " FROM " + TABLE_NAME + " WHERE nullif(" + ADDRESS + ", '') IS NOT NULL";
+    try (Cursor cursor = db.rawQuery(query, null)) {
+      List<kotlin.Pair<Address, Long>> threads = new ArrayList<>(cursor.getCount());
+      while (cursor.moveToNext()) {
+        long threadId = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
+        String address = cursor.getString(cursor.getColumnIndexOrThrow(ADDRESS));
+        if (address != null && !address.isEmpty()) {
+          threads.add(new kotlin.Pair<>(Address.fromSerialized(address), threadId));
+        }
+      }
+      return threads;
+    }
+  }
+
+  @NonNull
+  public ArrayList<ThreadRecord> getApprovedConversationList() {
     // Approved conversations will come from two different sources:
     // 1. Config based conversations
     // 2. Blinded conversations stored in the database
     final List<Address> blindedConversations = getBlindedConversations(true, false);
     final List<Address> configBasedConversations = recipientRepository.get().getAllConfigBasedApprovedConversations();
 
-    final List<Address> allAddresses = new ArrayList<>(blindedConversations.size() + configBasedConversations.size());
-    allAddresses.addAll(blindedConversations);
-    allAddresses.addAll(configBasedConversations);
-
-    return getFilteredConversationList(allAddresses);
+    return getFilteredConversationList(CollectionsKt.plus(blindedConversations, configBasedConversations));
   }
 
-  @Nullable
-  public Cursor getUnapprovedConversationList() {
+  @NonNull
+  public ArrayList<ThreadRecord> getUnapprovedConversationList() {
     // Unapproved conversations will come from two different sources:
     // 1. Config based conversations
     // 2. Blinded conversations stored in the database
     final List<Address> blindedConversations = getBlindedConversations(false, false);
     final List<Address> configBasedConversations = recipientRepository.get().getAllConfigBasedUnapprovedConversations();
 
-    final List<Address> allAddresses = new ArrayList<>(blindedConversations.size() + configBasedConversations.size());
-    allAddresses.addAll(blindedConversations);
-    allAddresses.addAll(configBasedConversations);
-
-    return getFilteredConversationList(allAddresses);
-  }
-
-  public Cursor getDirectShareList() {
-    SQLiteDatabase db    = getReadableDatabase();
-    String         query = createQuery("", 0);
-
-    return db.rawQuery(query, null);
+    return getFilteredConversationList(CollectionsKt.plus(blindedConversations, configBasedConversations));
   }
 
   /**
@@ -802,24 +693,16 @@ public class ThreadDatabase extends Database {
     return null;
   }
 
-  private @NonNull String createQuery(@NonNull String where, int limit) {
+  private @NonNull String createQuery(@NonNull String where) {
     String projection = Util.join(COMBINED_THREAD_RECIPIENT_GROUP_PROJECTION, ",");
-    String query =
-    "SELECT " + projection + " FROM " + TABLE_NAME +
+    return "SELECT " + projection + " FROM " + TABLE_NAME +
             " LEFT OUTER JOIN " + RecipientDatabase.TABLE_NAME +
             " ON " + TABLE_NAME + "." + ADDRESS + " = " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.ADDRESS +
             " LEFT OUTER JOIN " + GroupDatabase.TABLE_NAME +
             " ON " + TABLE_NAME + "." + ADDRESS + " = " + GroupDatabase.TABLE_NAME + "." + GROUP_ID +
             " LEFT OUTER JOIN " + LokiMessageDatabase.groupInviteTable +
             " ON "+ TABLE_NAME + "." + ID + " = " + LokiMessageDatabase.groupInviteTable+"."+LokiMessageDatabase.invitingSessionId +
-            " WHERE " + where +
-            " ORDER BY " + TABLE_NAME + "." + IS_PINNED + " DESC, " + TABLE_NAME + "." + THREAD_CREATION_DATE + " DESC";
-
-    if (limit >  0) {
-      query += " LIMIT " + limit;
-    }
-
-    return query;
+            " WHERE " + where;
   }
 
   public void notifyThreadUpdated(long threadId) {
@@ -830,29 +713,12 @@ public class ThreadDatabase extends Database {
     void onProgress(int complete, int total);
   }
 
-  public Reader readerFor(Cursor cursor) {
-    return readerFor(cursor, true);
-  }
-
-  /**
-   * Create a reader to conveniently access the thread cursor
-   *
-   * @param retrieveGroupStatus Whether group status should be calculated based on the config data.
-   *                            Normally you always want it, but if you don't want the reader
-   *                            to access the config system, this is the flag to turn it off.
-   */
-  public Reader readerFor(Cursor cursor, boolean retrieveGroupStatus) {
-    return new Reader(cursor, retrieveGroupStatus);
-  }
-
-  public class Reader implements Closeable {
+  private class Reader implements Closeable {
 
     private final Cursor cursor;
-    private final boolean retrieveGroupStatus;
 
-    public Reader(Cursor cursor, boolean retrieveGroupStatus) {
+    public Reader(Cursor cursor) {
       this.cursor = cursor;
-      this.retrieveGroupStatus = retrieveGroupStatus;
     }
 
     public int getCount() {
@@ -900,7 +766,7 @@ public class ThreadDatabase extends Database {
       }
 
       final GroupThreadStatus groupThreadStatus;
-      if (recipient.isGroupV2Recipient() && retrieveGroupStatus) {
+      if (recipient.isGroupV2Recipient()) {
         GroupInfo.ClosedGroupInfo group = ConfigFactoryProtocolKt.getGroup(
                 MessagingModuleConfiguration.getShared().getConfigFactory(),
                 new AccountId(recipient.getAddress().toString())

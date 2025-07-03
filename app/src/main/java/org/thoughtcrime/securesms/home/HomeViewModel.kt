@@ -36,10 +36,10 @@ import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsignal.utilities.Log
 import org.session.libsession.utilities.currentUserName
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
@@ -143,15 +143,13 @@ class HomeViewModel @Inject constructor(
     ).flowOn(Dispatchers.Default)
 
     private fun unapprovedConversationCount() = reloadTriggersAndContentChanges()
-        .map { threadDb.unapprovedConversationList?.use { cursor -> cursor.count } ?: 0 }
+        .map { threadDb.unapprovedConversationList.size }
 
     @Suppress("OPT_IN_USAGE")
     private fun observeConversationList(): Flow<List<ThreadRecord>> = reloadTriggersAndContentChanges()
         .mapLatest { _ ->
             withContext(Dispatchers.Default) {
-                val records = threadDb.approvedConversationList.use { openCursor ->
-                    threadDb.readerFor(openCursor).run { generateSequence { next }.toMutableList() }
-                }
+                val records = threadDb.approvedConversationList
 
                 // Sort the threads by priority and last message timestamp
                 records.sortWith(threadRecordComparator)

@@ -282,9 +282,7 @@ class DebugMenuViewModel @Inject constructor(
 
         // clear trusted downloads for all recipients
         viewModelScope.launch {
-            val conversations: List<ThreadRecord> = threadDb.approvedConversationList.use { openCursor ->
-                threadDb.readerFor(openCursor).run { generateSequence { next }.toList() }
-            }
+            val conversations: List<ThreadRecord> = threadDb.approvedConversationList
 
             conversations.filter { !it.recipient.isLocalNumber }.forEach {
                 recipientDatabase.setAutoDownloadAttachments(it.recipient.address, false)
