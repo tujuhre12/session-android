@@ -22,7 +22,7 @@ import org.thoughtcrime.securesms.database.ThreadDatabase
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class ShareContactListFragment : Fragment(), LoaderManager.LoaderCallbacks<List<ContactSelectionListItem>>, ContactClickListener {
+class ShareContactListFragment : Fragment(), LoaderManager.LoaderCallbacks<List<Recipient>>, ContactClickListener {
     private lateinit var binding: ShareContactListFragmentBinding
     private var cursorFilter: String? = null
     var onContactSelectedListener: OnContactSelectedListener? = null
@@ -96,26 +96,25 @@ class ShareContactListFragment : Fragment(), LoaderManager.LoaderCallbacks<List<
         setQueryFilter(null)
     }
 
-    override fun onCreateLoader(id: Int, args: Bundle?): Loader<List<ContactSelectionListItem>> {
+    override fun onCreateLoader(id: Int, args: Bundle?): Loader<List<Recipient>> {
         return ShareContactListLoader(
             context = requireActivity(),
-            mode = ContactsCursorLoader.DisplayMode.FLAG_ALL,
             filter = cursorFilter,
             deprecationManager = deprecationManager,
-            storage = storage,
-            threadDatabase = threadDatabase
+            threadDatabase = threadDatabase,
+            storage = storage
         )
     }
 
-    override fun onLoadFinished(loader: Loader<List<ContactSelectionListItem>>, items: List<ContactSelectionListItem>) {
+    override fun onLoadFinished(loader: Loader<List<Recipient>>, items: List<Recipient>) {
         update(items)
     }
 
-    override fun onLoaderReset(loader: Loader<List<ContactSelectionListItem>>) {
+    override fun onLoaderReset(loader: Loader<List<Recipient>>) {
         update(listOf())
     }
 
-    private fun update(items: List<ContactSelectionListItem>) {
+    private fun update(items: List<Recipient>) {
         if (activity?.isDestroyed == true) {
             Log.e(ShareContactListFragment::class.java.name,
                     "Received a loader callback after the fragment was detached from the activity.",

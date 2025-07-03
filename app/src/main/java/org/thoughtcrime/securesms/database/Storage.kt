@@ -1352,20 +1352,19 @@ open class Storage @Inject constructor(
             
             val mappingDb = blindedIdMappingDatabase
             val mappings = mutableMapOf<String, BlindedIdMapping>()
-            threadDatabase.readerFor(threadDatabase.conversationList).use { reader ->
-                while (reader.next != null) {
-                    val recipient = reader.current.recipient
-                    val address = recipient.address.toString()
-                    val blindedId = when {
-                        recipient.isGroupOrCommunityRecipient -> null
-                        recipient.isCommunityInboxRecipient -> GroupUtil.getDecodedOpenGroupInboxAccountId(address)
-                        else -> address.takeIf { AccountId(it).prefix == IdPrefix.BLINDED }
-                    } ?: continue
-                    mappingDb.getBlindedIdMapping(blindedId).firstOrNull()?.let {
-                        mappings[address] = it
-                    }
+
+            for ((address, _) in threadDatabase.allThreads) {
+                val blindedId = when {
+                    address.isGroupOrCommunity -> null
+                    address.isCommunityInbox -> GroupUtil.getDecodedOpenGroupInboxAccountId(address.toString())
+                    else -> address.address.takeIf { AccountId.fromStringOrNull(it)?.prefix == IdPrefix.BLINDED }
+                } ?: continue
+
+                mappingDb.getBlindedIdMapping(blindedId).firstOrNull()?.let {
+                    mappings[address.address] = it
                 }
             }
+
             for (mapping in mappings) {
                 if (!BlindKeyAPI.sessionIdMatchesBlindedId(
                         sessionId = senderPublicKey,

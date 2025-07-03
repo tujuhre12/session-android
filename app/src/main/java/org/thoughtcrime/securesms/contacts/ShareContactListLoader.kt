@@ -2,27 +2,22 @@ package org.thoughtcrime.securesms.contacts
 
 import android.content.Context
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.util.AsyncLoader
 
-sealed class ContactSelectionListItem {
-    class Contact(val recipient: Recipient) : ContactSelectionListItem()
-}
 
 class ShareContactListLoader(
     context: Context,
-    val mode: Int,
     val filter: String?,
     private val deprecationManager: LegacyGroupDeprecationManager,
     private val threadDatabase: ThreadDatabase,
     private val storage: StorageProtocol,
-) : AsyncLoader<List<ContactSelectionListItem>>(context) {
+) : AsyncLoader<List<Recipient>>(context) {
 
-    override fun loadInBackground(): List<ContactSelectionListItem> {
+    override fun loadInBackground(): List<Recipient> {
         val threads = threadDatabase.approvedConversationList
             .asSequence()
             .filter { thread ->
@@ -40,7 +35,7 @@ class ShareContactListLoader(
 
         threads.sortWith(COMPARATOR)
 
-        return threads.map { ContactSelectionListItem.Contact(it.recipient) }
+        return threads.map { it.recipient }
     }
 
     companion object {

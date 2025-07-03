@@ -102,7 +102,7 @@ class RecipientRepository @Inject constructor(
 
                 emit(value)
                 val evt = changeSource
-                    .debounce(1000) // Debounce to avoid too frequent updates
+                    .debounce(200) // Debounce to avoid too frequent updates
                     .first()
                 Log.d(TAG, "Recipient changed for ${address.debugString}, triggering event: $evt")
             }

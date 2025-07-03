@@ -22,12 +22,12 @@ import android.content.Intent
 import android.net.Uri
 import android.os.AsyncTask
 import android.os.Bundle
-import android.os.Parcel
 import android.provider.OpenableColumns
 import android.view.MenuItem
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.content.IntentCompat
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
@@ -40,7 +40,6 @@ import org.thoughtcrime.securesms.components.SearchToolbar.SearchListener
 import org.thoughtcrime.securesms.contacts.ShareContactListFragment
 import org.thoughtcrime.securesms.contacts.ShareContactListFragment.OnContactSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
 import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.providers.BlobUtils
 import org.thoughtcrime.securesms.util.MediaUtil
@@ -55,9 +54,7 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
     private val TAG = ShareActivity::class.java.simpleName
 
     companion object {
-        const val EXTRA_THREAD_ID          = "thread_id"
-        const val EXTRA_ADDRESS_MARSHALLED = "address_marshalled"
-        const val EXTRA_DISTRIBUTION_TYPE  = "distribution_type"
+        const val EXTRA_ADDRESS = "address"
     }
 
      override val applyDefaultWindowInsets: Boolean
@@ -183,20 +180,8 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
     }
 
     private fun handleResolvedMedia(intent: Intent, animate: Boolean) {
-        val threadId = intent.getLongExtra(EXTRA_THREAD_ID, -1)
-        val distributionType = intent.getIntExtra(EXTRA_DISTRIBUTION_TYPE, -1)
-        var address: Address? = null
-
-        if (intent.hasExtra(EXTRA_ADDRESS_MARSHALLED)) {
-            val parcel = Parcel.obtain()
-            val marshalled = intent.getByteArrayExtra(EXTRA_ADDRESS_MARSHALLED)
-            parcel.unmarshall(marshalled!!, 0, marshalled.size)
-            parcel.setDataPosition(0)
-            address = parcel.readParcelable<Address?>(classLoader)
-            parcel.recycle()
-        }
-
-        val hasResolvedDestination = threadId != -1L && address != null && distributionType != -1
+        val address = IntentCompat.getParcelableExtra<Address>(intent, EXTRA_ADDRESS, Address::class.java)
+        val hasResolvedDestination = address != null
 
         if (!hasResolvedDestination && animate) {
             ViewUtil.fadeIn(contactsFragment.requireView(), 300)

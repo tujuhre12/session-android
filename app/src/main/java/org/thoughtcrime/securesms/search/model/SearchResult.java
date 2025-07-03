@@ -58,7 +58,6 @@ public class SearchResult {
   }
 
   public void close() {
-    conversations.close();
     messages.close();
   }
 }
