@@ -57,7 +57,6 @@ import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSi
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
-import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.dependencies.ConfigFactory.Companion.MAX_GROUP_DESCRIPTION_BYTES
 import org.thoughtcrime.securesms.dependencies.ConfigFactory.Companion.MAX_NAME_BYTES
 import org.thoughtcrime.securesms.groups.OpenGroupManager

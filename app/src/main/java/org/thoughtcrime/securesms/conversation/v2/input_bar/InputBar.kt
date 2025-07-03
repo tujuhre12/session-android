@@ -22,6 +22,7 @@ import org.session.libsession.messaging.sending_receiving.link_preview.LinkPrevi
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
+import org.thoughtcrime.securesms.conversation.v2.InputBarCharLimitState
 import org.thoughtcrime.securesms.conversation.v2.InputBarContentState
 import org.thoughtcrime.securesms.conversation.v2.InputBarState
 import org.thoughtcrime.securesms.conversation.v2.components.LinkPreviewDraftView
@@ -315,16 +316,18 @@ class InputBar @JvmOverloads constructor(
 
         // handle buttons state
         allowAttachMultimediaButtons = state.enableAttachMediaControls
+    }
 
+    fun setCharLimitState(state: InputBarCharLimitState?) {
         // handle char limit
-        if(state.charLimitState != null){
-            binding.characterLimitText.text = state.charLimitState.count.toString()
-            binding.characterLimitText.setTextColor(if(state.charLimitState.danger) dangerColor else textColor)
+        if(state != null){
+            binding.characterLimitText.text = state.count.toString()
+            binding.characterLimitText.setTextColor(if(state.danger) dangerColor else textColor)
             binding.characterLimitContainer.setOnClickListener {
                 delegate?.onCharLimitTapped()
             }
 
-            binding.badgePro.isVisible = state.charLimitState.showProBadge
+            binding.badgePro.isVisible = state.showProBadge
 
             binding.characterLimitContainer.isVisible = true
         } else {

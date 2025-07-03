@@ -66,13 +66,16 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.scan
+import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
@@ -87,6 +90,7 @@ import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
 import org.session.libsession.messaging.messages.visible.Reaction
 import org.session.libsession.messaging.messages.visible.VisibleMessage
+import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
@@ -105,6 +109,7 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
 import org.session.libsession.utilities.concurrent.SimpleTask
 import org.session.libsession.utilities.getColorFromAttr
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.crypto.MnemonicCodec
 import org.session.libsignal.utilities.ListenableFuture
 import org.session.libsignal.utilities.Log
@@ -326,6 +331,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     private var conversationLoadAnimationJob: Job? = null
 
+
     private val layoutManager: LinearLayoutManager?
         get() { return binding.conversationRecyclerView.layoutManager as LinearLayoutManager? }
 
@@ -342,7 +348,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         MnemonicCodec(loadFileContents).encode(hexEncodedSeed, MnemonicCodec.Language.Configuration.english)
     }
 
-    private var firstCursorLoad = false
+    private val firstCursorLoad = MutableStateFlow(false)
 
     private val adapter by lazy {
         val adapter = ConversationAdapter(
@@ -544,13 +550,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // messageIdToScroll
         messageToScrollTimestamp.set(intent.getLongExtra(SCROLL_MESSAGE_ID, -1))
         messageToScrollAuthor.set(intent.getParcelableExtra(SCROLL_MESSAGE_AUTHOR))
-        val recipient = viewModel.recipient
-        val openGroup = recipient.let { viewModel.openGroup }
-        if (recipient == null || (recipient.isCommunityRecipient && openGroup == null)) {
-            Toast.makeText(this, getString(R.string.conversationsDeleted), Toast.LENGTH_LONG).show()
-            return finish()
-        }
-
         setUpToolBar()
         setUpInputBar()
         setUpLinkPreviewObserver()
@@ -721,8 +720,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             true,
             screenshotObserver
         )
-
-        viewModel.onResume()
     }
 
     override fun onPause() {
@@ -753,7 +750,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         adapter.changeCursor(cursor)
 
         if (cursor != null) {
-            firstCursorLoad = true
+            firstCursorLoad.value = true
             val messageTimestamp = messageToScrollTimestamp.getAndSet(-1)
             val author = messageToScrollAuthor.getAndSet(null)
             val initialUnreadCount = mmsSmsDb.getUnreadCount(viewModel.threadId)
@@ -773,8 +770,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 if (firstLoad.getAndSet(false)) scrollToFirstUnreadMessageOrBottom()
                 handleRecyclerViewScrolled()
             }
-
-            updatePlaceholder()
         }
 
         stopConversationLoader()
@@ -1026,9 +1021,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // Observe toast messages
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState
-                    .mapNotNull { it.uiMessages.firstOrNull() }
-                    .distinctUntilChanged()
+                viewModel.uiMessages
+                    .mapNotNull { it.firstOrNull() }
                     .collect { msg ->
                         Toast.makeText(this@ConversationActivityV2, msg.message, Toast.LENGTH_LONG).show()
                         viewModel.messageShown(msg.id)
@@ -1040,29 +1034,88 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 // Wait for `shouldExit == true` then finish the activity
-                viewModel.uiState
-                    .filter { it.shouldExit }
-                    .first()
+                viewModel.shouldExit
+                    .scan(null to null) { acc: Pair<Boolean?, Boolean?>, current ->
+                        acc.second to current
+                    }
+                    .mapNotNull { (prev, curr) ->
+                        // If shouldExit(curr) is true, we will always finish the activity,
+                        // but we will show a toast on the way out only if we used to have a conversation,
+                        // this is a way to detect the deletion of the conversation.
+                        val shouldShowToast = if (curr == true) {
+                            prev == false
+                        } else {
+                            return@mapNotNull null
+                        }
 
-                if (!isFinishing) {
-                    finish()
-                }
+                        shouldShowToast
+                    }
+                    .collect { shouldShowToast ->
+                        if (shouldShowToast) {
+                            Toast.makeText(
+                                this@ConversationActivityV2,
+                                getString(R.string.conversationsDeleted),
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+
+                        if (!isFinishing) {
+                            finish()
+                        }
+                    }
             }
         }
 
-        // Observe the rest misc "simple" state change. They are bundled in one big
-        // state observing as these changes are relatively cheap to perform even redundantly.
+        // React to input bar state changes
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { state ->
-                    binding.inputBar.setState(state.inputBarState)
+                viewModel.inputBarState.collectLatest(binding.inputBar::setState)
+            }
+        }
 
-                    binding.root.requestApplyInsets()
+        // React to input bar state changes
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.charLimitState.collectLatest(binding.inputBar::setCharLimitState)
+            }
+        }
 
-                    // show or hide loading indicator
-                    binding.loader.isVisible = state.showLoader
 
-                    updatePlaceholder()
+        // React to loader visibility changes
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.showLoader
+                    .collectLatest { show ->
+                        binding.loader.isVisible = show
+                    }
+            }
+        }
+
+        // React to placeholder related changes
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                data class PlaceholderData(
+                    val recipient: Recipient,
+                    val openGroup: OpenGroup?,
+                    val groupThreadStatus: GroupThreadStatus,
+                    val firstLoad: Boolean
+                )
+
+                combine(
+                    viewModel.recipientFlow.filterNotNull(),
+                    viewModel.openGroupFlow,
+                    viewModel.groupV2ThreadState,
+                    firstCursorLoad,
+                    ::PlaceholderData,
+                ).collectLatest { (r, og, groupState, firstLoad) ->
+                    updatePlaceholder(
+                        recipient = r,
+                        blindedRecipient = viewModel.blindedRecipient,
+                        openGroup = og,
+                        groupThreadStatus = groupState,
+                        firstLoad
+
+                    )
                 }
             }
         }
@@ -1155,9 +1208,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState
-                    .map { it.messageRequestState }
-                    .distinctUntilChanged()
+                viewModel.messageRequestState
                     .collectLatest { state ->
                         binding.messageRequestBar.root.isVisible = state is MessageRequestUiState.Visible
 
@@ -1304,13 +1355,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     // Update placeholder / control messages in a conversation
-    private fun updatePlaceholder() {
-        if(!firstCursorLoad) return
-        val recipient = viewModel.recipient ?: return Log.w("Loki", "recipient was null in placeholder update")
-        val blindedRecipient = viewModel.blindedRecipient
-        val openGroup = viewModel.openGroup
-
-        val groupThreadStatus = viewModel.groupV2ThreadState
+    private fun updatePlaceholder(recipient: Recipient,
+                                  blindedRecipient: Recipient?,
+                                  openGroup: OpenGroup?,
+                                  groupThreadStatus: GroupThreadStatus,
+                                  isFirstCursorLoad: Boolean) {
+        if(!isFirstCursorLoad) return
 
         // Special state handling for kicked/destroyed groups
         if (groupThreadStatus != GroupThreadStatus.None) {

@@ -1,6 +1,7 @@
 package org.session.libsession.utilities
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onStart
@@ -127,8 +128,15 @@ fun ConfigFactoryProtocol.getGroup(groupId: AccountId): GroupInfo.ClosedGroupInf
 /**
  * Flow that emits when the user configs are modified or merged.
  */
-fun ConfigFactoryProtocol.userConfigsChanged(): Flow<*> =
+fun ConfigFactoryProtocol.userConfigsChanged(debounceMills: Long = 0L): Flow<*> =
     configUpdateNotifications.filter { it is ConfigUpdateNotification.UserConfigsModified || it is ConfigUpdateNotification.UserConfigsMerged }
+        .let { flow ->
+            if (debounceMills > 0) {
+                flow.debounce(debounceMills)
+            } else {
+                flow
+            }
+        }
 
 /**
  * Wait until all configs of given group are pushed to the server.

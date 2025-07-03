@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -42,7 +43,6 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ExpirationUtil
-import org.session.libsession.utilities.StringSubstitutionConstants.COUNT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.LIMIT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
@@ -50,8 +50,8 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.recipients.displayNameOrFallback
 import org.session.libsession.utilities.recipients.getType
+import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
@@ -60,6 +60,7 @@ import org.thoughtcrime.securesms.audio.AudioSlidePlayer
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
+import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.ReactionDatabase
 import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
@@ -81,8 +82,9 @@ import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
-import org.thoughtcrime.securesms.util.RecipientChangeSource
 import org.thoughtcrime.securesms.util.avatarOptions
+import org.thoughtcrime.securesms.util.mapStateFlow
+import org.thoughtcrime.securesms.util.mapToStateFlow
 import org.thoughtcrime.securesms.webrtc.CallManager
 import org.thoughtcrime.securesms.webrtc.data.State
 import java.time.ZoneId
@@ -111,10 +113,10 @@ class ConversationViewModel @AssistedInject constructor(
     val dateUtils: DateUtils,
     private val expiredGroupManager: ExpiredGroupManager,
     private val avatarUtils: AvatarUtils,
-    private val recipientChangeSource: RecipientChangeSource,
     private val openGroupManager: OpenGroupManager,
     private val proStatusManager: ProStatusManager,
     private val recipientRepository: RecipientRepository,
+    private val lokiThreadDatabase: LokiThreadDatabase,
 ) : ViewModel() {
 
     val threadId: Long = threadDb.getThreadIdIfExistsFor(address)
@@ -129,74 +131,64 @@ class ConversationViewModel @AssistedInject constructor(
             (getBlindedRecipient(recipient)?.acceptsCommunityMessageRequests == true || isContactRecipient) && !isLocalNumber && !approvedMe
         } ?: false
 
-    private val _uiState = MutableStateFlow(ConversationUiState())
-    val uiState: StateFlow<ConversationUiState> get() = _uiState
-
     private val _uiEvents = MutableSharedFlow<ConversationUiEvent>(extraBufferCapacity = 1)
     val uiEvents: SharedFlow<ConversationUiEvent> get() = _uiEvents
 
     private val _dialogsState = MutableStateFlow(DialogsState())
     val dialogsState: StateFlow<DialogsState> = _dialogsState
 
-    private val _isAdmin = MutableStateFlow(false)
-    val isAdmin: StateFlow<Boolean> = _isAdmin
+    val recipientFlow: StateFlow<Recipient?> = recipientRepository.observeRecipient(address)
+        .filterNotNull()
+        .mapToStateFlow(viewModelScope, recipientRepository.getRecipientSync(address)) { it }
 
-    // all the data we need for the conversation app bar
-    private val _appBarData = MutableStateFlow(ConversationAppBarData(
-        title = "",
-        pagerData = emptyList(),
-        showCall = false,
-        showAvatar = false,
-        avatarUIData = AvatarUIData(
-            elements = emptyList()
-        )
-    ))
-    val appBarData: StateFlow<ConversationAppBarData> = _appBarData
+    val openGroupFlow: StateFlow<OpenGroup?> =
+        lokiThreadDatabase.retrieveAndObserveOpenGroup(viewModelScope, threadId) ?: MutableStateFlow(null)
 
-    private var _recipient: RetrieveOnce<Recipient> = RetrieveOnce {
-        val conversation = repository.maybeGetRecipientForThreadId(threadId)?.let(recipientRepository::getRecipientSync)
+    val openGroup: OpenGroup?
+        get() = openGroupFlow.value
 
-        // set admin from current conversation
-        val conversationType = conversation?.getType()
-        // Determining is the current user is an admin will depend on the kind of conversation we are in
-        _isAdmin.value = when(conversationType) {
-            // for Groups V2
-            MessageType.GROUPS_V2 -> {
-                configFactory.getGroup(AccountId(conversation.address.toString()))?.hasAdminKey() == true
+    val isAdmin: StateFlow<Boolean> = when {
+        address.isCommunity -> openGroupFlow.mapStateFlow(viewModelScope) { og -> isUserCommunityManager(og) }
+        address.isGroupV2 -> configFactory.userConfigsChanged(500)
+            .onStart { emit(Unit) }
+            .mapToStateFlow(viewModelScope, initialData = null) {
+                configFactory.getGroup(AccountId(address.address))?.hasAdminKey() == true
             }
 
-            // for legacy groups, check if the user created the group
-            MessageType.LEGACY_GROUP -> {
-                // for legacy groups, we check if the current user is the one who created the group
-                run {
-                    val localUserAddress =
-                        textSecurePreferences.getLocalNumber() ?: return@run false
-                    val group = storage.getGroup(conversation.address.toGroupString())
-                    group?.admins?.contains(fromSerialized(localUserAddress)) ?: false
-                }
+        address.isLegacyGroup -> textSecurePreferences.watchLocalNumber()
+            .filterNotNull()
+            .mapToStateFlow(viewModelScope, initialData = textSecurePreferences.getLocalNumber()) { myAddress ->
+                myAddress != null && storage.getGroup(address.toGroupString())
+                    ?.admins?.contains(fromSerialized(myAddress)) == true
             }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
-            // for communities the the `isUserModerator` field
-            MessageType.COMMUNITY -> isUserCommunityManager()
-
-            // false in other cases
-            else -> false
-        }
-
-        updateAppBarData(conversation)
-
-        conversation
+        else -> MutableStateFlow(false)
     }
 
+    private val _searchOpened = MutableStateFlow(false)
+
+    val appBarData: StateFlow<ConversationAppBarData> = combine(
+        recipientFlow.filterNotNull(),
+        openGroupFlow,
+        _searchOpened,
+        ::getAppBarData
+    ).stateIn(viewModelScope, SharingStarted.Eagerly, ConversationAppBarData(
+            title = "",
+            pagerData = emptyList(),
+            showCall = false,
+            showAvatar = false,
+            showSearch = false,
+            avatarUIData = AvatarUIData(emptyList())
+        ))
+
     val recipient: Recipient?
-        get() = _recipient.value
+        get() = recipientFlow.value
 
     val blindedRecipient: Recipient?
-        get() = _recipient.value?.let { recipient ->
+        get() = recipient?.let { recipient ->
             getBlindedRecipient(recipient)
         }
-
-    private var currentAppBarNotificationState: String? = null
 
     private fun getBlindedRecipient(recipient: Recipient?): Recipient? =
         when {
@@ -220,26 +212,20 @@ class ConversationViewModel @AssistedInject constructor(
             return repository.getInvitingAdmin(threadId)?.let(recipientRepository::getRecipientSync)
         }
 
-    val groupV2ThreadState: GroupThreadStatus
-        get() {
-            val recipient = recipient ?: return GroupThreadStatus.None
-            if (!recipient.isGroupV2Recipient) return GroupThreadStatus.None
-
-            return configFactory.getGroup(AccountId(recipient.address.toString())).let { group ->
-                when {
-                    group?.destroyed == true -> GroupThreadStatus.Destroyed
-                    group?.kicked == true -> GroupThreadStatus.Kicked
-                    else -> GroupThreadStatus.None
+    val groupV2ThreadState: Flow<GroupThreadStatus> get() = when {
+        !address.isGroupV2 -> flowOf( GroupThreadStatus.None)
+        else -> configFactory.userConfigsChanged(500)
+            .onStart { emit(Unit) }
+            .map {
+                configFactory.getGroup(AccountId(address.toString())).let { group ->
+                    when {
+                        group?.destroyed == true -> GroupThreadStatus.Destroyed
+                        group?.kicked == true -> GroupThreadStatus.Kicked
+                        else -> GroupThreadStatus.None
+                    }
                 }
             }
-        }
-
-    private val _openGroup: MutableStateFlow<OpenGroup?> by lazy {
-        MutableStateFlow(storage.getOpenGroup(threadId))
     }
-
-    val openGroup: OpenGroup?
-        get() = _openGroup.value
 
     val serverCapabilities: List<String>
         get() = openGroup?.let { storage.getServerCapabilities(it.server) } ?: listOf()
@@ -258,6 +244,33 @@ class ConversationViewModel @AssistedInject constructor(
             val recipient = recipient ?: return false
             return !recipient.isLocalNumber && !recipient.isLegacyGroupRecipient && !recipient.isCommunityRecipient && !recipient.approved
         }
+
+    private val _showLoader = MutableStateFlow(false)
+    val showLoader: StateFlow<Boolean> get() = _showLoader
+
+    val shouldExit: Flow<Boolean> get() = recipientFlow.map { it == null }
+
+    val inputBarState: StateFlow<InputBarState> = combine(
+        recipientFlow, openGroupFlow, legacyGroupDeprecationManager.deprecationState,
+        this::getInputBarState
+    ).stateIn(viewModelScope, SharingStarted.Eagerly, InputBarState())
+
+
+    private val _acceptingMessageRequest = MutableStateFlow<Boolean>(false)
+    val messageRequestState: StateFlow<MessageRequestUiState> = combine(
+        recipientFlow,
+        _acceptingMessageRequest,
+    ) { r, accepting ->
+        if (accepting) MessageRequestUiState.Pending
+        else buildMessageRequestState(r)
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, MessageRequestUiState.Invisible)
+
+
+    private val _uiMessages = MutableStateFlow<List<UiMessage>>(emptyList())
+    val uiMessages: StateFlow<List<UiMessage>> get() = _uiMessages
+
+    private val _charLimitState = MutableStateFlow<InputBarCharLimitState?>(null)
+    val charLimitState: StateFlow<InputBarCharLimitState?> get() = _charLimitState
 
     /**
      * returns true for outgoing message request, whether they are for 1 on 1 conversations or community outgoing MR
@@ -337,55 +350,6 @@ class ConversationViewModel @AssistedInject constructor(
     val lastSeenMessageId: Flow<MessageId?>
         get() = repository.getLastSentMessageID(threadId)
 
-    init {
-        viewModelScope.launch(Dispatchers.Default) {
-            combine(
-                recipientRepository.observeRecipient(repository.maybeGetRecipientForThreadId(threadId)!!),
-                _openGroup,
-                legacyGroupDeprecationManager.deprecationState,
-                ::Triple
-            ).collect { (recipient, community, deprecationState) ->
-                _uiState.update {
-                    it.copy(
-                        shouldExit = recipient == null,
-                        inputBarState = getInputBarState(recipient, community, deprecationState),
-                        messageRequestState = buildMessageRequestState(recipient),
-                    )
-                }
-            }
-        }
-
-        // update state on recipient changes
-        viewModelScope.launch(Dispatchers.Default) {
-            recipientChangeSource.changes().collect {
-                updateAppBarData(recipient)
-                _uiState.update {
-                    it.copy(
-                        shouldExit = recipient == null,
-                        inputBarState = getInputBarState(recipient, _openGroup.value, legacyGroupDeprecationManager.deprecationState.value),
-                    )
-                }
-            }
-        }
-
-        // Listen for changes in the open group's write access
-        viewModelScope.launch {
-            openGroupManager.getCommunitiesWriteAccessFlow()
-                .map {
-                    withContext(Dispatchers.Default) {
-                        if (openGroup?.groupId != null)
-                            it[openGroup?.groupId]
-                        else null
-                    }
-                }
-                .filterNotNull()
-                .collect{
-                    // update our community object
-                    _openGroup.value = openGroup?.copy(canWrite = it)
-                }
-        }
-    }
-
     private fun getInputBarState(
         recipient: Recipient?,
         community: OpenGroup?,
@@ -393,7 +357,7 @@ class ConversationViewModel @AssistedInject constructor(
     ): InputBarState {
         return when {
             // prioritise cases that demand the input to be hidden
-            !shouldShowInput(recipient, community, deprecationState) -> InputBarState(
+            !shouldShowInput(recipient, deprecationState) -> InputBarState(
                 contentState = InputBarContentState.Hidden,
                 enableAttachMediaControls = false
             )
@@ -411,7 +375,7 @@ class ConversationViewModel @AssistedInject constructor(
             )
 
             // the user does not have write access in the community
-            openGroup?.canWrite == false -> InputBarState(
+            community?.canWrite == false -> InputBarState(
                 contentState = InputBarContentState.Disabled(
                     text = application.getString(R.string.permissionsWriteCommunity),
                 ),
@@ -421,84 +385,79 @@ class ConversationViewModel @AssistedInject constructor(
             // other cases the input is visible, and the buttons might be disabled based on some criteria
             else -> InputBarState(
                 contentState = InputBarContentState.Visible,
-                enableAttachMediaControls = shouldEnableInputMediaControls(recipient)
+                enableAttachMediaControls = shouldEnableInputMediaControls(recipient, community)
             )
         }
     }
 
-    private fun updateAppBarData(conversation: Recipient?) {
-        viewModelScope.launch {
-            // sort out the pager data, if any
-            val pagerData: MutableList<ConversationAppBarPagerData> = mutableListOf()
-            if (conversation != null) {
-                // Specify the disappearing messages subtitle if we should
-                val expiryMode = conversation.expiryMode
-                if (expiryMode.expiryMillis > 0) {
-                    // Get the type of disappearing message and the abbreviated duration..
-                    val dmTypeString = when (expiryMode) {
-                        is ExpiryMode.AfterRead -> R.string.disappearingMessagesDisappearAfterReadState
-                        else -> R.string.disappearingMessagesDisappearAfterSendState
-                    }
-                    val durationAbbreviated = ExpirationUtil.getExpirationAbbreviatedDisplayValue(expiryMode.expirySeconds)
-
-                    // ..then substitute into the string..
-                    val subtitleTxt = application.getSubbedString(dmTypeString,
-                        TIME_KEY to durationAbbreviated
-                    )
-
-                    // .. and apply to the subtitle.
-                    pagerData += ConversationAppBarPagerData(
-                        title = subtitleTxt,
-                        action = {
-                            showDisappearingMessages()
-                        },
-                        icon = R.drawable.ic_clock_11,
-                        qaTag = application.resources.getString(R.string.AccessibilityId_disappearingMessagesDisappear)
-                    )
-                }
-
-                currentAppBarNotificationState = null
-                if (conversation.isMuted() || conversation.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS) {
-                    currentAppBarNotificationState = getNotificationStatusTitle(conversation)
-                    pagerData += ConversationAppBarPagerData(
-                        title = currentAppBarNotificationState!!,
-                        action = {
-                            showNotificationSettings()
-                        }
-                    )
-                }
-
-                if (conversation.isGroupOrCommunityRecipient && conversation.approved) {
-                    val title = if (conversation.isCommunityRecipient) {
-                        val userCount = openGroup?.let { lokiAPIDb.getUserCount(it.room, it.server) } ?: 0
-                        application.resources.getQuantityString(R.plurals.membersActive, userCount, userCount)
-                    } else {
-                        val userCount = if (conversation.isGroupV2Recipient) {
-                            storage.getMembers(conversation.address.toString()).size
-                        } else { // legacy closed groups
-                            groupDb.getGroupMemberAddresses(conversation.address.toGroupString(), true).size
-                        }
-                        application.resources.getQuantityString(R.plurals.members, userCount, userCount)
-                    }
-                    pagerData += ConversationAppBarPagerData(
-                        title = title,
-                        action = {
-                            showGroupMembers()
-                        },
-                    )
-                }
+    private suspend fun getAppBarData(conversation: Recipient, community: OpenGroup?, showSearch: Boolean): ConversationAppBarData {
+        // sort out the pager data, if any
+        val pagerData: MutableList<ConversationAppBarPagerData> = mutableListOf()
+        // Specify the disappearing messages subtitle if we should
+        val expiryMode = conversation.expiryMode
+        if (expiryMode.expiryMillis > 0) {
+            // Get the type of disappearing message and the abbreviated duration..
+            val dmTypeString = when (expiryMode) {
+                is ExpiryMode.AfterRead -> R.string.disappearingMessagesDisappearAfterReadState
+                else -> R.string.disappearingMessagesDisappearAfterSendState
             }
+            val durationAbbreviated = ExpirationUtil.getExpirationAbbreviatedDisplayValue(expiryMode.expirySeconds)
 
-            // calculate the main app bar data
-            val avatarData = avatarUtils.getUIDataFromRecipient(conversation)
-            _appBarData.value = ConversationAppBarData(
-                title = conversation.takeUnless { it?.isLocalNumber == true }?.displayName ?: application.getString(R.string.noteToSelf),
-                pagerData = pagerData,
-                showCall = conversation?.showCallMenu ?: false,
-                showAvatar = showOptionsMenu,
-                showSearch = _appBarData.value.showSearch,
-                avatarUIData = avatarData
+            // ..then substitute into the string..
+            val subtitleTxt = application.getSubbedString(dmTypeString,
+                TIME_KEY to durationAbbreviated
             )
+
+            // .. and apply to the subtitle.
+            pagerData += ConversationAppBarPagerData(
+                title = subtitleTxt,
+                action = {
+                    showDisappearingMessages()
+                },
+                icon = R.drawable.ic_clock_11,
+                qaTag = application.resources.getString(R.string.AccessibilityId_disappearingMessagesDisappear)
+            )
+        }
+
+        if (conversation.isMuted() || conversation.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS) {
+            pagerData += ConversationAppBarPagerData(
+                title = getNotificationStatusTitle(conversation),
+                action = {
+                    showNotificationSettings()
+                }
+            )
+        }
+
+        if (conversation.isGroupOrCommunityRecipient && conversation.approved) {
+            val title = if (conversation.isCommunityRecipient) {
+                val userCount = community?.let { lokiAPIDb.getUserCount(it.room, it.server) } ?: 0
+                application.resources.getQuantityString(R.plurals.membersActive, userCount, userCount)
+            } else {
+                val userCount = if (conversation.isGroupV2Recipient) {
+                    storage.getMembers(conversation.address.toString()).size
+                } else { // legacy closed groups
+                    groupDb.getGroupMemberAddresses(conversation.address.toGroupString(), true).size
+                }
+                application.resources.getQuantityString(R.plurals.members, userCount, userCount)
+            }
+            pagerData += ConversationAppBarPagerData(
+                title = title,
+                action = {
+                    showGroupMembers()
+                },
+            )
+        }
+
+        // calculate the main app bar data
+        val avatarData = avatarUtils.getUIDataFromRecipient(conversation)
+        return ConversationAppBarData(
+            title = conversation.takeUnless { it.isLocalNumber }?.displayName ?: application.getString(R.string.noteToSelf),
+            pagerData = pagerData,
+            showCall = conversation.showCallMenu,
+            showAvatar = showOptionsMenu,
+            showSearch = showSearch,
+            avatarUIData = avatarData
+        ).also {
             // also preload the larger version of the avatar in case the user goes to the settings
             avatarData.elements.mapNotNull { it.contactPhoto }.forEach {
                 val loadSize = application.resources.getDimensionPixelSize(R.dimen.large_profile_picture_size)
@@ -509,7 +468,7 @@ class ConversationViewModel @AssistedInject constructor(
         }
     }
 
-    private fun getNotificationStatusTitle(conversation: Recipient): String{
+    private fun getNotificationStatusTitle(conversation: Recipient): String {
         return if(conversation.isMuted()) application.getString(R.string.notificationsHeaderMute)
         else application.getString(R.string.notificationsHeaderMentionsOnly)
     }
@@ -521,7 +480,7 @@ class ConversationViewModel @AssistedInject constructor(
      *  1. First time we send message to a person.
      *     Since we haven't been approved by them, we can't send them any media, only text
      */
-    private fun shouldEnableInputMediaControls(recipient: Recipient?): Boolean {
+    private fun shouldEnableInputMediaControls(recipient: Recipient?, openGroup: OpenGroup?): Boolean {
 
         // Specifically disallow multimedia if we don't have a recipient to send anything to
         if (recipient == null) {
@@ -564,9 +523,9 @@ class ConversationViewModel @AssistedInject constructor(
      *  3. The legacy group is deprecated, OR
      *  4. Blinded recipient who have disabled message request from community members
      */
-    private fun shouldShowInput(recipient: Recipient?,
-                                community: OpenGroup?,
-                                deprecationState: LegacyGroupDeprecationManager.DeprecationState
+    private fun shouldShowInput(
+        recipient: Recipient?,
+        deprecationState: LegacyGroupDeprecationManager.DeprecationState
     ): Boolean {
         return when {
             recipient?.isGroupV2Recipient == true -> !repository.isGroupReadOnly(recipient)
@@ -815,7 +774,7 @@ class ConversationViewModel @AssistedInject constructor(
 
         viewModelScope.launch(Dispatchers.IO) {
             // show a loading indicator
-            _uiState.update { it.copy(showLoader = true) }
+            _showLoader.value = true
 
             // delete remotely
             try {
@@ -854,7 +813,7 @@ class ConversationViewModel @AssistedInject constructor(
             }
 
             // hide loading indicator
-            _uiState.update { it.copy(showLoader = false) }
+            _showLoader.value = false
         }
     }
 
@@ -863,7 +822,7 @@ class ConversationViewModel @AssistedInject constructor(
 
         viewModelScope.launch(Dispatchers.IO) {
             // show a loading indicator
-            _uiState.update { it.copy(showLoader = true) }
+            _showLoader.value = true
 
             // delete remotely
             try {
@@ -905,7 +864,7 @@ class ConversationViewModel @AssistedInject constructor(
             }
 
             // hide loading indicator
-            _uiState.update { it.copy(showLoader = false) }
+            _showLoader.value = false
         }
     }
 
@@ -955,7 +914,7 @@ class ConversationViewModel @AssistedInject constructor(
     private fun markAsDeletedForEveryoneGroupsV2(data: DeleteForEveryoneDialogData){
         viewModelScope.launch(Dispatchers.Default) {
             // show a loading indicator
-            _uiState.update { it.copy(showLoader = true) }
+            _showLoader.value = true
 
             try {
                 repository.deleteGroupV2MessagesRemotely(recipient!!.address, data.messages)
@@ -997,14 +956,14 @@ class ConversationViewModel @AssistedInject constructor(
             }
 
             // hide loading indicator
-            _uiState.update { it.copy(showLoader = false) }
+            _showLoader.value = false
         }
     }
 
     private fun markAsDeletedForEveryoneCommunity(data: DeleteForEveryoneDialogData){
         viewModelScope.launch(Dispatchers.IO) {
             // show a loading indicator
-            _uiState.update { it.copy(showLoader = true) }
+            _showLoader.value = true
 
             // delete remotely
             try {
@@ -1043,11 +1002,11 @@ class ConversationViewModel @AssistedInject constructor(
             }
 
             // hide loading indicator
-            _uiState.update { it.copy(showLoader = false) }
+            _showLoader.value = false
         }
     }
 
-    private fun isUserCommunityManager() = openGroup?.let { openGroup ->
+    private fun isUserCommunityManager(openGroup: OpenGroup?) = openGroup?.let { openGroup ->
         val userPublicKey = textSecurePreferences.getLocalNumber() ?: return@let false
         openGroupManager.isUserModerator(openGroup.id, userPublicKey, blindedPublicKey)
     } ?: false
@@ -1086,45 +1045,31 @@ class ConversationViewModel @AssistedInject constructor(
 
     fun acceptMessageRequest(): Job = viewModelScope.launch {
         val recipient = recipient ?: return@launch Log.w("Loki", "Recipient was null for accept message request action")
-        val currentState = _uiState.value.messageRequestState as? MessageRequestUiState.Visible
+        val currentState = messageRequestState.value as? MessageRequestUiState.Visible
             ?: return@launch Log.w("Loki", "Current state was not visible for accept message request action")
 
-        _uiState.update {
-            it.copy(messageRequestState = MessageRequestUiState.Pending(currentState))
-        }
+        _acceptingMessageRequest.value = true
 
         repository.acceptMessageRequest(threadId, recipient.address)
-            .onSuccess {
-                _uiState.update {
-                    it.copy(messageRequestState = MessageRequestUiState.Invisible)
-                }
-            }
             .onFailure {
                 Log.w("Loki", "Couldn't accept message request due to error", it)
-
-                _uiState.update { state ->
-                    state.copy(messageRequestState = currentState)
-                }
+                _acceptingMessageRequest.value = false
             }
     }
 
     fun declineMessageRequest() = viewModelScope.launch {
         repository.declineMessageRequest(threadId, recipient!!.address)
-            .onSuccess {
-                _uiState.update { it.copy(shouldExit = true) }
-            }
             .onFailure {
                 Log.w("Loki", "Couldn't decline message request due to error", it)
             }
     }
 
     private fun showMessage(message: String) {
-        _uiState.update { currentUiState ->
-            val messages = currentUiState.uiMessages + UiMessage(
+        _uiMessages.update { messages ->
+            messages + UiMessage(
                 id = UUID.randomUUID().mostSignificantBits,
                 message = message
             )
-            currentUiState.copy(uiMessages = messages)
         }
     }
 
@@ -1135,9 +1080,8 @@ class ConversationViewModel @AssistedInject constructor(
     }
 
     fun messageShown(messageId: Long) {
-        _uiState.update { currentUiState ->
-            val messages = currentUiState.uiMessages.filterNot { it.id == messageId }
-            currentUiState.copy(uiMessages = messages)
+        _uiMessages.update { messages ->
+            messages.filterNot { it.id == messageId }
         }
     }
 
@@ -1165,7 +1109,7 @@ class ConversationViewModel @AssistedInject constructor(
     fun implicitlyApproveRecipient(): Job? {
         val recipient = recipient
 
-        if (uiState.value.messageRequestState is MessageRequestUiState.Visible) {
+        if (messageRequestState.value is MessageRequestUiState.Visible) {
             return acceptMessageRequest()
         } else if (recipient?.approved == false) {
             // edge case for new outgoing thread on new recipient without sending approval messages
@@ -1266,7 +1210,7 @@ class ConversationViewModel @AssistedInject constructor(
 
     fun validateMessageLength(): Boolean {
         // the message is too long if we have a negative char left in the input state
-        val charsLeft = _uiState.value.inputBarState.charLimitState?.count ?: 0
+        val charsLeft = charLimitState.value?.count ?: 0
         return if(charsLeft < 0){
             // the user is trying to send a message that is too long - we should display a dialog
             // we currently have different logic for PRE and POST Pro launch
@@ -1284,7 +1228,7 @@ class ConversationViewModel @AssistedInject constructor(
     }
 
     private fun handleCharLimitTappedForProUser(){
-        if((_uiState.value.inputBarState.charLimitState?.count ?: 0) < 0){
+        if((charLimitState.value?.count ?: 0) < 0){
             showMessageTooLongDialog()
         } else {
             showMessageLengthDialog()
@@ -1297,7 +1241,7 @@ class ConversationViewModel @AssistedInject constructor(
 
     fun showMessageLengthDialog(){
         _dialogsState.update {
-            val charsLeft = _uiState.value.inputBarState.charLimitState?.count ?: 0
+            val charsLeft = charLimitState.value?.count ?: 0
             it.copy(
                 showSimpleDialog = SimpleDialogData(
                     title = application.getString(R.string.modalMessageCharacterDisplayTitle),
@@ -1381,12 +1325,12 @@ class ConversationViewModel @AssistedInject constructor(
     fun getUsername(accountId: String) = recipientRepository
         .getRecipientDisplayNameSync(fromSerialized(accountId))
 
-    fun onSearchOpened(){
-        _appBarData.update { _appBarData.value.copy(showSearch = true) }
+    fun onSearchOpened() {
+        _searchOpened.value = true
     }
 
     fun onSearchClosed(){
-        _appBarData.update { _appBarData.value.copy(showSearch = false) }
+        _searchOpened.value = false
     }
 
     private fun showDisappearingMessages() {
@@ -1413,15 +1357,6 @@ class ConversationViewModel @AssistedInject constructor(
         _uiEvents.tryEmit(ConversationUiEvent.ShowNotificationSettings(address))
     }
 
-    fun onResume() {
-        // when resuming we want to check if the app bar has notification status data, if so update it if it has changed
-        if(currentAppBarNotificationState != null && recipient!= null){
-            val newAppBarNotificationState = getNotificationStatusTitle(recipient!!)
-            if(currentAppBarNotificationState != newAppBarNotificationState){
-                updateAppBarData(recipient)
-            }
-        }
-    }
 
     fun onTextChanged(text: CharSequence) {
         // check the character limit
@@ -1439,13 +1374,7 @@ class ConversationViewModel @AssistedInject constructor(
             null
         }
 
-        _uiState.update {
-            it.copy(
-                inputBarState = it.inputBarState.copy(
-                    charLimitState = charLimitState
-                )
-            )
-        }
+        _charLimitState.value = charLimitState
     }
 
     @AssistedFactory
@@ -1504,21 +1433,12 @@ class ConversationViewModel @AssistedInject constructor(
 
 data class UiMessage(val id: Long, val message: String)
 
-data class ConversationUiState(
-    val uiMessages: List<UiMessage> = emptyList(),
-    val messageRequestState: MessageRequestUiState = MessageRequestUiState.Invisible,
-    val shouldExit: Boolean = false,
-    val inputBarState: InputBarState = InputBarState(),
-    val showLoader: Boolean = false,
-)
-
 data class InputBarState(
     val contentState: InputBarContentState = InputBarContentState.Visible,
     // Note: These input media controls are with regard to whether the user can attach multimedia files
     // or record voice messages to be sent to a recipient - they are NOT things like video or audio
     // playback controls.
     val enableAttachMediaControls: Boolean = true,
-    val charLimitState: InputBarCharLimitState? = null,
 )
 
 data class InputBarCharLimitState(
@@ -1545,33 +1465,11 @@ sealed interface ConversationUiEvent {
 sealed interface MessageRequestUiState {
     data object Invisible : MessageRequestUiState
 
-    data class Pending(val prevState: Visible) : MessageRequestUiState
+    data object Pending : MessageRequestUiState
 
     data class Visible(
-        @StringRes val acceptButtonText: Int,
+        @param:StringRes val acceptButtonText: Int,
         // If null, the block button shall not be shown
         val blockButtonText: String? = null
     ) : MessageRequestUiState
-}
-
-data class RetrieveOnce<T>(val retrieval: () -> T?) {
-    private var triedToRetrieve: Boolean = false
-    private var _value: T? = null
-
-    val value: T?
-        get() {
-            synchronized(this) {
-                if (triedToRetrieve) {
-                    return _value
-                }
-
-                triedToRetrieve = true
-                _value = retrieval()
-                return _value
-            }
-        }
-
-    fun updateTo(value: T?) {
-        _value = value
-    }
 }
