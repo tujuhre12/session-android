@@ -1426,7 +1426,7 @@ class ConversationViewModel(
     fun onTextChanged(text: CharSequence) {
         // check the character limit
         val maxChars = proStatusManager.getCharacterLimit()
-        val charsLeft = maxChars - text.length
+        val charsLeft = maxChars - text.toString().toByteArray(Charsets.UTF_8).size // using utf-8 to match libsession and iOS
 
         // update the char limit state based on characters left
         val charLimitState = if(charsLeft <= CHARACTER_LIMIT_THRESHOLD){
