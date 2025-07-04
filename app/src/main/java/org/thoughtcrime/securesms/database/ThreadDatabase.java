@@ -70,6 +70,10 @@ import javax.inject.Singleton;
 
 import dagger.Lazy;
 import kotlin.collections.CollectionsKt;
+import kotlinx.coroutines.channels.BufferOverflow;
+import kotlinx.coroutines.flow.Flow;
+import kotlinx.coroutines.flow.MutableSharedFlow;
+import kotlinx.coroutines.flow.SharedFlowKt;
 import network.loki.messenger.libsession_util.util.GroupInfo;
 
 @Singleton
@@ -154,6 +158,7 @@ public class ThreadDatabase extends Database {
   }
 
   private ConversationThreadUpdateListener updateListener;
+  private final MutableSharedFlow<Long> updateNotifications = SharedFlowKt.MutableSharedFlow(0, 256, BufferOverflow.DROP_OLDEST);
 
   private final Lazy<RecipientRepository> recipientRepository;
 
@@ -163,6 +168,11 @@ public class ThreadDatabase extends Database {
                         Lazy<RecipientRepository> recipientRepository) {
     super(context, databaseHelper);
     this.recipientRepository = recipientRepository;
+  }
+
+  @NonNull
+  public Flow<Long> getUpdateNotifications() {
+    return updateNotifications;
   }
 
   public void setUpdateListener(ConversationThreadUpdateListener updateListener) {
@@ -203,7 +213,6 @@ public class ThreadDatabase extends Database {
 
     SQLiteDatabase db = getWritableDatabase();
     db.update(TABLE_NAME, contentValues, ID + " = ?", new String[] {threadId + ""});
-    notifyConversationListListeners();
   }
 
   public void clearSnippet(long threadId){
@@ -214,12 +223,14 @@ public class ThreadDatabase extends Database {
     SQLiteDatabase db = getWritableDatabase();
     db.update(TABLE_NAME, contentValues, ID + " = ?", new String[] {threadId + ""});
     notifyConversationListListeners();
+    notifyThreadUpdated(threadId);
   }
 
   public void deleteThread(long threadId) {
     SQLiteDatabase db = getWritableDatabase();
     db.delete(TABLE_NAME, ID_WHERE, new String[] {threadId + ""});
     notifyConversationListListeners();
+    notifyThreadUpdated(threadId);
   }
 
   public void trimThreadBefore(long threadId, long timestamp) {
@@ -227,6 +238,7 @@ public class ThreadDatabase extends Database {
     DatabaseComponent.get(context).smsDatabase().deleteMessagesInThreadBeforeDate(threadId, timestamp);
     DatabaseComponent.get(context).mmsDatabase().deleteMessagesInThreadBeforeDate(threadId, timestamp, false);
     update(threadId, false);
+    notifyThreadUpdated(threadId);
     notifyConversationListeners(threadId);
   }
 
@@ -246,6 +258,7 @@ public class ThreadDatabase extends Database {
     SQLiteDatabase db = getWritableDatabase();
     db.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {threadId+""});
 
+    notifyThreadUpdated(threadId);
     notifyConversationListListeners();
 
     return new LinkedList<MarkedMessageInfo>() {{
@@ -270,6 +283,7 @@ public class ThreadDatabase extends Database {
     final List<MarkedMessageInfo> smsRecords = DatabaseComponent.get(context).smsDatabase().setMessagesRead(threadId);
     final List<MarkedMessageInfo> mmsRecords = DatabaseComponent.get(context).mmsDatabase().setMessagesRead(threadId);
 
+    notifyThreadUpdated(threadId);
     notifyConversationListListeners();
 
     return new LinkedList<MarkedMessageInfo>() {{
@@ -421,7 +435,7 @@ public class ThreadDatabase extends Database {
     // Approved conversations will come from two different sources:
     // 1. Config based conversations
     // 2. Blinded conversations stored in the database
-    final List<Address> blindedConversations = getBlindedConversations(true, false);
+    final List<Address> blindedConversations = getBlindedConversations(false, false);
     final List<Address> configBasedConversations = recipientRepository.get().getAllConfigBasedApprovedConversations();
 
     return getFilteredConversationList(CollectionsKt.plus(blindedConversations, configBasedConversations));
@@ -471,7 +485,7 @@ public class ThreadDatabase extends Database {
     db.execSQL(reflectUpdates, new Object[]{threadId});
     db.setTransactionSuccessful();
     db.endTransaction();
-    notifyConversationListeners(threadId);
+    notifyThreadUpdated(threadId);
     notifyConversationListListeners();
     return true;
   }
@@ -591,6 +605,8 @@ public class ThreadDatabase extends Database {
           if (updateListener != null) {
               updateListener.threadCreated(address, threadId);
           }
+
+          updateNotifications.tryEmit(threadId);
         }
 
       return threadId;
@@ -614,13 +630,14 @@ public class ThreadDatabase extends Database {
 
   public void setHasSent(long threadId, boolean hasSent) {
     ContentValues contentValues = new ContentValues(1);
-    contentValues.put(HAS_SENT, hasSent ? 1 : 0);
+    final int hasSentValue = hasSent ? 1 : 0;
+    contentValues.put(HAS_SENT, hasSentValue);
 
-    getWritableDatabase().update(TABLE_NAME, contentValues, ID_WHERE,
-                                                new String[] {String.valueOf(threadId)});
-
-    notifyConversationListeners(threadId);
-    notifyConversationListListeners();
+    if (getWritableDatabase().update(TABLE_NAME, contentValues, ID + " = ? AND " + HAS_SENT + " != ?",
+                                                new String[] {String.valueOf(threadId), String.valueOf(hasSentValue)}) > 0) {
+      notifyThreadUpdated(threadId);
+      notifyConversationListListeners();
+    }
   }
 
   public boolean update(long threadId, boolean unarchive) {
@@ -646,8 +663,8 @@ public class ThreadDatabase extends Database {
         return false;
       }
     } finally {
+      notifyThreadUpdated(threadId);
       notifyConversationListListeners();
-      notifyConversationListeners(threadId);
     }
   }
 
@@ -707,10 +724,7 @@ public class ThreadDatabase extends Database {
 
   public void notifyThreadUpdated(long threadId) {
     notifyConversationListeners(threadId);
-  }
-
-  public interface ProgressListener {
-    void onProgress(int complete, int total);
+    updateNotifications.tryEmit(threadId);
   }
 
   private class Reader implements Closeable {

@@ -8,7 +8,6 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -20,10 +19,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
@@ -34,18 +30,15 @@ import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDD
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.currentUserName
-import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.database.DatabaseContentProviders
+import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
-import org.thoughtcrime.securesms.util.observeChanges
 import org.thoughtcrime.securesms.webrtc.CallManager
 import org.thoughtcrime.securesms.webrtc.data.State
 import javax.inject.Inject
@@ -60,7 +53,8 @@ class HomeViewModel @Inject constructor(
     private val configFactory: ConfigFactory,
     callManager: CallManager,
     private val storage: StorageProtocol,
-    private val groupManager: GroupManagerV2
+    private val groupManager: GroupManagerV2,
+    private val recipientDatabase: RecipientDatabase,
 ) : ViewModel() {
     // SharedFlow that emits whenever the user asks us to reload  the conversation
     private val manualReloadTrigger = MutableSharedFlow<Unit>(
@@ -86,49 +80,52 @@ class HomeViewModel @Inject constructor(
      * This flow will emit whenever the user asks us to reload the conversation list or
      * whenever the conversation list changes.
      */
-    val data: StateFlow<Data?> = combine(
-        observeConversationList(),
+    @Suppress("OPT_IN_USAGE")
+    val data: StateFlow<Data?> = (combine(
+        // First flow: conversation list and unapproved conversation count
+        merge(
+            manualReloadTrigger,
+            threadDb.updateNotifications,
+            configFactory.configUpdateNotifications,
+            recipientDatabase.updateNotifications,
+        )
+            .debounce(CHANGE_NOTIFICATION_DEBOUNCE_MILLS)
+            .onStart { emit(Unit) }
+            .map {
+                withContext(Dispatchers.Default) {
+                    threadDb.unapprovedConversationList.size to
+                            threadDb.approvedConversationList.apply {
+                                sortWith(CONVERSATION_COMPARATOR)
+                            }
+                }
+            },
+
+        // Second flow: typing status of threads
         observeTypingStatus(),
-        messageRequests(),
-        hasHiddenNoteToSelf()
-    ) { threads, typingStatus, messageRequests, hideNoteToSelf ->
+
+        // Third flow: whether the user has marked message requests as hidden
+        (TextSecurePreferences.events.filter { it == TextSecurePreferences.HAS_HIDDEN_MESSAGE_REQUESTS } as Flow<*>)
+            .onStart { emit(Unit) }
+            .map { prefs.hasHiddenMessageRequests() }
+    ) { (unapproveConvoCount, convoList), typingStatus, hiddenMessageRequest ->
         Data(
             items = buildList {
-                messageRequests?.let { add(it) }
+                if (unapproveConvoCount > 0 && !hiddenMessageRequest) {
+                    add(Item.MessageRequests(unapproveConvoCount))
+                }
 
-                threads.mapNotNullTo(this) { thread ->
-                    // if the note to self is marked as hidden,
-                    // or if the contact is blocked, do not add it
-                    if (
-                        thread.recipient.isLocalNumber && hideNoteToSelf ||
-                        thread.recipient.blocked
-                    ) {
-                        return@mapNotNullTo null
-                    }
-
+                convoList.mapTo(this) { thread ->
                     Item.Thread(
                         thread = thread,
                         isTyping = typingStatus.contains(thread.threadId),
                     )
                 }
             }
-        ) as? Data?
-    }.catch { err ->
+        )
+    } as Flow<Data?>).catch { err ->
         Log.e("HomeViewModel", "Error loading conversation list", err)
         emit(null)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
-
-    private fun hasHiddenMessageRequests() = TextSecurePreferences.events
-        .filter { it == TextSecurePreferences.HAS_HIDDEN_MESSAGE_REQUESTS }
-        .map { prefs.hasHiddenMessageRequests() }
-        .onStart { emit(prefs.hasHiddenMessageRequests()) }
-
-    private fun hasHiddenNoteToSelf(): Flow<Boolean> =
-        configFactory.userConfigsChanged()
-            .debounce(1000L)
-            .onStart { emit(Unit) }
-            .map { configFactory.withUserConfigs { it.userProfile.getNtsPriority() == PRIORITY_HIDDEN } }
-
 
     private fun observeTypingStatus(): Flow<Set<Long>> = typingStatusRepository
                     .typingThreads
@@ -136,42 +133,6 @@ class HomeViewModel @Inject constructor(
                     .onStart { emit(emptySet()) }
                     .distinctUntilChanged()
 
-    private fun messageRequests() = combine(
-        unapprovedConversationCount(),
-        hasHiddenMessageRequests(),
-        ::createMessageRequests
-    ).flowOn(Dispatchers.Default)
-
-    private fun unapprovedConversationCount() = reloadTriggersAndContentChanges()
-        .map { threadDb.unapprovedConversationList.size }
-
-    @Suppress("OPT_IN_USAGE")
-    private fun observeConversationList(): Flow<List<ThreadRecord>> = reloadTriggersAndContentChanges()
-        .mapLatest { _ ->
-            withContext(Dispatchers.Default) {
-                val records = threadDb.approvedConversationList
-
-                // Sort the threads by priority and last message timestamp
-                records.sortWith(threadRecordComparator)
-
-                records
-            }
-        }
-
-    private val threadRecordComparator = compareByDescending<ThreadRecord> { it.recipient.isPinned }
-        .thenByDescending { it.recipient.priority }
-        .thenByDescending { it.lastMessage?.timestamp ?: 0L }
-        .thenByDescending { it.date }
-        .thenBy { it.recipient.displayName }
-
-    @OptIn(FlowPreview::class)
-    private fun reloadTriggersAndContentChanges(): Flow<*> = merge(
-        manualReloadTrigger,
-        contentResolver.observeChanges(DatabaseContentProviders.ConversationList.CONTENT_URI),
-        configFactory.configUpdateNotifications.filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
-    )
-        .debounce(CHANGE_NOTIFICATION_DEBOUNCE_MILLS)
-        .onStart { emit(Unit) }
 
     fun tryReload() = manualReloadTrigger.tryEmit(Unit)
 
@@ -205,12 +166,6 @@ class HomeViewModel @Inject constructor(
         data class MessageRequests(val count: Int) : Item
     }
 
-    private fun createMessageRequests(
-        count: Int,
-        hidden: Boolean
-    ) = if (count > 0 && !hidden) Item.MessageRequests(count) else null
-
-
     fun hideNoteToSelf() {
         configFactory.withMutableUserConfigs {
             it.userProfile.setNtsPriority(PRIORITY_HIDDEN)
@@ -239,5 +194,11 @@ class HomeViewModel @Inject constructor(
 
     companion object {
         private const val CHANGE_NOTIFICATION_DEBOUNCE_MILLS = 100L
+
+        private val CONVERSATION_COMPARATOR = compareByDescending<ThreadRecord> { it.recipient.isPinned }
+            .thenByDescending { it.recipient.priority }
+            .thenByDescending { it.lastMessage?.timestamp ?: 0L }
+            .thenByDescending { it.date }
+            .thenBy { it.recipient.displayName }
     }
 }

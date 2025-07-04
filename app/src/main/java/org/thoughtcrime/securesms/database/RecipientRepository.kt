@@ -379,14 +379,18 @@ class RecipientRepository @Inject constructor(
             )
         }
 
+        val localNumber = preferences.getLocalNumber()
+
         val ntsSequence = sequenceOf(
-            preferences.getLocalNumber()
+            localNumber
                 ?.takeIf { shouldHaveNts }
                 ?.let(Address::fromSerialized))
             .filterNotNull()
 
         val contactsSequence = contacts.asSequence()
             .filter { it.priority >= 0 && contactFilter(it) }
+            // Exclude self in the contact if exists
+            .filterNot { it.id.equals(localNumber, ignoreCase = true) }
             .map { Address.fromSerialized(it.id) }
 
         val groupsSequence = groups.asSequence()

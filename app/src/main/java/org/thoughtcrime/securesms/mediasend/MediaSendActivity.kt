@@ -38,6 +38,7 @@ import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.scribbles.ImageEditorFragment
 import org.thoughtcrime.securesms.util.FilenameUtils.constructPhotoFilename
 import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
+import javax.inject.Inject
 
 /**
  * Encompasses the entire flow of sending media, starting from the selection process to the actual
@@ -55,6 +56,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
 
     private lateinit var binding: MediasendActivityBinding
 
+    @Inject
     lateinit var recipientRepository: RecipientRepository
 
 
