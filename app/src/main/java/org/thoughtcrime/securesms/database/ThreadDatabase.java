@@ -25,17 +25,17 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
 import com.annimon.stream.Stream;
 
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
 import org.json.JSONArray;
-import org.session.libsession.messaging.MessagingModuleConfiguration;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier;
 import org.session.libsession.snode.SnodeAPI;
 import org.session.libsession.utilities.Address;
+import org.session.libsession.utilities.ConfigFactoryProtocol;
 import org.session.libsession.utilities.ConfigFactoryProtocolKt;
 import org.session.libsession.utilities.DistributionTypes;
 import org.session.libsession.utilities.TextSecurePreferences;
@@ -45,14 +45,12 @@ import org.session.libsignal.utilities.AccountId;
 import org.session.libsignal.utilities.IdPrefix;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.Pair;
-import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 import org.thoughtcrime.securesms.database.model.GroupThreadStatus;
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord;
 import org.thoughtcrime.securesms.database.model.MessageRecord;
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord;
 import org.thoughtcrime.securesms.database.model.ThreadRecord;
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.SlideDeck;
 import org.thoughtcrime.securesms.notifications.MarkReadReceiver;
@@ -60,8 +58,10 @@ import org.thoughtcrime.securesms.notifications.MarkReadReceiver;
 import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -97,14 +97,18 @@ public class ThreadDatabase extends Database {
   public  static final String READ                   = "read";
   public  static final String UNREAD_COUNT           = "unread_count";
   public  static final String UNREAD_MENTION_COUNT   = "unread_mention_count";
+  @Deprecated(forRemoval = true)
   public  static final String DISTRIBUTION_TYPE      = "type"; // See: DistributionTypes.kt
   private static final String ERROR                  = "error";
   public  static final String SNIPPET_TYPE           = "snippet_type";
+  @Deprecated(forRemoval = true)
   public  static final String SNIPPET_URI            = "snippet_uri";
+  @Deprecated(forRemoval = true)
   public  static final String ARCHIVED               = "archived";
   public  static final String STATUS                 = "status";
   public  static final String DELIVERY_RECEIPT_COUNT = "delivery_receipt_count";
   public  static final String READ_RECEIPT_COUNT     = "read_receipt_count";
+  @Deprecated(forRemoval = true)
   public  static final String EXPIRES_IN             = "expires_in";
   public  static final String LAST_SEEN              = "last_seen";
   public static final String HAS_SENT                = "has_sent";
@@ -160,14 +164,29 @@ public class ThreadDatabase extends Database {
   private ConversationThreadUpdateListener updateListener;
   private final MutableSharedFlow<Long> updateNotifications = SharedFlowKt.MutableSharedFlow(0, 256, BufferOverflow.DROP_OLDEST);
 
-  private final Lazy<RecipientRepository> recipientRepository;
+  private final Lazy<@NonNull RecipientRepository> recipientRepository;
+  private final Lazy<@NonNull MmsSmsDatabase> mmsSmsDatabase;
+  private final Lazy<@NonNull ConfigFactoryProtocol> configFactory;
+  private final Lazy<@NonNull MessageNotifier> messageNotifier;
+  private final Lazy<@NonNull MmsDatabase> mmsDatabase;
+  private final Lazy<@NonNull SmsDatabase> smsDatabase;
 
   @Inject
   public ThreadDatabase(@dagger.hilt.android.qualifiers.ApplicationContext Context context,
                         Provider<SQLCipherOpenHelper> databaseHelper,
-                        Lazy<RecipientRepository> recipientRepository) {
+                        Lazy<@NonNull RecipientRepository> recipientRepository,
+                        Lazy<@NonNull MmsSmsDatabase> mmsSmsDatabase,
+                        Lazy<@NonNull ConfigFactoryProtocol> configFactory,
+                        Lazy<@NonNull MessageNotifier> messageNotifier,
+                        Lazy<@NonNull MmsDatabase> mmsDatabase,
+                        Lazy<@NonNull SmsDatabase> smsDatabase) {
     super(context, databaseHelper);
     this.recipientRepository = recipientRepository;
+    this.mmsSmsDatabase = mmsSmsDatabase;
+    this.configFactory = configFactory;
+    this.messageNotifier = messageNotifier;
+      this.mmsDatabase = mmsDatabase;
+      this.smsDatabase = smsDatabase;
   }
 
   @NonNull
@@ -179,13 +198,10 @@ public class ThreadDatabase extends Database {
     this.updateListener = updateListener;
   }
 
-  private long createThreadForRecipient(Address address, boolean group, int distributionType) {
-    ContentValues contentValues = new ContentValues(4);
+  private long createThreadForRecipient(Address address) {
+    ContentValues contentValues = new ContentValues(2);
 
     contentValues.put(ADDRESS, address.toString());
-
-    if (group) contentValues.put(DISTRIBUTION_TYPE, distributionType);
-
     contentValues.put(MESSAGE_COUNT, 0);
 
     SQLiteDatabase db = getWritableDatabase();
@@ -228,15 +244,16 @@ public class ThreadDatabase extends Database {
 
   public void deleteThread(long threadId) {
     SQLiteDatabase db = getWritableDatabase();
-    db.delete(TABLE_NAME, ID_WHERE, new String[] {threadId + ""});
-    notifyConversationListListeners();
-    notifyThreadUpdated(threadId);
+    if (db.delete(TABLE_NAME, ID_WHERE, new String[] {threadId + ""}) > 0) {
+      notifyConversationListListeners();
+      notifyThreadUpdated(threadId);
+    }
   }
 
   public void trimThreadBefore(long threadId, long timestamp) {
     Log.i("ThreadDatabase", "Trimming thread: " + threadId + " before :"+timestamp);
-    DatabaseComponent.get(context).smsDatabase().deleteMessagesInThreadBeforeDate(threadId, timestamp);
-    DatabaseComponent.get(context).mmsDatabase().deleteMessagesInThreadBeforeDate(threadId, timestamp, false);
+    smsDatabase.get().deleteMessagesInThreadBeforeDate(threadId, timestamp);
+    mmsDatabase.get().deleteMessagesInThreadBeforeDate(threadId, timestamp, false);
     update(threadId, false);
     notifyThreadUpdated(threadId);
     notifyConversationListeners(threadId);
@@ -244,8 +261,8 @@ public class ThreadDatabase extends Database {
 
   public List<MarkedMessageInfo> setRead(long threadId, long lastReadTime) {
 
-    final List<MarkedMessageInfo> smsRecords = DatabaseComponent.get(context).smsDatabase().setMessagesRead(threadId, lastReadTime);
-    final List<MarkedMessageInfo> mmsRecords = DatabaseComponent.get(context).mmsDatabase().setMessagesRead(threadId, lastReadTime);
+    final List<MarkedMessageInfo> smsRecords = smsDatabase.get().setMessagesRead(threadId, lastReadTime);
+    final List<MarkedMessageInfo> mmsRecords = mmsDatabase.get().setMessagesRead(threadId, lastReadTime);
 
     if (smsRecords.isEmpty() && mmsRecords.isEmpty()) {
       return Collections.emptyList();
@@ -280,8 +297,8 @@ public class ThreadDatabase extends Database {
     SQLiteDatabase db = getWritableDatabase();
     db.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {threadId+""});
 
-    final List<MarkedMessageInfo> smsRecords = DatabaseComponent.get(context).smsDatabase().setMessagesRead(threadId);
-    final List<MarkedMessageInfo> mmsRecords = DatabaseComponent.get(context).mmsDatabase().setMessagesRead(threadId);
+    final List<MarkedMessageInfo> smsRecords = smsDatabase.get().setMessagesRead(threadId);
+    final List<MarkedMessageInfo> mmsRecords = mmsDatabase.get().setMessagesRead(threadId);
 
     notifyThreadUpdated(threadId);
     notifyConversationListListeners();
@@ -377,22 +394,24 @@ public class ThreadDatabase extends Database {
         new JSONArray(CollectionsKt.map(filter, Address::toString)).toString()
     };
 
-    try(final Cursor cursor = getReadableDatabase().rawQuery(query, selectionArgs)) {
+    try (final Cursor cursor = getReadableDatabase().rawQuery(query, selectionArgs)) {
       return getThreadRecords(cursor);
     }
   }
 
-  private List<Address> getBlindedConversations(@Nullable Boolean approved, @Nullable Boolean blocked) {
+  /**
+   * @param approved If true, only returns approved conversations, otherwise returns unapproved conversations.
+   *                 Null means return all conversations.
+   * @return All blinded conversations in the database, with their blinded address.
+   */
+  @NonNull
+  public List<Address> getBlindedConversations(@Nullable Boolean approved) {
     String query = "SELECT " + TABLE_NAME + "." + ADDRESS + " FROM " + TABLE_NAME +
             " INNER JOIN " + RecipientDatabase.TABLE_NAME + " ON " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.ADDRESS + " = " + TABLE_NAME + "." + ADDRESS +
             " WHERE " + TABLE_NAME + "." + ADDRESS + " LIKE '" + IdPrefix.BLINDED.getValue() + "%'";
 
     if (approved != null) {
       query += " AND " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.APPROVED + " = " + (approved ? 1 : 0);
-    }
-
-    if (blocked != null) {
-      query += " AND " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.BLOCK + " = " + (blocked ? 1 : 0);
     }
 
     try(final Cursor cursor = getReadableDatabase().rawQuery(query)) {
@@ -415,8 +434,11 @@ public class ThreadDatabase extends Database {
    *   in the database, normally this is useful only for data integrity purposes.
    */
   public List<kotlin.Pair<Address, Long>> getAllThreads() {
-    SQLiteDatabase db = getReadableDatabase();
-    String query = "SELECT " + ID + ", " + ADDRESS + " FROM " + TABLE_NAME + " WHERE nullif(" + ADDRESS + ", '') IS NOT NULL";
+    return getAllThreads(getReadableDatabase());
+  }
+
+  private List<kotlin.Pair<Address, Long>> getAllThreads(SQLiteDatabase db) {
+    final String query = "SELECT " + ID + ", " + ADDRESS + " FROM " + TABLE_NAME + " WHERE nullif(" + ADDRESS + ", '') IS NOT NULL";
     try (Cursor cursor = db.rawQuery(query, null)) {
       List<kotlin.Pair<Address, Long>> threads = new ArrayList<>(cursor.getCount());
       while (cursor.moveToNext()) {
@@ -430,28 +452,6 @@ public class ThreadDatabase extends Database {
     }
   }
 
-  @NonNull
-  public ArrayList<ThreadRecord> getApprovedConversationList() {
-    // Approved conversations will come from two different sources:
-    // 1. Config based conversations
-    // 2. Blinded conversations stored in the database
-    final List<Address> blindedConversations = getBlindedConversations(false, false);
-    final List<Address> configBasedConversations = recipientRepository.get().getAllConfigBasedApprovedConversations();
-
-    return getFilteredConversationList(CollectionsKt.plus(blindedConversations, configBasedConversations));
-  }
-
-  @NonNull
-  public ArrayList<ThreadRecord> getUnapprovedConversationList() {
-    // Unapproved conversations will come from two different sources:
-    // 1. Config based conversations
-    // 2. Blinded conversations stored in the database
-    final List<Address> blindedConversations = getBlindedConversations(false, false);
-    final List<Address> configBasedConversations = recipientRepository.get().getAllConfigBasedUnapprovedConversations();
-
-    return getFilteredConversationList(CollectionsKt.plus(blindedConversations, configBasedConversations));
-  }
-
   /**
    * @param threadId
    * @param timestamp
@@ -459,9 +459,8 @@ public class ThreadDatabase extends Database {
    */
   public boolean setLastSeen(long threadId, long timestamp) {
     // edge case where we set the last seen time for a conversation before it loads messages (joining community for example)
-    MmsSmsDatabase mmsSmsDatabase = DatabaseComponent.get(context).mmsSmsDatabase();
     Address forThreadId = getRecipientForThreadId(threadId);
-    if (mmsSmsDatabase.getConversationCount(threadId) <= 0 && forThreadId != null && forThreadId.isCommunity()) return false;
+    if (mmsSmsDatabase.get().getConversationCount(threadId) <= 0 && forThreadId != null && forThreadId.isCommunity()) return false;
 
     SQLiteDatabase db = getWritableDatabase();
 
@@ -565,21 +564,6 @@ public class ThreadDatabase extends Database {
   }
 
   public long getOrCreateThreadIdFor(Address address) {
-    return getOrCreateThreadIdFor(address, DistributionTypes.DEFAULT);
-  }
-
-  public void setThreadArchived(long threadId) {
-    ContentValues contentValues = new ContentValues(1);
-    contentValues.put(ARCHIVED, 1);
-
-    getWritableDatabase().update(TABLE_NAME, contentValues, ID_WHERE,
-            new String[] {String.valueOf(threadId)});
-
-    notifyConversationListListeners();
-    notifyConversationListeners(threadId);
-  }
-
-  public long getOrCreateThreadIdFor(Address address, int distributionType) {
     SQLiteDatabase db            = getReadableDatabase();
     String         where         = ADDRESS + " = ?";
     String[]       recipientsArg = new String[]{address.toString()};
@@ -596,7 +580,7 @@ public class ThreadDatabase extends Database {
             if (cursor != null && cursor.moveToFirst()) {
               threadId = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
             } else {
-              threadId = createThreadForRecipient(address, address.isGroupOrCommunity(), distributionType);
+              threadId = createThreadForRecipient(address);
               created = true;
             }
         }
@@ -640,11 +624,67 @@ public class ThreadDatabase extends Database {
     }
   }
 
-  public boolean update(long threadId, boolean unarchive) {
-    MmsSmsDatabase mmsSmsDatabase = DatabaseComponent.get(context).mmsSmsDatabase();
-    long count                    = mmsSmsDatabase.getConversationCount(threadId);
+  /**
+   * Synchronizes the threads with the given addresses. This will delete any threads that are not in the
+   * given addresses set, and will create threads for any addresses that do not have a thread yet.
+   *
+   * @return The deleted thread IDs.
+   */
+  @NonNull
+  public List<@NonNull Long> syncThreadWithAddresses(@NonNull Set<@NonNull Address> addresses) {
+    final SQLiteDatabase db = getWritableDatabase();
+    final List<Long> deletedThreadIds = new ArrayList<>();
 
-    try (MmsSmsDatabase.Reader reader = mmsSmsDatabase.readerFor(mmsSmsDatabase.getConversationSnippet(threadId))) {
+    db.beginTransaction();
+    try {
+      // Get all thread IDs to start with
+      Map<Address, Long> allThreads = CollectionsKt.associateTo(
+              getAllThreads(db),
+              new HashMap<>(),
+              (p) -> p
+      );
+
+      // Delete all threads that are not in the addresses set
+      for (Map.Entry<Address, Long> entry : allThreads.entrySet()) {
+        Address address = entry.getKey();
+        long threadId = entry.getValue();
+
+        if (!addresses.contains(address)) {
+          // This thread is not in the addresses set, delete it
+          db.delete(TABLE_NAME, ID_WHERE, new String[]{String.valueOf(threadId)});
+          deletedThreadIds.add(threadId);
+        }
+      }
+
+      // Create threads for any addresses that do not have a thread yet
+      for (Address address : addresses) {
+          if (!allThreads.containsKey(address)) {
+            // This address does not have a thread, create it
+            long threadId = createThreadForRecipient(address);
+            if (updateListener != null) {
+                updateListener.threadCreated(address, threadId);
+            }
+            updateNotifications.tryEmit(threadId);
+          }
+      }
+
+      db.setTransactionSuccessful();
+
+      for (Long deletedThreadId : deletedThreadIds) {
+        notifyThreadUpdated(deletedThreadId);
+      }
+      notifyConversationListListeners();
+
+      return deletedThreadIds;
+    } finally {
+      db.endTransaction();
+    }
+  }
+
+  public boolean update(long threadId, boolean unarchive) {
+    long count                    = mmsSmsDatabase.get().getConversationCount(threadId);
+
+    try (MmsSmsDatabase.Reader reader = mmsSmsDatabase.get().readerFor(mmsSmsDatabase.get().getConversationSnippet(threadId))) {
       MessageRecord record = null;
       if (reader != null) {
         record = reader.getNext();
@@ -675,11 +715,10 @@ public class ThreadDatabase extends Database {
    * @return true if we have set the last seen for the thread, false if there were no messages in the thread
    */
   public boolean markAllAsRead(long threadId, boolean isGroupRecipient, long lastSeenTime, boolean force) {
-    MmsSmsDatabase mmsSmsDatabase = DatabaseComponent.get(context).mmsSmsDatabase();
-    if (mmsSmsDatabase.getConversationCount(threadId) <= 0 && !force) return false;
+    if (mmsSmsDatabase.get().getConversationCount(threadId) <= 0 && !force) return false;
     List<MarkedMessageInfo> messages = setRead(threadId, lastSeenTime);
     MarkReadReceiver.process(context, messages);
-    ApplicationContext.getInstance(context).getMessageNotifier().updateNotification(context, threadId);
+    messageNotifier.get().updateNotification(context, threadId);
     return setLastSeen(threadId, lastSeenTime);
   }
 
@@ -748,7 +787,6 @@ public class ThreadDatabase extends Database {
 
     public ThreadRecord getCurrent() {
       long    threadId         = cursor.getLong(cursor.getColumnIndexOrThrow(ThreadDatabase.ID));
-      int     distributionType = cursor.getInt(cursor.getColumnIndexOrThrow(ThreadDatabase.DISTRIBUTION_TYPE));
       Address address          = Address.fromSerialized(cursor.getString(cursor.getColumnIndexOrThrow(ThreadDatabase.ADDRESS)));
 
       Recipient recipient            = recipientRepository.get().getRecipientSyncOrEmpty(address);
@@ -758,14 +796,10 @@ public class ThreadDatabase extends Database {
       int                unreadCount          = cursor.getInt(cursor.getColumnIndexOrThrow(ThreadDatabase.UNREAD_COUNT));
       int                unreadMentionCount   = cursor.getInt(cursor.getColumnIndexOrThrow(ThreadDatabase.UNREAD_MENTION_COUNT));
       long               type                 = cursor.getLong(cursor.getColumnIndexOrThrow(ThreadDatabase.SNIPPET_TYPE));
-      boolean            archived             = cursor.getInt(cursor.getColumnIndexOrThrow(ThreadDatabase.ARCHIVED)) != 0;
       int                status               = cursor.getInt(cursor.getColumnIndexOrThrow(ThreadDatabase.STATUS));
       int                deliveryReceiptCount = cursor.getInt(cursor.getColumnIndexOrThrow(ThreadDatabase.DELIVERY_RECEIPT_COUNT));
       int                readReceiptCount     = cursor.getInt(cursor.getColumnIndexOrThrow(ThreadDatabase.READ_RECEIPT_COUNT));
-      long               expiresIn            = cursor.getLong(cursor.getColumnIndexOrThrow(ThreadDatabase.EXPIRES_IN));
       long               lastSeen             = cursor.getLong(cursor.getColumnIndexOrThrow(ThreadDatabase.LAST_SEEN));
-      Uri                snippetUri           = getSnippetUri(cursor);
-      boolean            pinned              = cursor.getInt(cursor.getColumnIndexOrThrow(ThreadDatabase.IS_PINNED)) != 0;
       String             invitingAdmin       = cursor.getString(cursor.getColumnIndexOrThrow(LokiMessageDatabase.invitingSessionId));
 
       if (!TextSecurePreferences.isReadReceiptsEnabled(context)) {
@@ -775,14 +809,13 @@ public class ThreadDatabase extends Database {
       MessageRecord lastMessage = null;
 
       if (count > 0) {
-        MmsSmsDatabase mmsSmsDatabase = DatabaseComponent.get(context).mmsSmsDatabase();
-        lastMessage = mmsSmsDatabase.getLastMessage(threadId);
+        lastMessage = mmsSmsDatabase.get().getLastMessage(threadId);
       }
 
       final GroupThreadStatus groupThreadStatus;
       if (recipient.isGroupV2Recipient()) {
         GroupInfo.ClosedGroupInfo group = ConfigFactoryProtocolKt.getGroup(
-                MessagingModuleConfiguration.getShared().getConfigFactory(),
+                configFactory.get(),
                 new AccountId(recipient.getAddress().toString())
         );
         if (group != null && group.getDestroyed()) {
@@ -796,22 +829,9 @@ public class ThreadDatabase extends Database {
         groupThreadStatus = GroupThreadStatus.None;
       }
 
-      return new ThreadRecord(body, snippetUri, lastMessage, recipient, date, count,
+      return new ThreadRecord(body, lastMessage, recipient, date, count,
                               unreadCount, unreadMentionCount, threadId, deliveryReceiptCount, status, type,
-                              distributionType, archived, expiresIn, lastSeen, readReceiptCount, pinned, invitingAdmin, groupThreadStatus);
-    }
-
-    private @Nullable Uri getSnippetUri(Cursor cursor) {
-      if (cursor.isNull(cursor.getColumnIndexOrThrow(ThreadDatabase.SNIPPET_URI))) {
-        return null;
-      }
-
-      try {
-        return Uri.parse(cursor.getString(cursor.getColumnIndexOrThrow(ThreadDatabase.SNIPPET_URI)));
-      } catch (IllegalArgumentException e) {
-        Log.w(TAG, e);
-        return null;
-      }
+              lastSeen, readReceiptCount, invitingAdmin, groupThreadStatus);
     }
 
     @Override

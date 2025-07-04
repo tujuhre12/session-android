@@ -15,6 +15,7 @@ import org.thoughtcrime.securesms.database.MmsSmsColumns
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SearchDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.search.model.MessageResult
 import org.thoughtcrime.securesms.search.model.SearchResult
 import org.thoughtcrime.securesms.util.Stopwatch
@@ -24,12 +25,13 @@ import javax.inject.Singleton
 // Class to manage data retrieval for search
 @Singleton
 class SearchRepository @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val searchDatabase: SearchDatabase,
     private val threadDatabase: ThreadDatabase,
     private val groupDatabase: GroupDatabase,
     private val contactAccessor: ContactAccessor,
     private val recipientRepository: RecipientRepository,
+    private val conversationRepository: ConversationRepository,
 ) {
     private val executor = SignalExecutors.SERIAL
 
@@ -80,7 +82,7 @@ class SearchRepository @Inject constructor(
     }
 
     private fun getBlockedContacts(): Set<String> {
-        return recipientRepository.getConfigBasedConversations(
+        return conversationRepository.getConfigBasedConversations(
             nts = { false },
             contactFilter = { it.blocked },
             groupFilter = { false },
@@ -90,7 +92,7 @@ class SearchRepository @Inject constructor(
     }
 
     fun queryContacts(searchName: String? = null): List<BasicRecipient.Contact> {
-        return recipientRepository.getConfigBasedConversations(
+        return conversationRepository.getConfigBasedConversations(
             nts = { false },
             contactFilter = {
                 !it.blocked &&

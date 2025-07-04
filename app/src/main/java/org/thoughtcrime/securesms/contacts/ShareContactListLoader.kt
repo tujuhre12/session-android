@@ -1,11 +1,14 @@
 package org.thoughtcrime.securesms.contacts
 
 import android.content.Context
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
+import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.AsyncLoader
 
 
@@ -15,10 +18,14 @@ class ShareContactListLoader(
     private val deprecationManager: LegacyGroupDeprecationManager,
     private val threadDatabase: ThreadDatabase,
     private val storage: StorageProtocol,
+    private val repo: ConversationRepository,
 ) : AsyncLoader<List<Recipient>>(context) {
 
     override fun loadInBackground(): List<Recipient> {
-        val threads = threadDatabase.approvedConversationList
+        val threads = runBlocking {
+            repo.observeConversationList(approved = true)
+                .first()
+        }
             .asSequence()
             .filter { thread ->
                 val recipient = thread.recipient

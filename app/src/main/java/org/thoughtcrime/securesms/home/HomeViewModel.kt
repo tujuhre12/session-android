@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
@@ -38,6 +39,7 @@ import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
 import org.thoughtcrime.securesms.webrtc.CallManager
 import org.thoughtcrime.securesms.webrtc.data.State
@@ -55,6 +57,7 @@ class HomeViewModel @Inject constructor(
     private val storage: StorageProtocol,
     private val groupManager: GroupManagerV2,
     private val recipientDatabase: RecipientDatabase,
+    private val conversationRepository: ConversationRepository,
 ) : ViewModel() {
     // SharedFlow that emits whenever the user asks us to reload  the conversation
     private val manualReloadTrigger = MutableSharedFlow<Unit>(
@@ -83,21 +86,12 @@ class HomeViewModel @Inject constructor(
     @Suppress("OPT_IN_USAGE")
     val data: StateFlow<Data?> = (combine(
         // First flow: conversation list and unapproved conversation count
-        merge(
-            manualReloadTrigger,
-            threadDb.updateNotifications,
-            configFactory.configUpdateNotifications,
-            recipientDatabase.updateNotifications,
-        )
-            .debounce(CHANGE_NOTIFICATION_DEBOUNCE_MILLS)
+        manualReloadTrigger
             .onStart { emit(Unit) }
-            .map {
-                withContext(Dispatchers.Default) {
-                    threadDb.unapprovedConversationList.size to
-                            threadDb.approvedConversationList.apply {
-                                sortWith(CONVERSATION_COMPARATOR)
-                            }
-                }
+            .flatMapLatest { conversationRepository.observeConversationList() }
+            .map { convos ->
+                val (approved, unapproved) = convos.partition { it.recipient.approved }
+                unapproved.size to approved.sortedWith(CONVERSATION_COMPARATOR)
             },
 
         // Second flow: typing status of threads

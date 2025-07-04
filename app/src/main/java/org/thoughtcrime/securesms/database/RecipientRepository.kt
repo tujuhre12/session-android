@@ -18,8 +18,6 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
-import network.loki.messenger.libsession_util.ReadableUserProfile
-import network.loki.messenger.libsession_util.util.Contact
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.database.StorageProtocol
@@ -346,73 +344,6 @@ class RecipientRepository @Inject constructor(
     suspend fun getRecipientOrEmpty(address: Address): Recipient {
         return getRecipient(address) ?: empty(address)
     }
-
-    fun getAllConfigBasedUnapprovedConversations(): List<Address> {
-        return getConfigBasedConversations(
-            nts = { false },
-            contactFilter = { !it.approved && it.approvedMe && !it.blocked },
-            groupFilter = { it.invited },
-            communityFilter = { false },
-            legacyFilter = { false },
-        )
-    }
-
-    fun getAllConfigBasedApprovedConversations(): List<Address> {
-        return getConfigBasedConversations(
-            contactFilter = { it.approved && !it.blocked },
-            groupFilter = { !it.invited }
-        )
-    }
-
-    fun getConfigBasedConversations(
-        nts: (ReadableUserProfile) -> Boolean = { true },
-        contactFilter: (Contact) -> Boolean = { true },
-        groupFilter: (GroupInfo.ClosedGroupInfo) -> Boolean = { true },
-        legacyFilter: (GroupInfo.LegacyGroupInfo) -> Boolean = { true },
-        communityFilter: (GroupInfo.CommunityGroupInfo) -> Boolean = { true }
-    ): List<Address> {
-        val (shouldHaveNts, contacts, groups) = configFactory.withUserConfigs { configs ->
-            Triple(
-                configs.userProfile.getNtsPriority() >= 0 && nts(configs.userProfile),
-                configs.contacts.all(),
-                configs.userGroups.all(),
-            )
-        }
-
-        val localNumber = preferences.getLocalNumber()
-
-        val ntsSequence = sequenceOf(
-            localNumber
-                ?.takeIf { shouldHaveNts }
-                ?.let(Address::fromSerialized))
-            .filterNotNull()
-
-        val contactsSequence = contacts.asSequence()
-            .filter { it.priority >= 0 && contactFilter(it) }
-            // Exclude self in the contact if exists
-            .filterNot { it.id.equals(localNumber, ignoreCase = true) }
-            .map { Address.fromSerialized(it.id) }
-
-        val groupsSequence = groups.asSequence()
-            .filterIsInstance<GroupInfo.ClosedGroupInfo>()
-            .filter { it.priority >= 0 && groupFilter(it) }
-            .map { Address.fromSerialized(it.groupAccountId) }
-
-        val legacyGroupsSequence = groups.asSequence()
-            .filterIsInstance<GroupInfo.LegacyGroupInfo>()
-            .filter { it.priority >= 0 && legacyFilter(it) }
-            .map { Address.fromSerialized(GroupUtil.doubleEncodeGroupID(it.accountId)) }
-
-        val communityGroupsSequence = groups.asSequence()
-            .filterIsInstance<GroupInfo.CommunityGroupInfo>()
-            .filter(communityFilter)
-            .map { Address.fromSerialized(GroupUtil.getEncodedOpenGroupID(it.groupId.toByteArray())) }
-
-        return (ntsSequence + contactsSequence + groupsSequence + legacyGroupsSequence + communityGroupsSequence).toList()
-    }
-
-    private val GroupInfo.CommunityGroupInfo.groupId: String
-        get() = "${community.baseUrl}.${community.room}"
 
     companion object {
         private const val TAG = "RecipientRepository"

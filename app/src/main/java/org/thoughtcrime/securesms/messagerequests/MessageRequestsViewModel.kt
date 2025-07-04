@@ -3,17 +3,16 @@ package org.thoughtcrime.securesms.messagerequests
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.session.libsession.utilities.Address
-import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import javax.inject.Inject
@@ -21,17 +20,15 @@ import javax.inject.Inject
 @HiltViewModel
 class MessageRequestsViewModel @Inject constructor(
     private val repository: ConversationRepository,
-    private val threadDatabase: ThreadDatabase
 ) : ViewModel() {
     private val reloadTrigger = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     val threads: StateFlow<List<ThreadRecord>> = reloadTrigger
         .onStart { emit(Unit) }
-        .map {
-            withContext(Dispatchers.Default) {
-                threadDatabase.unapprovedConversationList
-                    .apply { sortWith(COMPARATOR) }
-            }
+        .flatMapLatest {
+            repository.observeConversationList(approved = false)
+                .map { it.sortedWith(COMPARATOR) }
         }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 

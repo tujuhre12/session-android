@@ -56,7 +56,7 @@ public class GroupManager {
 
     Address groupRecipient = Address.fromSerialized(groupId);
     long threadID = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(
-            groupRecipient, DistributionTypes.CONVERSATION);
+            groupRecipient);
     return new GroupActionResult(groupRecipient, threadID);
   }
 

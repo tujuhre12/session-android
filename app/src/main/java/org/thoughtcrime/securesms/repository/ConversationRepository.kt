@@ -4,11 +4,23 @@ import android.content.ContentResolver
 import app.cash.copper.Query
 import app.cash.copper.flow.observeQuery
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withContext
+import network.loki.messenger.libsession_util.ReadableUserProfile
+import network.loki.messenger.libsession_util.util.Contact
 import network.loki.messenger.libsession_util.util.ExpiryMode
+import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.groups.GroupManagerV2
@@ -28,6 +40,7 @@ import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.upsertContact
+import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
@@ -36,6 +49,7 @@ import org.thoughtcrime.securesms.database.DraftDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.SessionJobDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.Storage
@@ -46,8 +60,21 @@ import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.util.observeChanges
 import javax.inject.Inject
+import javax.inject.Singleton
+import kotlin.sequences.filter
+import kotlin.sequences.map
 
 interface ConversationRepository {
+    fun observeConversationList(approved: Boolean? = null): Flow<List<ThreadRecord>>
+
+    fun getConfigBasedConversations(
+        nts: (ReadableUserProfile) -> Boolean = { false },
+        contactFilter: (Contact) -> Boolean = { false },
+        groupFilter: (GroupInfo.ClosedGroupInfo) -> Boolean = { false },
+        legacyFilter: (GroupInfo.LegacyGroupInfo) -> Boolean = { false },
+        communityFilter: (GroupInfo.CommunityGroupInfo) -> Boolean = { false }
+    ): List<Address>
+
     fun maybeGetRecipientForThreadId(threadId: Long): Address?
     fun maybeGetBlindedRecipient(address: Address): Address?
     fun changes(threadId: Long): Flow<Query>
@@ -102,6 +129,7 @@ interface ConversationRepository {
     suspend fun clearAllMessages(threadId: Long, groupId: AccountId?): Int
 }
 
+@Singleton
 class DefaultConversationRepository @Inject constructor(
     private val textSecurePreferences: TextSecurePreferences,
     private val messageDataProvider: MessageDataProvider,
@@ -117,7 +145,104 @@ class DefaultConversationRepository @Inject constructor(
     private val contentResolver: ContentResolver,
     private val groupManager: GroupManagerV2,
     private val clock: SnodeClock,
+    private val preferences: TextSecurePreferences,
+    private val recipientDatabase: RecipientDatabase,
 ) : ConversationRepository {
+
+    override fun getConfigBasedConversations(
+        nts: (ReadableUserProfile) -> Boolean,
+        contactFilter: (Contact) -> Boolean,
+        groupFilter: (GroupInfo.ClosedGroupInfo) -> Boolean,
+        legacyFilter: (GroupInfo.LegacyGroupInfo) -> Boolean,
+        communityFilter: (GroupInfo.CommunityGroupInfo) -> Boolean
+    ): List<Address> {
+        val (shouldHaveNts, contacts, groups) = configFactory.withUserConfigs { configs ->
+            Triple(
+                configs.userProfile.getNtsPriority() >= 0 && nts(configs.userProfile),
+                configs.contacts.all(),
+                configs.userGroups.all(),
+            )
+        }
+
+        val localNumber = preferences.getLocalNumber()
+
+        val ntsSequence = sequenceOf(
+            localNumber
+                ?.takeIf { shouldHaveNts }
+                ?.let(Address::fromSerialized))
+            .filterNotNull()
+
+        val contactsSequence = contacts.asSequence()
+            .filter { it.priority >= 0 && contactFilter(it) }
+            // Exclude self in the contact if exists
+            .filterNot { it.id.equals(localNumber, ignoreCase = true) }
+            .map { Address.fromSerialized(it.id) }
+
+        val groupsSequence = groups.asSequence()
+            .filterIsInstance<GroupInfo.ClosedGroupInfo>()
+            .filter { it.priority >= 0 && groupFilter(it) }
+            .map { Address.fromSerialized(it.groupAccountId) }
+
+        val legacyGroupsSequence = groups.asSequence()
+            .filterIsInstance<GroupInfo.LegacyGroupInfo>()
+            .filter { it.priority >= 0 && legacyFilter(it) }
+            .map { Address.fromSerialized(GroupUtil.doubleEncodeGroupID(it.accountId)) }
+
+        val communityGroupsSequence = groups.asSequence()
+            .filterIsInstance<GroupInfo.CommunityGroupInfo>()
+            .filter(communityFilter)
+            .map { Address.fromSerialized(GroupUtil.getEncodedOpenGroupID(it.groupId.toByteArray())) }
+
+        return (ntsSequence + contactsSequence + groupsSequence + legacyGroupsSequence + communityGroupsSequence).toList()
+    }
+
+    private val GroupInfo.CommunityGroupInfo.groupId: String
+        get() = "${community.baseUrl}.${community.room}"
+
+    private val GroupInfo.ClosedGroupInfo.approved: Boolean
+        get() = !invited
+
+    @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
+    override fun observeConversationList(approved: Boolean?): Flow<List<ThreadRecord>> {
+        val configBasedFlow = configFactory.userConfigsChanged(200)
+            .onStart { emit(Unit) }
+            .map {
+                getConfigBasedConversations(
+                    nts = { approved == null || approved },
+                    contactFilter = {
+                        !it.blocked && (approved == null || it.approved == approved)
+                    },
+                    groupFilter = {
+                        approved == null || it.approved == approved
+                    },
+                    legacyFilter = { approved != false }, // Legacy groups are always approved
+                    communityFilter = { approved != false } // Communities are always approved
+                )
+            }
+            .distinctUntilChanged()
+
+        val blindConvoFlow = (threadDb.updateNotifications
+            .debounce(500) as Flow<*>)
+            .onStart { emit(Unit) }
+            .map { threadDb.getBlindedConversations(approved) }
+            .distinctUntilChanged()
+
+        return combine(configBasedFlow, blindConvoFlow) { configBased, blinded ->
+            configBased + blinded
+        }.flatMapLatest { allAddresses ->
+            merge(
+                configFactory.configUpdateNotifications,
+                recipientDatabase.updateNotifications,
+                threadDb.updateNotifications
+            ).debounce(500)
+                .onStart { emit(Unit) }
+                .mapLatest {
+                    withContext(Dispatchers.Default) {
+                        threadDb.getFilteredConversationList(allAddresses)
+                    }
+                }
+        }
+    }
 
     override fun maybeGetRecipientForThreadId(threadId: Long): Address? {
         return threadDb.getRecipientForThreadId(threadId)
@@ -406,15 +531,15 @@ class DefaultConversationRepository @Inject constructor(
         = declineMessageRequest(thread.threadId, thread.recipient.address)
 
     override suspend fun clearAllMessageRequests(block: Boolean) = runCatching {
-        withContext(Dispatchers.Default) {
-            threadDb.unapprovedConversationList.forEach { record ->
+        observeConversationList(approved = false)
+            .first()
+            .forEach { record ->
                 deleteMessageRequest(record)
                 val recipient = record.recipient
                 if (block && !recipient.isGroupV2Recipient) {
                     setBlocked(recipient.address, true)
                 }
             }
-        }
     }
 
     override suspend fun clearAllMessages(threadId: Long, groupId: AccountId?): Int {

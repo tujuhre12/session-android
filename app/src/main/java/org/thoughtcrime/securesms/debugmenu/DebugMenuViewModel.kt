@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -34,6 +35,7 @@ import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.tokenpage.TokenPageNotificationManager
 import org.thoughtcrime.securesms.util.ClearDataUtils
 import java.time.ZonedDateTime
@@ -52,6 +54,7 @@ class DebugMenuViewModel @Inject constructor(
     private val threadDb: ThreadDatabase,
     private val recipientDatabase: RecipientDatabase,
     private val attachmentDatabase: AttachmentDatabase,
+    private val conversationRepository: ConversationRepository,
 ) : ViewModel() {
     private val TAG = "DebugMenu"
 
@@ -282,7 +285,7 @@ class DebugMenuViewModel @Inject constructor(
 
         // clear trusted downloads for all recipients
         viewModelScope.launch {
-            val conversations: List<ThreadRecord> = threadDb.approvedConversationList
+            val conversations: List<ThreadRecord> = conversationRepository.observeConversationList(approved = true).first()
 
             conversations.filter { !it.recipient.isLocalNumber }.forEach {
                 recipientDatabase.setAutoDownloadAttachments(it.recipient.address, false)
