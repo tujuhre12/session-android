@@ -312,7 +312,7 @@ open class Storage @Inject constructor(
         getRecipientForThread(threadId)?.let { recipient ->
             val currentLastRead = threadDb.getLastSeenAndHasSent(threadId).first()
             // don't set the last read in the volatile if we didn't set it in the DB
-            if (!threadDb.markAllAsRead(threadId, recipient.isGroupOrCommunityRecipient, lastSeenTime, force) && !force) return
+            if (!threadDb.markAllAsRead(threadId, lastSeenTime, force) && !force) return
 
             // don't process configs for inbox recipients
             if (recipient.isCommunityInboxRecipient) return
@@ -1787,10 +1787,10 @@ open class Storage @Inject constructor(
             return
         }
 
-        addReaction(messageId, reaction, messageSender, notifyUnread)
+        addReaction(messageId, reaction, messageSender)
     }
 
-    override fun addReaction(messageId: MessageId, reaction: Reaction, messageSender: String, notifyUnread: Boolean) {
+    override fun addReaction(messageId: MessageId, reaction: Reaction, messageSender: String) {
         reactionDatabase.addReaction(
             ReactionRecord(
                 messageId = messageId,
@@ -1801,8 +1801,7 @@ open class Storage @Inject constructor(
                 sortId = reaction.index!!,
                 dateSent = reaction.dateSent!!,
                 dateReceived = reaction.dateReceived!!
-            ),
-            notifyUnread
+            )
         )
     }
 
@@ -1813,8 +1812,7 @@ open class Storage @Inject constructor(
     ) {
         reactionDatabase.addReactions(
             reactionsByMessageId = reactions,
-            replaceAll = replaceAll,
-            notifyUnread = notifyUnread
+            replaceAll = replaceAll
         )
     }
 
@@ -1826,7 +1824,11 @@ open class Storage @Inject constructor(
         notifyUnread: Boolean
     ) {
         val messageRecord = mmsSmsDatabase.getMessageForTimestamp(threadId, messageTimestamp) ?: return
-        reactionDatabase.deleteReaction(emoji, MessageId(messageRecord.id, messageRecord.isMms), author, notifyUnread)
+        reactionDatabase.deleteReaction(
+            emoji,
+            MessageId(messageRecord.id, messageRecord.isMms),
+            author
+        )
     }
 
     override fun updateReactionIfNeeded(message: Message, sender: String, openGroupSentTimestamp: Long) {
