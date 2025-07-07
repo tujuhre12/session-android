@@ -228,4 +228,8 @@
     <attr name="reactionsPillNormalBackground" format="color|reference"/>
     <attr name="reactionsPillNormalTextColor" format="color|reference"/>
 
+    <declare-styleable name="InputBar">
+        <attr name="sendOnly" format="boolean" />
+    </declare-styleable>
+
 </resources>

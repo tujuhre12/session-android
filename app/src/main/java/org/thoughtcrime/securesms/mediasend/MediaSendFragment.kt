@@ -41,7 +41,6 @@ import org.thoughtcrime.securesms.mediapreview.MediaRailAdapter
 import org.thoughtcrime.securesms.mediapreview.MediaRailAdapter.RailItemListener
 import org.thoughtcrime.securesms.providers.BlobUtils
 import org.thoughtcrime.securesms.scribbles.ImageEditorFragment
-import org.thoughtcrime.securesms.util.PushCharacterCalculator
 import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import java.io.File
 import java.io.FileInputStream
@@ -61,10 +60,6 @@ class MediaSendFragment : Fragment(), RailItemListener,
 
     private var visibleHeight = 0
     private var viewModel: MediaSendViewModel? = null
-
-    private val visibleBounds = Rect()
-
-    private val characterCalculator = PushCharacterCalculator()
 
     private val controller: Controller
         get() = (parentFragment as? Controller) ?: requireActivity() as Controller
@@ -97,17 +92,17 @@ class MediaSendFragment : Fragment(), RailItemListener,
 
         binding.mediasendSafeArea.applySafeInsetsPaddings()
 
-        binding.mediasendSendButton.setOnClickListener { v: View? ->
+       /* binding.mediasendSendButton.setOnClickListener { v: View? ->
             fragmentPagerAdapter?.let { processMedia(it.allMedia, it.savedState) }
-        }
+        }*/
 
         val composeKeyPressedListener = ComposeKeyPressedListener()
 
-        binding.mediasendComposeText.setOnKeyListener(composeKeyPressedListener)
+      /*  binding.mediasendComposeText.setOnKeyListener(composeKeyPressedListener)
         binding.mediasendComposeText.addTextChangedListener(composeKeyPressedListener)
         binding.mediasendComposeText.setOnFocusChangeListener(composeKeyPressedListener)
 
-        binding.mediasendComposeText.requestFocus()
+        binding.mediasendComposeText.requestFocus()*/
 
         fragmentPagerAdapter = MediaSendFragmentPagerAdapter(childFragmentManager)
         binding.mediasendPager.setAdapter(fragmentPagerAdapter)
@@ -126,14 +121,14 @@ class MediaSendFragment : Fragment(), RailItemListener,
         )
         binding.mediasendMediaRail.setAdapter(mediaRailAdapter)
 
-        binding.mediasendComposeText.append(viewModel?.body)
+        /*binding.mediasendComposeText.append(viewModel?.body)
 
         binding.mediasendComposeText.setHint(getString(R.string.message), null)
         binding.mediasendComposeText.setOnEditorActionListener { v: TextView?, actionId: Int, event: KeyEvent? ->
             val isSend = actionId == EditorInfo.IME_ACTION_SEND
             if (isSend) binding.mediasendSendButton.performClick()
             isSend
-        }
+        }*/
 
         binding.mediasendCloseButton.setOnClickListener { requireActivity().finish() }
     }
@@ -190,20 +185,20 @@ class MediaSendFragment : Fragment(), RailItemListener,
     override fun onKeyboardShown() {
         val binding = binding ?: return
 
-        if (binding.mediasendComposeText.hasFocus()) {
+       /* if (binding.mediasendComposeText.hasFocus()) {
             binding.mediasendMediaRail.visibility = View.VISIBLE
             binding.mediasendComposeContainer.visibility = View.VISIBLE
         } else {
             binding.mediasendMediaRail.visibility = View.GONE
             binding.mediasendComposeContainer.visibility = View.VISIBLE
-        }
+        }*/
     }
 
     override fun onKeyboardHidden() {
-        binding?.apply {
+        /*binding?.apply {
             mediasendComposeContainer.visibility = View.VISIBLE
             mediasendMediaRail.visibility = View.VISIBLE
-        }
+        }*/
     }
 
     fun onTouchEventsNeeded(needed: Boolean) {
@@ -239,26 +234,6 @@ class MediaSendFragment : Fragment(), RailItemListener,
         viewModel.getBucketId().observe(this) { bucketId: String? ->
             if (bucketId == null) return@observe
             mediaRailAdapter!!.setAddButtonListener { controller.onAddMediaClicked(bucketId) }
-        }
-    }
-
-
-    private fun presentCharactersRemaining() {
-        val binding = binding ?: return
-        val messageBody = binding.mediasendComposeText.textTrimmed
-        val characterState = characterCalculator.calculateCharacters(messageBody)
-
-        if (characterState.charactersRemaining <= 15 || characterState.messagesSpent > 1) {
-            binding.mediasendCharactersLeft.text = String.format(
-                Locale.getDefault(),
-                "%d/%d (%d)",
-                characterState.charactersRemaining,
-                characterState.maxTotalMessageSize,
-                characterState.messagesSpent
-            )
-            binding.mediasendCharactersLeft.visibility = View.VISIBLE
-        } else {
-            binding.mediasendCharactersLeft.visibility = View.GONE
         }
     }
 
@@ -366,7 +341,7 @@ class MediaSendFragment : Fragment(), RailItemListener,
                 }
             }
 
-            controller.onSendClicked(updatedMedia, binding.mediasendComposeText.textTrimmed)
+           // controller.onSendClicked(updatedMedia, binding.mediasendComposeText.textTrimmed)
             delayedShowLoader.cancel()
             binding.loader.isVisible = false
         }
@@ -391,7 +366,7 @@ class MediaSendFragment : Fragment(), RailItemListener,
             if (event.action == KeyEvent.ACTION_DOWN) {
                 if (keyCode == KeyEvent.KEYCODE_ENTER) {
                     if (isEnterSendsEnabled(requireContext())) {
-                        binding?.mediasendSendButton?.dispatchKeyEvent(
+                       /* binding?.mediasendSendButton?.dispatchKeyEvent(
                             KeyEvent(
                                 KeyEvent.ACTION_DOWN,
                                 KeyEvent.KEYCODE_ENTER
@@ -402,7 +377,7 @@ class MediaSendFragment : Fragment(), RailItemListener,
                                 KeyEvent.ACTION_UP,
                                 KeyEvent.KEYCODE_ENTER
                             )
-                        )
+                        )*/
                         return true
                     }
                 }
@@ -411,11 +386,10 @@ class MediaSendFragment : Fragment(), RailItemListener,
         }
 
         override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {
-            beforeLength = binding?.mediasendComposeText?.textTrimmed?.length ?: return
+          //  beforeLength = binding?.mediasendComposeText?.textTrimmed?.length ?: return
         }
 
         override fun afterTextChanged(s: Editable) {
-            presentCharactersRemaining()
             viewModel!!.onBodyChanged(s)
         }
 
