@@ -88,7 +88,9 @@ class HomeViewModel @Inject constructor(
         // First flow: conversation list and unapproved conversation count
         manualReloadTrigger
             .onStart { emit(Unit) }
-            .flatMapLatest { conversationRepository.observeConversationList() }
+            .flatMapLatest {
+                conversationRepository.observeConversationList()
+            }
             .map { convos ->
                 val (approved, unapproved) = convos.partition { it.recipient.approved }
                 unapproved.size to approved.sortedWith(CONVERSATION_COMPARATOR)

@@ -332,16 +332,9 @@ public class RecipientDatabase extends Database {
   }
 
   public void setAutoDownloadAttachments(@NonNull Address recipient, boolean shouldAutoDownloadAttachments) {
-    SQLiteDatabase db = getWritableDatabase();
-    db.beginTransaction();
-    try {
-      ContentValues values = new ContentValues();
-      values.put(AUTO_DOWNLOAD, shouldAutoDownloadAttachments ? 1 : 0);
-      db.update(TABLE_NAME, values, ADDRESS+ " = ?", new String[]{recipient.toString()});
-      db.setTransactionSuccessful();
-    } finally {
-      db.endTransaction();
-    }
+    ContentValues values = new ContentValues(1);
+    values.put(AUTO_DOWNLOAD, shouldAutoDownloadAttachments ? 1 : 0);
+    updateOrInsert(recipient, values);
 
     invalidateCache(recipient);
     notifyRecipientListeners();

@@ -44,7 +44,10 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.loader.app.LoaderManager
 import androidx.loader.content.Loader
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -54,6 +57,15 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.MediaPreviewActivityBinding
 import network.loki.messenger.databinding.MediaViewPageBinding
@@ -109,6 +121,8 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
     private var leftIsRecent = false
     private val viewModel: MediaPreviewViewModel by viewModels()
     private var viewPagerListener: ViewPagerListener? = null
+
+    private val currentSelectedRecipient = MutableStateFlow<Address?>(null)
     
     @Inject
     lateinit var deprecationManager: LegacyGroupDeprecationManager
@@ -130,6 +144,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
     private var windowInsetBottom = 0
     private var railHeight = 0
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun onCreate(bundle: Bundle?, ready: Boolean) {
         binding = MediaPreviewActivityBinding.inflate(
             layoutInflater
@@ -170,6 +185,17 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
             windowInsets.inset(insets)
         }
 
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                currentSelectedRecipient
+                    .flatMapLatest { address ->
+                        address?.let(recipientRepository::observeRecipient) ?: flowOf(null)
+                    }
+                    .collectLatest { recipient ->
+                        updateActionBar(currentMediaItem, recipient)
+                    }
+            }
+        }
 
         // Set up system UI visibility listener
         window.decorView.setOnSystemUiVisibilityChangeListener { visibility ->
@@ -262,9 +288,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
         throw UnsupportedOperationException("Callback unsupported.")
     }
 
-    private fun updateActionBar() {
-        val mediaItem = currentMediaItem
-
+    private fun updateActionBar(mediaItem: MediaItem?, recipient: Recipient?) {
         if (mediaItem != null) {
             val relativeTimeSpan: CharSequence = if (mediaItem.date > 0) {
                 dateUtils.getDisplayFormattedTimeSpanString(mediaItem.date)
@@ -273,8 +297,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
             }
 
             if (mediaItem.outgoing) supportActionBar?.title = getString(R.string.you)
-            else if (mediaItem.recipient != null) supportActionBar?.title =
-                mediaItem.recipient.displayName
+            else if (recipient != null) supportActionBar?.title = recipient.displayName
             else supportActionBar?.title = ""
 
             supportActionBar?.subtitle = relativeTimeSpan
@@ -644,7 +667,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
             try {
                 val item = adapter!!.getMediaItemFor(position)
                 viewModel.setActiveAlbumRailItem(this@MediaPreviewActivity, position)
-                updateActionBar()
+                currentSelectedRecipient.value = item.recipientAddress
             } catch (e: Exception){
                 finish()
             }
@@ -741,7 +764,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
             if (mediaRecord.attachment.dataUri == null) throw AssertionError()
 
             return MediaItem(
-                address?.let(recipientRepository::getRecipientSync),
+                address,
                 mediaRecord.attachment,
                 mediaRecord.attachment.dataUri!!,
                 mediaRecord.contentType,
@@ -779,7 +802,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
     }
 
     class MediaItem(
-        val recipient: Recipient?,
+        val recipientAddress: Address?,
         val attachment: DatabaseAttachment?,
         val uri: Uri,
         val mimeType: String,
