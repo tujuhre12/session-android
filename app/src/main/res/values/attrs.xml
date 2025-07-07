@@ -210,10 +210,6 @@
         <attr name="typingIndicator_tint" format="color" />
     </declare-styleable>
 
-    <declare-styleable name="MaxHeightScrollView">
-        <attr name="scrollView_maxHeight" format="dimension" />
-    </declare-styleable>
-
     <declare-styleable name="KeyboardPageSearchView">
         <attr name="show_always" format="boolean" />
         <attr name="search_bar_tint" format="color|reference" />
