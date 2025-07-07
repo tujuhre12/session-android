@@ -11,6 +11,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -29,7 +30,7 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent
+import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import org.thoughtcrime.securesms.util.NumberUtil.formatAbbreviated
@@ -41,11 +42,11 @@ import kotlin.time.Duration.Companion.minutes
 
 @HiltViewModel
 class TokenPageViewModel @Inject constructor(
-    @ApplicationContext val context: Context,
-    private val tokenRepository: TokenRepository,
+    @param:ApplicationContext val context: Context,
     private val tokenDataManager: TokenDataManager,
     private val dateUtils: DateUtils,
-    private val prefs: TextSecurePreferences
+    private val prefs: TextSecurePreferences,
+    private val conversationRepository: ConversationRepository,
 ) : ViewModel() {
     private val TAG = "TokenPageVM"
 
@@ -254,8 +255,7 @@ class TokenPageViewModel @Inject constructor(
             var numGroupV2Convos = 0
 
             // Grab the database and reader details we need to count the conversations / groups
-            val threadDatabase = DatabaseComponent.get(context).threadDatabase()
-            val convoList = threadDatabase.approvedConversationList
+            val convoList = conversationRepository.observeConversationList(approved = true).first()
             val result = mutableSetOf<Recipient>()
 
             // Look through the database to build up our conversation & group counts (still on Dispatchers.IO not the main thread)

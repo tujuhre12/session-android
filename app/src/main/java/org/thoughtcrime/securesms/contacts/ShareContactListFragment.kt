@@ -18,7 +18,7 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.repository.ConversationRepository
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -34,7 +34,7 @@ class ShareContactListFragment : Fragment(), LoaderManager.LoaderCallbacks<List<
     lateinit var storage: StorageProtocol
 
     @Inject
-    lateinit var threadDatabase: ThreadDatabase
+    lateinit var conversationRepository: ConversationRepository
 
     private val multiSelect: Boolean by lazy {
         requireActivity().intent.getBooleanExtra(MULTI_SELECT, false)
@@ -101,8 +101,8 @@ class ShareContactListFragment : Fragment(), LoaderManager.LoaderCallbacks<List<
             context = requireActivity(),
             filter = cursorFilter,
             deprecationManager = deprecationManager,
-            threadDatabase = threadDatabase,
-            storage = storage
+            storage = storage,
+            repo = conversationRepository,
         )
     }
 

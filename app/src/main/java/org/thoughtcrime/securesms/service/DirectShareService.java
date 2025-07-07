@@ -25,6 +25,7 @@ import org.thoughtcrime.securesms.contacts.ShareContactListLoader;
 import org.thoughtcrime.securesms.database.RecipientRepository;
 import org.thoughtcrime.securesms.database.ThreadDatabase;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
+import org.thoughtcrime.securesms.repository.ConversationRepository;
 import org.thoughtcrime.securesms.util.BitmapUtil;
 
 import java.util.ArrayList;
@@ -46,6 +47,9 @@ public class DirectShareService extends ChooserTargetService {
   @Inject
   StorageProtocol storage;
 
+  @Inject
+  ConversationRepository conversationRepository;
+
   private static final String TAG = DirectShareService.class.getSimpleName();
 
   @Override
@@ -54,9 +58,8 @@ public class DirectShareService extends ChooserTargetService {
   {
     List<ChooserTarget> results        = new ArrayList<>();
     ComponentName       componentName  = new ComponentName(this, ShareActivity.class);
-    ThreadDatabase      threadDatabase = DatabaseComponent.get(this).threadDatabase();
 
-    List<@NotNull Recipient> items = new ShareContactListLoader(this, null, legacyGroupDeprecationManager, threadDatabase, storage).loadInBackground();
+    List<@NotNull Recipient> items = new ShareContactListLoader(this, null, legacyGroupDeprecationManager, storage, conversationRepository).loadInBackground();
 
     for (final Recipient recipient : items) {
         Bitmap avatar;

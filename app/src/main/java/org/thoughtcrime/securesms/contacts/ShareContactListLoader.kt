@@ -16,7 +16,6 @@ class ShareContactListLoader(
     context: Context,
     val filter: String?,
     private val deprecationManager: LegacyGroupDeprecationManager,
-    private val threadDatabase: ThreadDatabase,
     private val storage: StorageProtocol,
     private val repo: ConversationRepository,
 ) : AsyncLoader<List<Recipient>>(context) {
