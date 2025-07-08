@@ -18,6 +18,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
+import org.thoughtcrime.securesms.InputBarDialogs
 import org.thoughtcrime.securesms.InputbarViewModel
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ClearEmoji
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ConfirmRecreateGroup
@@ -49,9 +50,15 @@ fun ConversationV2Dialogs(
     dialogsState: ConversationViewModel.DialogsState,
     inputBarDialogsState: InputbarViewModel.InputBarDialogsState,
     sendCommand: (ConversationViewModel.Commands) -> Unit,
-    sendCommand2: (InputbarViewModel.Commands) -> Unit
+    sendInputBarCommand: (InputbarViewModel.Commands) -> Unit
 ){
     SessionMaterialTheme {
+        // inputbar dialogs
+        InputBarDialogs(
+            inputBarDialogsState = inputBarDialogsState,
+            sendCommand = sendInputBarCommand
+        )
+
         // open link confirmation
         if(!dialogsState.openLinkDialogUrl.isNullOrEmpty()){
             OpenURLAlertDialog(
@@ -60,42 +67,6 @@ fun ConversationV2Dialogs(
                     // hide dialog
                     sendCommand(ShowOpenUrlDialog(null))
                 }
-            )
-        }
-
-        //  Simple dialogs
-        if (inputBarDialogsState.showSimpleDialog != null) {
-            val buttons = mutableListOf<DialogButtonData>()
-            if(inputBarDialogsState.showSimpleDialog.positiveText != null) {
-                buttons.add(
-                    DialogButtonData(
-                        text = GetString(inputBarDialogsState.showSimpleDialog.positiveText),
-                        color = if (inputBarDialogsState.showSimpleDialog.positiveStyleDanger) LocalColors.current.danger
-                        else LocalColors.current.text,
-                        qaTag = inputBarDialogsState.showSimpleDialog.positiveQaTag,
-                        onClick = inputBarDialogsState.showSimpleDialog.onPositive
-                    )
-                )
-            }
-            if(inputBarDialogsState.showSimpleDialog.negativeText != null){
-                buttons.add(
-                    DialogButtonData(
-                        text = GetString(inputBarDialogsState.showSimpleDialog.negativeText),
-                        qaTag = inputBarDialogsState.showSimpleDialog.negativeQaTag,
-                        onClick = inputBarDialogsState.showSimpleDialog.onNegative
-                    )
-                )
-            }
-
-            AlertDialog(
-                onDismissRequest = {
-                    // hide dialog
-                    sendCommand2(InputbarViewModel.Commands.HideSimpleDialog)
-                },
-                title = annotatedStringResource(inputBarDialogsState.showSimpleDialog.title),
-                text = annotatedStringResource(inputBarDialogsState.showSimpleDialog.message),
-                showCloseButton = inputBarDialogsState.showSimpleDialog.showXIcon,
-                buttons = buttons
             )
         }
 
@@ -253,26 +224,6 @@ fun ConversationV2Dialogs(
                 )
             }
         }
-
-        // Pro CTA
-        if (inputBarDialogsState.sessionProCharLimitCTA) {
-            SimpleSessionProCTA(
-                heroImage = R.drawable.cta_hero_char_limit,
-                text = stringResource(R.string.proCallToActionLongerMessages),
-                features = listOf(
-                    CTAFeature.Icon(stringResource(R.string.proFeatureListLongerMessages)),
-                    CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
-                    CTAFeature.RainbowIcon(stringResource(R.string.proFeatureListLoadsMore)),
-                ),
-                onUpgrade = {
-                    sendCommand2(InputbarViewModel.Commands.HideSessionProCTA)
-                    //todo PRO go to screen once it exists
-                },
-                onCancel = {
-                    sendCommand2(InputbarViewModel.Commands.HideSessionProCTA)
-                }
-            )
-        }
     }
 }
 
@@ -286,7 +237,7 @@ fun PreviewURLDialog(){
             ),
             inputBarDialogsState = InputbarViewModel.InputBarDialogsState(),
             sendCommand = {},
-            sendCommand2 = {}
+            sendInputBarCommand = {}
         )
     }
 }

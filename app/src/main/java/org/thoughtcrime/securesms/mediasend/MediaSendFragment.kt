@@ -9,6 +9,9 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -32,6 +35,8 @@ import network.loki.messenger.databinding.MediasendFragmentBinding
 import org.session.libsession.utilities.MediaTypes
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.InputBarDialogs
+import org.thoughtcrime.securesms.conversation.v2.ConversationV2Dialogs
 import org.thoughtcrime.securesms.conversation.v2.input_bar.InputBarDelegate
 import org.thoughtcrime.securesms.conversation.v2.mention.MentionViewModel
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
@@ -39,6 +44,7 @@ import org.thoughtcrime.securesms.mediapreview.MediaRailAdapter
 import org.thoughtcrime.securesms.mediapreview.MediaRailAdapter.RailItemListener
 import org.thoughtcrime.securesms.providers.BlobUtils
 import org.thoughtcrime.securesms.scribbles.ImageEditorFragment
+import org.thoughtcrime.securesms.ui.setThemedContent
 import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import org.thoughtcrime.securesms.util.hideKeyboard
 import java.io.File
@@ -135,6 +141,21 @@ class MediaSendFragment : Fragment(), RailItemListener, InputBarDelegate {
             binding.inputBar.clearFocus()
             binding.root.hideKeyboard()
             requireActivity().finish()
+        }
+
+        // set the compose dialog content
+        binding.dialogs.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setThemedContent {
+                if(viewModel == null) return@setThemedContent
+                val dialogsState by viewModel!!.inputBarStateDialogsState.collectAsState()
+                InputBarDialogs (
+                    inputBarDialogsState = dialogsState,
+                    sendCommand = {
+                        viewModel?.onInputBarCommand(it)
+                    }
+                )
+            }
         }
     }
 
@@ -350,7 +371,7 @@ class MediaSendFragment : Fragment(), RailItemListener, InputBarDelegate {
     }
 
     override fun onCharLimitTapped() {
-
+        viewModel?.onCharLimitTapped()
     }
 
     // Unused callbacks

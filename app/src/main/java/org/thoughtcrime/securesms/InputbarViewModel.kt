@@ -151,7 +151,7 @@ abstract class InputbarViewModel(
         }
     }
 
-    fun onCommand(command: Commands) {
+    fun onInputBarCommand(command: Commands) {
         when (command) {
             is Commands.HideSimpleDialog -> {
                 hideSimpleDialog()

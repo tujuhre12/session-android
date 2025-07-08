@@ -539,7 +539,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     dialogsState = dialogsState,
                     inputBarDialogsState = inputBarDialogState,
                     sendCommand = viewModel::onCommand,
-                    sendCommand2 = {}
+                    sendInputBarCommand = viewModel::onInputBarCommand
                 )
             }
         }
