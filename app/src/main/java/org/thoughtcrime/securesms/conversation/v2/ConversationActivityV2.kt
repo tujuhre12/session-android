@@ -534,9 +534,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setThemedContent {
                 val dialogsState by viewModel.dialogsState.collectAsState()
+                val inputBarDialogState by viewModel.inputBarStateDialogsState.collectAsState()
                 ConversationV2Dialogs(
                     dialogsState = dialogsState,
-                    sendCommand = viewModel::onCommand
+                    inputBarDialogsState = inputBarDialogState,
+                    sendCommand = viewModel::onCommand,
+                    sendCommand2 = {}
                 )
             }
         }
@@ -1064,14 +1067,20 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
-                    binding.inputBar.setState(state.inputBarState)
-
                     binding.root.requestApplyInsets()
 
                     // show or hide loading indicator
                     binding.loader.isVisible = state.showLoader
 
                     updatePlaceholder()
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.inputBarState.collect { state ->
+                    binding.inputBar.setState(state)
                 }
             }
         }

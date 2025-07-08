@@ -23,8 +23,8 @@ import org.session.libsession.messaging.sending_receiving.link_preview.LinkPrevi
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
+import org.thoughtcrime.securesms.InputbarViewModel
 import org.thoughtcrime.securesms.conversation.v2.InputBarContentState
-import org.thoughtcrime.securesms.conversation.v2.InputBarState
 import org.thoughtcrime.securesms.conversation.v2.components.LinkPreviewDraftView
 import org.thoughtcrime.securesms.conversation.v2.components.LinkPreviewDraftViewDelegate
 import org.thoughtcrime.securesms.conversation.v2.messages.QuoteView
@@ -313,7 +313,7 @@ class InputBar @JvmOverloads constructor(
         binding.inputBarEditText.setEditableFactory(factory)
     }
 
-    fun setState(state: InputBarState){
+    fun setState(state: InputbarViewModel.InputBarState){
         // handle content state
         when(state.contentState){
             is InputBarContentState.Hidden ->{

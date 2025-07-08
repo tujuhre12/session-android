@@ -12,8 +12,10 @@ import android.widget.TextView
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.viewpager.widget.ViewPager.SimpleOnPageChangeListener
 import com.bumptech.glide.Glide
@@ -102,6 +104,14 @@ class MediaSendFragment : Fragment(), RailItemListener, InputBarDelegate {
         viewLifecycleOwner.lifecycleScope.launch {
             val pretty = mentionViewModel.reconstructMentions(viewModel?.body?.toString().orEmpty())
             binding.inputBar.setText(pretty, TextView.BufferType.EDITABLE)
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel?.inputBarState?.collect { state ->
+                    binding.inputBar.setState(state)
+                }
+            }
         }
 
         fragmentPagerAdapter = MediaSendFragmentPagerAdapter(childFragmentManager)
@@ -327,15 +337,14 @@ class MediaSendFragment : Fragment(), RailItemListener, InputBarDelegate {
     }
 
     override fun inputBarEditTextContentChanged(newContent: CharSequence) {
-    // todo PRO handle mentions?
         // use the normalised version of the text's body to get the characters amount with the
         // mentions as their account id
-       // viewModel.onTextChanged(mentionViewModel.deconstructMessageMentions())
+        viewModel?.onTextChanged(mentionViewModel.deconstructMessageMentions())
     }
 
     override fun sendMessage() {
         // validate message length before sending
-        //if(!viewModel.validateMessageLength()) return
+        if(viewModel == null || viewModel?.validateMessageLength() == false) return
 
         fragmentPagerAdapter?.let { processMedia(it.allMedia, it.savedState) }
     }
