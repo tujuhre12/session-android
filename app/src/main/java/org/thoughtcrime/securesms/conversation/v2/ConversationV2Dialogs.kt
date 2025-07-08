@@ -18,12 +18,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
+import org.thoughtcrime.securesms.InputBarDialogs
+import org.thoughtcrime.securesms.InputbarViewModel
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ClearEmoji
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ConfirmRecreateGroup
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.HideClearEmoji
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.HideDeleteEveryoneDialog
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.HideRecreateGroupConfirm
-import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.HideSimpleDialog
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.MarkAsDeletedForEveryone
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.MarkAsDeletedLocally
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ShowOpenUrlDialog
@@ -47,9 +48,17 @@ import org.thoughtcrime.securesms.ui.theme.SessionMaterialTheme
 @Composable
 fun ConversationV2Dialogs(
     dialogsState: ConversationViewModel.DialogsState,
-    sendCommand: (ConversationViewModel.Commands) -> Unit
+    inputBarDialogsState: InputbarViewModel.InputBarDialogsState,
+    sendCommand: (ConversationViewModel.Commands) -> Unit,
+    sendInputBarCommand: (InputbarViewModel.Commands) -> Unit
 ){
     SessionMaterialTheme {
+        // inputbar dialogs
+        InputBarDialogs(
+            inputBarDialogsState = inputBarDialogsState,
+            sendCommand = sendInputBarCommand
+        )
+
         // open link confirmation
         if(!dialogsState.openLinkDialogUrl.isNullOrEmpty()){
             OpenURLAlertDialog(
@@ -58,42 +67,6 @@ fun ConversationV2Dialogs(
                     // hide dialog
                     sendCommand(ShowOpenUrlDialog(null))
                 }
-            )
-        }
-
-        //  Simple dialogs
-        if (dialogsState.showSimpleDialog != null) {
-            val buttons = mutableListOf<DialogButtonData>()
-            if(dialogsState.showSimpleDialog.positiveText != null) {
-                buttons.add(
-                    DialogButtonData(
-                        text = GetString(dialogsState.showSimpleDialog.positiveText),
-                        color = if (dialogsState.showSimpleDialog.positiveStyleDanger) LocalColors.current.danger
-                        else LocalColors.current.text,
-                        qaTag = dialogsState.showSimpleDialog.positiveQaTag,
-                        onClick = dialogsState.showSimpleDialog.onPositive
-                    )
-                )
-            }
-            if(dialogsState.showSimpleDialog.negativeText != null){
-                buttons.add(
-                    DialogButtonData(
-                        text = GetString(dialogsState.showSimpleDialog.negativeText),
-                        qaTag = dialogsState.showSimpleDialog.negativeQaTag,
-                        onClick = dialogsState.showSimpleDialog.onNegative
-                    )
-                )
-            }
-
-            AlertDialog(
-                onDismissRequest = {
-                    // hide dialog
-                    sendCommand(HideSimpleDialog)
-                },
-                title = annotatedStringResource(dialogsState.showSimpleDialog.title),
-                text = annotatedStringResource(dialogsState.showSimpleDialog.message),
-                showCloseButton = dialogsState.showSimpleDialog.showXIcon,
-                buttons = buttons
             )
         }
 
@@ -251,26 +224,6 @@ fun ConversationV2Dialogs(
                 )
             }
         }
-
-        // Pro CTA
-        if (dialogsState.sessionProCharLimitCTA) {
-            SimpleSessionProCTA(
-                heroImage = R.drawable.cta_hero_char_limit,
-                text = stringResource(R.string.proCallToActionLongerMessages),
-                features = listOf(
-                    CTAFeature.Icon(stringResource(R.string.proFeatureListLongerMessages)),
-                    CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
-                    CTAFeature.RainbowIcon(stringResource(R.string.proFeatureListLoadsMore)),
-                ),
-                onUpgrade = {
-                    sendCommand(ConversationViewModel.Commands.HideSessionProCTA)
-                    //todo PRO go to screen once it exists
-                },
-                onCancel = {
-                    sendCommand(ConversationViewModel.Commands.HideSessionProCTA)
-                }
-            )
-        }
     }
 }
 
@@ -282,7 +235,9 @@ fun PreviewURLDialog(){
             dialogsState = ConversationViewModel.DialogsState(
                 openLinkDialogUrl = "https://google.com"
             ),
-            sendCommand = {}
+            inputBarDialogsState = InputbarViewModel.InputBarDialogsState(),
+            sendCommand = {},
+            sendInputBarCommand = {}
         )
     }
 }

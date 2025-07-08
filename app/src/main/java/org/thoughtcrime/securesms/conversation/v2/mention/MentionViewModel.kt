@@ -17,15 +17,20 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.allWithStatus
@@ -33,6 +38,7 @@ import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
+import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.database.DatabaseContentProviders.Conversation
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.GroupMemberDatabase
@@ -269,6 +275,19 @@ class MentionViewModel(
         // Add the remaining content
         sb.append(editable, offset, editable.length)
         return sb.toString()
+    }
+
+    suspend fun reconstructMentions(raw: String): Editable {
+        editable.replace(0, editable.length, raw)
+
+        val memberList = members.filterNotNull().first()
+
+        MentionUtilities.substituteIdsInPlace(
+            editable,
+            memberList.associateBy { it.publicKey }
+        )
+
+        return editable
     }
 
     data class Member(

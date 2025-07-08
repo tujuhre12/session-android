@@ -1,20 +1,20 @@
 package org.thoughtcrime.securesms.notifications
 
-import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.os.AsyncTask
 import androidx.core.app.NotificationManagerCompat
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.MessagingModuleConfiguration.Companion.shared
 import org.session.libsession.messaging.messages.control.ReadReceipt
 import org.session.libsession.messaging.sending_receiving.MessageSender.send
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeAPI.nowWithOffset
+import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isReadReceiptsEnabled
@@ -27,24 +27,31 @@ import org.thoughtcrime.securesms.database.ExpirationInfo
 import org.thoughtcrime.securesms.database.MarkedMessageInfo
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.util.SessionMetaProtocol.shouldSendReadReceipt
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MarkReadReceiver : BroadcastReceiver() {
-    @SuppressLint("StaticFieldLeak")
+    @Inject
+    lateinit var storage: StorageProtocol
+
+    @Inject
+    lateinit var clock: SnodeClock
+
     override fun onReceive(context: Context, intent: Intent) {
         if (CLEAR_ACTION != intent.action) return
         val threadIds = intent.getLongArrayExtra(THREAD_IDS_EXTRA) ?: return
         NotificationManagerCompat.from(context).cancel(intent.getIntExtra(NOTIFICATION_ID_EXTRA, -1))
-        object : AsyncTask<Void?, Void?, Void?>() {
-            override fun doInBackground(vararg params: Void?): Void? {
-                val currentTime = nowWithOffset
-                threadIds.forEach {
-                    Log.i(TAG, "Marking as read: $it")
-                    shared.storage.markConversationAsRead(it, currentTime, true)
-                }
-                return null
+        GlobalScope.launch {
+            val currentTime = clock.currentTimeMills()
+            threadIds.forEach {
+                Log.i(TAG, "Marking as read: $it")
+                storage.markConversationAsRead(
+                    threadId = it,
+                    lastSeenTime = currentTime,
+                    force = true
+                )
             }
-        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR)
+        }
     }
 
     companion object {
