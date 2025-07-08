@@ -200,7 +200,6 @@ private fun AnimateMessageText(text: String, isOutgoing: Boolean, modifier: Modi
     LaunchedEffect(Unit) { visible = true }
 
     Box {
-        // TODO [SES-2077] Use LazyList itemAnimation when we update to compose 1.7 or so.
         MessageText(text, isOutgoing, Modifier.alpha(0f))
 
         AnimatedVisibility(

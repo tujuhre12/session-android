@@ -122,17 +122,14 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
     }
 
     override fun onBackPressed() {
-        val sendFragment = supportFragmentManager.findFragmentByTag(TAG_SEND) as MediaSendFragment?
-        if (sendFragment == null || !sendFragment.isVisible) {
-            super.onBackPressed()
+        super.onBackPressed()
 
-            if (intent.getBooleanExtra(
-                    KEY_IS_CAMERA,
-                    false
-                ) && supportFragmentManager.backStackEntryCount == 0
-            ) {
-                viewModel.onImageCaptureUndo(this)
-            }
+        if (intent.getBooleanExtra(
+                KEY_IS_CAMERA,
+                false
+            ) && supportFragmentManager.backStackEntryCount == 0
+        ) {
+            viewModel.onImageCaptureUndo(this)
         }
     }
 
