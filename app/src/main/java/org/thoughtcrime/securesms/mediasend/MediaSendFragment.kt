@@ -99,16 +99,9 @@ class MediaSendFragment : Fragment(), RailItemListener, InputBarDelegate {
         binding.inputBar.delegate = this
         binding.inputBar.setInputBarEditableFactory(mentionViewModel.editableFactory)
 
-        mentionViewModel.initialiseDisplayBody(viewModel?.body?.toString().orEmpty())
-        
-        lifecycleScope.launchWhenStarted {
-            mentionViewModel.displayBody
-                .filterNotNull()
-                .collect { editable ->
-                    binding.inputBar.setText(editable, TextView.BufferType.EDITABLE)
-                    // move cursor to end so the user can keep typing
-                    //binding.inputBar.setSelection(editable.length)
-                }
+        viewLifecycleOwner.lifecycleScope.launch {
+            val pretty = mentionViewModel.reconstructMentions(viewModel?.body?.toString().orEmpty())
+            binding.inputBar.setText(pretty, TextView.BufferType.EDITABLE)
         }
 
         fragmentPagerAdapter = MediaSendFragmentPagerAdapter(childFragmentManager)
