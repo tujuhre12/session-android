@@ -929,7 +929,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
         if (textSecurePreferences.isTypingIndicatorsEnabled()) {
             binding.inputBar.addTextChangedListener {
-                typingStatusSender.onTypingStarted(viewModel.threadId)
+                if(!it.isNullOrEmpty()) {
+                    typingStatusSender.onTypingStarted(viewModel.threadId)
+                }
             }
         }
     }
