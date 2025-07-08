@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.home
 
-import android.content.ContentResolver
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asFlow
@@ -16,16 +15,13 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import org.session.libsession.database.StorageProtocol
@@ -35,8 +31,6 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.currentUserName
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.database.RecipientDatabase
-import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.repository.ConversationRepository
@@ -48,15 +42,12 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
-    private val threadDb: ThreadDatabase,
-    private val contentResolver: ContentResolver,
     private val prefs: TextSecurePreferences,
     private val typingStatusRepository: TypingStatusRepository,
     private val configFactory: ConfigFactory,
     callManager: CallManager,
     private val storage: StorageProtocol,
     private val groupManager: GroupManagerV2,
-    private val recipientDatabase: RecipientDatabase,
     private val conversationRepository: ConversationRepository,
 ) : ViewModel() {
     // SharedFlow that emits whenever the user asks us to reload  the conversation
@@ -189,8 +180,6 @@ class HomeViewModel @Inject constructor(
     }
 
     companion object {
-        private const val CHANGE_NOTIFICATION_DEBOUNCE_MILLS = 100L
-
         private val CONVERSATION_COMPARATOR = compareByDescending<ThreadRecord> { it.recipient.isPinned }
             .thenByDescending { it.recipient.priority }
             .thenByDescending { it.lastMessage?.timestamp ?: 0L }
