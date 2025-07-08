@@ -16,15 +16,6 @@
         android:layout_width="match_parent"
         android:layout_height="0dp" />
 
-    <FrameLayout
-        android:id="@+id/mediasend_playback_controls_container"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        app:layout_constraintTop_toTopOf="@+id/mediasend_pager"
-        app:layout_constraintBottom_toBottomOf="@+id/mediasend_pager"
-        android:animateLayoutChanges="true"
-        android:layout_gravity="top"/>
-
     <LinearLayout
         android:id="@+id/mediasend_caption_and_rail"
         android:layout_width="match_parent"

@@ -106,7 +106,14 @@ class MediaSendFragment : Fragment(), RailItemListener, InputBarDelegate {
             this.binding = it
         }
 
-        binding.mediasendSafeArea.applySafeInsetsPaddings()
+        binding.mediasendSafeArea.applySafeInsetsPaddings(
+            applyBottom = false,
+            alsoApply = {
+                binding.bottomSpacer.updateLayoutParams<LayoutParams> {
+                    height = it.bottom
+                }
+            }
+        )
 
         binding.inputBar.delegate = this
         binding.inputBar.setInputBarEditableFactory(mentionViewModel.editableFactory)
@@ -145,17 +152,6 @@ class MediaSendFragment : Fragment(), RailItemListener, InputBarDelegate {
             binding.inputBar.clearFocus()
             binding.root.hideKeyboard()
             requireActivity().finish()
-        }
-
-        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, windowInsets ->
-            val systemBarsInsets =
-                windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars() or WindowInsetsCompat.Type.ime())
-
-            binding.bottomSpacer.updateLayoutParams<LayoutParams> {
-                height = systemBarsInsets.bottom
-            }
-
-            windowInsets.inset(systemBarsInsets)
         }
 
         // set the compose dialog content
