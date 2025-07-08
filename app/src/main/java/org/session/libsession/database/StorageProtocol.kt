@@ -181,6 +181,7 @@ interface StorageProtocol {
     fun getLastUpdated(threadID: Long): Long
     fun trimThreadBefore(threadID: Long, timestamp: Long)
     fun getMessageCount(threadID: Long): Long
+    fun getTotalPinned(): Int
     fun setPinned(address: Address, isPinned: Boolean)
     fun deleteConversation(threadID: Long)
     fun setThreadCreationDate(threadId: Long, newDate: Long)
@@ -239,7 +240,7 @@ interface StorageProtocol {
     /**
      * Add reaction to a specific message. This is preferable to the timestamp lookup.
      */
-    fun addReaction(messageId: MessageId, reaction: Reaction, messageSender: String, notifyUnread: Boolean)
+    fun addReaction(messageId: MessageId, reaction: Reaction, messageSender: String)
 
     /**
      * Add reactions into the database. If [replaceAll] is true,

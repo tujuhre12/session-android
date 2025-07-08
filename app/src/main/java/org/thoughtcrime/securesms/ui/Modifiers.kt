@@ -1,7 +1,9 @@
 package org.thoughtcrime.securesms.ui
 
 import androidx.annotation.StringRes
-import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.StartOffset
+import androidx.compose.animation.core.StartOffsetType
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
@@ -9,15 +11,19 @@ import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -39,6 +45,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 
@@ -190,44 +197,70 @@ fun Modifier.verticalScrollbar(
  * @param highlightColor The highlight color that moves across
  * @param animationDuration Duration of one shimmer cycle in milliseconds
  * @param delayBetweenCycles Delay between animation cycles in milliseconds (0 = continuous)
+ * @param initialDelay Delay before the very first animation starts in milliseconds (0 = start immediately)
  */
 fun Modifier.shimmerOverlay(
     color: Color = Color.White.copy(alpha = 0.0f),
     highlightColor: Color = Color.White.copy(alpha = 0.6f),
     animationDuration: Int = 1200,
-    delayBetweenCycles: Int = 3000
+    delayBetweenCycles: Int = 3000,
+    initialDelay: Int = 0
 ): Modifier = composed {
-
-    val infiniteTransition = rememberInfiniteTransition(label = "shimmer")
-
-    val shimmerProgress by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = keyframes {
-                durationMillis = animationDuration + delayBetweenCycles
-                0f at 0
-                1f at animationDuration
-                1f at (animationDuration + delayBetweenCycles) // Hold at end during delay
-            }
-        ),
-        label = "shimmerProgress"
-    )
+    // Single transition with a one-off start delay
+    val progress by rememberInfiniteTransition(label = "shimmer")
+        .animateFloat(
+            initialValue = 0f,
+            targetValue  = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = keyframes {
+                    durationMillis = animationDuration + delayBetweenCycles
+                    0f at 0
+                    1f at animationDuration
+                    1f at animationDuration + delayBetweenCycles
+                },
+                initialStartOffset = StartOffset(
+                    initialDelay,
+                    StartOffsetType.Delay
+                ),
+                repeatMode = RepeatMode.Restart
+            ),
+            label = "shimmerProgress"
+        )
 
     graphicsLayer {
         compositingStrategy = CompositingStrategy.Offscreen
     }
-        .drawWithContent {
-            // Draw the original content first
+    .drawWithCache {
+        // Work this out once per size change, not every frame
+        val diagonal   = kotlin.math.hypot(size.width, size.height)
+        val bandWidth  = diagonal * 0.30f
+        val travelDist = size.width + bandWidth * 2
+
+        onDrawWithContent {
             drawContent()
 
-            // Then draw the shimmer overlay on top
-            drawShimmerOverlay(
-                progress = shimmerProgress,
-                color = color,
-                highlightColor = highlightColor
+            // Map 0-1 progress → current band centre
+            val centre = -bandWidth + progress * travelDist
+
+            val brush = Brush.linearGradient(
+                colors = listOf(
+                    Color.Transparent,
+                    color,
+                    highlightColor,
+                    color,
+                    Color.Transparent
+                ),
+                start = Offset(centre - bandWidth, centre - bandWidth),
+                end   = Offset(centre + bandWidth, centre + bandWidth)
+            )
+
+            drawRect(
+                brush     = brush,
+                size      = size,
+                blendMode = BlendMode.SrcAtop   // only where there’s content
             )
         }
+    }
 }
 
 private fun createShimmerBrush(

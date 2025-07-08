@@ -207,7 +207,7 @@ class MmsDatabase @Inject constructor(
             arrayOf(body, messageId.toString())
         )
         with (get(context).threadDatabase()) {
-            setLastSeen(threadId)
+            setLastSeen(threadId, SnodeAPI.nowWithOffset)
             setHasSent(threadId, true)
             if (runThreadUpdate) {
                 update(threadId, true)
@@ -369,14 +369,14 @@ class MmsDatabase @Inject constructor(
 
     fun setMessagesRead(threadId: Long, beforeTime: Long): List<MarkedMessageInfo> {
         return setMessagesRead(
-            THREAD_ID + " = ? AND (" + READ + " = 0 OR " + REACTIONS_UNREAD + " = 1) AND " + DATE_SENT + " <= ?",
+            THREAD_ID + " = ? AND (" + READ + " = 0) AND " + DATE_SENT + " <= ?",
             arrayOf(threadId.toString(), beforeTime.toString())
         )
     }
 
     fun setMessagesRead(threadId: Long): List<MarkedMessageInfo> {
         return setMessagesRead(
-            THREAD_ID + " = ? AND (" + READ + " = 0 OR " + REACTIONS_UNREAD + " = 1)",
+            THREAD_ID + " = ? AND (" + READ + " = 0)",
             arrayOf(threadId.toString())
         )
     }

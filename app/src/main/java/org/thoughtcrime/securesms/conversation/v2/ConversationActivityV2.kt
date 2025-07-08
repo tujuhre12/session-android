@@ -532,7 +532,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         setupWindowInsets()
 
-
         startConversationLoaderWithDelay()
 
         // set the compose dialog content
@@ -540,9 +539,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setThemedContent {
                 val dialogsState by viewModel.dialogsState.collectAsState()
+                val inputBarDialogState by viewModel.inputBarStateDialogsState.collectAsState()
                 ConversationV2Dialogs(
                     dialogsState = dialogsState,
-                    sendCommand = viewModel::onCommand
+                    inputBarDialogsState = inputBarDialogState,
+                    sendCommand = viewModel::onCommand,
+                    sendInputBarCommand = viewModel::onInputBarCommand
                 )
             }
         }
@@ -878,7 +880,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                         AttachmentManager.MediaType.VIDEO  == mediaType)
             ) {
                 val media = Media(mediaURI, filename, mimeType, 0, 0, 0, 0, null, null)
-                startActivityForResult(MediaSendActivity.buildEditorIntent(this, listOf( media ), viewModel.recipient!!.address, ""), PICK_FROM_LIBRARY)
+                startActivityForResult(MediaSendActivity.buildEditorIntent(this, listOf( media ), viewModel.recipient!!.address, threadId, getMessageBody()), PICK_FROM_LIBRARY)
                 return
             } else {
                 prepMediaForSending(mediaURI, mediaType).addListener(object : ListenableFuture.Listener<Boolean> {
@@ -915,7 +917,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
         if (textSecurePreferences.isTypingIndicatorsEnabled()) {
             binding.inputBar.addTextChangedListener {
-                typingStatusSender.onTypingStarted(viewModel.threadId)
+                if(it.isNotEmpty()) {
+                    typingStatusSender.onTypingStarted(viewModel.threadId)
+                }
             }
         }
     }
@@ -1571,8 +1575,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     // `position` is the adapter position; not the visual position
     private fun handleSwipeToReply(message: MessageRecord) {
         if (message.isOpenGroupInvitation) return
-        val recipient = viewModel.recipient ?: return
-        binding.inputBar.draftQuote(recipient, message, glide)
+        reply(setOf(message))
     }
 
     // `position` is the adapter position; not the visual position
@@ -1712,7 +1715,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 dateSent = emojiTimestamp,
                 dateReceived = emojiTimestamp
             )
-            reactionDb.addReaction(reaction, false)
+            reactionDb.addReaction(reaction)
 
             val originalAuthor = if (originalMessage.isOutgoing) {
                 fromSerialized(viewModel.blindedPublicKey ?: textSecurePreferences.getLocalNumber()!!)
@@ -1749,7 +1752,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             Log.w(TAG, "Unable to locate local number when removing emoji reaction - aborting.")
             return
         } else {
-            reactionDb.deleteReaction(emoji, MessageId(originalMessage.id, originalMessage.isMms), author, false)
+            reactionDb.deleteReaction(
+                emoji,
+                MessageId(originalMessage.id, originalMessage.isMms),
+                author
+            )
 
             val originalAuthor = if (originalMessage.isOutgoing) {
                 fromSerialized(viewModel.blindedPublicKey ?: textSecurePreferences.getLocalNumber()!!)
@@ -1992,7 +1999,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val mimeType = MediaUtil.getMimeType(this, contentUri)!!
         val filename = FilenameUtils.getFilenameFromUri(this, contentUri, mimeType)
         val media = Media(contentUri, filename, mimeType, 0, 0, 0, 0, null, null)
-        startActivityForResult(MediaSendActivity.buildEditorIntent(this, listOf( media ), recipient.address, getMessageBody()), PICK_FROM_LIBRARY)
+        startActivityForResult(MediaSendActivity.buildEditorIntent(this, listOf( media ), recipient.address, threadId, getMessageBody()), PICK_FROM_LIBRARY)
     }
 
     // If we previously approve this recipient, either implicitly or explicitly, we need to wait for
@@ -2167,11 +2174,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private fun pickFromLibrary() {
         val recipient = viewModel.recipient ?: return
         binding.inputBar.text?.trim()?.let { text ->
-            AttachmentManager.selectGallery(this, PICK_FROM_LIBRARY, recipient.address, text)
+            AttachmentManager.selectGallery(this, PICK_FROM_LIBRARY, recipient.address, threadId, getMessageBody())
         }
     }
 
-    private fun showCamera() { attachmentManager.capturePhoto(this, TAKE_PHOTO, viewModel.recipient?.address) }
+    private fun showCamera() { attachmentManager.capturePhoto(this, TAKE_PHOTO, viewModel.recipient?.address, threadId) }
 
     override fun onAttachmentChanged() { /* Do nothing */ }
 

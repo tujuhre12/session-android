@@ -22,6 +22,7 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.glide.CommunityFileDownloadWorker
 import org.thoughtcrime.securesms.glide.EncryptedFileDownloadWorker
 import org.thoughtcrime.securesms.home.HomeActivity
+import org.thoughtcrime.securesms.logging.PersistentLogger
 import org.thoughtcrime.securesms.migration.DatabaseMigrationManager
 import javax.inject.Inject
 
@@ -31,6 +32,7 @@ class ClearDataUtils @Inject constructor(
     private val tokenFetcher: TokenFetcher,
     private val storage: Storage,
     private val prefs: TextSecurePreferences,
+    private val persistentLogger: PersistentLogger,
 ) {
     // Method to clear the local data - returns true on success otherwise false
     @SuppressLint("ApplySharedPref")
@@ -56,6 +58,8 @@ class ClearDataUtils @Inject constructor(
 
             EncryptedFileDownloadWorker.cancelAll(application)
             CommunityFileDownloadWorker.cancelAll(application)
+
+            persistentLogger.deleteAllLogs()
 
             // The token deletion is nice but not critical, so don't let it block the rest of the process
             runCatching {

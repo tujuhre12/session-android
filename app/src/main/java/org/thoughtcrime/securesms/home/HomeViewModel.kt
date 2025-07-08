@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
@@ -33,6 +34,7 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
 import org.thoughtcrime.securesms.webrtc.CallManager
@@ -49,6 +51,7 @@ class HomeViewModel @Inject constructor(
     private val storage: StorageProtocol,
     private val groupManager: GroupManagerV2,
     private val conversationRepository: ConversationRepository,
+    private val proStatusManager: ProStatusManager,
 ) : ViewModel() {
     // SharedFlow that emits whenever the user asks us to reload  the conversation
     private val manualReloadTrigger = MutableSharedFlow<Unit>(
@@ -67,6 +70,9 @@ class HomeViewModel @Inject constructor(
             else context.getString(R.string.callsIncomingUnknown)
         } else null // null when the call isn't in progress / incoming
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), initialValue = null)
+
+    private val _dialogsState = MutableStateFlow(DialogsState())
+    val dialogsState: StateFlow<DialogsState> = _dialogsState
 
     /**
      * A [StateFlow] that emits the list of threads and the typing status of each thread.
@@ -177,6 +183,54 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.Default) {
             groupManager.leaveGroup(accountId)
         }
+    }
+
+    fun setPinned(address: Address, pinned: Boolean) {
+        // check the pin limit before continuing
+        val totalPins = storage.getTotalPinned()
+        val maxPins = proStatusManager.getPinnedConversationLimit()
+        if(pinned && totalPins >= maxPins){
+            // the user has reached the pin limit, show the CTA
+            _dialogsState.update {
+                it.copy(
+                    pinCTA = PinProCTA(overTheLimit = totalPins > maxPins)
+                )
+            }
+        } else {
+            viewModelScope.launch(Dispatchers.Default) {
+                storage.setPinned(address, pinned)
+            }
+        }
+    }
+
+    fun onCommand(command: Commands) {
+        when (command) {
+            is Commands.HidePinCTADialog -> {
+                _dialogsState.update { it.copy(pinCTA = null) }
+            }
+
+            is Commands.GoToProUpgradeScreen -> {
+                // hide dialog
+                _dialogsState.update { it.copy(pinCTA = null) }
+
+                // to go Pro upgrade screen
+                //todo PRO go to screen once it exists
+            }
+
+        }
+    }
+
+    data class DialogsState(
+        val pinCTA: PinProCTA? = null,
+    )
+
+    data class PinProCTA(
+        val overTheLimit: Boolean
+    )
+
+    sealed interface Commands {
+        data object HidePinCTADialog: Commands
+        data object GoToProUpgradeScreen: Commands
     }
 
     companion object {
