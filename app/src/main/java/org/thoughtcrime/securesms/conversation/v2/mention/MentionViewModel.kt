@@ -17,15 +17,19 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.allWithStatus
@@ -269,6 +273,49 @@ class MentionViewModel(
         // Add the remaining content
         sb.append(editable, offset, editable.length)
         return sb.toString()
+    }
+
+    private val _displayBody = MutableStateFlow<Editable?>(null)
+    val displayBody: StateFlow<Editable?> = _displayBody
+
+    /**
+     * Convert a raw body that still contains "@<64-hex>" tokens into an
+     * Editable that shows "@DisplayName" and carries the proper MentionSpans.
+     */
+    fun initialiseDisplayBody(rawBody: String) {
+        if (rawBody.isBlank()) return
+
+        editable.replace(0, editable.length, rawBody)
+
+        suspend fun rebuild(members: List<Member>) {
+            if (!rawBody.contains('@')) return
+
+            editable.clearSpans()
+
+            val regex = Regex("@([0-9a-fA-F]{66})")
+            val matches = regex.findAll(editable).toList()
+
+            // Replace from the end so earlier indexes don’t change
+            for (m in matches.asReversed()) {
+                val id      = m.groupValues[1]
+                val member  = members.firstOrNull { it.publicKey == id } ?: continue
+
+                val start = m.range.first
+                val end   = m.range.last + 1
+
+                editable.replace(start, end, "@${member.name}")
+
+                editable.addMention(member, start .. start + member.name.length + 1)
+            }
+
+            _displayBody.value = SpannableStringBuilder(editable)
+        }
+
+        members.value?.let { viewModelScope.launch { rebuild(it) } }
+
+        viewModelScope.launch {
+            members.filterNotNull().firstOrNull()?.let { rebuild(it) }
+        }
     }
 
     data class Member(

@@ -889,7 +889,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                         AttachmentManager.MediaType.VIDEO  == mediaType)
             ) {
                 val media = Media(mediaURI, filename, mimeType, 0, 0, 0, 0, null, null)
-                startActivityForResult(MediaSendActivity.buildEditorIntent(this, listOf( media ), viewModel.recipient!!, ""), PICK_FROM_LIBRARY)
+                startActivityForResult(MediaSendActivity.buildEditorIntent(this, listOf( media ), viewModel.recipient!!, threadId, getMessageBody()), PICK_FROM_LIBRARY)
                 return
             } else {
                 prepMediaForSending(mediaURI, mediaType).addListener(object : ListenableFuture.Listener<Boolean> {
@@ -1951,7 +1951,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val mimeType = MediaUtil.getMimeType(this, contentUri)!!
         val filename = FilenameUtils.getFilenameFromUri(this, contentUri, mimeType)
         val media = Media(contentUri, filename, mimeType, 0, 0, 0, 0, null, null)
-        startActivityForResult(MediaSendActivity.buildEditorIntent(this, listOf( media ), recipient, getMessageBody()), PICK_FROM_LIBRARY)
+        startActivityForResult(MediaSendActivity.buildEditorIntent(this, listOf( media ), recipient, threadId, getMessageBody()), PICK_FROM_LIBRARY)
     }
 
     // If we previously approve this recipient, either implicitly or explicitly, we need to wait for
@@ -2124,12 +2124,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     private fun pickFromLibrary() {
         val recipient = viewModel.recipient ?: return
-        binding.inputBar.text?.trim()?.let { text ->
-            AttachmentManager.selectGallery(this, PICK_FROM_LIBRARY, recipient, text)
-        }
+        AttachmentManager.selectGallery(this, PICK_FROM_LIBRARY, recipient, threadId,
+            getMessageBody())
     }
 
-    private fun showCamera() { attachmentManager.capturePhoto(this, TAKE_PHOTO, viewModel.recipient) }
+    private fun showCamera() { attachmentManager.capturePhoto(this, TAKE_PHOTO, viewModel.recipient, threadId) }
 
     override fun onAttachmentChanged() { /* Do nothing */ }
 

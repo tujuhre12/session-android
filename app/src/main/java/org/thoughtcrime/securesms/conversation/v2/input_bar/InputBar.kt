@@ -5,6 +5,7 @@ import android.content.Context
 import android.graphics.PointF
 import android.net.Uri
 import android.text.Editable
+import android.text.SpannableString
 import android.util.AttributeSet
 import android.view.KeyEvent
 import android.view.LayoutInflater
@@ -84,6 +85,10 @@ class InputBar @JvmOverloads constructor(
     var text: String
         get() = binding.inputBarEditText.text?.toString() ?: ""
         set(value) { binding.inputBarEditText.setText(value) }
+
+    fun setText(text: CharSequence, type: TextView.BufferType){
+        binding.inputBarEditText.setText(text, type)
+    }
 
     var voiceRecorderState = VoiceRecorderState.Idle
 
