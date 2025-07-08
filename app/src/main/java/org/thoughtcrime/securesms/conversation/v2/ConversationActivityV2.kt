@@ -526,7 +526,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         setupWindowInsets()
 
-
         startConversationLoaderWithDelay()
 
         // set the compose dialog content
