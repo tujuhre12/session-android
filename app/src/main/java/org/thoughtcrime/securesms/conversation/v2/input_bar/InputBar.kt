@@ -5,7 +5,6 @@ import android.content.Context
 import android.graphics.PointF
 import android.net.Uri
 import android.text.Editable
-import android.text.SpannableString
 import android.util.AttributeSet
 import android.view.KeyEvent
 import android.view.LayoutInflater
@@ -24,7 +23,7 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.InputbarViewModel
-import org.thoughtcrime.securesms.conversation.v2.InputBarContentState
+import org.thoughtcrime.securesms.InputbarViewModel.InputBarContentState
 import org.thoughtcrime.securesms.conversation.v2.components.LinkPreviewDraftView
 import org.thoughtcrime.securesms.conversation.v2.components.LinkPreviewDraftViewDelegate
 import org.thoughtcrime.securesms.conversation.v2.messages.QuoteView
@@ -33,7 +32,6 @@ import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.util.addTextChangedListener
 import org.thoughtcrime.securesms.util.contains
-import org.thoughtcrime.securesms.util.setSafeOnClickListener
 
 // TODO: A lot of the logic regarding voice messages is currently performed in the ConversationActivity
 // TODO: and here - it would likely be best to move this into the CA's ViewModel.
@@ -346,7 +344,7 @@ class InputBar @JvmOverloads constructor(
 
         // handle char limit
         if(state.charLimitState != null){
-            binding.characterLimitText.text = state.charLimitState.count.toString()
+            binding.characterLimitText.text = state.charLimitState.countFormatted
             binding.characterLimitText.setTextColor(if(state.charLimitState.danger) dangerColor else textColor)
             binding.characterLimitContainer.setOnClickListener {
                 delegate?.onCharLimitTapped()

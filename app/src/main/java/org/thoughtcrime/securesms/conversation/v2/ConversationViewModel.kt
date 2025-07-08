@@ -1427,21 +1427,6 @@ data class ConversationUiState(
     val showLoader: Boolean = false,
 )
 
-
-
-data class InputBarCharLimitState(
-    val count: Int,
-    val danger: Boolean,
-    val showProBadge: Boolean
-)
-
-sealed interface InputBarContentState {
-    data object Hidden : InputBarContentState
-    data object Visible : InputBarContentState
-    data class Disabled(val text: String, val onClick: (() -> Unit)? = null) : InputBarContentState
-}
-
-
 sealed interface ConversationUiEvent {
     data class NavigateToConversation(val threadId: Long) : ConversationUiEvent
     data class ShowDisappearingMessages(val threadId: Long) : ConversationUiEvent

@@ -8,10 +8,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.LIMIT_KEY
-import org.thoughtcrime.securesms.conversation.v2.InputBarCharLimitState
-import org.thoughtcrime.securesms.conversation.v2.InputBarContentState
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.SimpleDialogData
+import org.thoughtcrime.securesms.util.NumberUtil
 
 // the amount of character left at which point we should show an indicator
 private const  val CHARACTER_LIMIT_THRESHOLD = 200
@@ -35,6 +34,7 @@ abstract class InputbarViewModel(
         val charLimitState = if(charsLeft <= CHARACTER_LIMIT_THRESHOLD){
             InputBarCharLimitState(
                 count = charsLeft,
+                countFormatted = NumberUtil.getFormattedNumber(charsLeft.toLong()),
                 danger = charsLeft < 0,
                 showProBadge = proStatusManager.isPostPro() && !proStatusManager.isCurrentUserPro() // only show the badge for non pro users POST pro launch
             )
@@ -163,6 +163,19 @@ abstract class InputbarViewModel(
                 }
             }
         }
+    }
+
+    data class InputBarCharLimitState(
+        val count: Int,
+        val countFormatted: String,
+        val danger: Boolean,
+        val showProBadge: Boolean
+    )
+
+    sealed interface InputBarContentState {
+        data object Hidden : InputBarContentState
+        data object Visible : InputBarContentState
+        data class Disabled(val text: String, val onClick: (() -> Unit)? = null) : InputBarContentState
     }
 
     data class InputBarState(
