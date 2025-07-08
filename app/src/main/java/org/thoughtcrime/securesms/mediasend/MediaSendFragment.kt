@@ -8,11 +8,15 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams
 import android.widget.TextView
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
+import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -141,6 +145,17 @@ class MediaSendFragment : Fragment(), RailItemListener, InputBarDelegate {
             binding.inputBar.clearFocus()
             binding.root.hideKeyboard()
             requireActivity().finish()
+        }
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, windowInsets ->
+            val systemBarsInsets =
+                windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars() or WindowInsetsCompat.Type.ime())
+
+            binding.bottomSpacer.updateLayoutParams<LayoutParams> {
+                height = systemBarsInsets.bottom
+            }
+
+            windowInsets.inset(systemBarsInsets)
         }
 
         // set the compose dialog content

@@ -50,12 +50,16 @@
             android:layout_height="wrap_content"
             tools:layout_height="60dp"
             android:background="?input_bar_background"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/recreateGroupButtonContainer"
-            app:layout_constraintBottom_toTopOf="@+id/bottomSpacer"
-            app:layout_constraintVertical_bias="1"
             app:sendOnly="true"
             />
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:background="?input_bar_background"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:id="@+id/bottomSpacer" />
 
     </LinearLayout>
 
