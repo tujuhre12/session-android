@@ -929,7 +929,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
         if (textSecurePreferences.isTypingIndicatorsEnabled()) {
             binding.inputBar.addTextChangedListener {
-                if(!it.isNullOrEmpty()) {
+                if(it.isNotEmpty()) {
                     typingStatusSender.onTypingStarted(viewModel.threadId)
                 }
             }
