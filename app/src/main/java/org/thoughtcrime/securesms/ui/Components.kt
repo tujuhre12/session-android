@@ -779,7 +779,7 @@ fun PinProCTA(
 ){
     SimpleSessionProCTA(
         modifier = modifier,
-        heroImage = R.drawable.cta_hero_char_limit,
+        heroImage = R.drawable.cta_hero_pins,
         text = if(overTheLimit) stringResource(R.string.proCallToActionPinnedConversations)
                 else stringResource(R.string.proCallToActionPinnedConversationsMoreThan),
         features = listOf(
