@@ -259,7 +259,7 @@ interface StorageProtocol {
     /**
      * Add reaction to a specific message. This is preferable to the timestamp lookup.
      */
-    fun addReaction(messageId: MessageId, reaction: Reaction, messageSender: String, notifyUnread: Boolean)
+    fun addReaction(messageId: MessageId, reaction: Reaction, messageSender: String)
 
     /**
      * Add reactions into the database. If [replaceAll] is true,

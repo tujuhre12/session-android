@@ -216,7 +216,6 @@ import org.thoughtcrime.securesms.webrtc.WebRtcCallActivity.Companion.ACTION_STA
 import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge.Companion.EXTRA_RECIPIENT_ADDRESS
 import java.io.File
 import java.util.LinkedList
-import java.util.Locale
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
@@ -1671,7 +1670,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 dateSent = emojiTimestamp,
                 dateReceived = emojiTimestamp
             )
-            reactionDb.addReaction(reaction, false)
+            reactionDb.addReaction(reaction)
 
             val originalAuthor = if (originalMessage.isOutgoing) {
                 fromSerialized(viewModel.blindedPublicKey ?: textSecurePreferences.getLocalNumber()!!)
@@ -1708,7 +1707,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             Log.w(TAG, "Unable to locate local number when removing emoji reaction - aborting.")
             return
         } else {
-            reactionDb.deleteReaction(emoji, MessageId(originalMessage.id, originalMessage.isMms), author, false)
+            reactionDb.deleteReaction(
+                emoji,
+                MessageId(originalMessage.id, originalMessage.isMms),
+                author
+            )
 
             val originalAuthor = if (originalMessage.isOutgoing) {
                 fromSerialized(viewModel.blindedPublicKey ?: textSecurePreferences.getLocalNumber()!!)
