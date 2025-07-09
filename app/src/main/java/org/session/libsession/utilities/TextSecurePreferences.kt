@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.update
 import network.loki.messenger.R
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.TextSecurePreferences.Companion.AUTOPLAY_AUDIO_MESSAGES
@@ -173,11 +174,13 @@ interface TextSecurePreferences {
     fun hasHiddenMessageRequests(): Boolean
     fun setHasHiddenMessageRequests(hidden: Boolean)
     fun forceCurrentUserAsPro(): Boolean
-    fun setForceCurrentUserAsPro(hidden: Boolean)
+    fun watchProStatus(): StateFlow<Boolean>
+    fun setForceCurrentUserAsPro(isPro: Boolean)
     fun forceIncomingMessagesAsPro(): Boolean
-    fun setForceIncomingMessagesAsPro(hidden: Boolean)
+    fun setForceIncomingMessagesAsPro(isPro: Boolean)
     fun forcePostPro(): Boolean
-    fun setForcePostPro(hidden: Boolean)
+    fun setForcePostPro(postPro: Boolean)
+    fun watchPostProStatus(): StateFlow<Boolean>
     fun hasHiddenNoteToSelf(): Boolean
     fun setHasHiddenNoteToSelf(hidden: Boolean)
     fun setShownCallWarning(): Boolean
@@ -1003,6 +1006,8 @@ class AppTextSecurePreferences @Inject constructor(
     @ApplicationContext private val context: Context
 ): TextSecurePreferences {
     private val localNumberState = MutableStateFlow(getStringPreference(TextSecurePreferences.LOCAL_NUMBER_PREF, null))
+    private val proState = MutableStateFlow(getBooleanPreference(TextSecurePreferences.SET_FORCE_CURRENT_USER_PRO, false))
+    private val postProLaunchState = MutableStateFlow(getBooleanPreference(TextSecurePreferences.SET_FORCE_POST_PRO, false))
 
     override var migratedToGroupV2Config: Boolean
         get() = getBooleanPreference(TextSecurePreferences.MIGRATED_TO_GROUP_V2_CONFIG, false)
@@ -1608,27 +1613,34 @@ class AppTextSecurePreferences @Inject constructor(
         return getBooleanPreference(SET_FORCE_CURRENT_USER_PRO, false)
     }
 
-    override fun setForceCurrentUserAsPro(hidden: Boolean) {
-        setBooleanPreference(SET_FORCE_CURRENT_USER_PRO, hidden)
-        _events.tryEmit(SET_FORCE_CURRENT_USER_PRO)
+    override fun setForceCurrentUserAsPro(isPro: Boolean) {
+        setBooleanPreference(SET_FORCE_CURRENT_USER_PRO, isPro)
+        proState.update { isPro }
+    }
+
+    override fun watchProStatus(): StateFlow<Boolean> {
+        return proState
     }
 
     override fun forceIncomingMessagesAsPro(): Boolean {
         return getBooleanPreference(SET_FORCE_INCOMING_MESSAGE_PRO, false)
     }
 
-    override fun setForceIncomingMessagesAsPro(hidden: Boolean) {
-        setBooleanPreference(SET_FORCE_INCOMING_MESSAGE_PRO, hidden)
-        _events.tryEmit(SET_FORCE_INCOMING_MESSAGE_PRO)
+    override fun setForceIncomingMessagesAsPro(isPro: Boolean) {
+        setBooleanPreference(SET_FORCE_INCOMING_MESSAGE_PRO, isPro)
     }
 
     override fun forcePostPro(): Boolean {
         return getBooleanPreference(SET_FORCE_POST_PRO, false)
     }
 
-    override fun setForcePostPro(hidden: Boolean) {
-        setBooleanPreference(SET_FORCE_POST_PRO, hidden)
-        _events.tryEmit(SET_FORCE_POST_PRO)
+    override fun setForcePostPro(postPro: Boolean) {
+        setBooleanPreference(SET_FORCE_POST_PRO, postPro)
+        postProLaunchState.update { postPro }
+    }
+
+    override fun watchPostProStatus(): StateFlow<Boolean> {
+        return postProLaunchState
     }
 
     override fun getFingerprintKeyGenerated(): Boolean {

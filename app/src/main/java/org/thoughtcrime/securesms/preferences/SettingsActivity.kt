@@ -28,8 +28,11 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -58,6 +61,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
@@ -73,6 +77,7 @@ import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivitySettingsBinding
 import org.session.libsession.snode.OnionRequestAPI
+import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.NonTranslatableStringConstants.NETWORK_NAME
 import org.session.libsession.utilities.SSKEnvironment.ProfileManagerProtocol
 import org.session.libsession.utilities.StringSubstitutionConstants.VERSION_KEY
@@ -90,6 +95,9 @@ import org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActiv
 import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
 import org.thoughtcrime.securesms.tokenpage.TokenPageActivity
 import org.thoughtcrime.securesms.ui.AlertDialog
+import org.thoughtcrime.securesms.ui.AnimatedSessionProActivatedCTA
+import org.thoughtcrime.securesms.ui.AnimatedSessionProCTA
+import org.thoughtcrime.securesms.ui.CTAFeature
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.Divider
@@ -97,6 +105,7 @@ import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LargeItemButton
 import org.thoughtcrime.securesms.ui.LargeItemButtonWithDrawable
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
+import org.thoughtcrime.securesms.ui.SimpleSessionProCTA
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.BaseBottomSheet
 import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
@@ -606,6 +615,13 @@ class SettingsActivity : ScreenLockActionBarActivity() {
             AvatarDialogContainer()
         }
 
+        // Animated avatar CTA
+        if(uiState.showAnimatedProCTA){
+            AnimatedProCTA(
+                isPro = uiState.isPro,
+            )
+        }
+
         // donate confirmation
         if(uiState.showUrlDialog != null){
             OpenURLAlertDialog(
@@ -718,10 +734,49 @@ class SettingsActivity : ScreenLockActionBarActivity() {
             content = {
                 // custom content that has the displayed images
 
+                // animated Pro title
+                if(state.isPostPro){
+                    Row(
+                        modifier = Modifier.padding(
+                            top = LocalDimensions.current.xxxsSpacing,
+                            bottom = LocalDimensions.current.xsSpacing,
+                        )
+                            .clickable{
+                                viewModel.showAnimatedProCTA()
+                            },
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
+                    ) {
+                        if(state.isPro) {
+                            Image(
+                                modifier = Modifier.height(LocalType.current.base.lineHeight.value.dp),
+                                painter = painterResource(id = R.drawable.ic_pro_badge),
+                                contentDescription = NonTranslatableStringConstants.APP_PRO,
+                            )
+
+                            Text(
+                                text = stringResource(R.string.proAnimatedDisplayPictureModalDescription),
+                                style = LocalType.current.base.copy(color = LocalColors.current.textSecondary)
+                            )
+                        } else {
+                            Text(
+                                text = stringResource(R.string.proAnimatedDisplayPicturesNonProModalDescription),
+                                style = LocalType.current.base.copy(color = LocalColors.current.textSecondary)
+                            )
+
+                            Image(
+                                modifier = Modifier.height(LocalType.current.base.lineHeight.value.dp),
+                                painter = painterResource(id = R.drawable.ic_pro_badge),
+                                contentDescription = NonTranslatableStringConstants.APP_PRO,
+                            )
+                        }
+                    }
+                }
+
                 // main container that control the overall size and adds the rounded bg
                 Box(
                     modifier = Modifier
-                        .padding(top = LocalDimensions.current.smallSpacing)
+                        .padding(vertical = LocalDimensions.current.smallSpacing)
                         .size(LocalDimensions.current.iconXXLarge)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
@@ -804,6 +859,33 @@ class SettingsActivity : ScreenLockActionBarActivity() {
             )
         )
     }
+
+     @Composable
+     fun AnimatedProCTA(
+         isPro: Boolean,
+     ){
+         if(isPro) {
+             AnimatedSessionProActivatedCTA (
+                 heroImageBg = R.drawable.cta_hero_animated_bg,
+                 heroImageAnimatedFg = R.drawable.cta_hero_animated_fg,
+                 text = stringResource(R.string.proAnimatedDisplayPicture),
+                 onCancel = viewModel::hideAnimatedProCTA
+             )
+         } else {
+             AnimatedSessionProCTA(
+                 heroImageBg = R.drawable.cta_hero_animated_bg,
+                 heroImageAnimatedFg = R.drawable.cta_hero_animated_fg,
+                 text = stringResource(R.string.proAnimatedDisplayPictureCallToActionDescription),
+                 features = listOf(
+                     CTAFeature.Icon(stringResource(R.string.proFeatureListAnimatedDisplayPicture)),
+                     CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
+                     CTAFeature.RainbowIcon(stringResource(R.string.proFeatureListLoadsMore)),
+                 ),
+                 onUpgrade = viewModel::goToProUpgradeScreen,
+                 onCancel = viewModel::hideAnimatedProCTA
+             )
+         }
+     }
 
     @Preview
     @Composable

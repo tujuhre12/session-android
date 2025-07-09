@@ -1,5 +1,11 @@
 package org.thoughtcrime.securesms.pro
 
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.utilities.TextSecurePreferences
 import javax.inject.Inject
@@ -12,6 +18,28 @@ class ProStatusManager @Inject constructor(
     private val MAX_CHARACTER_PRO = 10000 // max characters in a message for pro users
     private val MAX_CHARACTER_REGULAR = 2000 // max characters in a message for non pro users
     private val MAX_PIN_REGULAR = 5 // max pinned conversation for non pro users
+
+    // live state of the Pro status
+    private val _proStatus = MutableStateFlow(isCurrentUserPro())
+    val proStatus: StateFlow<Boolean> = _proStatus
+
+    // live state for the pre vs post pro  launch status
+    private val _postProLaunchStatus = MutableStateFlow(isPostPro())
+    val postProLaunchStatus: StateFlow<Boolean> = _postProLaunchStatus
+
+    init {
+        GlobalScope.launch {
+            prefs.watchProStatus().collect {
+                _proStatus.update { isCurrentUserPro() }
+            }
+        }
+
+        GlobalScope.launch {
+            prefs.watchPostProStatus().collect {
+                _postProLaunchStatus.update { isPostPro() }
+            }
+        }
+    }
 
     fun isCurrentUserPro(): Boolean {
         // if the debug is set, return that

@@ -75,6 +75,18 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(avatarDialogState = getDefaultAvatarDialogState()) }
         }
+
+        viewModelScope.launch {
+            proStatusManager.proStatus.collect { isPro ->
+                _uiState.update { it.copy(isPro = isPro) }
+            }
+        }
+
+        viewModelScope.launch {
+            proStatusManager.postProLaunchStatus.collect { postPro ->
+                _uiState.update { it.copy(isPostPro = postPro) }
+            }
+        }
     }
 
     private fun updateAvatar(){
@@ -271,6 +283,21 @@ class SettingsViewModel @Inject constructor(
 
     }
 
+    fun showAnimatedProCTA() {
+        _uiState.update { it.copy(showAnimatedProCTA = true) }
+    }
+    fun hideAnimatedProCTA() {
+        _uiState.update { it.copy(showAnimatedProCTA = false) }
+    }
+
+    fun goToProUpgradeScreen() {
+        // hide dialog
+        hideAnimatedProCTA()
+
+        // to go Pro upgrade screen
+        //todo PRO go to screen once it exists
+    }
+
     sealed class AvatarDialogState() {
         object NoAvatar : AvatarDialogState()
         data class UserAvatar(val data: AvatarUIData) : AvatarDialogState()
@@ -289,6 +316,7 @@ class SettingsViewModel @Inject constructor(
         val showAvatarDialog: Boolean = false,
         val showAvatarPickerOptionCamera: Boolean = false,
         val showAvatarPickerOptions: Boolean = false,
+        val showAnimatedProCTA: Boolean = false,
         val isPro: Boolean,
         val isPostPro: Boolean
     )
