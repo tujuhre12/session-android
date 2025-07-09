@@ -16,6 +16,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -272,4 +273,4 @@ sealed class AvatarBadge(@DrawableRes val icon: Int){
 fun RequestBuilder<Drawable>.avatarOptions(sizePx: Int) = this.override(sizePx)
     .dontTransform()
     .diskCacheStrategy(DiskCacheStrategy.NONE)
-    .centerCrop()
+    .optionalTransform(CenterCrop())
