@@ -28,7 +28,6 @@ import org.thoughtcrime.securesms.conversation.disappearingmessages.ExpiryType
 import org.thoughtcrime.securesms.database.ExpirationInfo
 import org.thoughtcrime.securesms.database.MarkedMessageInfo
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
-import org.thoughtcrime.securesms.util.SessionMetaProtocol.shouldSendReadReceipt
 import javax.inject.Inject
 
 @AndroidEntryPoint

@@ -533,7 +533,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
          */
         @JvmStatic
         fun buildCameraIntent(context: Context, recipient: Address, threadId: Long): Intent {
-            val intent = buildGalleryIntent(context, recipient, "")
+            val intent = buildGalleryIntent(context, recipient, threadId, "")
             intent.putExtra(KEY_IS_CAMERA, true)
             return intent
         }

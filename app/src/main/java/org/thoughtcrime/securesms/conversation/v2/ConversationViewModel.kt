@@ -249,12 +249,6 @@ class ConversationViewModel @AssistedInject constructor(
 
     val shouldExit: Flow<Boolean> get() = recipientFlow.map { it == null }
 
-    val inputBarState: StateFlow<InputBarState> = combine(
-        recipientFlow, openGroupFlow, legacyGroupDeprecationManager.deprecationState,
-        this::getInputBarState
-    ).stateIn(viewModelScope, SharingStarted.Eagerly, InputBarState())
-
-
     private val _acceptingMessageRequest = MutableStateFlow<Boolean>(false)
     val messageRequestState: StateFlow<MessageRequestUiState> = combine(
         recipientFlow,
