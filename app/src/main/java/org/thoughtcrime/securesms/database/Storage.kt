@@ -400,10 +400,10 @@ open class Storage @Inject constructor(
         }
         val targetRecipient = Recipient.from(context, targetAddress, false)
         if (!targetRecipient.isGroupOrCommunityRecipient) {
-            if (isUserSender || isUserBlindedSender) {
+            if ((isUserSender || isUserBlindedSender) && !targetRecipient.isApproved) {
                 setRecipientApproved(targetRecipient, true)
-            } else {
-                setRecipientApprovedMe(targetRecipient, true)
+            } else if(!targetRecipient.hasApprovedMe()){
+                 setRecipientApprovedMe(targetRecipient, true)
             }
         }
         if (message.threadID == null && !targetRecipient.isCommunityRecipient) {

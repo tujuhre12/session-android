@@ -355,7 +355,7 @@ fun MessageReceiver.handleVisibleMessage(
         val isUserBlindedSender = messageSender == context.userBlindedKey
         if (profile != null && userPublicKey != messageSender && !isUserBlindedSender) {
             val name = profile.displayName!!
-            if (name.isNotEmpty()) {
+            if (name.isNotEmpty() && name != recipient.rawName) {
                 context.profileManager.setName(context.context, recipient, name)
             }
             val newProfileKey = profile.profileKey
@@ -371,7 +371,7 @@ fun MessageReceiver.handleVisibleMessage(
             }
         }
 
-        if (userPublicKey != messageSender && !isUserBlindedSender) {
+        if (userPublicKey != messageSender && !isUserBlindedSender && message.blocksMessageRequests != recipient.blocksCommunityMessageRequests) {
             context.storage.setBlocksCommunityMessageRequests(recipient, message.blocksMessageRequests)
         }
 
@@ -380,11 +380,13 @@ fun MessageReceiver.handleVisibleMessage(
             proto.dataMessage.expireTimer > 0 && !proto.hasExpirationType() -> Recipient.DisappearingState.LEGACY
             else -> Recipient.DisappearingState.UPDATED
         }
-        context.storage.updateDisappearingState(
-            messageSender,
-            context.threadId,
-            disappearingState
-        )
+        if(disappearingState != recipient.disappearingState) {
+            context.storage.updateDisappearingState(
+                messageSender,
+                context.threadId,
+                disappearingState
+            )
+        }
     }
     // Handle group invite response if new closed group
     if (context.threadRecipient?.isGroupV2Recipient == true) {

@@ -1136,8 +1136,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     // region Animation & Updating
     override fun onModified(recipient: Recipient) {
-        viewModel.updateRecipient()
-
         runOnUiThread {
             invalidateOptionsMenu()
             updateSendAfterApprovalText()
