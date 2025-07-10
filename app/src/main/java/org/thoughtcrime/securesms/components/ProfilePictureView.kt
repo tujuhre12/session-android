@@ -27,6 +27,7 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.GroupDatabase
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.avatarOptions
 import javax.inject.Inject
@@ -59,6 +60,9 @@ class ProfilePictureView @JvmOverloads constructor(
 
     @Inject
     lateinit var avatarUtils: AvatarUtils
+
+    @Inject
+    lateinit var proStatusManager: ProStatusManager
 
     private val profilePicturesCache = mutableMapOf<View, Recipient>()
     private val resourcePadding by lazy {
@@ -209,7 +213,10 @@ class ProfilePictureView @JvmOverloads constructor(
             if (signalProfilePicture != null && avatar != "0" && avatar != "") {
                 val maxSizePx = context.resources.getDimensionPixelSize(R.dimen.medium_profile_picture_size)
                 glide.load(signalProfilePicture)
-                    .avatarOptions(maxSizePx)
+                    .avatarOptions(
+                        sizePx = maxSizePx,
+                        freezeFrame = proStatusManager.freezeFrameForUser(recipient.address)
+                    )
                     .placeholder(createUnknownRecipientDrawable())
                     .error(glide.load(placeholder))
                     .into(imageView)

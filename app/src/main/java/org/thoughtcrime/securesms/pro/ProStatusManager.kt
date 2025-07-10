@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.session.libsession.messaging.messages.visible.VisibleMessage
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -47,6 +48,19 @@ class ProStatusManager @Inject constructor(
 
         // otherwise return the true value
         return false //todo PRO implement real logic once it's in
+    }
+
+    fun isUserPro(address: Address?): Boolean{
+        //todo PRO implement real logic once it's in
+
+        return false
+    }
+
+    /**
+     * Logic to determine if we should animate the avatar for a user or freeze it on the first frame
+     */
+    fun freezeFrameForUser(address: Address?): Boolean{
+        return if(!isPostPro()) false else !isUserPro(address)
     }
 
     /**
