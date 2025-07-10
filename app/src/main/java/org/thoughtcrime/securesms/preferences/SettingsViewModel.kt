@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.preferences
 
 import android.content.Context
+import android.net.Uri
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -31,6 +32,7 @@ import org.session.libsignal.utilities.Util.SECURE_RANDOM
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.profiles.ProfileMediaConstraints
+import org.thoughtcrime.securesms.util.AnimatedImageUtils
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.BitmapDecodingException
@@ -141,6 +143,32 @@ class SettingsViewModel @Inject constructor(
 
             else -> {
                 Log.e(TAG, "Cropping image failed")
+            }
+        }
+    }
+
+    fun onAvatarPicked(uri: Uri) {
+        Log.i(TAG,  "Picked a new avatar: $uri")
+
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+
+                if(bytes == null){
+                    Log.e(TAG, "Error reading avatar bytes")
+                    Toast.makeText(context, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
+                } else {
+                    _uiState.update {
+                        it.copy(
+                            avatarDialogState = AvatarDialogState.TempAvatar(
+                                data = bytes,
+                                hasAvatar = hasAvatar()
+                            )
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error reading avatar bytes", e)
             }
         }
     }
@@ -297,6 +325,8 @@ class SettingsViewModel @Inject constructor(
         // to go Pro upgrade screen
         //todo PRO go to screen once it exists
     }
+
+    fun isAnimated(uri: Uri) = AnimatedImageUtils.isAnimated(context, uri)
 
     sealed class AvatarDialogState() {
         object NoAvatar : AvatarDialogState()

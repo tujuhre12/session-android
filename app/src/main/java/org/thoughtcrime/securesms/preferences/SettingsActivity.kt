@@ -28,11 +28,9 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -46,9 +44,7 @@ import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -66,6 +62,8 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
 import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageOptions
@@ -88,6 +86,7 @@ import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.home.PathActivity
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
+import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.TempAvatar
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.UserAvatar
@@ -105,11 +104,10 @@ import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LargeItemButton
 import org.thoughtcrime.securesms.ui.LargeItemButtonWithDrawable
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
-import org.thoughtcrime.securesms.ui.SimpleSessionProCTA
+import org.thoughtcrime.securesms.ui.components.AcccentOutlineCopyButton
+import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.BaseBottomSheet
-import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
-import org.thoughtcrime.securesms.ui.components.AcccentOutlineCopyButton
 import org.thoughtcrime.securesms.ui.getCellBottomShape
 import org.thoughtcrime.securesms.ui.getCellTopShape
 import org.thoughtcrime.securesms.ui.qaTag
@@ -120,8 +118,8 @@ import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
-import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
 import org.thoughtcrime.securesms.ui.theme.accentTextButtonColors
+import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
 import org.thoughtcrime.securesms.util.FileProviderUtil
 import org.thoughtcrime.securesms.util.applyCommonWindowInsetsOnViews
 import org.thoughtcrime.securesms.util.push
@@ -152,8 +150,12 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                  viewModel.hideAvatarPickerOptions() // close the bottom sheet
 
                  // Handle the selected image URI
-                 val outputFile = Uri.fromFile(File(cacheDir, "cropped"))
-                 cropImage(it, outputFile)
+                 if(viewModel.isAnimated(uri)){ // no cropping for animated images
+                     viewModel.onAvatarPicked(uri)
+                 } else {
+                     val outputFile = Uri.fromFile(File(cacheDir, "cropped"))
+                     cropImage(it, outputFile)
+                 }
 
              }
          }
@@ -722,6 +724,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
         }
     }
 
+    @OptIn(ExperimentalGlideComposeApi::class)
     @Composable
     fun AvatarDialog(
         state: SettingsViewModel.UIState,
@@ -803,11 +806,12 @@ class SettingsActivity : ScreenLockActionBarActivity() {
 
                         // temporary image
                         is TempAvatar -> {
-                            Image(
+                            GlideImage(
                                 modifier = Modifier.size(LocalDimensions.current.iconXXLarge)
                                     .clip(shape = CircleShape,),
-                                bitmap = BitmapFactory.decodeByteArray(s.data, 0, s.data.size).asImageBitmap(),
-                                contentDescription = null
+                                contentScale = ContentScale.Crop,
+                                model = s.data,
+                                contentDescription = stringResource(R.string.profileDisplayPicture)
                             )
                         }
 
