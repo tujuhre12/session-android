@@ -297,7 +297,7 @@ public class AttachmentManager {
                     );
         }
 
-        builder.onAllGranted(() -> activity.startActivityForResult(MediaSendActivity.buildGalleryIntent(activity, recipient, threadId, body), requestCode))
+        builder.onAllGranted(() -> activity.startActivityForResult(MediaSendActivity.buildGalleryIntent(activity, recipient, body), requestCode))
                 .execute();
     }
 
@@ -329,7 +329,7 @@ public class AttachmentManager {
                 .request(Manifest.permission.CAMERA)
                 .withPermanentDenialDialog(cameraPermissionDeniedTxt)
                 .onAllGranted(() -> {
-                    Intent captureIntent = MediaSendActivity.buildCameraIntent(activity, recipient, threadId);
+                    Intent captureIntent = MediaSendActivity.buildCameraIntent(activity, recipient);
                     if (captureIntent.resolveActivity(activity.getPackageManager()) != null) {
                         activity.startActivityForResult(captureIntent, requestCode);
                     }

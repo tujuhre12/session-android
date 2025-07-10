@@ -2,6 +2,7 @@ package org.session.libsession.utilities
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
+import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Util
 import java.util.LinkedList
@@ -70,6 +71,10 @@ data class Address private constructor(val address: String) : Parcelable, Compar
                 escapedAddresses.add(DelimiterUtil.escape(address.toString(), delimiter))
             }
             return Util.join(escapedAddresses, delimiter.toString() + "")
+        }
+
+        fun AccountId.toAddress(): Address {
+            return fromSerialized(hexString)
         }
     }
 

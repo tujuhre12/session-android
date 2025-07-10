@@ -4,7 +4,6 @@ import android.content.Context
 import android.net.Uri
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.KeyPair
-import org.session.libsession.messaging.BlindedIdMapping
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.messaging.jobs.AttachmentUploadJob
 import org.session.libsession.messaging.jobs.Job
@@ -228,7 +227,6 @@ interface StorageProtocol {
     fun getLastOutboxMessageId(server: String): Long?
     fun setLastOutboxMessageId(server: String, messageId: Long)
     fun removeLastOutboxMessageId(server: String)
-    fun getOrCreateBlindedIdMapping(blindedId: String, server: String, serverPublicKey: String, fromOutbox: Boolean = false): BlindedIdMapping
 
     /**
      * Add reaction to a message that has the timestamp given by [reaction]. This is less than

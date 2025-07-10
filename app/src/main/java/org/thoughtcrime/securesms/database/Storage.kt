@@ -15,7 +15,6 @@ import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.KeyPair
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.BlindedIdMapping
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.messaging.jobs.AttachmentUploadJob
 import org.session.libsession.messaging.jobs.GroupAvatarDownloadJob
@@ -108,7 +107,7 @@ open class Storage @Inject constructor(
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val mmsDatabase: MmsDatabase,
     private val smsDatabase: SmsDatabase,
-    private val blindedIdMappingDatabase: BlindedIdMappingDatabase,
+    private val blindedIdMappingRepository: BlindMappingRepository,
     private val groupMemberDatabase: GroupMemberDatabase,
     private val reactionDatabase: ReactionDatabase,
     private val lokiThreadDatabase: LokiThreadDatabase,
@@ -1087,12 +1086,7 @@ open class Storage @Inject constructor(
     }
 
     override fun syncLibSessionContacts(contacts: List<LibSessionContact>, timestamp: Long?) {
-        val mappingDb = blindedIdMappingDatabase
-        val moreContacts = contacts.filter { contact ->
-            val id = AccountId(contact.id)
-            id.prefix?.isBlinded() == false || mappingDb.getBlindedIdMapping(contact.id).none { it.accountId != null }
-        }
-        moreContacts.forEach { contact ->
+        contacts.forEach { contact ->
             val address = fromSerialized(contact.id)
 
             if (contact.priority == PRIORITY_HIDDEN) {
@@ -1114,7 +1108,7 @@ open class Storage @Inject constructor(
             IdPrefix.fromValue(localContact.toString()) == IdPrefix.STANDARD && // only want standard address
             localContact.isContact && // only for conversations
             localContact.address != currentUserKey && // we don't want to remove ourselves (ie, our Note to Self)
-            moreContacts.none { it.id == localContact.address } // we don't want to remove contacts that are present in the config
+            contacts.none { it.id == localContact.address } // we don't want to remove contacts that are present in the config
         }
         removedContacts.forEach {
             deleteContact(it.address)
@@ -1389,10 +1383,9 @@ open class Storage @Inject constructor(
                         picKey = profile.profileKey,
                         acceptsCommunityRequests = null
                     ),
-                    communityServerPubKey = null)
+                    fromCommunity = null)
             }
             
-            val mappingDb = blindedIdMappingDatabase
             val mappings = mutableMapOf<String, BlindedIdMapping>()
 
             for ((address, _) in threadDatabase.allThreads) {
@@ -1401,12 +1394,9 @@ open class Storage @Inject constructor(
                     address.isCommunityInbox -> GroupUtil.getDecodedOpenGroupInboxAccountId(address.toString())
                     else -> address.address.takeIf { AccountId.fromStringOrNull(it)?.prefix == IdPrefix.BLINDED }
                 } ?: continue
-
-                mappingDb.getBlindedIdMapping(blindedId).firstOrNull()?.let {
-                    mappings[address.address] = it
-                }
             }
 
+            // TODO: Actually move the conversation from blind to normal
             for (mapping in mappings) {
                 if (!BlindKeyAPI.sessionIdMatchesBlindedId(
                         sessionId = senderPublicKey,
@@ -1416,7 +1406,6 @@ open class Storage @Inject constructor(
                 ) {
                     continue
                 }
-                mappingDb.addBlindedIdMapping(mapping.value.copy(accountId = senderPublicKey))
 
                 val blindedThreadId = threadDatabase.getOrCreateThreadIdFor(fromSerialized(mapping.key))
                 mmsDatabase.updateThreadId(blindedThreadId, threadId)
@@ -1533,48 +1522,6 @@ open class Storage @Inject constructor(
 
     override fun removeLastOutboxMessageId(server: String) {
         lokiAPIDatabase.removeLastOutboxMessageId(server)
-    }
-
-    override fun getOrCreateBlindedIdMapping(
-        blindedId: String,
-        server: String,
-        serverPublicKey: String,
-        fromOutbox: Boolean
-    ): BlindedIdMapping {
-        val db = blindedIdMappingDatabase
-        val mapping = db.getBlindedIdMapping(blindedId).firstOrNull() ?: BlindedIdMapping(blindedId, null, server, serverPublicKey)
-        if (mapping.accountId != null) {
-            return mapping
-        }
-
-        configFactory.withUserConfigs { it.contacts.all() }
-            .forEach { contact ->
-                val accountId = AccountId(contact.id)
-                if (accountId.prefix == IdPrefix.STANDARD && BlindKeyAPI.sessionIdMatchesBlindedId(
-                        sessionId = accountId.hexString,
-                        blindedId = blindedId,
-                        serverPubKey = serverPublicKey
-                    )
-                ) {
-                    val contactMapping = mapping.copy(accountId = accountId.hexString)
-                    db.addBlindedIdMapping(contactMapping)
-                    return contactMapping
-                }
-            }
-        db.getBlindedIdMappingsExceptFor(server).forEach {
-            if (BlindKeyAPI.sessionIdMatchesBlindedId(
-                    sessionId = it.accountId!!,
-                    blindedId = blindedId,
-                    serverPubKey = serverPublicKey
-                )
-            ) {
-                val otherMapping = mapping.copy(accountId = it.accountId)
-                db.addBlindedIdMapping(otherMapping)
-                return otherMapping
-            }
-        }
-        db.addBlindedIdMapping(mapping)
-        return mapping
     }
 
     override fun addReaction(

@@ -203,7 +203,10 @@ class RecipientRepository @Inject constructor(
                     }
 
                     settings != null -> {
-                        value = createGenericRecipient(address, settings)
+                        value = createGenericRecipient(
+                            address = address,
+                            settings = settings
+                        )
                         changeSource =
                             recipientDatabase.updateNotifications.filter { it == address }
                     }
@@ -465,7 +468,7 @@ class RecipientRepository @Inject constructor(
          */
         private fun createGenericRecipient(
             address: Address,
-            settings: RecipientSettings
+            settings: RecipientSettings,
         ): Recipient {
             return Recipient(
                 basic = BasicRecipient.Generic(
@@ -485,7 +488,7 @@ class RecipientRepository @Inject constructor(
                     ?.let { ZonedDateTime.from(Instant.ofEpochMilli(it)) },
                 autoDownloadAttachments = settings.autoDownloadAttachments,
                 notifyType = settings.notifyType,
-                acceptsCommunityMessageRequests = !settings.blocksCommunityMessagesRequests
+                acceptsCommunityMessageRequests = !settings.blocksCommunityMessagesRequests,
             )
         }
 

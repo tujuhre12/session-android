@@ -1,17 +1,16 @@
 package org.session.libsession.messaging.messages
 
-import dagger.Lazy
-import network.loki.messenger.BuildConfig
+import network.loki.messenger.libsession_util.util.BaseCommunityInfo
 import network.loki.messenger.libsession_util.util.UserPic
-import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.database.BlindedIdMappingDatabase
+import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.RecipientDatabase
+import java.util.EnumSet
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -27,30 +26,11 @@ import javax.inject.Singleton
 class ProfileUpdateHandler @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val recipientDatabase: RecipientDatabase,
-    private val blindedIdMappingDatabase: BlindedIdMappingDatabase,
     private val prefs: TextSecurePreferences,
-    private val storage: Lazy<StorageProtocol>,
+    private val blindIdMappingRepository: BlindMappingRepository,
 ) {
 
-    fun handleProfileUpdate(sender: Address, updates: Updates, communityServerPubKey: String?) {
-        val senderAccountId = AccountId.fromStringOrNull(sender.address)
-        if (senderAccountId == null) {
-            Log.e(TAG, "Invalid sender address")
-            return
-        }
-
-        handleProfileUpdate(senderAccountId, updates, communityServerPubKey)
-    }
-
-    fun handleProfileUpdate(sender: AccountId, updates: Updates, communityServerPubKey: String?) {
-        if (sender.hexString == prefs.getLocalNumber() ||
-            (communityServerPubKey != null && storage.get().getUserBlindedAccountId(communityServerPubKey) == sender)
-        ) {
-            Log.w(TAG, "Ignoring profile update for local number")
-            return
-        }
-
-
+    fun handleProfileUpdate(sender: Address, updates: Updates, fromCommunity: BaseCommunityInfo?) {
         if (updates.name.isNullOrBlank() &&
             updates.pic == null &&
             updates.acceptsCommunityRequests == null
@@ -59,29 +39,32 @@ class ProfileUpdateHandler @Inject constructor(
             return
         }
 
+        // Unblind the sender if it's blinded and we have information to unblind it.
+        val actualSender = if (IdPrefix.fromValue(sender.address)?.isBlinded() == true && fromCommunity != null) {
+            blindIdMappingRepository.getMapping(fromCommunity.baseUrl, sender)
+        } else {
+            sender
+        } ?: sender
 
-        Log.d(TAG, "Handling profile update for $sender")
-
-        // If the sender is blind, we need to figure out their real address first.
-        val actualSender =
-            if (sender.prefix == IdPrefix.BLINDED || sender.prefix == IdPrefix.BLINDEDV2) {
-                blindedIdMappingDatabase.getBlindedIdMapping(sender.hexString)
-                    .firstNotNullOfOrNull { it.accountId }
-                    ?.let(AccountId::fromStringOrNull)
-                    ?: sender
-            } else {
-                sender
-            }
-
-        if (actualSender.hexString == prefs.getLocalNumber()) {
-            Log.w(TAG, "Ignoring profile update for local number: $actualSender")
+        if (actualSender.address == prefs.getLocalNumber()) {
+            Log.w(TAG, "Ignoring profile update for local number")
             return
         }
 
+        val actualSenderIdPrefix = IdPrefix.fromValue(actualSender.address)
+
+        if (actualSenderIdPrefix == null ||
+            actualSenderIdPrefix !in EnumSet.of(IdPrefix.STANDARD, IdPrefix.BLINDED, IdPrefix.BLINDEDV2)) {
+            Log.w(TAG, "Unsupported profile update for sender: $sender (actualSender: $actualSender)")
+            return
+        }
+
+        Log.d(TAG, "Handling profile update for $sender")
+
         // First, if the user is a contact, update the config and that's all we need to do.
-        val isExistingContact = actualSender.prefix == IdPrefix.STANDARD &&
+        val isExistingContact = actualSenderIdPrefix == IdPrefix.STANDARD &&
                 configFactory.withMutableUserConfigs { configs ->
-                    val existingContact = configs.contacts.get(actualSender.hexString)
+                    val existingContact = configs.contacts.get(actualSender.address)
                     if (existingContact != null) {
                         configs.contacts.set(
                             existingContact.copy(
@@ -100,27 +83,13 @@ class ProfileUpdateHandler @Inject constructor(
             return
         }
 
-        // If the actual sender is still blinded or unknown contact, we need to update their
-        // settings in the recipient database instead, as we don't have a place in the config
-        // for them.
-        if (actualSender.prefix == IdPrefix.BLINDED || actualSender.prefix == IdPrefix.BLINDEDV2 ||
-            actualSender.prefix == IdPrefix.STANDARD
-        ) {
-            Log.d(TAG, "Updating recipient profile for $actualSender")
-            recipientDatabase.updateProfile(
-                Address.fromSerialized(actualSender.hexString),
-                updates.name,
-                updates.pic,
-                updates.acceptsCommunityRequests
-            )
-            return
-        }
-
-        if (BuildConfig.DEBUG) {
-            throw IllegalArgumentException("Unsupported profile update for sender: $sender")
-        }
-
-        Log.e(TAG, "Unsupported profile updating for sender: $sender")
+        Log.d(TAG, "Updating recipient profile for $actualSender")
+        recipientDatabase.updateProfile(
+            actualSender,
+            updates.name,
+            updates.pic,
+            updates.acceptsCommunityRequests
+        )
     }
 
     data class Updates(

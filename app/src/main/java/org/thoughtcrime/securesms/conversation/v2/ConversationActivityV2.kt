@@ -69,13 +69,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.scan
-import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
@@ -880,7 +877,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                         AttachmentManager.MediaType.VIDEO  == mediaType)
             ) {
                 val media = Media(mediaURI, filename, mimeType, 0, 0, 0, 0, null, null)
-                startActivityForResult(MediaSendActivity.buildEditorIntent(this, listOf( media ), viewModel.recipient!!.address, viewModel.threadId, getMessageBody()), PICK_FROM_LIBRARY)
+                startActivityForResult(MediaSendActivity.buildEditorIntent(
+                    this,
+                    listOf( media ),
+                    viewModel.recipient!!.address,
+                    getMessageBody()
+                ), PICK_FROM_LIBRARY)
                 return
             } else {
                 prepMediaForSending(mediaURI, mediaType).addListener(object : ListenableFuture.Listener<Boolean> {
@@ -1999,7 +2001,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val mimeType = MediaUtil.getMimeType(this, contentUri)!!
         val filename = FilenameUtils.getFilenameFromUri(this, contentUri, mimeType)
         val media = Media(contentUri, filename, mimeType, 0, 0, 0, 0, null, null)
-        startActivityForResult(MediaSendActivity.buildEditorIntent(this, listOf( media ), recipient.address, viewModel.threadId, getMessageBody()), PICK_FROM_LIBRARY)
+        startActivityForResult(MediaSendActivity.buildEditorIntent(
+            this,
+            listOf( media ),
+            recipient.address,
+            getMessageBody()
+        ), PICK_FROM_LIBRARY)
     }
 
     // If we previously approve this recipient, either implicitly or explicitly, we need to wait for

@@ -337,7 +337,7 @@ fun MessageReceiver.handleVisibleMessage(
                 picKey = message.profile?.profileKey,
                 acceptsCommunityRequests = !message.blocksMessageRequests
             ),
-            communityServerPubKey = context.openGroup?.publicKey
+            fromCommunity = context.openGroup?.toCommunityInfo(),
         )
     }
     // Handle group invite response if new closed group
@@ -563,7 +563,7 @@ private fun MessageReceiver.handleGroupUpdated(message: GroupUpdated, closedGrou
             picKey = message.profile?.profileKey,
             acceptsCommunityRequests = null,
         ),
-        communityServerPubKey = null // Groupv2 is not a community
+        fromCommunity = null // Groupv2 is not a community
     )
 
     when {

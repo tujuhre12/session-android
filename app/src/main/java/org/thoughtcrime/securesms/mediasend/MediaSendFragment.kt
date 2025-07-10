@@ -67,15 +67,14 @@ class MediaSendFragment : Fragment(), RailItemListener, InputBarDelegate {
     private val controller: Controller
         get() = (parentFragment as? Controller) ?: requireActivity() as Controller
 
-    // Mentions
-    private val threadId: Long
-        get() = arguments?.getLong(KEY_THREADID) ?: -1L
+    private val address: Address
+        get() = requireNotNull(BundleCompat.getParcelable(requireArguments(), KEY_ADDRESS, Address::class.java)) {
+            "Address is not provided in arguments"
+        }
 
     private val mentionViewModel: MentionViewModel by viewModels(extrasProducer = {
         defaultViewModelCreationExtras.withCreationCallback<MentionViewModel.Factory> {
-            it.create(
-                requireNotNull(BundleCompat.getParcelable(requireArguments(), KEY_ADDRESS, Address::class.java))
-            )
+            it.create(address)
         }
     })
 
@@ -409,12 +408,10 @@ class MediaSendFragment : Fragment(), RailItemListener, InputBarDelegate {
         private val TAG: String = MediaSendFragment::class.java.simpleName
 
         private const val KEY_ADDRESS = "address"
-        private const val KEY_THREADID = "threadid"
 
-        fun newInstance(address: Address, threadId: Long): MediaSendFragment {
-            val args = Bundle()
+        fun newInstance(address: Address): MediaSendFragment {
+            val args = Bundle(1)
             args.putParcelable(KEY_ADDRESS, address)
-            args.putLong(KEY_THREADID, threadId)
 
             val fragment = MediaSendFragment()
             fragment.arguments = args
