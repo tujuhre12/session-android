@@ -1007,6 +1007,11 @@ interface TextSecurePreferences {
 
         @JvmStatic
         fun setDateFormatPref(context: Context, value: Int) { setIntegerPreference(context, DATE_FORMAT_PREF, value) }
+
+        @JvmStatic
+        fun forcedShortTTL(context: Context): Boolean {
+            return getBooleanPreference(context, FORCED_SHORT_TTL, false)
+        }
     }
 }
 
