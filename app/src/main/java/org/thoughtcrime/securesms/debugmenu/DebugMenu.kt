@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.debugmenu
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -13,6 +14,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -38,7 +41,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -230,12 +235,29 @@ fun DebugMenu(
                 )
 
                 DebugSwitchRow(
-                    text = "Set other users as Pro (close and reopen app to change avatar animations state)",
+                    text = "Set other users as Pro",
                     checked = uiState.forceOtherUsersAsPro,
                     onCheckedChange = {
                         sendCommand(DebugMenuViewModel.Commands.ForceOtherUsersAsPro(it))
                     }
                 )
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsSpacing)
+                ){
+                    Image(
+                        modifier = Modifier.size(LocalDimensions.current.iconXSmall),
+                        painter = painterResource(id = R.drawable.ic_triangle_alert),
+                        colorFilter = ColorFilter.tint(LocalColors.current.warning),
+                        contentDescription = null,
+                    )
+
+                    Text(
+                        text = "For avatar animation changes based on the values changed above, please restart the app",
+                        style = LocalType.current.base.copy(color = LocalColors.current.warning)
+                    )
+                }
             }
 
             // Fake contacts
