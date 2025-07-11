@@ -130,7 +130,13 @@ class SettingsViewModel @Inject constructor(
                             ).bitmap
 
                         // update dialog with temporary avatar (has not been saved/uploaded yet)
-                        _uiState.update { it.copy(avatarDialogState = AvatarDialogState.TempAvatar(profilePictureToBeUploaded, hasAvatar())) }
+                        _uiState.update {
+                            it.copy(avatarDialogState = AvatarDialogState.TempAvatar(
+                                data = profilePictureToBeUploaded,
+                                isAnimated = false, // cropped avatars can't be animated
+                                hasAvatar = hasAvatar()
+                            ))
+                        }
                     } catch (e: BitmapDecodingException) {
                         Log.e(TAG, e)
                     }
@@ -162,6 +168,7 @@ class SettingsViewModel @Inject constructor(
                         it.copy(
                             avatarDialogState = AvatarDialogState.TempAvatar(
                                 data = bytes,
+                                isAnimated = isAnimated(uri),
                                 hasAvatar = hasAvatar()
                             )
                         )
@@ -187,8 +194,19 @@ class SettingsViewModel @Inject constructor(
     else AvatarDialogState.NoAvatar
 
     fun saveAvatar() {
-        val tempAvatar = (uiState.value.avatarDialogState as? AvatarDialogState.TempAvatar)?.data
+        val tempAvatar = (uiState.value.avatarDialogState as? AvatarDialogState.TempAvatar)
             ?: return Toast.makeText(context, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
+
+        // if the selected avatar is animated but the user isn't pro, show the animated pro CTA
+        if (tempAvatar.isAnimated && !proStatusManager.isCurrentUserPro() && proStatusManager.isPostPro()) {
+            showAnimatedProCTA()
+            return
+        }
+
+        // dismiss avatar dialog
+        // we don't want to do it earlier as the animated / pro case above should not close the dialog
+        // to give the user a chance ti pick something else
+        onAvatarDialogDismissed()
 
         if (!hasNetworkConnection()) {
             Log.w(TAG, "Cannot update profile picture - no network connection.")
@@ -201,7 +219,7 @@ class SettingsViewModel @Inject constructor(
             Toast.makeText(context, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
         }
 
-        syncProfilePicture(tempAvatar, onFail)
+        syncProfilePicture(tempAvatar.data, onFail)
     }
 
 
@@ -326,13 +344,15 @@ class SettingsViewModel @Inject constructor(
         //todo PRO go to screen once it exists
     }
 
-    fun isAnimated(uri: Uri) = AnimatedImageUtils.isAnimated(context, uri)
+    fun isAnimated(uri: Uri) = proStatusManager.isPostPro() // block animated avatars prior to pro
+            && AnimatedImageUtils.isAnimated(context, uri)
 
     sealed class AvatarDialogState() {
         object NoAvatar : AvatarDialogState()
         data class UserAvatar(val data: AvatarUIData) : AvatarDialogState()
         data class TempAvatar(
             val data: ByteArray,
+            val isAnimated: Boolean,
             val hasAvatar: Boolean // true if the user has an avatar set already but is in this temp state because they are trying out a new avatar
         ) : AvatarDialogState()
     }

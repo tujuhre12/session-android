@@ -851,6 +851,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                 DialogButtonData(
                     text = GetString(R.string.save),
                     enabled = state.avatarDialogState is TempAvatar,
+                    dismissOnClick = false,
                     onClick = viewModel::saveAvatar
                 ),
                 DialogButtonData(

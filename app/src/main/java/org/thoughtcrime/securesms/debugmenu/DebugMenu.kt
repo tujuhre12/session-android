@@ -228,6 +228,14 @@ fun DebugMenu(
                         sendCommand(DebugMenuViewModel.Commands.ForcePostPro(it))
                     }
                 )
+
+                DebugSwitchRow(
+                    text = "Set other users as Pro (close and reopen app to change avatar animations state)",
+                    checked = uiState.forceOtherUsersAsPro,
+                    onCheckedChange = {
+                        sendCommand(DebugMenuViewModel.Commands.ForceOtherUsersAsPro(it))
+                    }
+                )
             }
 
             // Fake contacts
@@ -482,7 +490,8 @@ private fun DebugRow(
 ) {
     Row(
         modifier = modifier.heightIn(min = LocalDimensions.current.minItemButtonHeight),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsSpacing)
     ) {
         Text(
             text = title,
@@ -560,6 +569,7 @@ fun PreviewDebugMenu() {
                 deprecatingStartTime = ZonedDateTime.now(),
                 forceCurrentUserAsPro = false,
                 forceIncomingMessagesAsPro = false,
+                forceOtherUsersAsPro = false,
                 forcePostPro = false,
             ),
             sendCommand = {},

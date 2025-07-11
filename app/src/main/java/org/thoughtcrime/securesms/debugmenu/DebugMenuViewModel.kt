@@ -70,6 +70,7 @@ class DebugMenuViewModel @Inject constructor(
             deprecatedTime = deprecationManager.deprecatedTime.value,
             deprecatingStartTime = deprecationManager.deprecatingStartTime.value,
             forceCurrentUserAsPro = textSecurePreferences.forceCurrentUserAsPro(),
+            forceOtherUsersAsPro = textSecurePreferences.forceOtherUsersAsPro(),
             forceIncomingMessagesAsPro = textSecurePreferences.forceIncomingMessagesAsPro(),
             forcePostPro = textSecurePreferences.forcePostPro(),
         )
@@ -211,6 +212,13 @@ class DebugMenuViewModel @Inject constructor(
                 }
             }
 
+            is Commands.ForceOtherUsersAsPro -> {
+                textSecurePreferences.setForceOtherUsersAsPro(command.set)
+                _uiState.update {
+                    it.copy(forceOtherUsersAsPro = command.set)
+                }
+            }
+
             is Commands.ForceIncomingMessagesAsPro -> {
                 textSecurePreferences.setForceIncomingMessagesAsPro(command.set)
                 _uiState.update {
@@ -316,6 +324,7 @@ class DebugMenuViewModel @Inject constructor(
         val hideMessageRequests: Boolean,
         val hideNoteToSelf: Boolean,
         val forceCurrentUserAsPro: Boolean,
+        val forceOtherUsersAsPro: Boolean,
         val forceIncomingMessagesAsPro: Boolean,
         val forcePostPro: Boolean,
         val forceDeprecationState: LegacyGroupDeprecationManager.DeprecationState?,
@@ -334,6 +343,7 @@ class DebugMenuViewModel @Inject constructor(
         data class HideMessageRequest(val hide: Boolean) : Commands()
         data class HideNoteToSelf(val hide: Boolean) : Commands()
         data class ForceCurrentUserAsPro(val set: Boolean) : Commands()
+        data class ForceOtherUsersAsPro(val set: Boolean) : Commands()
         data class ForceIncomingMessagesAsPro(val set: Boolean) : Commands()
         data class ForcePostPro(val set: Boolean) : Commands()
         data class ShowDeprecationChangeDialog(val state: LegacyGroupDeprecationManager.DeprecationState?) : Commands()

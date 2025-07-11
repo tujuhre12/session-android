@@ -24,7 +24,7 @@ class ProStatusManager @Inject constructor(
     private val _proStatus = MutableStateFlow(isCurrentUserPro())
     val proStatus: StateFlow<Boolean> = _proStatus
 
-    // live state for the pre vs post pro  launch status
+    // live state for the pre vs post pro launch status
     private val _postProLaunchStatus = MutableStateFlow(isPostPro())
     val postProLaunchStatus: StateFlow<Boolean> = _postProLaunchStatus
 
@@ -52,6 +52,8 @@ class ProStatusManager @Inject constructor(
 
     fun isUserPro(address: Address?): Boolean{
         //todo PRO implement real logic once it's in
+        if(address.toString() == prefs.getLocalNumber()) return isCurrentUserPro()
+        else if(prefs.forceOtherUsersAsPro()) return true
 
         return false
     }

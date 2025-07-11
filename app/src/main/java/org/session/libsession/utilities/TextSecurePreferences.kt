@@ -38,6 +38,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.SELECTED
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SELECTED_STYLE
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_CURRENT_USER_PRO
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_INCOMING_MESSAGE_PRO
+import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_OTHER_USERS_PRO
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_POST_PRO
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CALL_NOTIFICATION
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CALL_WARNING
@@ -176,6 +177,8 @@ interface TextSecurePreferences {
     fun forceCurrentUserAsPro(): Boolean
     fun watchProStatus(): StateFlow<Boolean>
     fun setForceCurrentUserAsPro(isPro: Boolean)
+    fun forceOtherUsersAsPro(): Boolean
+    fun setForceOtherUsersAsPro(isPro: Boolean)
     fun forceIncomingMessagesAsPro(): Boolean
     fun setForceIncomingMessagesAsPro(isPro: Boolean)
     fun forcePostPro(): Boolean
@@ -299,6 +302,7 @@ interface TextSecurePreferences {
         const val HAS_HIDDEN_MESSAGE_REQUESTS = "pref_message_requests_hidden"
         const val HAS_HIDDEN_NOTE_TO_SELF = "pref_note_to_self_hidden"
         const val SET_FORCE_CURRENT_USER_PRO = "pref_force_current_user_pro"
+        const val SET_FORCE_OTHER_USERS_PRO = "pref_force_other_users_pro"
         const val SET_FORCE_INCOMING_MESSAGE_PRO = "pref_force_incoming_message_pro"
         const val SET_FORCE_POST_PRO = "pref_force_post_pro"
         const val CALL_NOTIFICATIONS_ENABLED = "pref_call_notifications_enabled"
@@ -1620,6 +1624,14 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun watchProStatus(): StateFlow<Boolean> {
         return proState
+    }
+
+    override fun forceOtherUsersAsPro(): Boolean {
+        return getBooleanPreference(SET_FORCE_OTHER_USERS_PRO, false)
+    }
+
+    override fun setForceOtherUsersAsPro(isPro: Boolean) {
+        setBooleanPreference(SET_FORCE_OTHER_USERS_PRO, isPro)
     }
 
     override fun forceIncomingMessagesAsPro(): Boolean {
