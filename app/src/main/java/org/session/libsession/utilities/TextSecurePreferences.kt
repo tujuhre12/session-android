@@ -25,6 +25,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.CLASSIC_
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CLASSIC_LIGHT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.ENVIRONMENT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FOLLOW_SYSTEM_SETTINGS
+import org.session.libsession.utilities.TextSecurePreferences.Companion.FORCED_SHORT_TTL
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_HIDDEN_MESSAGE_REQUESTS
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_HIDDEN_NOTE_TO_SELF
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAVE_SHOWN_A_NOTIFICATION_ABOUT_TOKEN_PAGE
@@ -212,6 +213,8 @@ interface TextSecurePreferences {
     fun setEnvironment(value: Environment)
     fun hasSeenTokenPageNotification(): Boolean
     fun setHasSeenTokenPageNotification(value: Boolean)
+    fun forcedShortTTL(): Boolean
+    fun setForcedShortTTL(value: Boolean)
 
     var deprecationStateOverride: String?
     var deprecatedTimeOverride: ZonedDateTime?
@@ -361,6 +364,8 @@ interface TextSecurePreferences {
 
         // Key name for the user's preferred time format string
         const val TIME_FORMAT_PREF = "libsession.TIME_FORMAT_PREF"
+
+        const val FORCED_SHORT_TTL = "forced_short_ttl"
 
         @JvmStatic
         fun getConfigurationMessageSynced(context: Context): Boolean {
@@ -1010,8 +1015,8 @@ class AppTextSecurePreferences @Inject constructor(
     @ApplicationContext private val context: Context
 ): TextSecurePreferences {
     private val localNumberState = MutableStateFlow(getStringPreference(TextSecurePreferences.LOCAL_NUMBER_PREF, null))
-    private val proState = MutableStateFlow(getBooleanPreference(TextSecurePreferences.SET_FORCE_CURRENT_USER_PRO, false))
-    private val postProLaunchState = MutableStateFlow(getBooleanPreference(TextSecurePreferences.SET_FORCE_POST_PRO, false))
+    private val proState = MutableStateFlow(getBooleanPreference(SET_FORCE_CURRENT_USER_PRO, false))
+    private val postProLaunchState = MutableStateFlow(getBooleanPreference(SET_FORCE_POST_PRO, false))
 
     override var migratedToGroupV2Config: Boolean
         get() = getBooleanPreference(TextSecurePreferences.MIGRATED_TO_GROUP_V2_CONFIG, false)
@@ -1312,7 +1317,7 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setHasLegacyConfig(newValue: Boolean) {
         setBooleanPreference(TextSecurePreferences.HAS_RECEIVED_LEGACY_CONFIG, newValue)
-        TextSecurePreferences._events.tryEmit(TextSecurePreferences.HAS_RECEIVED_LEGACY_CONFIG)
+        _events.tryEmit(TextSecurePreferences.HAS_RECEIVED_LEGACY_CONFIG)
     }
 
     override fun setLocalNumber(localNumber: String) {
@@ -1682,7 +1687,7 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setAccentColorStyle(@StyleRes newColorStyle: Int?) {
         setStringPreference(
-            TextSecurePreferences.SELECTED_ACCENT_COLOR, when (newColorStyle) {
+            SELECTED_ACCENT_COLOR, when (newColorStyle) {
                 R.style.PrimaryGreen -> TextSecurePreferences.GREEN_ACCENT
                 R.style.PrimaryBlue -> TextSecurePreferences.BLUE_ACCENT
                 R.style.PrimaryPurple -> TextSecurePreferences.PURPLE_ACCENT
@@ -1765,6 +1770,14 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setHasSeenTokenPageNotification(value: Boolean) {
         setBooleanPreference(HAVE_SHOWN_A_NOTIFICATION_ABOUT_TOKEN_PAGE, value)
+    }
+
+    override fun forcedShortTTL(): Boolean {
+        return getBooleanPreference(FORCED_SHORT_TTL, false)
+    }
+
+    override fun setForcedShortTTL(value: Boolean) {
+        setBooleanPreference(FORCED_SHORT_TTL, value)
     }
 
     override var deprecationStateOverride: String?

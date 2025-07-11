@@ -73,6 +73,7 @@ class DebugMenuViewModel @Inject constructor(
             forceOtherUsersAsPro = textSecurePreferences.forceOtherUsersAsPro(),
             forceIncomingMessagesAsPro = textSecurePreferences.forceIncomingMessagesAsPro(),
             forcePostPro = textSecurePreferences.forcePostPro(),
+            forceShortTTl = textSecurePreferences.forcedShortTTL()
         )
     )
     val uiState: StateFlow<UIState>
@@ -232,6 +233,13 @@ class DebugMenuViewModel @Inject constructor(
                     it.copy(forcePostPro = command.set)
                 }
             }
+
+            is Commands.ForceShortTTl -> {
+                textSecurePreferences.setForcedShortTTL(command.set)
+                _uiState.update {
+                    it.copy(forceShortTTl = command.set)
+                }
+            }
         }
     }
 
@@ -327,6 +335,7 @@ class DebugMenuViewModel @Inject constructor(
         val forceOtherUsersAsPro: Boolean,
         val forceIncomingMessagesAsPro: Boolean,
         val forcePostPro: Boolean,
+        val forceShortTTl: Boolean,
         val forceDeprecationState: LegacyGroupDeprecationManager.DeprecationState?,
         val availableDeprecationState: List<LegacyGroupDeprecationManager.DeprecationState?>,
         val deprecatedTime: ZonedDateTime,
@@ -346,6 +355,7 @@ class DebugMenuViewModel @Inject constructor(
         data class ForceOtherUsersAsPro(val set: Boolean) : Commands()
         data class ForceIncomingMessagesAsPro(val set: Boolean) : Commands()
         data class ForcePostPro(val set: Boolean) : Commands()
+        data class ForceShortTTl(val set: Boolean) : Commands()
         data class ShowDeprecationChangeDialog(val state: LegacyGroupDeprecationManager.DeprecationState?) : Commands()
         object HideDeprecationChangeDialog : Commands()
         object OverrideDeprecationState : Commands()
