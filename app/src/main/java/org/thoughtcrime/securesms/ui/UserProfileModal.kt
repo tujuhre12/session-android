@@ -158,13 +158,19 @@ fun UserProfileModal(
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
 
-            Text(
-                modifier = Modifier.qaTag(R.string.qa_conversation_settings_account_id),
-                text = data.address,
-                textAlign = TextAlign.Center,
-                style = LocalType.current.base.monospace(),
-                color = LocalColors.current.text
-            )
+            Row {
+                Text(
+                    modifier = Modifier.qaTag(R.string.qa_conversation_settings_account_id),
+                    text = data.address,
+                    textAlign = TextAlign.Center,
+                    style = LocalType.current.base.monospace(),
+                    color = LocalColors.current.text
+                )
+
+                if(!data.tooltipText.isNullOrEmpty()){
+
+                }
+            }
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
@@ -293,7 +299,7 @@ private fun PreviewUPMQR(
                 isPro = false,
                 isBlinded = true,
                 tooltipText = "Some tooltip",
-                address = "158342146b...c6ed734na5",
+                address = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
                 enableMessage = false,
                 headerState = UserProfileModalData.HeaderState.QR,
                 showProCTA = false,
