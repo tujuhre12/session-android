@@ -16,7 +16,10 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -66,7 +69,7 @@ fun UserProfileModal(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null // the ripple doesn't look nice as a square with the plus icon on top too
                     ) {
-                       //todo UPM implement
+                        //todo UPM implement
                     },
                 contentAlignment = Alignment.Center
             ) {
@@ -133,13 +136,15 @@ fun UserProfileModal(
                 verticalAlignment = Alignment.CenterVertically,
             ){
                 Box(
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
                         .height(1.dp)
                         .background(color = LocalColors.current.borders)
                 )
 
                 Text(
-                    modifier = Modifier.border()
+                    modifier = Modifier
+                        .border()
                         .padding(
                             horizontal = LocalDimensions.current.smallSpacing,
                             vertical = LocalDimensions.current.xxxsSpacing
@@ -150,7 +155,8 @@ fun UserProfileModal(
                 )
 
                 Box(
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
                         .height(1.dp)
                         .background(color = LocalColors.current.borders)
                 )
@@ -159,8 +165,13 @@ fun UserProfileModal(
             Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
 
             Row {
+                var accountIdModifier = Modifier.qaTag(R.string.qa_conversation_settings_account_id).weight(1f)
+                if(!data.tooltipText.isNullOrEmpty()){
+                    accountIdModifier = accountIdModifier.padding(horizontal = LocalDimensions.current.xsSpacing)
+                }
+
                 Text(
-                    modifier = Modifier.qaTag(R.string.qa_conversation_settings_account_id),
+                    modifier = accountIdModifier,
                     text = data.address,
                     textAlign = TextAlign.Center,
                     style = LocalType.current.base.monospace(),
@@ -168,7 +179,40 @@ fun UserProfileModal(
                 )
 
                 if(!data.tooltipText.isNullOrEmpty()){
+                    var displayTooltip by remember { mutableStateOf(false) }
 
+                    Box(
+                        modifier = Modifier
+                            .size(LocalDimensions.current.iconXSmall)
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_circle_help),
+                            contentDescription = null,
+                            colorFilter = ColorFilter.tint(LocalColors.current.text),
+                            modifier = Modifier
+                                .size(LocalDimensions.current.iconXSmall)
+                                .clickable { displayTooltip = true }
+                                .qaTag("Tooltip")
+                        )
+
+                        if (displayTooltip) {
+                            SimplePopup(
+                                onDismiss = { displayTooltip = false }
+                            ) {
+                                Text(
+                                    text = data.tooltipText,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier
+                                        .padding(
+                                            horizontal = LocalDimensions.current.smallSpacing,
+                                            vertical = LocalDimensions.current.xxsSpacing
+                                        )
+                                        .qaTag("Tooltip info"),
+                                    style = LocalType.current.small
+                                )
+                            }
+                        }
+                    }
                 }
             }
 
