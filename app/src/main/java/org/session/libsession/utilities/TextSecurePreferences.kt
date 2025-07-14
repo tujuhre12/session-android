@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.update
 import network.loki.messenger.R
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.TextSecurePreferences.Companion.AUTOPLAY_AUDIO_MESSAGES
@@ -24,6 +25,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.CLASSIC_
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CLASSIC_LIGHT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.ENVIRONMENT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FOLLOW_SYSTEM_SETTINGS
+import org.session.libsession.utilities.TextSecurePreferences.Companion.FORCED_SHORT_TTL
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_HIDDEN_MESSAGE_REQUESTS
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_HIDDEN_NOTE_TO_SELF
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAVE_SHOWN_A_NOTIFICATION_ABOUT_TOKEN_PAGE
@@ -37,6 +39,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.SELECTED
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SELECTED_STYLE
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_CURRENT_USER_PRO
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_INCOMING_MESSAGE_PRO
+import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_OTHER_USERS_PRO
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_POST_PRO
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CALL_NOTIFICATION
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CALL_WARNING
@@ -173,11 +176,15 @@ interface TextSecurePreferences {
     fun hasHiddenMessageRequests(): Boolean
     fun setHasHiddenMessageRequests(hidden: Boolean)
     fun forceCurrentUserAsPro(): Boolean
-    fun setForceCurrentUserAsPro(hidden: Boolean)
+    fun watchProStatus(): StateFlow<Boolean>
+    fun setForceCurrentUserAsPro(isPro: Boolean)
+    fun forceOtherUsersAsPro(): Boolean
+    fun setForceOtherUsersAsPro(isPro: Boolean)
     fun forceIncomingMessagesAsPro(): Boolean
-    fun setForceIncomingMessagesAsPro(hidden: Boolean)
+    fun setForceIncomingMessagesAsPro(isPro: Boolean)
     fun forcePostPro(): Boolean
-    fun setForcePostPro(hidden: Boolean)
+    fun setForcePostPro(postPro: Boolean)
+    fun watchPostProStatus(): StateFlow<Boolean>
     fun hasHiddenNoteToSelf(): Boolean
     fun setHasHiddenNoteToSelf(hidden: Boolean)
     fun setShownCallWarning(): Boolean
@@ -206,6 +213,8 @@ interface TextSecurePreferences {
     fun setEnvironment(value: Environment)
     fun hasSeenTokenPageNotification(): Boolean
     fun setHasSeenTokenPageNotification(value: Boolean)
+    fun forcedShortTTL(): Boolean
+    fun setForcedShortTTL(value: Boolean)
 
     var deprecationStateOverride: String?
     var deprecatedTimeOverride: ZonedDateTime?
@@ -296,6 +305,7 @@ interface TextSecurePreferences {
         const val HAS_HIDDEN_MESSAGE_REQUESTS = "pref_message_requests_hidden"
         const val HAS_HIDDEN_NOTE_TO_SELF = "pref_note_to_self_hidden"
         const val SET_FORCE_CURRENT_USER_PRO = "pref_force_current_user_pro"
+        const val SET_FORCE_OTHER_USERS_PRO = "pref_force_other_users_pro"
         const val SET_FORCE_INCOMING_MESSAGE_PRO = "pref_force_incoming_message_pro"
         const val SET_FORCE_POST_PRO = "pref_force_post_pro"
         const val CALL_NOTIFICATIONS_ENABLED = "pref_call_notifications_enabled"
@@ -354,6 +364,8 @@ interface TextSecurePreferences {
 
         // Key name for the user's preferred time format string
         const val TIME_FORMAT_PREF = "libsession.TIME_FORMAT_PREF"
+
+        const val FORCED_SHORT_TTL = "forced_short_ttl"
 
         @JvmStatic
         fun getConfigurationMessageSynced(context: Context): Boolean {
@@ -995,6 +1007,11 @@ interface TextSecurePreferences {
 
         @JvmStatic
         fun setDateFormatPref(context: Context, value: Int) { setIntegerPreference(context, DATE_FORMAT_PREF, value) }
+
+        @JvmStatic
+        fun forcedShortTTL(context: Context): Boolean {
+            return getBooleanPreference(context, FORCED_SHORT_TTL, false)
+        }
     }
 }
 
@@ -1003,6 +1020,8 @@ class AppTextSecurePreferences @Inject constructor(
     @ApplicationContext private val context: Context
 ): TextSecurePreferences {
     private val localNumberState = MutableStateFlow(getStringPreference(TextSecurePreferences.LOCAL_NUMBER_PREF, null))
+    private val proState = MutableStateFlow(getBooleanPreference(SET_FORCE_CURRENT_USER_PRO, false))
+    private val postProLaunchState = MutableStateFlow(getBooleanPreference(SET_FORCE_POST_PRO, false))
 
     override var migratedToGroupV2Config: Boolean
         get() = getBooleanPreference(TextSecurePreferences.MIGRATED_TO_GROUP_V2_CONFIG, false)
@@ -1303,7 +1322,7 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setHasLegacyConfig(newValue: Boolean) {
         setBooleanPreference(TextSecurePreferences.HAS_RECEIVED_LEGACY_CONFIG, newValue)
-        TextSecurePreferences._events.tryEmit(TextSecurePreferences.HAS_RECEIVED_LEGACY_CONFIG)
+        _events.tryEmit(TextSecurePreferences.HAS_RECEIVED_LEGACY_CONFIG)
     }
 
     override fun setLocalNumber(localNumber: String) {
@@ -1608,27 +1627,42 @@ class AppTextSecurePreferences @Inject constructor(
         return getBooleanPreference(SET_FORCE_CURRENT_USER_PRO, false)
     }
 
-    override fun setForceCurrentUserAsPro(hidden: Boolean) {
-        setBooleanPreference(SET_FORCE_CURRENT_USER_PRO, hidden)
-        _events.tryEmit(SET_FORCE_CURRENT_USER_PRO)
+    override fun setForceCurrentUserAsPro(isPro: Boolean) {
+        setBooleanPreference(SET_FORCE_CURRENT_USER_PRO, isPro)
+        proState.update { isPro }
+    }
+
+    override fun watchProStatus(): StateFlow<Boolean> {
+        return proState
+    }
+
+    override fun forceOtherUsersAsPro(): Boolean {
+        return getBooleanPreference(SET_FORCE_OTHER_USERS_PRO, false)
+    }
+
+    override fun setForceOtherUsersAsPro(isPro: Boolean) {
+        setBooleanPreference(SET_FORCE_OTHER_USERS_PRO, isPro)
     }
 
     override fun forceIncomingMessagesAsPro(): Boolean {
         return getBooleanPreference(SET_FORCE_INCOMING_MESSAGE_PRO, false)
     }
 
-    override fun setForceIncomingMessagesAsPro(hidden: Boolean) {
-        setBooleanPreference(SET_FORCE_INCOMING_MESSAGE_PRO, hidden)
-        _events.tryEmit(SET_FORCE_INCOMING_MESSAGE_PRO)
+    override fun setForceIncomingMessagesAsPro(isPro: Boolean) {
+        setBooleanPreference(SET_FORCE_INCOMING_MESSAGE_PRO, isPro)
     }
 
     override fun forcePostPro(): Boolean {
         return getBooleanPreference(SET_FORCE_POST_PRO, false)
     }
 
-    override fun setForcePostPro(hidden: Boolean) {
-        setBooleanPreference(SET_FORCE_POST_PRO, hidden)
-        _events.tryEmit(SET_FORCE_POST_PRO)
+    override fun setForcePostPro(postPro: Boolean) {
+        setBooleanPreference(SET_FORCE_POST_PRO, postPro)
+        postProLaunchState.update { postPro }
+    }
+
+    override fun watchPostProStatus(): StateFlow<Boolean> {
+        return postProLaunchState
     }
 
     override fun getFingerprintKeyGenerated(): Boolean {
@@ -1658,7 +1692,7 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setAccentColorStyle(@StyleRes newColorStyle: Int?) {
         setStringPreference(
-            TextSecurePreferences.SELECTED_ACCENT_COLOR, when (newColorStyle) {
+            SELECTED_ACCENT_COLOR, when (newColorStyle) {
                 R.style.PrimaryGreen -> TextSecurePreferences.GREEN_ACCENT
                 R.style.PrimaryBlue -> TextSecurePreferences.BLUE_ACCENT
                 R.style.PrimaryPurple -> TextSecurePreferences.PURPLE_ACCENT
@@ -1741,6 +1775,14 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setHasSeenTokenPageNotification(value: Boolean) {
         setBooleanPreference(HAVE_SHOWN_A_NOTIFICATION_ABOUT_TOKEN_PAGE, value)
+    }
+
+    override fun forcedShortTTL(): Boolean {
+        return getBooleanPreference(FORCED_SHORT_TTL, false)
+    }
+
+    override fun setForcedShortTTL(value: Boolean) {
+        setBooleanPreference(FORCED_SHORT_TTL, value)
     }
 
     override var deprecationStateOverride: String?

@@ -29,6 +29,9 @@ import java.util.Date
 
 object ProfilePictureUtilities {
 
+    const val DEFAULT_AVATAR_TTL = 14 * 24 * 60 * 60 * 1000 // 14 days
+    const val DEBUG_AVATAR_TTL = 30 // 30 seconds
+
     @OptIn(DelicateCoroutinesApi::class)
     fun resubmitProfilePictureIfNeeded(context: Context) {
         GlobalScope.launch(Dispatchers.IO) {
@@ -37,7 +40,9 @@ object ProfilePictureUtilities {
             val userPublicKey = getLocalNumber(context) ?: return@launch
             val now = Date().time
             val lastProfilePictureUpload = getLastProfilePictureUpload(context)
-            if (now - lastProfilePictureUpload <= 14 * 24 * 60 * 60 * 1000) return@launch
+            val avatarTtl = if(TextSecurePreferences.forcedShortTTL(context)) DEBUG_AVATAR_TTL else DEFAULT_AVATAR_TTL
+            Log.d("Loki-Avatar", "Should reupload avatar? ${now - lastProfilePictureUpload > avatarTtl} (TTL of $avatarTtl)")
+            if (now - lastProfilePictureUpload <= avatarTtl) return@launch
 
             // Don't generate a new profile key here; we do that when the user changes their profile picture
             Log.d("Loki-Avatar", "Uploading Avatar Started")
@@ -106,9 +111,14 @@ object ProfilePictureUtilities {
         val data = b.readByteArray()
         var id: Long = 0
 
+        // add a custom TTL header if we have enabled it i the debug menu
+        val customHeaders = if(TextSecurePreferences.forcedShortTTL(context)){
+            mapOf("X-FS-TTL" to DEBUG_AVATAR_TTL.toString()) // force the TTL to 30 seconds
+        } else mapOf()
+
         // this can throw an error
         id = retryIfNeeded(4) {
-            FileServerApi.upload(data)
+            FileServerApi.upload(file = data, customHeaders = customHeaders)
         }.await()
 
         TextSecurePreferences.setLastProfilePictureUpload(context, Date().time)
