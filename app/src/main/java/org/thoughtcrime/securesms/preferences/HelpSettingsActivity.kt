@@ -44,7 +44,7 @@ class HelpSettingsFragment: CorrectedPreferenceFragment() {
         private const val FAQ          = "faq"
         private const val SUPPORT      = "support"
         private const val CROWDIN_URL  = "https://getsession.org/translate"
-        private const val FEEDBACK_URL = "https://getsession.org/survey"
+        private const val FEEDBACK_URL = "https://www.surveymonkey.com/r/Q7C8GJS"
         private const val FAQ_URL      = "https://getsession.org/faq"
         private const val SUPPORT_URL  = "https://sessionapp.zendesk.com/hc/en-us"
     }
