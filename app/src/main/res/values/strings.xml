@@ -151,6 +151,7 @@
     <string name="banUser">Ban User</string>
     <string name="banUserBanned">User banned</string>
     <string name="banUserDescription">Enter the Account ID of the user you are banning</string>
+    <string name="blindedId">Blinded ID</string>
     <string name="block">Block</string>
     <string name="blockBlockedDescription">Unblock this contact to send a message</string>
     <string name="blockBlockedNone">No blocked contacts</string>
@@ -843,6 +844,7 @@
     <string name="proFeatureListLongerMessages">Messages up to 10,000 characters</string>
     <string name="proFeatureListPinnedConversations">Pin unlimited conversations</string>
     <string name="proSendMore">Send more with</string>
+    <string name="proUserProfileModalCallToAction">Want to use Session to its fullest potential? Upgrade to Session Pro to gain access to exclusive perks and features</string>
     <string name="profile">Profile</string>
     <string name="profileDisplayPicture">Display Picture</string>
     <string name="profileDisplayPictureRemoveError">Failed to remove display picture.</string>
@@ -978,6 +980,8 @@
     <string name="theContinue">Continue</string>
     <string name="theDefault">Default</string>
     <string name="theError">Error</string>
+    <string name="tooltipAccountIdVisible">The Account ID of <b>{name}</b> is visible\nbased on your previous interactions</string>
+    <string name="tooltipBlindedIdCommunities">Blinded IDs are used in communities\nto reduce spam and increase privacy</string>
     <string name="tryAgain">Try Again</string>
     <string name="typingIndicators">Typing Indicators</string>
     <string name="typingIndicatorsDescription">See and share typing indicators.</string>
