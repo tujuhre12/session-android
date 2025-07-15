@@ -38,6 +38,8 @@ import org.session.libsession.utilities.NetworkFailure;
 import org.session.libsession.utilities.ThemeUtil;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.AccountId;
+import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate;
+import org.thoughtcrime.securesms.database.model.content.MessageContent;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 
 import network.loki.messenger.R;
@@ -63,10 +65,6 @@ public abstract class MessageRecord extends DisplayRecord {
   @Nullable
   private UpdateMessageData               groupUpdateMessage;
 
-  public final boolean isNotDisappearAfterRead() {
-    return expireStarted == getTimestamp();
-  }
-
   public abstract boolean isMms();
   public abstract boolean isMmsNotification();
 
@@ -81,10 +79,11 @@ public abstract class MessageRecord extends DisplayRecord {
                 List<IdentityKeyMismatch> mismatches,
                 List<NetworkFailure> networkFailures,
                 long expiresIn, long expireStarted,
-                int readReceiptCount, List<ReactionRecord> reactions, boolean hasMention)
+                int readReceiptCount, List<ReactionRecord> reactions, boolean hasMention,
+                @Nullable MessageContent messageContent)
   {
     super(body, conversationRecipient, dateSent, dateReceived,
-      threadId, deliveryStatus, deliveryReceiptCount, type, readReceiptCount);
+      threadId, deliveryStatus, deliveryReceiptCount, type, readReceiptCount, messageContent);
     this.id                  = id;
     this.individualRecipient = individualRecipient;
     this.mismatches          = mismatches;
@@ -160,10 +159,10 @@ public abstract class MessageRecord extends DisplayRecord {
       }
 
       return text;
-    } else if (isExpirationTimerUpdate()) {
-      int seconds = (int) (getExpiresIn() / 1000);
+    } else if (getMessageContent() instanceof DisappearingMessageUpdate) {
       boolean isGroup = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(getThreadId()).isGroupOrCommunity();
-      return new SpannableString(UpdateMessageBuilder.INSTANCE.buildExpirationTimerMessage(context, seconds, isGroup, getIndividualRecipient().getAddress().toString(), isOutgoing(), getTimestamp(), expireStarted));
+      return UpdateMessageBuilder.INSTANCE
+              .buildExpirationTimerMessage(context, ((DisappearingMessageUpdate) getMessageContent()).getExpiryMode(), isGroup, getIndividualRecipient().getAddress().toString(), isOutgoing());
     } else if (isDataExtractionNotification()) {
       if (isScreenshotNotification()) return new SpannableString((UpdateMessageBuilder.INSTANCE.buildDataExtractionMessage(context, DataExtractionNotificationInfoMessage.Kind.SCREENSHOT, getIndividualRecipient().getAddress().toString())));
       else if (isMediaSavedNotification()) return new SpannableString((UpdateMessageBuilder.INSTANCE.buildDataExtractionMessage(context, DataExtractionNotificationInfoMessage.Kind.MEDIA_SAVED, getIndividualRecipient().getAddress().toString())));

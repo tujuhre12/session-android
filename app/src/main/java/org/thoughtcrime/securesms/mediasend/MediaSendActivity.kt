@@ -527,8 +527,8 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
          * Get an intent to launch the media send flow starting with the camera.
          */
         @JvmStatic
-        fun buildCameraIntent(context: Context, recipient: Address): Intent {
-            val intent = buildGalleryIntent(context, recipient, "")
+        fun buildCameraIntent(context: Context, recipient: Address, body: String): Intent {
+            val intent = buildGalleryIntent(context, recipient, body)
             intent.putExtra(KEY_IS_CAMERA, true)
             return intent
         }

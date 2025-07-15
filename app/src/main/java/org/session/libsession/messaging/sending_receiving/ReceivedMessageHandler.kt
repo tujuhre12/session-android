@@ -167,7 +167,11 @@ fun MessageReceiver.cancelTypingIndicatorsIfNeeded(senderPublicKey: String) {
 }
 
 private fun MessageReceiver.handleExpirationTimerUpdate(message: ExpirationTimerUpdate) {
-    SSKEnvironment.shared.messageExpirationManager.insertExpirationTimerMessage(message)
+    SSKEnvironment.shared.messageExpirationManager.run {
+        insertExpirationTimerMessage(message)
+        onMessageReceived(message)
+    }
+
 }
 
 private fun MessageReceiver.handleDataExtractionNotification(message: DataExtractionNotification) {

@@ -348,11 +348,13 @@ class ConversationViewModel @AssistedInject constructor(
         community: OpenGroup?,
         deprecationState: LegacyGroupDeprecationManager.DeprecationState
     ): InputBarState {
+        val currentCharLimitState = _inputBarState.value.charLimitState
         return when {
             // prioritise cases that demand the input to be hidden
             !shouldShowInput(recipient, deprecationState) -> InputBarState(
                 contentState = InputBarContentState.Hidden,
-                enableAttachMediaControls = false
+                enableAttachMediaControls = false,
+                charLimitState = currentCharLimitState
             )
 
             // next are cases where the  input is visible but disabled
@@ -364,7 +366,8 @@ class ConversationViewModel @AssistedInject constructor(
                         _uiEvents.tryEmit(ConversationUiEvent.ShowUnblockConfirmation)
                     }
                 ),
-                enableAttachMediaControls = false
+                enableAttachMediaControls = false,
+                charLimitState = currentCharLimitState
             )
 
             // the user does not have write access in the community
@@ -372,13 +375,15 @@ class ConversationViewModel @AssistedInject constructor(
                 contentState = InputBarContentState.Disabled(
                     text = application.getString(R.string.permissionsWriteCommunity),
                 ),
-                enableAttachMediaControls = false
+                enableAttachMediaControls = false,
+                charLimitState = currentCharLimitState
             )
 
             // other cases the input is visible, and the buttons might be disabled based on some criteria
             else -> InputBarState(
                 contentState = InputBarContentState.Visible,
-                enableAttachMediaControls = shouldEnableInputMediaControls(recipient, community)
+                enableAttachMediaControls = shouldEnableInputMediaControls(recipient, community),
+                charLimitState = currentCharLimitState
             )
         }
     }

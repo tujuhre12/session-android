@@ -36,6 +36,8 @@ import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.thoughtcrime.securesms.database.MmsSmsColumns;
 import org.thoughtcrime.securesms.database.SmsDatabase;
+import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate;
+import org.thoughtcrime.securesms.database.model.content.MessageContent;
 import org.thoughtcrime.securesms.ui.UtilKt;
 
 /**
@@ -61,9 +63,10 @@ public class ThreadRecord extends DisplayRecord {
                       int unreadMentionCount, long threadId, int deliveryReceiptCount, int status,
                       long snippetType,
                       long lastSeen, int readReceiptCount, String invitingAdminId,
-                      @NonNull GroupThreadStatus groupThreadStatus)
+                      @NonNull GroupThreadStatus groupThreadStatus,
+                      @Nullable MessageContent messageContent)
   {
-    super(body, recipient, date, date, threadId, status, deliveryReceiptCount, snippetType, readReceiptCount);
+    super(body, recipient, date, date, threadId, status, deliveryReceiptCount, snippetType, readReceiptCount, messageContent);
     this.lastMessage        = lastMessage;
     this.count              = count;
     this.unreadCount        = unreadCount;
@@ -125,7 +128,7 @@ public class ThreadRecord extends DisplayRecord {
             return Phrase.from(context, R.string.callsMissedCallFrom)
                     .put(NAME_KEY, getName())
                     .format().toString();
-        } else if (SmsDatabase.Types.isExpirationTimerUpdate(type)) {
+        } else if (getMessageContent() instanceof DisappearingMessageUpdate) {
             // Use the same message as we would for displaying on the conversation screen.
             // lastMessage shouldn't be null here, but we'll check just in case.
             if (lastMessage != null) {
@@ -133,7 +136,8 @@ public class ThreadRecord extends DisplayRecord {
             } else {
                 return "";
             }
-        } else if (MmsSmsColumns.Types.isMediaSavedExtraction(type)) {
+        }
+        else if (MmsSmsColumns.Types.isMediaSavedExtraction(type)) {
             return Phrase.from(context, R.string.attachmentsMediaSaved)
                     .put(NAME_KEY, getName())
                     .format().toString();

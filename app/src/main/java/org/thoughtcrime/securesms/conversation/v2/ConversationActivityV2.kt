@@ -2040,12 +2040,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val message = VisibleMessage().applyExpiryMode(viewModel.threadId)
         message.sentTimestamp = sentTimestamp
         message.text = text
-        val expiryMode = viewModel.recipient?.expiryMode
-        val expiresInMillis = expiryMode?.expiryMillis ?: 0
-        val expireStartedAt = if (expiryMode is ExpiryMode.AfterSend) {
-            message.sentTimestamp
-        } else 0
-        val outgoingTextMessage = OutgoingTextMessage.from(message, recipient.address, expiresInMillis, expireStartedAt!!)
+        val expiresInMillis = viewModel.recipient?.expiryMode?.expiryMillis ?: 0
+        val outgoingTextMessage = OutgoingTextMessage.from(message, recipient.address, expiresInMillis, 0)
 
         // Clear the input bar
         binding.inputBar.text = ""
@@ -2185,7 +2181,15 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
     }
 
-    private fun showCamera() { attachmentManager.capturePhoto(this, TAKE_PHOTO, viewModel.recipient?.address, viewModel.threadId) }
+    private fun showCamera() {
+        attachmentManager.capturePhoto(
+            this,
+            TAKE_PHOTO,
+            viewModel.recipient,
+            viewModel.threadId,
+            getMessageBody()
+        )
+    }
 
     override fun onAttachmentChanged() { /* Do nothing */ }
 

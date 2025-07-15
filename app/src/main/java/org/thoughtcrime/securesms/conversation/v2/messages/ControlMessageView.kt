@@ -10,7 +10,6 @@ import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
-import androidx.compose.ui.graphics.Color
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.view.isGone
@@ -22,7 +21,6 @@ import network.loki.messenger.databinding.ViewControlMessageBinding
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.ExpirationConfiguration
-import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
@@ -32,6 +30,7 @@ import org.thoughtcrime.securesms.conversation.disappearingmessages.Disappearing
 import org.thoughtcrime.securesms.conversation.disappearingmessages.expiryMode
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageRecord
+import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.PrivacySettingsActivity
@@ -86,8 +85,9 @@ class ControlMessageView : LinearLayout {
 
         binding.root.contentDescription = null
         binding.textView.text = messageBody
+        val messageContent = message.messageContent
         when {
-            message.isExpirationTimerUpdate -> {
+            messageContent is DisappearingMessageUpdate -> {
                 binding.apply {
                     expirationTimerView.isVisible = true
 
@@ -100,12 +100,14 @@ class ControlMessageView : LinearLayout {
                     }
 
                     followSetting.isVisible = ExpirationConfiguration.isNewConfigEnabled
-                        && !message.isOutgoing
-                        && message.expiryMode != MessagingModuleConfiguration.shared.storage.getExpirationConfiguration(message.threadId)
-                        && threadRecipient?.isGroupOrCommunity != true
+                            && !message.isOutgoing
+                            && messageContent.expiryMode != (MessagingModuleConfiguration.shared.storage.getExpirationConfiguration(message.threadId)?.expiryMode ?: ExpiryMode.NONE)
+                            && threadRecipient?.isGroupOrCommunity != true
 
                     if (followSetting.isVisible) {
-                        binding.controlContentView.setOnClickListener { disappearingMessages.showFollowSettingDialog(context, message) }
+                        binding.controlContentView.setOnClickListener {
+                            disappearingMessages.showFollowSettingDialog(context, threadId = message.threadId, recipient = message.recipient, messageContent)
+                        }
                     } else {
                         binding.controlContentView.setOnClickListener(null)
                     }

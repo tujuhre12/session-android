@@ -3,6 +3,7 @@ package org.session.libsession.messaging.utilities
 import android.content.Context
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.getOrNull
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.calls.CallMessageType
@@ -326,15 +327,12 @@ object UpdateMessageBuilder {
         }
     }
 
-
     fun buildExpirationTimerMessage(
         context: Context,
-        duration: Long,
-        isGroup: Boolean, // Note: isGroup should cover both closed groups AND communities
-        senderId: String? = null,
-        isOutgoing: Boolean = false,
-        timestamp: Long,
-        expireStarted: Long
+        mode: ExpiryMode,
+        isGroup: Boolean,  // Note: isGroup should cover both closed groups AND communities
+        senderId: String?,
+        isOutgoing: Boolean,
     ): CharSequence {
         if (!isOutgoing && senderId == null) {
             Log.w(TAG, "buildExpirationTimerMessage: Cannot build for outgoing message when senderId is null.")
@@ -344,7 +342,7 @@ object UpdateMessageBuilder {
         val senderName = if (isOutgoing) context.getString(R.string.you) else getGroupMemberName(senderId!!)
 
         // Case 1.) Disappearing messages have been turned off..
-        if (duration <= 0) {
+        if (mode == ExpiryMode.NONE) {
             // ..by you..
             return if (isOutgoing) {
                 // in a group
@@ -366,8 +364,12 @@ object UpdateMessageBuilder {
         }
 
         // Case 2.) Disappearing message settings have been changed but not turned off.
-        val time = ExpirationUtil.getExpirationDisplayValue(context, duration.toInt())
-        val action = context.getExpirationTypeDisplayValue(timestamp >= expireStarted)
+        val time = ExpirationUtil.getExpirationDisplayValue(context, mode.duration)
+        val action = if (mode is ExpiryMode.AfterSend) {
+            context.getString(R.string.disappearingMessagesTypeSent)
+        } else {
+            context.getString(R.string.disappearingMessagesTypeRead)
+        }
 
         //..by you..
         if (isOutgoing) {
@@ -392,6 +394,30 @@ object UpdateMessageBuilder {
                 .put(DISAPPEARING_MESSAGES_TYPE_KEY, action)
                 .format()
         }
+    }
+
+
+    @Deprecated("Use the version with ExpiryMode instead. This will be removed in a future release.")
+    fun buildExpirationTimerMessage(
+        context: Context,
+        duration: Long,
+        isGroup: Boolean, // Note: isGroup should cover both closed groups AND communities
+        senderId: String? = null,
+        isOutgoing: Boolean = false,
+        timestamp: Long,
+        expireStarted: Long
+    ): CharSequence {
+        return buildExpirationTimerMessage(
+            context,
+            mode = when {
+                duration == 0L -> ExpiryMode.NONE
+                timestamp >= expireStarted -> ExpiryMode.AfterSend(duration) // Not the greatest logic here but keeping it for backwards compatibility, can be removed once migrated over
+                else -> ExpiryMode.AfterRead(duration)
+            },
+            isGroup = isGroup,
+            senderId = senderId,
+            isOutgoing = isOutgoing,
+        )
     }
 
     fun buildDataExtractionMessage(context: Context,

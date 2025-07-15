@@ -86,7 +86,6 @@ import org.thoughtcrime.securesms.util.SessionMetaProtocol.clearReceivedMessages
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
-import kotlin.collections.set
 import network.loki.messenger.libsession_util.util.Contact as LibSessionContact
 import network.loki.messenger.libsession_util.util.GroupMember as LibSessionGroupMember
 
@@ -627,15 +626,12 @@ open class Storage @Inject constructor(
 
     override fun updateSentTimestamp(
         messageId: MessageId,
-        openGroupSentTimestamp: Long,
-        threadId: Long
+        newTimestamp: Long
     ) {
         if (messageId.mms) {
-            val mmsDb = mmsDatabase
-            mmsDb.updateSentTimestamp(messageId.id, openGroupSentTimestamp, threadId)
+            mmsDatabase.updateSentTimestamp(messageId.id, newTimestamp)
         } else {
-            val smsDb = smsDatabase
-            smsDb.updateSentTimestamp(messageId.id, openGroupSentTimestamp, threadId)
+            smsDatabase.updateSentTimestamp(messageId.id, newTimestamp)
         }
     }
 
@@ -776,7 +772,20 @@ open class Storage @Inject constructor(
         val userPublicKey = getUserPublicKey()!!
         val recipient = fromSerialized(groupID)
         val updateData = UpdateMessageData.buildGroupUpdate(type, name, members)?.toJSON() ?: ""
-        val infoMessage = OutgoingGroupMediaMessage(recipient, updateData, groupID, null, sentTimestamp, 0, 0, true, null, listOf(), listOf())
+        val infoMessage = OutgoingGroupMediaMessage(
+            recipient,
+            updateData,
+            groupID,
+            null,
+            sentTimestamp,
+            0,
+            0,
+            true,
+            null,
+            listOf(),
+            listOf(),
+            null
+        )
         val mmsDB = mmsDatabase
         val mmsSmsDB = mmsSmsDatabase
         if (mmsSmsDB.getMessageFor(sentTimestamp, userPublicKey) != null) {
@@ -940,7 +949,8 @@ open class Storage @Inject constructor(
                 true,
                 null,
                 listOf(),
-                listOf()
+                listOf(),
+                null
             )
             val mmsDB = mmsDatabase
             val mmsSmsDB = mmsSmsDatabase
@@ -1333,10 +1343,10 @@ open class Storage @Inject constructor(
             expireStartedAt,
             false,
             false,
-            false,
             Optional.absent(),
             Optional.absent(),
             Optional.absent(),
+            null,
             Optional.absent(),
             Optional.absent(),
             Optional.absent(),
@@ -1344,10 +1354,6 @@ open class Storage @Inject constructor(
         )
 
         mmsDatabase.insertSecureDecryptedMessageInbox(mediaMessage, threadId, runThreadUpdate = true)
-            .orNull()
-            ?.let {
-                messageExpirationManager.startExpiringNow(MessageId(id = it.messageId, mms = true))
-            }
     }
 
     /**
@@ -1433,12 +1439,12 @@ open class Storage @Inject constructor(
                     -1,
                     0,
                     0,
-                    false,
                     true,
                     false,
                     Optional.absent(),
                     Optional.absent(),
                     Optional.absent(),
+                    null,
                     Optional.absent(),
                     Optional.absent(),
                     Optional.absent(),
@@ -1465,12 +1471,12 @@ open class Storage @Inject constructor(
             -1,
             0,
             0,
-            false,
             true,
             false,
             Optional.absent(),
             Optional.absent(),
             Optional.absent(),
+            null,
             Optional.absent(),
             Optional.absent(),
             Optional.absent(),
@@ -1486,11 +1492,7 @@ open class Storage @Inject constructor(
         val expiresInMillis = expiryMode.expiryMillis
         val expireStartedAt = if (expiryMode is ExpiryMode.AfterSend) sentTimestamp else 0
         val callMessage = IncomingTextMessage.fromCallInfo(callMessageType, address, Optional.absent(), sentTimestamp, expiresInMillis, expireStartedAt)
-        smsDatabase.insertCallMessage(callMessage).orNull()
-            ?.let {
-                messageExpirationManager.startExpiringNow(MessageId(it.messageId, mms = false))
-            }
-
+        smsDatabase.insertCallMessage(callMessage)
     }
 
     override fun conversationHasOutgoing(userPublicKey: String): Boolean {
