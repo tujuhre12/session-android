@@ -37,16 +37,12 @@
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:layout_height="wrap_content">
 
                 <TextView
                     android:id="@+id/displayNameTextView"
-                    android:layout_width="0dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:drawablePadding="4dp"
                     android:ellipsize="end"
                     android:maxLines="1"
                     android:textAlignment="viewStart"
@@ -54,9 +50,12 @@
                     android:textSize="@dimen/medium_font_size"
                     android:textStyle="bold"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toStartOf="@+id/unreadCountIndicator"
+                    app:layout_constraintEnd_toStartOf="@id/unreadCountIndicator"
+                    app:layout_constraintHorizontal_bias="0"
+                    app:layout_constraintHorizontal_chainStyle="packed"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constrainedWidth="true"
                     tools:text="I'm a very long display name. What are you going to do about it?" />
 
                 <RelativeLayout
