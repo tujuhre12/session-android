@@ -2185,8 +2185,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         attachmentManager.capturePhoto(
             this,
             TAKE_PHOTO,
-            viewModel.recipient,
-            viewModel.threadId,
+            viewModel.address,
             getMessageBody()
         )
     }

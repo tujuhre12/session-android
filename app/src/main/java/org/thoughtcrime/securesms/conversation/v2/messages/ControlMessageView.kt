@@ -27,7 +27,6 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
 import org.session.libsession.utilities.getColorFromAttr
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessages
-import org.thoughtcrime.securesms.conversation.disappearingmessages.expiryMode
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
@@ -101,7 +100,7 @@ class ControlMessageView : LinearLayout {
 
                     followSetting.isVisible = ExpirationConfiguration.isNewConfigEnabled
                             && !message.isOutgoing
-                            && messageContent.expiryMode != (MessagingModuleConfiguration.shared.storage.getExpirationConfiguration(message.threadId)?.expiryMode ?: ExpiryMode.NONE)
+                            && messageContent.expiryMode != (MessagingModuleConfiguration.shared.storage.getExpirationConfiguration(message.threadId) ?: ExpiryMode.NONE)
                             && threadRecipient?.isGroupOrCommunity != true
 
                     if (followSetting.isVisible) {

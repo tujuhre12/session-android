@@ -253,7 +253,6 @@ interface StorageProtocol {
     fun blockedContacts(): List<Recipient>
     fun getExpirationConfiguration(threadId: Long): ExpiryMode
     fun setExpirationConfiguration(address: Address, expiryMode: ExpiryMode)
-    fun getExpiringMessages(messageIds: List<Long> = emptyList()): List<Pair<Long, Long>>
 
     // Shared configs
     fun conversationInConfig(publicKey: String?, groupPublicKey: String?, openGroupId: String?, visibleOnly: Boolean): Boolean

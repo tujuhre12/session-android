@@ -23,7 +23,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_K
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.OTHER_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
-import org.session.libsession.utilities.getExpirationTypeDisplayValue
 import org.session.libsession.utilities.getGroup
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log

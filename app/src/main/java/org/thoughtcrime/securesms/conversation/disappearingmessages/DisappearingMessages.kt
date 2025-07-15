@@ -100,7 +100,7 @@ class DisappearingMessages @Inject constructor(
                 text = dangerButtonText,
                 contentDescriptionRes = dangerButtonContentDescription,
         ) {
-            set(recipient.address, content.expiryMode, recipient.isGroup)
+            set(recipient.address, content.expiryMode, recipient.isGroupRecipient)
         }
         cancelButton()
     }
