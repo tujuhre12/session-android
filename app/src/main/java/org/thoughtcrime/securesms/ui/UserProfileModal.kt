@@ -1,5 +1,9 @@
 package org.thoughtcrime.securesms.ui
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -31,6 +35,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
@@ -62,41 +67,100 @@ fun UserProfileModal(
         title = null as AnnotatedString?,
         content = {
             // avatar
+            val scaleSpec: AnimationSpec<Dp> = tween(
+                durationMillis = 300,
+                delayMillis = 0
+            )
+
+            val animatedAvatarSize by animateDpAsState(
+                targetValue = if (data.expandedAvatar) {
+                    LocalDimensions.current.iconXXLargeAvatar
+                } else {
+                    LocalDimensions.current.iconXXLarge
+                },
+                animationSpec = scaleSpec,
+                label = "avatar_size_animation"
+            )
+
+            val animatedBadgeSize by animateDpAsState(
+                targetValue = if (data.expandedAvatar) {
+                    LocalDimensions.current.iconLargeAvatar
+                } else {
+                    LocalDimensions.current.iconMedium
+                },
+                animationSpec = scaleSpec,
+                label = "badge_size_animation"
+            )
+
+            // animating the inner padding of the badge otherwise the icon looks too big within the background
+            val animatedBadgeInnerPadding by animateDpAsState(
+                targetValue = if (data.expandedAvatar) {
+                    LocalDimensions.current.xxsSpacing
+                } else {
+                    5.dp
+                },
+                animationSpec = scaleSpec,
+                label = "badge_inner_pd_animation"
+            )
+
+            // animating the end padding of the badge to keep it touching the avatar
+            val animatedBadgeEndPadding by animateDpAsState(
+                targetValue = if (data.expandedAvatar) {
+                    LocalDimensions.current.smallSpacing
+                } else {
+                    0.dp
+                },
+                animationSpec = scaleSpec,
+                label = "badge_inner_pd_animation"
+            )
+
             Box(
                 modifier = Modifier
-                    .size(LocalDimensions.current.iconXXLarge)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null // the ripple doesn't look nice as a square with the plus icon on top too
                     ) {
-                        //todo UPM implement
+                        sendCommand(UserProfileModalCommands.ToggleAvatarExpand)
                     },
                 contentAlignment = Alignment.Center
             ) {
-                // the image content will depend on state type
+                // avatar and qr code
+
                 Avatar(
-                    size = LocalDimensions.current.iconXXLarge,
+                    size = animatedAvatarSize,
                     data = data.avatarUIData
                 )
 
                 // qr/avatar button switch
-                Image(
-                    modifier = Modifier
-                        .size(LocalDimensions.current.spacing)
-                        .background(
-                            shape = CircleShape,
-                            color = LocalColors.current.accent
-                        )
-                        .padding(LocalDimensions.current.xxxsSpacing)
-                        .align(Alignment.TopEnd)
-                    ,
-                    painter = painterResource(id = when(data.headerState){
-                        UserProfileModalData.HeaderState.Avatar -> R.drawable.ic_qr_code
-                        UserProfileModalData.HeaderState.QR -> R.drawable.ic_user_filled_custom
-                    }),
-                    contentDescription = null,
-                    colorFilter = ColorFilter.tint(Color.Black)
-                )
+                Crossfade(
+                    modifier = Modifier.align(Alignment.TopEnd)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null // the ripple doesn't look nice as a square with the plus icon on top too
+                        ) {
+                            sendCommand(UserProfileModalCommands.ToggleQR)
+                        }
+                        .padding(end = animatedBadgeEndPadding),
+                    targetState = data.showQR,
+                    animationSpec = tween(durationMillis = 300),
+                    label = "icon_crossfade"
+                ) { showQR ->
+                    Image(
+                        modifier = Modifier
+                            .size(animatedBadgeSize)
+                            .background(
+                                shape = CircleShape,
+                                color = LocalColors.current.accent
+                            )
+                            .padding(animatedBadgeInnerPadding),
+                        painter = painterResource(id = when(showQR){
+                            true -> R.drawable.ic_user_filled_custom
+                            false -> R.drawable.ic_qr_code
+                        }),
+                        contentDescription = null,
+                        colorFilter = ColorFilter.tint(Color.Black)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
@@ -283,20 +347,18 @@ data class UserProfileModalData(
     val isBlinded: Boolean,
     val tooltipText: String?,
     val enableMessage: Boolean,
-    val headerState: HeaderState,
+    val expandedAvatar: Boolean,
+    val showQR: Boolean,
     val avatarUIData: AvatarUIData,
     val showProCTA: Boolean
-){
-    sealed interface HeaderState {
-        object Avatar: HeaderState
-        object QR: HeaderState
-    }
-}
+)
 
 sealed interface UserProfileModalCommands {
     object HideUserProfileModal: UserProfileModalCommands
     object HideSessionProCTA: UserProfileModalCommands
     object CopyAccountId: UserProfileModalCommands
+    object ToggleAvatarExpand: UserProfileModalCommands
+    object ToggleQR: UserProfileModalCommands
 }
 
 @Preview
@@ -305,27 +367,47 @@ private fun PreviewUPM(
     @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
 ) {
     PreviewTheme(colors) {
-        UserProfileModal(
-            data = UserProfileModalData(
-                name = "Atreyu",
-                subtitle = null,
-                isPro = true,
-                isBlinded = false,
-                tooltipText = null,
-                address = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
-                enableMessage = true,
-                headerState = UserProfileModalData.HeaderState.Avatar,
-                showProCTA = false,
-                avatarUIData = AvatarUIData(
-                    listOf(
-                        AvatarUIElement(
-                            name = "TO",
-                            color = primaryRed
+        var data by remember {
+            mutableStateOf(
+                UserProfileModalData(
+                    name = "Atreyu",
+                    subtitle = "(Neverending)",
+                    isPro = false,
+                    isBlinded = false,
+                    tooltipText = "Some tooltip",
+                    address = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
+                    enableMessage = false,
+                    expandedAvatar = false,
+                    showQR = false,
+                    showProCTA = false,
+                    avatarUIData = AvatarUIData(
+                        listOf(
+                            AvatarUIElement(
+                                name = "TO",
+                                color = primaryRed
+                            )
                         )
                     )
                 )
-            ),
-            sendCommand = {}
+            )
+        }
+
+        UserProfileModal(
+            data = data,
+            sendCommand = { command ->
+                when(command){
+                    UserProfileModalCommands.HideUserProfileModal -> {}
+                    UserProfileModalCommands.HideSessionProCTA -> {}
+                    UserProfileModalCommands.ToggleQR -> {
+                        data = data.copy(showQR = !data.showQR)
+                    }
+                    UserProfileModalCommands.ToggleAvatarExpand -> {
+                        data = data.copy(expandedAvatar = !data.expandedAvatar)
+                    }
+                    else -> {}
+
+                }
+            }
         )
     }
 }
@@ -336,27 +418,47 @@ private fun PreviewUPMQR(
     @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
 ) {
     PreviewTheme(colors) {
-        UserProfileModal(
-            data = UserProfileModalData(
-                name = "Atreyu",
-                subtitle = "(Neverending)",
-                isPro = false,
-                isBlinded = true,
-                tooltipText = "Some tooltip",
-                address = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
-                enableMessage = false,
-                headerState = UserProfileModalData.HeaderState.QR,
-                showProCTA = false,
-                avatarUIData = AvatarUIData(
-                    listOf(
-                        AvatarUIElement(
-                            name = "TO",
-                            color = primaryRed
+        var data by remember {
+            mutableStateOf(
+            UserProfileModalData(
+                    name = "Atreyu",
+                    subtitle = "(Neverending)",
+                    isPro = false,
+                    isBlinded = true,
+                    tooltipText = "Some tooltip",
+                    address = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
+                    enableMessage = true,
+                    expandedAvatar = false,
+                    showQR = true,
+                    showProCTA = false,
+                    avatarUIData = AvatarUIData(
+                        listOf(
+                            AvatarUIElement(
+                                name = "TO",
+                                color = primaryRed
+                            )
                         )
                     )
                 )
-            ),
-            sendCommand = {}
+            )
+        }
+
+        UserProfileModal(
+            data = data,
+            sendCommand = { command ->
+                when(command){
+                    UserProfileModalCommands.HideUserProfileModal -> {}
+                    UserProfileModalCommands.HideSessionProCTA -> {}
+                    UserProfileModalCommands.ToggleQR -> {
+                        data = data.copy(showQR = !data.showQR)
+                    }
+                    UserProfileModalCommands.ToggleAvatarExpand -> {
+                        data = data.copy(expandedAvatar = !data.expandedAvatar)
+                    }
+                    else -> {}
+
+                }
+            }
         )
     }
 }
@@ -376,7 +478,8 @@ private fun PreviewUPMCTA(
                 tooltipText = "Some tooltip",
                 address = "158342146b...c6ed734na5",
                 enableMessage = false,
-                headerState = UserProfileModalData.HeaderState.QR,
+                expandedAvatar = true,
+                showQR = false,
                 showProCTA = true,
                 avatarUIData = AvatarUIData(
                     listOf(
