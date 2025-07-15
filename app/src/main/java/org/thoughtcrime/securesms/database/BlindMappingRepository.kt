@@ -83,6 +83,15 @@ class BlindMappingRepository @Inject constructor(
         return mappings.value[serverUrl]?.get(blindedAddress)
     }
 
+    fun getReverseMappings(
+        contactAddress: Address,
+    ): List<Pair<CommunityServerUrl, BlindedAddress>> {
+        return mappings.value.flatMap { (communityUrl, mapping) ->
+            mapping.filter { it.value == contactAddress }
+                .map { (blindedAddress, _) -> communityUrl to blindedAddress }
+        }
+    }
+
     fun observeMapping(
         communityAddress: CommunityServerUrl,
         blindedAddress: BlindedAddress

@@ -1385,33 +1385,35 @@ open class Storage @Inject constructor(
                     ),
                     fromCommunity = null)
             }
-            
-            val mappings = mutableMapOf<String, BlindedIdMapping>()
 
-            for ((address, _) in threadDatabase.allThreads) {
-                val blindedId = when {
-                    address.isGroupOrCommunity -> null
-                    address.isCommunityInbox -> GroupUtil.getDecodedOpenGroupInboxAccountId(address.toString())
-                    else -> address.address.takeIf { AccountId.fromStringOrNull(it)?.prefix == IdPrefix.BLINDED }
-                } ?: continue
-            }
-
-            // TODO: Actually move the conversation from blind to normal
-            for (mapping in mappings) {
-                if (!BlindKeyAPI.sessionIdMatchesBlindedId(
-                        sessionId = senderPublicKey,
-                        blindedId = mapping.value.blindedId,
-                        serverPubKey = mapping.value.serverId
-                    )
-                ) {
-                    continue
-                }
-
-                val blindedThreadId = threadDatabase.getOrCreateThreadIdFor(fromSerialized(mapping.key))
-                mmsDatabase.updateThreadId(blindedThreadId, threadId)
-                smsDatabase.updateThreadId(blindedThreadId, threadId)
-                deleteConversation(blindedThreadId)
-            }
+//            blindedIdMappingRepository.getReverseMappings(sender)
+//
+//            val mappings = mutableMapOf<String, BlindedIdMapping>()
+//
+//            for ((address, threadId) in threadDatabase.allThreads) {
+//                val blindedId = when {
+//                    address.isGroupOrCommunity -> null
+//                    address.isCommunityInbox -> GroupUtil.getDecodedOpenGroupInboxAccountId(address.toString())
+//                    else -> address.address.takeIf { AccountId.fromStringOrNull(it)?.prefix == IdPrefix.BLINDED }
+//                } ?: continue
+//            }
+//
+//            // TODO: Actually move the conversation from blind to normal
+//            for (mapping in mappings) {
+//                if (!BlindKeyAPI.sessionIdMatchesBlindedId(
+//                        sessionId = senderPublicKey,
+//                        blindedId = mapping.value.blindedId,
+//                        serverPubKey = mapping.value.serverId
+//                    )
+//                ) {
+//                    continue
+//                }
+//
+//                val blindedThreadId = threadDatabase.getOrCreateThreadIdFor(fromSerialized(mapping.key))
+//                mmsDatabase.updateThreadId(blindedThreadId, threadId)
+//                smsDatabase.updateThreadId(blindedThreadId, threadId)
+//                deleteConversation(blindedThreadId)
+//            }
 
             var alreadyApprovedMe = false
 

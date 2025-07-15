@@ -527,6 +527,20 @@ public class ThreadDatabase extends Database {
     }
   }
 
+  public List<Long> getThreadIDsFor(List<String> addresses) {
+    final String where = ADDRESS + " IN (SELECT value FROM json_each(?))";
+    final String whereArg = new JSONArray(addresses).toString();
+
+    try (final Cursor cursor = getReadableDatabase().query(TABLE_NAME, new String[]{ID}, where,
+            new String[]{whereArg}, null, null, null)) {
+      List<Long> threadIds = new ArrayList<>(cursor.getCount());
+      while (cursor.moveToNext()) {
+        threadIds.add(cursor.getLong(cursor.getColumnIndexOrThrow(ID)));
+      }
+      return threadIds;
+    }
+  }
+
   public long getThreadIdIfExistsFor(String address) {
     SQLiteDatabase db      = getReadableDatabase();
     String where           = ADDRESS + " = ?";
