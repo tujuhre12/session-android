@@ -507,7 +507,10 @@ class ConversationViewModel(
             avatarData.elements.mapNotNull { it.contactPhoto }.forEach {
                 val loadSize = application.resources.getDimensionPixelSize(R.dimen.large_profile_picture_size)
                 Glide.with(application).load(it)
-                    .avatarOptions(loadSize)
+                    .avatarOptions(
+                        sizePx = loadSize,
+                        freezeFrame = proStatusManager.freezeFrameForUser(recipient?.address)
+                    )
                     .preload(loadSize, loadSize)
             }
         }
