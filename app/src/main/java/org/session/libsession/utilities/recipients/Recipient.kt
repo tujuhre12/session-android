@@ -78,7 +78,6 @@ data class Recipient(
                 autoDownloadAttachments = true,
                 notifyType = RecipientDatabase.NOTIFY_TYPE_ALL,
                 acceptsCommunityMessageRequests = false,
-                unblindedRecipientAddress = null,
             )
         }
     }

@@ -2,29 +2,15 @@ package org.session.libsession.utilities
 
 import android.content.Context
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import network.loki.messenger.libsession_util.util.Bytes
-import network.loki.messenger.libsession_util.util.UserPic
 import okio.Buffer
-import org.session.libsession.avatars.AvatarHelper
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.snode.utilities.await
-import org.session.libsession.utilities.Address.Companion.fromSerialized
-import org.session.libsession.utilities.TextSecurePreferences.Companion.getLastProfilePictureUpload
-import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
-import org.session.libsession.utilities.TextSecurePreferences.Companion.getProfileKey
-import org.session.libsession.utilities.TextSecurePreferences.Companion.setLastProfilePictureUpload
 import org.session.libsignal.streams.DigestingRequestBody
 import org.session.libsignal.streams.ProfileCipherOutputStream
 import org.session.libsignal.streams.ProfileCipherOutputStreamFactory
-import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ProfileAvatarData
 import org.session.libsignal.utilities.retryIfNeeded
 import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
 import java.util.Date
 
 object ProfilePictureUtilities {
