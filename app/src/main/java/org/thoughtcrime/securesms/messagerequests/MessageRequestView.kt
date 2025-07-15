@@ -37,6 +37,7 @@ class MessageRequestView : LinearLayout {
         this.thread = thread
 
         val senderDisplayName = getUserDisplayName(thread.recipient) ?: thread.recipient.address.toString()
+        val unreadCount = thread.unreadCount
 
         binding.displayNameTextView.text = senderDisplayName
         binding.timestampTextView.text = dateUtils.getDisplayFormattedTimeSpanString(
