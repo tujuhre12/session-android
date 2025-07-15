@@ -76,6 +76,7 @@ class MessageRequestView : LinearLayout {
         )
 
         binding.snippetTextView.text = snippet
+        UnreadStylingHelper.applyUnreadTextStyle(binding.snippetTextView, unreadCount, thread.isRead)
 
         post {
             binding.profilePictureView.update(thread.recipient)

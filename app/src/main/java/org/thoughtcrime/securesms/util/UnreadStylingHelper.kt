@@ -3,10 +3,8 @@ package org.thoughtcrime.securesms.util
 import android.content.Context
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
-import android.view.View
 import android.widget.TextView
 import androidx.core.content.ContextCompat
-import androidx.core.view.isVisible
 import network.loki.messenger.R
 
 object UnreadStylingHelper {
@@ -41,9 +39,4 @@ object UnreadStylingHelper {
         textView.typeface =
             if (unreadCount > 0 && !isRead) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
     }
-
-    fun showIfUnread(view: View, unreadCount: Int, isRead: Boolean) {
-        view.isVisible = unreadCount > 0 && !isRead
-    }
-
 }
