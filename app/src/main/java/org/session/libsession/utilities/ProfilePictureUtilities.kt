@@ -2,18 +2,35 @@ package org.session.libsession.utilities
 
 import android.content.Context
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import network.loki.messenger.libsession_util.util.Bytes
+import network.loki.messenger.libsession_util.util.UserPic
 import okio.Buffer
+import org.session.libsession.avatars.AvatarHelper
+import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.snode.utilities.await
+import org.session.libsession.utilities.Address.Companion.fromSerialized
+import org.session.libsession.utilities.TextSecurePreferences.Companion.getLastProfilePictureUpload
+import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
+import org.session.libsession.utilities.TextSecurePreferences.Companion.getProfileKey
+import org.session.libsession.utilities.TextSecurePreferences.Companion.setLastProfilePictureUpload
 import org.session.libsignal.streams.DigestingRequestBody
 import org.session.libsignal.streams.ProfileCipherOutputStream
 import org.session.libsignal.streams.ProfileCipherOutputStreamFactory
+import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ProfileAvatarData
 import org.session.libsignal.utilities.retryIfNeeded
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.util.Date
 
 object ProfilePictureUtilities {
+
+    const val DEFAULT_AVATAR_TTL = 14 * 24 * 60 * 60 * 1000 // 14 days
+    const val DEBUG_AVATAR_TTL = 30 // 30 seconds
 
     @OptIn(DelicateCoroutinesApi::class)
     fun resubmitProfilePictureIfNeeded(context: Context) {
@@ -23,7 +40,9 @@ object ProfilePictureUtilities {
 //            val userPublicKey = getLocalNumber(context) ?: return@launch
 //            val now = Date().time
 //            val lastProfilePictureUpload = getLastProfilePictureUpload(context)
-//            if (now - lastProfilePictureUpload <= 14 * 24 * 60 * 60 * 1000) return@launch
+//            val avatarTtl = if(TextSecurePreferences.forcedShortTTL(context)) DEBUG_AVATAR_TTL else DEFAULT_AVATAR_TTL
+//            Log.d("Loki-Avatar", "Should reupload avatar? ${now - lastProfilePictureUpload > avatarTtl} (TTL of $avatarTtl)")
+//            if (now - lastProfilePictureUpload <= avatarTtl) return@launch
 //
 //            // Don't generate a new profile key here; we do that when the user changes their profile picture
 //            Log.d("Loki-Avatar", "Uploading Avatar Started")
@@ -92,9 +111,14 @@ object ProfilePictureUtilities {
         val data = b.readByteArray()
         var id: Long = 0
 
+        // add a custom TTL header if we have enabled it i the debug menu
+        val customHeaders = if(TextSecurePreferences.forcedShortTTL(context)){
+            mapOf("X-FS-TTL" to DEBUG_AVATAR_TTL.toString()) // force the TTL to 30 seconds
+        } else mapOf()
+
         // this can throw an error
         id = retryIfNeeded(4) {
-            FileServerApi.upload(data)
+            FileServerApi.upload(file = data, customHeaders = customHeaders)
         }.await()
 
         TextSecurePreferences.setLastProfilePictureUpload(context, Date().time)

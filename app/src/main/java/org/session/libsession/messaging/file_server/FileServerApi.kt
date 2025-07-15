@@ -103,7 +103,7 @@ object FileServerApi {
         }
     }
 
-    fun upload(file: ByteArray): Promise<Long, Exception> {
+    fun upload(file: ByteArray, customHeaders: Map<String, String> = mapOf()): Promise<Long, Exception> {
         val request = Request(
             verb = HTTP.Verb.POST,
             endpoint = "file",
@@ -111,7 +111,7 @@ object FileServerApi {
             headers = mapOf(
                 "Content-Disposition" to "attachment",
                 "Content-Type" to "application/octet-stream"
-            )
+            ) + customHeaders
         )
         return send(request).map { response ->
             val json = JsonUtil.fromJson(response, Map::class.java)

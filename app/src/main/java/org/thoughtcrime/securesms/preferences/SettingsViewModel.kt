@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.preferences
 
 import android.content.Context
+import android.net.Uri
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -27,8 +28,9 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.NoExternalStorageException
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.TempAvatar
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.profiles.ProfileMediaConstraints
+import org.thoughtcrime.securesms.util.AnimatedImageUtils
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.BitmapDecodingException
@@ -46,6 +48,7 @@ class SettingsViewModel @Inject constructor(
     private val connectivity: NetworkConnectivity,
     private val avatarUtils: AvatarUtils,
     private val recipientRepository: RecipientRepository,
+    private val proStatusManager: ProStatusManager,
 ) : ViewModel() {
     private val TAG = "SettingsViewModel"
 
@@ -57,38 +60,38 @@ class SettingsViewModel @Inject constructor(
         recipientRepository.getRecipientSync(Address.fromSerialized(hexEncodedPublicKey))
     }
 
-    private val _avatarDialogState: MutableStateFlow<AvatarDialogState> = MutableStateFlow(
-        AvatarDialogState.NoAvatar
-    )
-    val avatarDialogState: StateFlow<AvatarDialogState>
-        get() = _avatarDialogState
-
-    private val _showLoader: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val showLoader: StateFlow<Boolean>
-        get() = _showLoader
-
-    private val _recoveryHidden: MutableStateFlow<Boolean> = MutableStateFlow(prefs.getHidePassword())
-    val recoveryHidden: StateFlow<Boolean>
-        get() = _recoveryHidden
-
-    private val _avatarData: MutableStateFlow<AvatarUIData?> = MutableStateFlow(null)
-    val avatarData: StateFlow<AvatarUIData?>
-        get() = _avatarData
+    private val _uiState = MutableStateFlow(UIState(
+        recoveryHidden = prefs.getHidePassword(),
+        isPro = proStatusManager.isCurrentUserPro(),
+        isPostPro = proStatusManager.isPostPro()
+    ))
+    val uiState: StateFlow<UIState>
+        get() = _uiState
 
     init {
         updateAvatar()
 
         // set default dialog ui
         viewModelScope.launch {
-            _avatarDialogState.value = getDefaultAvatarDialogState()
+            _uiState.update { it.copy(avatarDialogState = getDefaultAvatarDialogState()) }
+        }
+
+        viewModelScope.launch {
+            proStatusManager.proStatus.collect { isPro ->
+                _uiState.update { it.copy(isPro = isPro) }
+            }
+        }
+
+        viewModelScope.launch {
+            proStatusManager.postProLaunchStatus.collect { postPro ->
+                _uiState.update { it.copy(isPostPro = postPro) }
+            }
         }
     }
 
     private fun updateAvatar(){
         viewModelScope.launch(Dispatchers.Default) {
-            _avatarData.update {
-                avatarUtils.getUIDataFromRecipient(userRecipient)
-            }
+            _uiState.update { it.copy(avatarData = avatarUtils.getUIDataFromRecipient(userRecipient)) }
         }
     }
 
@@ -125,8 +128,13 @@ class SettingsViewModel @Inject constructor(
                             ).bitmap
 
                         // update dialog with temporary avatar (has not been saved/uploaded yet)
-                        _avatarDialogState.value =
-                            AvatarDialogState.TempAvatar(profilePictureToBeUploaded, hasAvatar())
+                        _uiState.update {
+                            it.copy(avatarDialogState = AvatarDialogState.TempAvatar(
+                                data = profilePictureToBeUploaded,
+                                isAnimated = false, // cropped avatars can't be animated
+                                hasAvatar = hasAvatar()
+                            ))
+                        }
                     } catch (e: BitmapDecodingException) {
                         Log.e(TAG, e)
                     }
@@ -143,10 +151,39 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun onAvatarPicked(uri: Uri) {
+        Log.i(TAG,  "Picked a new avatar: $uri")
+
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+
+                if(bytes == null){
+                    Log.e(TAG, "Error reading avatar bytes")
+                    Toast.makeText(context, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
+                } else {
+                    _uiState.update {
+                        it.copy(
+                            avatarDialogState = AvatarDialogState.TempAvatar(
+                                data = bytes,
+                                isAnimated = isAnimated(uri),
+                                hasAvatar = hasAvatar()
+                            )
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error reading avatar bytes", e)
+            }
+        }
+    }
+
     fun onAvatarDialogDismissed() {
         viewModelScope.launch {
-            _avatarDialogState.value = getDefaultAvatarDialogState()
-        }
+            _uiState.update { it.copy(
+                avatarDialogState = getDefaultAvatarDialogState(),
+                showAvatarDialog = false
+            ) } }
     }
 
     private suspend fun getDefaultAvatarDialogState() = if (hasAvatar()) AvatarDialogState.UserAvatar(
@@ -155,8 +192,19 @@ class SettingsViewModel @Inject constructor(
     else AvatarDialogState.NoAvatar
 
     fun saveAvatar() {
-        val tempAvatar = (avatarDialogState.value as? TempAvatar)?.data
+        val tempAvatar = (uiState.value.avatarDialogState as? AvatarDialogState.TempAvatar)
             ?: return Toast.makeText(context, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
+
+        // if the selected avatar is animated but the user isn't pro, show the animated pro CTA
+        if (tempAvatar.isAnimated && !proStatusManager.isCurrentUserPro() && proStatusManager.isPostPro()) {
+            showAnimatedProCTA()
+            return
+        }
+
+        // dismiss avatar dialog
+        // we don't want to do it earlier as the animated / pro case above should not close the dialog
+        // to give the user a chance ti pick something else
+        onAvatarDialogDismissed()
 
         if (!hasNetworkConnection()) {
             Log.w(TAG, "Cannot update profile picture - no network connection.")
@@ -169,7 +217,7 @@ class SettingsViewModel @Inject constructor(
             Toast.makeText(context, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
         }
 
-        syncProfilePicture(tempAvatar, onFail)
+        syncProfilePicture(tempAvatar.data, onFail)
     }
 
 
@@ -193,7 +241,7 @@ class SettingsViewModel @Inject constructor(
     // Helper method used by updateProfilePicture and removeProfilePicture to sync it online
     private fun syncProfilePicture(profilePicture: ByteArray, onFail: () -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
-            _showLoader.value = true
+            _uiState.update { it.copy(showLoader = true) }
 
             try {
                 // Grab the profile key and kick of the promise to update the profile picture
@@ -214,7 +262,7 @@ class SettingsViewModel @Inject constructor(
                     }
 
                     // update dialog state
-                    _avatarDialogState.value = AvatarDialogState.NoAvatar
+                    _uiState.update { it.copy(avatarDialogState = AvatarDialogState.NoAvatar) }
                 } else {
                     // If we have a URL and a profile key then set the user's profile picture
                     if (url.isNotBlank() && encodedProfileKey.isNotBlank()) {
@@ -224,7 +272,7 @@ class SettingsViewModel @Inject constructor(
                     }
 
                     // update dialog state
-                    _avatarDialogState.value = AvatarDialogState.UserAvatar(avatarUtils.getUIDataFromRecipient(userRecipient))
+                    _uiState.update { it.copy(avatarDialogState = AvatarDialogState.UserAvatar(avatarUtils.getUIDataFromRecipient(userRecipient))) }
                 }
 
             } catch (e: Exception){ // If the sync failed then inform the user
@@ -237,7 +285,7 @@ class SettingsViewModel @Inject constructor(
             // Finally update the main avatar
             updateAvatar()
             // And remove the loader animation after we've waited for the attempt to succeed or fail
-            _showLoader.value = false
+            _uiState.update { it.copy(showLoader = false) }
         }
     }
 
@@ -248,17 +296,72 @@ class SettingsViewModel @Inject constructor(
     fun permanentlyHidePassword() {
         //todo we can simplify this once we expose all our sharedPrefs as flows
         prefs.setHidePassword(true)
-        _recoveryHidden.update { true }
+        _uiState.update { it.copy(recoveryHidden = true) }
     }
 
     fun hasNetworkConnection(): Boolean = connectivity.networkAvailable.value
+
+    fun showUrlDialog(url: String) {
+        _uiState.update { it.copy(showUrlDialog = url) }
+    }
+    fun hideUrlDialog() {
+        _uiState.update { it.copy(showUrlDialog = null) }
+    }
+
+    fun showAvatarDialog() {
+        _uiState.update { it.copy(showAvatarDialog = true) }
+    }
+
+    fun showAvatarPickerOptions(showCamera: Boolean) {
+        _uiState.update { it.copy(
+            showAvatarPickerOptions = true,
+            showAvatarPickerOptionCamera = showCamera
+        ) }
+    }
+    fun hideAvatarPickerOptions() {
+        _uiState.update { it.copy(showAvatarPickerOptions = false) }
+
+    }
+
+    fun showAnimatedProCTA() {
+        _uiState.update { it.copy(showAnimatedProCTA = true) }
+    }
+    fun hideAnimatedProCTA() {
+        _uiState.update { it.copy(showAnimatedProCTA = false) }
+    }
+
+    fun goToProUpgradeScreen() {
+        // hide dialog
+        hideAnimatedProCTA()
+
+        // to go Pro upgrade screen
+        //todo PRO go to screen once it exists
+    }
+
+    fun isAnimated(uri: Uri) = proStatusManager.isPostPro() // block animated avatars prior to pro
+            && AnimatedImageUtils.isAnimated(context, uri)
 
     sealed class AvatarDialogState() {
         object NoAvatar : AvatarDialogState()
         data class UserAvatar(val data: AvatarUIData) : AvatarDialogState()
         data class TempAvatar(
             val data: ByteArray,
+            val isAnimated: Boolean,
             val hasAvatar: Boolean // true if the user has an avatar set already but is in this temp state because they are trying out a new avatar
         ) : AvatarDialogState()
     }
+
+    data class UIState(
+        val showLoader: Boolean = false,
+        val avatarDialogState: AvatarDialogState = AvatarDialogState.NoAvatar,
+        val avatarData: AvatarUIData? = null,
+        val recoveryHidden: Boolean,
+        val showUrlDialog: String? = null,
+        val showAvatarDialog: Boolean = false,
+        val showAvatarPickerOptionCamera: Boolean = false,
+        val showAvatarPickerOptions: Boolean = false,
+        val showAnimatedProCTA: Boolean = false,
+        val isPro: Boolean,
+        val isPostPro: Boolean
+    )
 }

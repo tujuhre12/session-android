@@ -158,10 +158,10 @@ private fun AvatarElement(
                 contentDescription = null,
                 loading = placeholder(R.drawable.ic_user_filled_custom_padded),
                 requestBuilderTransform = {
-                    it.avatarOptions(maxSizePx)
+                    it.avatarOptions(sizePx = maxSizePx, freezeFrame = data.freezeFrame)
                 }
             )
-        } // second attemot to use the custom icon if there is one
+        } // second attempt to use the custom icon if there is one
         else if(data.icon != null){
             Image(
                 modifier = Modifier.fillMaxSize().padding(size * 0.2f),

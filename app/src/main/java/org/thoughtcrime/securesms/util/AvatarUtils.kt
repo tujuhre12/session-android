@@ -1,13 +1,13 @@
 package org.thoughtcrime.securesms.util
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.Typeface
 import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.Drawable
 import android.text.TextPaint
 import android.text.TextUtils
 import androidx.annotation.DrawableRes
@@ -16,6 +16,8 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.load.resource.bitmap.CenterCrop
+import com.bumptech.glide.request.RequestOptions
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -27,6 +29,7 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import java.math.BigInteger
 import java.security.MessageDigest
 import java.util.Locale
@@ -39,6 +42,7 @@ class AvatarUtils @Inject constructor(
     private val groupDatabase: GroupDatabase, // for legacy groups
     private val storage: Lazy<StorageProtocol>,
     private val recipientRepository: RecipientRepository,
+    private val proStatusManager: ProStatusManager,
 ) {
     // Hardcoded possible bg colors for avatar backgrounds
     private val avatarBgColors = arrayOf(
@@ -141,7 +145,8 @@ class AvatarUtils @Inject constructor(
             name = extractLabel(name),
             color = color,
             icon = customIcon,
-            contactPhoto = contactPhoto
+            contactPhoto = contactPhoto,
+            freezeFrame = proStatusManager.freezeFrameForUser(recipient.address)
         )
     }
 
@@ -246,6 +251,7 @@ data class AvatarUIElement(
     val color: Color? = null,
     @DrawableRes val icon: Int? = null,
     val contactPhoto: Any? = null,
+    val freezeFrame: Boolean = true,
 )
 
 sealed class AvatarBadge(@DrawableRes val icon: Int){
@@ -255,7 +261,17 @@ sealed class AvatarBadge(@DrawableRes val icon: Int){
 }
 
 // Helper function for our common avatar Glide options
-fun RequestBuilder<Drawable>.avatarOptions(sizePx: Int) = this.override(sizePx)
+fun <T>RequestBuilder<T>.avatarOptions(
+    sizePx: Int,
+    freezeFrame: Boolean
+): RequestBuilder<T> = this.override(sizePx)
     .dontTransform()
     .diskCacheStrategy(DiskCacheStrategy.NONE)
-    .centerCrop()
+    .optionalTransform(CenterCrop())
+    .run {
+        if(freezeFrame){
+            this.dontAnimate()
+                .apply(RequestOptions.decodeTypeOf(Bitmap::class.java))
+        } else this
+    }
+

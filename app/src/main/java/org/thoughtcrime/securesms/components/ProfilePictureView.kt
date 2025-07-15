@@ -10,6 +10,7 @@ import android.widget.RelativeLayout
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
 import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewProfilePictureBinding
@@ -26,6 +27,7 @@ import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.avatarOptions
 import javax.inject.Inject
@@ -58,6 +60,9 @@ class ProfilePictureView @JvmOverloads constructor(
 
     @Inject
     lateinit var recipientRepository: RecipientRepository
+
+    @Inject
+    lateinit var proStatusManager: ProStatusManager
 
     private val resourcePadding by lazy {
         context.resources.getDimensionPixelSize(R.dimen.normal_padding).toFloat()
@@ -190,7 +195,7 @@ class ProfilePictureView @JvmOverloads constructor(
                 this.recipient = recipientRepository.getRecipientSync(address) ?: Recipient.empty(address)
                 this.recipient!!
             }
-            
+
             glide.clear(imageView)
 
             val placeholder = PlaceholderAvatarPhoto(
@@ -204,22 +209,25 @@ class ProfilePictureView @JvmOverloads constructor(
             if (avatar != null) {
                 val maxSizePx = context.resources.getDimensionPixelSize(R.dimen.medium_profile_picture_size)
                 glide.load(avatar)
-                    .avatarOptions(maxSizePx)
+                    .avatarOptions(
+                        sizePx = maxSizePx,
+                        freezeFrame = proStatusManager.freezeFrameForUser(recipient.address)
+                    )
                     .placeholder(createUnknownRecipientDrawable())
                     .error(glide.load(placeholder))
                     .into(imageView)
             } else if(recipient.isGroupRecipient) { // for groups, if we have an unknown it needs to display the unknown icon but with a bg colour based on the group's id
                 glide.load(createUnknownRecipientDrawable(publicKey))
-                    .centerCrop()
+                    .optionalTransform(CenterCrop())
                     .into(imageView)
             } else if (recipient.isCommunityRecipient && avatar == null) {
                 glide.load(unknownOpenGroupDrawable)
-                    .centerCrop()
+                    .optionalTransform(CenterCrop())
                     .into(imageView)
             } else {
                 glide.load(placeholder)
                     .placeholder(createUnknownRecipientDrawable())
-                    .centerCrop()
+                    .optionalTransform(CenterCrop())
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .into(imageView)
             }
