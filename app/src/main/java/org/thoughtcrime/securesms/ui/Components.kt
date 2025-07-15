@@ -706,16 +706,22 @@ fun SimpleSessionProCTA(
         features = features,
         onUpgrade = onUpgrade,
         onCancel = onCancel,
-        content = {
-        Image(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(LocalColors.current.accent),
-            contentScale = ContentScale.FillWidth,
-            painter = painterResource(id = heroImage),
-            contentDescription = null,
-        )
-    })
+        content = { CTAImage(heroImage = heroImage) }
+    )
+}
+
+@Composable
+fun CTAImage(
+    @DrawableRes heroImage: Int,
+){
+    Image(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(LocalColors.current.accent),
+        contentScale = ContentScale.FillWidth,
+        painter = painterResource(id = heroImage),
+        contentDescription = null,
+    )
 }
 
 @OptIn(ExperimentalGlideComposeApi::class)
@@ -736,34 +742,178 @@ fun AnimatedSessionProCTA(
         onUpgrade = onUpgrade,
         onCancel = onCancel,
         content = {
-            Image(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(LocalColors.current.accent),
-                contentScale = ContentScale.FillWidth,
-                painter = painterResource(id = heroImageBg),
-                contentDescription = null,
+            CTAAnimatedImages(
+                heroImageBg = heroImageBg,
+                heroImageAnimatedFg = heroImageAnimatedFg
             )
+        })
+}
 
-            GlideSubcomposition(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(IntrinsicSize.Min),
-                model = heroImageAnimatedFg,
-            ){
-                when (state) {
-                    is RequestState.Success -> {
-                        Image(
-                            modifier = Modifier.fillMaxWidth(),
-                            contentScale = ContentScale.FillWidth,
-                            painter = painter,
-                            contentDescription = null,
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+fun CTAAnimatedImages(
+    @DrawableRes heroImageBg: Int,
+    @DrawableRes heroImageAnimatedFg: Int,
+){
+    Image(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(LocalColors.current.accent),
+        contentScale = ContentScale.FillWidth,
+        painter = painterResource(id = heroImageBg),
+        contentDescription = null,
+    )
+
+    GlideSubcomposition(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min),
+        model = heroImageAnimatedFg,
+    ){
+        when (state) {
+            is RequestState.Success -> {
+                Image(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentScale = ContentScale.FillWidth,
+                    painter = painter,
+                    contentDescription = null,
+                )
+            }
+
+            else -> {}
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SessionProActivatedCTA(
+    content: @Composable () -> Unit,
+    text: String,
+    modifier: Modifier = Modifier,
+    onCancel: () -> Unit,
+){
+    BasicAlertDialog(
+        modifier = modifier,
+        onDismissRequest = onCancel,
+        content = {
+            DialogBg {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    // hero image
+                    BottomFadingEdgeBox(
+                        fadingEdgeHeight = 70.dp,
+                        fadingColor = LocalColors.current.backgroundSecondary,
+                        content = { _ ->
+                            content()
+                        },
+                    )
+
+                    // content
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(LocalDimensions.current.smallSpacing)
+                    ) {
+                        // title
+                        Row(
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
+
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.ic_pro_badge),
+                                contentScale = ContentScale.FillHeight,
+                                contentDescription = NonTranslatableStringConstants.APP_PRO,
+                            )
+
+                            Text(
+                                text = stringResource(R.string.proActivated),
+                                style = LocalType.current.h5
+                            )
+                        }
+
+                        Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
+
+                        // already have pro
+                        Row(
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
+
+                        ) {
+                            Text(
+                                text = stringResource(R.string.proAlreadyPurchased),
+                                style = LocalType.current.base.copy(color = LocalColors.current.textSecondary)
+                            )
+
+                            Image(
+                                modifier = Modifier.height(LocalType.current.base.lineHeight.value.dp),
+                                painter = painterResource(id = R.drawable.ic_pro_badge),
+                                contentDescription = NonTranslatableStringConstants.APP_PRO,
+                            )
+                        }
+
+                        Spacer(Modifier.height(2.dp))
+
+                        // main message
+                        Text(
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            text = text,
+                            textAlign = TextAlign.Center,
+                            style = LocalType.current.base.copy(
+                                color = LocalColors.current.textSecondary
+                            )
+                        )
+
+                        Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
+
+                        // buttons
+                        TertiaryFillButtonRect(
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            text = stringResource(R.string.close),
+                            onClick = onCancel
                         )
                     }
-
-                    else -> {}
                 }
             }
+        }
+    )
+}
+
+@Composable
+fun SimpleSessionProActivatedCTA(
+    @DrawableRes heroImage: Int,
+    text: String,
+    modifier: Modifier = Modifier,
+    onCancel: () -> Unit,
+){
+    SessionProActivatedCTA(
+        modifier = modifier,
+        text = text,
+        onCancel = onCancel,
+        content = { CTAImage(heroImage = heroImage) }
+    )
+}
+
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+fun AnimatedSessionProActivatedCTA(
+    @DrawableRes heroImageBg: Int,
+    @DrawableRes heroImageAnimatedFg: Int,
+    text: String,
+    modifier: Modifier = Modifier,
+    onCancel: () -> Unit,
+){
+    SessionProActivatedCTA(
+        modifier = modifier,
+        text = text,
+        onCancel = onCancel,
+        content = {
+            CTAAnimatedImages(
+                heroImageBg = heroImageBg,
+                heroImageAnimatedFg = heroImageAnimatedFg
+            )
         })
 }
 
@@ -812,6 +962,20 @@ private fun PreviewProCTA(
     }
 }
 
+@Preview
+@Composable
+private fun PreviewProActivatedCTA(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+) {
+    PreviewTheme(colors) {
+        SimpleSessionProActivatedCTA(
+            heroImage = R.drawable.cta_hero_char_limit,
+            text = "This is a description of this Pro feature",
+            onCancel = {}
+        )
+    }
+}
+
 @Composable
 fun ProCTAFeature(
     data: CTAFeature,
@@ -828,7 +992,7 @@ fun ProCTAFeature(
             is CTAFeature.Icon -> {
                 Image(
                     painter = painterResource(id = data.icon),
-                    colorFilter = ColorFilter.tint(LocalColors.current.accent),
+                    colorFilter = ColorFilter.tint(LocalColors.current.accentText ),
                     contentDescription = null,
                     modifier = Modifier.align(Alignment.CenterVertically)
                 )

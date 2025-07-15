@@ -390,11 +390,13 @@ class ConversationViewModel(
         community: OpenGroup?,
         deprecationState: LegacyGroupDeprecationManager.DeprecationState
     ): InputBarState {
+        val currentCharLimitState = _inputBarState.value.charLimitState
         return when {
             // prioritise cases that demand the input to be hidden
             !shouldShowInput(recipient, community, deprecationState) -> InputBarState(
                 contentState = InputBarContentState.Hidden,
-                enableAttachMediaControls = false
+                enableAttachMediaControls = false,
+                charLimitState = currentCharLimitState
             )
 
             // next are cases where the  input is visible but disabled
@@ -406,7 +408,8 @@ class ConversationViewModel(
                         _uiEvents.tryEmit(ConversationUiEvent.ShowUnblockConfirmation)
                     }
                 ),
-                enableAttachMediaControls = false
+                enableAttachMediaControls = false,
+                charLimitState = currentCharLimitState
             )
 
             // the user does not have write access in the community
@@ -414,13 +417,15 @@ class ConversationViewModel(
                 contentState = InputBarContentState.Disabled(
                     text = application.getString(R.string.permissionsWriteCommunity),
                 ),
-                enableAttachMediaControls = false
+                enableAttachMediaControls = false,
+                charLimitState = currentCharLimitState
             )
 
             // other cases the input is visible, and the buttons might be disabled based on some criteria
             else -> InputBarState(
                 contentState = InputBarContentState.Visible,
-                enableAttachMediaControls = shouldEnableInputMediaControls(recipient)
+                enableAttachMediaControls = shouldEnableInputMediaControls(recipient),
+                charLimitState = currentCharLimitState
             )
         }
     }
@@ -502,7 +507,10 @@ class ConversationViewModel(
             avatarData.elements.mapNotNull { it.contactPhoto }.forEach {
                 val loadSize = application.resources.getDimensionPixelSize(R.dimen.large_profile_picture_size)
                 Glide.with(application).load(it)
-                    .avatarOptions(loadSize)
+                    .avatarOptions(
+                        sizePx = loadSize,
+                        freezeFrame = proStatusManager.freezeFrameForUser(recipient?.address)
+                    )
                     .preload(loadSize, loadSize)
             }
         }

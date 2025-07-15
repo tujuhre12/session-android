@@ -247,7 +247,12 @@ class MediaSendFragment : Fragment(), RailItemListener, InputBarDelegate {
 
         viewModel.getBucketId().observe(this) { bucketId: String? ->
             if (bucketId == null) return@observe
-            mediaRailAdapter!!.setAddButtonListener { controller.onAddMediaClicked(bucketId) }
+            mediaRailAdapter!!.setAddButtonListener {
+                // save existing text in VM
+                viewModel.onBodyChanged(mentionViewModel.deconstructMessageMentions())
+
+                controller.onAddMediaClicked(bucketId)
+            }
         }
     }
 
