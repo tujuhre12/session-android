@@ -48,11 +48,10 @@ class MessageRequestView : LinearLayout {
 
         binding.root.background = UnreadStylingHelper.getUnreadBackground(context, isUnread)
 
-        //Add block logic for accent here if necessary
-        val accentColor = context.getAccentColor()
-        val background = ColorDrawable(accentColor)
-        binding.accentView.background = background
-        binding.accentView.visibility = if (unreadCount > 0 && !thread.isRead) View.VISIBLE else View.INVISIBLE
+        binding.accentView.apply {
+            this.background = UnreadStylingHelper.getAccentBackground(context)
+            isVisible = isUnread
+        }
 
         binding.unreadCountTextView.apply {
             text = UnreadStylingHelper.formatUnreadCount(unreadCount)
@@ -61,7 +60,7 @@ class MessageRequestView : LinearLayout {
                 UnreadStylingHelper.getUnreadTextSize(unreadCount)
             )
         }
-        binding.unreadCountIndicator.isVisible =  (unreadCount != 0 && !thread.isRead)
+        binding.unreadCountIndicator.isVisible =  isUnread
 
         binding.displayNameTextView.text = senderDisplayName
         binding.timestampTextView.text = dateUtils.getDisplayFormattedTimeSpanString(
@@ -75,8 +74,10 @@ class MessageRequestView : LinearLayout {
             context = context
         )
 
-        binding.snippetTextView.text = snippet
-        UnreadStylingHelper.applyUnreadTextStyle(binding.snippetTextView, unreadCount, thread.isRead)
+        binding.snippetTextView.apply {
+            text = snippet
+            typeface = UnreadStylingHelper.getUnreadTypeface(isUnread)
+        }
 
         post {
             binding.profilePictureView.update(thread.recipient)

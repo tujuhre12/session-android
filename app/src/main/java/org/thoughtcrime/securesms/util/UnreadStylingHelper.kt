@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.util
 
 import android.content.Context
 import android.graphics.Typeface
+import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.widget.TextView
 import androidx.core.content.ContextCompat
@@ -31,12 +32,14 @@ object UnreadStylingHelper {
         return if (unreadCount < 1000) 12.0f else 10.0f
     }
 
-    fun applyUnreadTextStyle(
-        textView: TextView,
-        unreadCount: Int,
-        isRead: Boolean
-    ) {
-        textView.typeface =
-            if (unreadCount > 0 && !isRead) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+    fun getUnreadTypeface(isUnread: Boolean): Typeface {
+        return if (isUnread) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+    }
+
+    fun getAccentBackground(context: Context) : ColorDrawable {
+        val accentColor = context.getAccentColor()
+        val background = ColorDrawable(accentColor)
+
+        return background
     }
 }
