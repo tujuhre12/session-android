@@ -63,7 +63,7 @@ class UserDetailsBottomSheet: BottomSheetDialogFragment() {
             profilePictureView.update(recipient)
             nameTextViewContainer.visibility = View.VISIBLE
             nameTextViewContainer.setOnClickListener {
-                if (recipient.isCommunityInboxRecipient || recipient.isCommunityOutboxRecipient) return@setOnClickListener
+                if (recipient.address.toBlindedId() != null) return@setOnClickListener
                 nameTextViewContainer.visibility = View.INVISIBLE
                 nameEditTextContainer.visibility = View.VISIBLE
                 nicknameEditText.text = null
@@ -93,8 +93,7 @@ class UserDetailsBottomSheet: BottomSheetDialogFragment() {
             nameEditIcon.isVisible = recipient.basic is BasicRecipient.Contact
 
             publicKeyTextView.isVisible = !threadRecipient.isCommunityRecipient
-                    && !threadRecipient.isCommunityInboxRecipient
-                    && !threadRecipient.isCommunityOutboxRecipient
+                    && threadRecipient.address.toBlindedId() == null
             messageButton.isVisible = !threadRecipient.isCommunityRecipient || IdPrefix.fromValue(publicKey)?.isBlinded() == true
             publicKeyTextView.text = publicKey
             publicKeyTextView.setOnLongClickListener {
@@ -110,8 +109,7 @@ class UserDetailsBottomSheet: BottomSheetDialogFragment() {
                 startActivity(
                     ConversationActivityV2.createIntent(
                         requireContext(),
-                        address = recipient.address,
-                        fromGroupThreadId = threadID
+                        address = recipient.address
                     )
                 )
                 dismiss()

@@ -15,16 +15,40 @@ data class Address private constructor(val address: String) : Parcelable, Compar
         get() = address.startsWith(IdPrefix.GROUP.value)
     val isCommunity: Boolean
         get() = GroupUtil.isCommunity(address)
+
+    /**
+     * Whether this address is an encoded blinded address. The encoded blinded address contains
+     * information of:
+     * - The community URL it belongs to
+     * - The blinded address itself
+     *
+     * This is used to uniquely identify a blinded address in a particular community. You may
+     * encounter a blinded address that is passed directly into [Address] but that blinded address
+     * technically is not unique across communities. This is because the blinded address derives
+     * only from the public key of the user, and not the server's pub key. So if two communities
+     * share the same public key, they will have the same blinded address for the same user.
+     *
+     * We encode this information here so that it's unique across the board.
+     */
     val isCommunityInbox: Boolean
         get() = GroupUtil.isCommunityInbox(address)
-    val isCommunityOutbox: Boolean
-        get() = address.startsWith(IdPrefix.BLINDED.value) || address.startsWith(IdPrefix.BLINDEDV2.value)
     val isGroupOrCommunity: Boolean
         get() = isGroup || isCommunity
     val isGroup: Boolean
         get() = isLegacyGroup || isGroupV2
     val isContact: Boolean
         get() = !(isGroupOrCommunity || isCommunityInbox)
+
+    /**
+     * Extracts the blinded ID from the address if it is somehow encoded within this address.
+     */
+    fun toBlindedId(): AccountId? {
+        return when {
+            isCommunityInbox -> AccountId.fromStringOrNull(GroupUtil.getDecodedOpenGroupInboxAccountId(address))
+            !isGroupOrCommunity -> AccountId.fromStringOrNull(address)?.takeIf { it.prefix?.isBlinded() == true }
+            else -> null
+        }
+    }
 
     fun contactIdentifier(): String {
         if (!isContact && !isCommunity) {

@@ -36,7 +36,10 @@ class ShortcutLauncherActivity : AppCompatActivity() {
         // start the appropriate conversation activity and finish this one
         lifecycleScope.launch(Dispatchers.Default) {
             val address = fromSerialized(serializedAddress)
-            val intent = ConversationActivityV2.createIntent(this@ShortcutLauncherActivity, address = address)
+            val intent = ConversationActivityV2.createIntent(
+                this@ShortcutLauncherActivity,
+                address = address
+            )
 
             backStack.addNextIntent(intent)
             backStack.startActivities()

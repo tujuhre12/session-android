@@ -11,15 +11,16 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
-import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.userConfigsChanged
+import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.util.mapStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 
 private typealias CommunityServerUrl = String
-private typealias BlindedAddress = Address
+private typealias BlindedAddress = AccountId
 
 /**
  * A class that handles the blind mappings of addresses reactively.
@@ -35,7 +36,7 @@ class BlindMappingRepository @Inject constructor(
      * blinded addresses to 05 prefixed addresses
      */
     @Suppress("OPT_IN_USAGE")
-    val mappings: StateFlow<Map<CommunityServerUrl, Map<BlindedAddress, Address>>> = prefs.watchLocalNumber()
+    val mappings: StateFlow<Map<CommunityServerUrl, Map<BlindedAddress, AccountId>>> = prefs.watchLocalNumber()
         .filterNotNull()
         .flatMapLatest { localAddress ->
             configFactory
@@ -45,8 +46,8 @@ class BlindMappingRepository @Inject constructor(
                     configFactory.withUserConfigs { configs ->
                         Pair(
                             configs.userGroups.allCommunityInfo().map { it.community },
-                            configs.contacts.all().map { Address.fromSerialized(it.id) }
-                                    + Address.fromSerialized(localAddress)
+                            configs.contacts.all().map { AccountId(it.id) }
+                                    + AccountId(localAddress)
                         )
                     }
                 }
@@ -58,16 +59,16 @@ class BlindMappingRepository @Inject constructor(
                     allCommunities.asSequence()
                         .map { community ->
                             val allBlindIDs = BlindKeyAPI.blind15Ids(
-                                sessionId = contactAddress.address,
+                                sessionId = contactAddress.hexString,
                                 serverPubKey = community.pubKeyHex
                             ).asSequence() + BlindKeyAPI.blind25Id(
-                                sessionId = contactAddress.address,
+                                sessionId = contactAddress.hexString,
                                 serverPubKey = community.pubKeyHex
                             )
 
                             community.baseUrl to
                             allBlindIDs
-                                .map(Address::fromSerialized)
+                                .map(::AccountId)
                                 .associateWith { contactAddress }
                         }
 
@@ -79,12 +80,12 @@ class BlindMappingRepository @Inject constructor(
     fun getMapping(
         serverUrl: CommunityServerUrl,
         blindedAddress: BlindedAddress
-    ): Address? {
+    ): AccountId? {
         return mappings.value[serverUrl]?.get(blindedAddress)
     }
 
     fun getReverseMappings(
-        contactAddress: Address,
+        contactAddress: AccountId,
     ): List<Pair<CommunityServerUrl, BlindedAddress>> {
         return mappings.value.flatMap { (communityUrl, mapping) ->
             mapping.filter { it.value == contactAddress }
@@ -95,9 +96,7 @@ class BlindMappingRepository @Inject constructor(
     fun observeMapping(
         communityAddress: CommunityServerUrl,
         blindedAddress: BlindedAddress
-    ): StateFlow<Address?> {
-        return mappings.map { it[communityAddress]?.get(blindedAddress) }
-            .distinctUntilChanged()
-            .stateIn(GlobalScope, started = SharingStarted.Eagerly, initialValue = getMapping(communityAddress, blindedAddress))
+    ): StateFlow<AccountId?> {
+        return mappings.mapStateFlow(GlobalScope) { it[communityAddress]?.get(blindedAddress) }
     }
 }

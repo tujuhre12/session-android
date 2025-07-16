@@ -1382,7 +1382,7 @@ open class Storage @Inject constructor(
             val profile = response.profile
             if (profile != null) {
                 profileUpdateHandler.handleProfileUpdate(
-                    sender,
+                    AccountId(senderPublicKey),
                     ProfileUpdateHandler.Updates(
                         name = profile.displayName,
                         picUrl = profile.profilePictureURL,

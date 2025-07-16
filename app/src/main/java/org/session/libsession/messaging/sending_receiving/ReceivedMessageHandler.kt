@@ -326,24 +326,13 @@ fun MessageReceiver.handleVisibleMessage(
 ): MessageId? {
     val userPublicKey = context.storage.getUserPublicKey()
     val messageSender: String? = message.sender
+    val senderId = AccountId(messageSender!!)
 
     // Do nothing if the message was outdated
     if (MessageReceiver.messageIsOutdated(message, context.threadId, context.openGroupID)) { return null }
 
-    // Update profile if needed
-    val address = Address.fromSerialized(messageSender!!)
-    if (runProfileUpdate) {
-        context.profileUpdateHandler.handleProfileUpdate(
-            sender = address,
-            updates = ProfileUpdateHandler.Updates(
-                name = message.profile?.displayName,
-                picUrl = message.profile?.profilePictureURL,
-                picKey = message.profile?.profileKey,
-                acceptsCommunityRequests = !message.blocksMessageRequests
-            ),
-            fromCommunity = context.openGroup?.toCommunityInfo(),
-        )
-    }
+    val address = Address.fromSerialized(messageSender)
+
     // Handle group invite response if new closed group
     if (context.threadRecipient?.isGroupV2Recipient == true) {
         GlobalScope.launch {
@@ -351,7 +340,7 @@ fun MessageReceiver.handleVisibleMessage(
                 MessagingModuleConfiguration.shared.groupManagerV2
                     .handleInviteResponse(
                         AccountId(context.threadRecipient!!.address.toString()),
-                        AccountId(messageSender),
+                        senderId,
                         approved = true
                     )
             } catch (e: Exception) {
@@ -449,6 +438,21 @@ fun MessageReceiver.handleVisibleMessage(
        }
 
         val messageID = context.storage.persist(message, quoteModel, linkPreviews, message.groupPublicKey, context.openGroupID, attachments, runThreadUpdate) ?: return null
+
+        // Update profile if needed (must be done after the message is persisted)
+        if (runProfileUpdate) {
+            context.profileUpdateHandler.handleProfileUpdate(
+                sender = senderId,
+                updates = ProfileUpdateHandler.Updates(
+                    name = message.profile?.displayName,
+                    picUrl = message.profile?.profilePictureURL,
+                    picKey = message.profile?.profileKey,
+                    acceptsCommunityRequests = !message.blocksMessageRequests
+                ),
+                fromCommunity = context.openGroup?.toCommunityInfo(),
+            )
+        }
+
         // Parse & persist attachments
         // Start attachment downloads if needed
         if (messageID.mms && (context.threadRecipient?.autoDownloadAttachments == true || messageSender == userPublicKey)) {
@@ -560,7 +564,7 @@ private fun MessageReceiver.handleGroupUpdated(message: GroupUpdated, closedGrou
 
     // Update profile if needed
     SSKEnvironment.shared.profileUpdateHandler.handleProfileUpdate(
-        sender = Address.fromSerialized(message.sender!!),
+        sender = AccountId(message.sender!!),
         updates = ProfileUpdateHandler.Updates(
             name = message.profile?.displayName,
             picUrl = message.profile?.profilePictureURL,

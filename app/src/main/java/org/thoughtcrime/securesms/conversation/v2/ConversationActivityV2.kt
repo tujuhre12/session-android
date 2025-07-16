@@ -18,6 +18,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.provider.MediaStore
 import android.provider.Settings
 import android.text.Spannable
@@ -66,9 +67,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -284,7 +287,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     private val viewModel: ConversationViewModel by viewModels(extrasProducer = {
         defaultViewModelCreationExtras.withCreationCallback<ConversationViewModel.Factory> {
-            it.create(address)
+            it.create(
+                address = address,
+                createThreadIfNotExists = intent.getBooleanExtra(EXTRA_CREATE_THREAD_IF_NOT_EXISTS, false),
+            )
         }
     })
 
@@ -345,7 +351,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         MnemonicCodec(loadFileContents).encode(hexEncodedSeed, MnemonicCodec.Language.Configuration.english)
     }
 
-    private val firstCursorLoad = MutableStateFlow(false)
+    private val lastCursorLoaded = MutableSharedFlow<Long>(extraBufferCapacity = 1)
 
     private val adapter by lazy {
         val adapter = ConversationAdapter(
@@ -361,7 +367,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             },
             onItemLongPress = { message, position, view ->
                 // long pressing message for blocked users should show unblock dialog
-                if (viewModel.recipient?.blocked == true) unblock()
+                if (viewModel.recipient.blocked == true) unblock()
                 else {
                     if (!viewModel.isMessageRequestThread) {
                         showConversationReaction(message, view)
@@ -478,10 +484,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     companion object {
         // Extras
         private const val ADDRESS = "address"
-        private const val FROM_GROUP_THREAD_ID = "from_group_thread_id"
         private const val SCROLL_MESSAGE_ID = "scroll_message_id"
         private const val SCROLL_MESSAGE_AUTHOR = "scroll_message_author"
-
+        private const val EXTRA_CREATE_THREAD_IF_NOT_EXISTS = "create_thread_if_not_exists"
 
         const val SHOW_SEARCH = "show_search"
 
@@ -495,15 +500,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         fun createIntent(
             context: Context,
             address: Address,
-            fromGroupThreadId: Long? = null,
+            createThreadIfNotExists: Boolean = true,
             // If provided, this will scroll to the message with the given timestamp and author (TODO: use message id instead)
             scrollToMessage: Pair<Long, Address>? = null
         ): Intent {
             return Intent(context, ConversationActivityV2::class.java).apply {
                 putExtra(ADDRESS, address)
-                fromGroupThreadId?.let {
-                    putExtra(FROM_GROUP_THREAD_ID, it)
-                }
+                putExtra(EXTRA_CREATE_THREAD_IF_NOT_EXISTS, createThreadIfNotExists)
 
                 scrollToMessage?.let { (timestamp, author) ->
                     putExtra(SCROLL_MESSAGE_ID, timestamp)
@@ -575,7 +578,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         setUpExpiredGroupBanner()
         binding.searchBottomBar.setEventListener(this)
-        updateSendAfterApprovalText()
         setUpMessageRequests()
 
         setUpRecyclerView()
@@ -749,7 +751,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         adapter.changeCursor(cursor)
 
         if (cursor != null) {
-            firstCursorLoad.value = true
             val messageTimestamp = messageToScrollTimestamp.getAndSet(-1)
             val author = messageToScrollAuthor.getAndSet(null)
             val initialUnreadCount = mmsSmsDb.getUnreadCount(viewModel.threadId)
@@ -771,9 +772,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }
         }
 
+        lastCursorLoaded.tryEmit(SystemClock.elapsedRealtime());
+
         stopConversationLoader()
 
-        viewModel.recipient?.let {
+        viewModel.recipient.let {
             setUpOutdatedClientBanner()
         }
     }
@@ -880,7 +883,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 startActivityForResult(MediaSendActivity.buildEditorIntent(
                     this,
                     listOf( media ),
-                    viewModel.recipient!!.address,
+                    viewModel.recipient.address,
                     getMessageBody()
                 ), PICK_FROM_LIBRARY)
                 return
@@ -946,7 +949,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         if (shouldShowLegacy) {
 
             val txt = Phrase.from(this, R.string.disappearingMessagesLegacy)
-                .put(NAME_KEY, legacyRecipient!!.displayName)
+                .put(NAME_KEY, legacyRecipient.displayName)
                 .format()
             binding.conversationHeader.outdatedDisappearingBannerTextView.text = txt
         }
@@ -1104,23 +1107,25 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     val recipient: Recipient,
                     val openGroup: OpenGroup?,
                     val groupThreadStatus: GroupThreadStatus,
-                    val firstLoad: Boolean
                 )
 
                 combine(
-                    viewModel.recipientFlow.filterNotNull(),
+                    viewModel.recipientFlow,
                     viewModel.openGroupFlow,
                     viewModel.groupV2ThreadState,
-                    firstCursorLoad,
-                    ::PlaceholderData,
-                ).collectLatest { (r, og, groupState, firstLoad) ->
-                    updatePlaceholder(
+                    lastCursorLoaded
+                ) { r, og, groupState, _ ->
+                    PlaceholderData(
                         recipient = r,
-                        blindedRecipient = viewModel.blindedRecipient,
                         openGroup = og,
                         groupThreadStatus = groupState,
-                        firstLoad
-
+                    )
+                } .collectLatest { (r, og, groupState) ->
+                    updatePlaceholder(
+                        recipient = r,
+                        openGroup = og,
+                        groupThreadStatus = groupState,
+                        adapterItemCount = adapter.itemCount,
                     )
                 }
             }
@@ -1137,6 +1142,15 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                         }
                     }
                 }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.showSendAfterApprovalText
+                    .collectLatest {
+                        binding.textSendAfterApproval.isVisible = it
+                    }
             }
         }
     }
@@ -1175,19 +1189,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     // endregion
 
     // region Animation & Updating
-    //TODO test recipient update
-//    override fun onModified(recipient: Recipient) {
-//        viewModel.updateRecipient()
-//
-//        runOnUiThread {
-//            invalidateOptionsMenu()
-//            updateSendAfterApprovalText()
-//        }
-//    }
-
-    private fun updateSendAfterApprovalText() {
-        binding.textSendAfterApproval.isVisible = viewModel.showSendAfterApprovalText
-    }
 
     private fun setUpMessageRequests() {
         binding.messageRequestBar.acceptMessageRequestButton.setOnClickListener {
@@ -1362,12 +1363,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     // Update placeholder / control messages in a conversation
     private fun updatePlaceholder(recipient: Recipient,
-                                  blindedRecipient: Recipient?,
                                   openGroup: OpenGroup?,
                                   groupThreadStatus: GroupThreadStatus,
-                                  isFirstCursorLoad: Boolean) {
-        if(!isFirstCursorLoad) return
-
+                                  adapterItemCount: Int) {
         // Special state handling for kicked/destroyed groups
         if (groupThreadStatus != GroupThreadStatus.None) {
             binding.placeholderText.isVisible = true
@@ -1401,14 +1399,14 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }
 
             // If we're trying to message someone who has blocked community message requests
-            blindedRecipient?.acceptsCommunityMessageRequests == false -> {
+            !recipient.acceptsCommunityMessageRequests -> {
                 Phrase.from(applicationContext, R.string.messageRequestsTurnedOff)
                     .put(NAME_KEY, recipient.displayName)
                     .format()
             }
 
             // 10n1 and groups and blinded 1on1
-            recipient.isCommunityInboxRecipient || recipient.isCommunityOutboxRecipient ||
+            recipient.isCommunityInboxRecipient ||
                     recipient.is1on1 || recipient.isGroupOrCommunityRecipient -> {
                 Phrase.from(applicationContext, R.string.groupNoMessages)
                     .put(GROUP_NAME_KEY, recipient.displayName)
@@ -1421,7 +1419,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }
         }
 
-        val showPlaceholder = adapter.itemCount == 0 || isDestroyed
+        val showPlaceholder = adapterItemCount == 0 || isDestroyed
         binding.placeholderText.isVisible = showPlaceholder
         binding.conversationRecyclerView.visibility = if (showPlaceholder) View.INVISIBLE else View.VISIBLE
         if (showPlaceholder) {
@@ -1446,10 +1444,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     // region Interaction
     private fun callRecipient() {
-        if(viewModel.recipient == null) return
 
         // if the user is blocked, show unblock modal
-        if(viewModel.recipient?.blocked == true){
+        if(viewModel.recipient.blocked){
             unblock()
             return
         }
@@ -1487,13 +1484,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         WebRtcCallActivity.getCallActivityIntent(this)
             .apply {
                 action = ACTION_START_CALL
-                putExtra(EXTRA_RECIPIENT_ADDRESS, viewModel.recipient!!.address)
+                putExtra(EXTRA_RECIPIENT_ADDRESS, viewModel.recipient.address)
             }
             .let(::startActivity)
     }
 
     fun block(deleteThread: Boolean) {
-        val recipient = viewModel.recipient ?: return Log.w("Loki", "Recipient was null for block action")
+        val recipient = viewModel.recipient
         val invitingAdmin = viewModel.invitingAdmin
 
         val name = if (recipient.isGroupV2Recipient && invitingAdmin != null) {
@@ -1526,7 +1523,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     fun unblock() {
-        val recipient = viewModel.recipient ?: return Log.w("Loki", "Recipient was null for unblock action")
+        val recipient = viewModel.recipient
 
         if (!recipient.isContactRecipient) {
             return Log.w("Loki", "Cannot unblock a user who is not a contact recipient - aborting unblock attempt.")
@@ -1698,7 +1695,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
 
         // Create the message
-        val recipient = viewModel.recipient ?: return Log.w(TAG, "Could not locate recipient when sending emoji reaction")
+        val recipient = viewModel.recipient
         val reactionMessage = VisibleMessage()
         val emojiTimestamp = SnodeAPI.nowWithOffset
         reactionMessage.sentTimestamp = emojiTimestamp
@@ -1744,7 +1741,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     // Method to remove a emoji reaction from a message.
     // Note: We do not count emoji removal towards the emojiRateLimiterQueue.
     private fun sendEmojiRemoval(emoji: String, originalMessage: MessageRecord) {
-        val recipient = viewModel.recipient ?: return
+        val recipient = viewModel.recipient
         val message = VisibleMessage()
         val emojiTimestamp = SnodeAPI.nowWithOffset
         message.sentTimestamp = emojiTimestamp
@@ -1949,7 +1946,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun onReactionLongClicked(messageId: MessageId, emoji: String?) {
-        if (viewModel.recipient?.isGroupOrCommunityRecipient == true) {
+        if (viewModel.recipient.isGroupOrCommunityRecipient == true) {
             val isUserModerator = viewModel.openGroup?.let { openGroup ->
                 val userPublicKey = textSecurePreferences.getLocalNumber() ?: return@let false
                 openGroupManager.isUserModerator(
@@ -1972,11 +1969,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun sendMessage() {
-        val recipient = viewModel.recipient ?: return
+        val recipient = viewModel.recipient
 
         // show the unblock dialog when trying to send a message to a blocked contact
         if (recipient.isContactRecipient && recipient.blocked) {
-            BlockedDialog(recipient.address, viewModel.getUsername(recipient.address.toString())).show(supportFragmentManager, "Blocked Dialog")
+            BlockedDialog(recipient.address, recipient.displayName).show(supportFragmentManager, "Blocked Dialog")
             return
         }
 
@@ -1997,7 +1994,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun commitInputContent(contentUri: Uri) {
-        val recipient = viewModel.recipient ?: return
+        val recipient = viewModel.recipient
         val mimeType = MediaUtil.getMimeType(this, contentUri)!!
         val filename = FilenameUtils.getFilenameFromUri(this, contentUri, mimeType)
         val media = Media(contentUri, filename, mimeType, 0, 0, 0, 0, null, null)
@@ -2019,7 +2016,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     private fun sendTextOnlyMessage(hasPermissionToSendSeed: Boolean = false): Pair<Address, Long>? {
-        val recipient = viewModel.recipient ?: return null
+        val recipient = viewModel.recipient
         val sentTimestamp = SnodeAPI.nowWithOffset
         viewModel.implicitlyApproveRecipient()?.let { conversationApprovalJob = it }
         val text = getMessageBody()
@@ -2040,7 +2037,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val message = VisibleMessage().applyExpiryMode(viewModel.threadId)
         message.sentTimestamp = sentTimestamp
         message.text = text
-        val expiresInMillis = viewModel.recipient?.expiryMode?.expiryMillis ?: 0
+        val expiresInMillis = viewModel.recipient.expiryMode.expiryMillis
         val outgoingTextMessage = OutgoingTextMessage.from(message, recipient.address, expiresInMillis, 0)
 
         // Clear the input bar
@@ -2072,11 +2069,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         linkPreview: LinkPreview? = null,
         deleteAttachmentFilesAfterSave: Boolean = false,
     ): Pair<Address, Long>? {
-        if (viewModel.recipient == null) {
-            Log.w(TAG, "Cannot send attachments to a null recipient")
-            return null
-        }
-        val recipient = viewModel.recipient!!
+        val recipient = viewModel.recipient
         val sentTimestamp = SnodeAPI.nowWithOffset
         viewModel.implicitlyApproveRecipient()?.let { conversationApprovalJob = it }
 
@@ -2097,8 +2090,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 else it.individualRecipient.address
             quote?.copy(author = sender)
         }
-        val expiresInMs = viewModel.recipient?.expiryMode?.expiryMillis ?: 0
-        val expireStartedAtMs = if (viewModel.recipient?.expiryMode is ExpiryMode.AfterSend) {
+        val expiresInMs = viewModel.recipient.expiryMode.expiryMillis ?: 0
+        val expireStartedAtMs = if (viewModel.recipient.expiryMode is ExpiryMode.AfterSend) {
             sentTimestamp
         } else 0
         val outgoingTextMessage = OutgoingMediaMessage.from(message, recipient.address, attachments, localQuote, linkPreview, expiresInMs, expireStartedAtMs)
@@ -2175,7 +2168,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private fun showDocumentPicker() = AttachmentManager.selectDocument(this, PICK_DOCUMENT)
 
     private fun pickFromLibrary() {
-        val recipient = viewModel.recipient ?: return
+        val recipient = viewModel.recipient
         binding.inputBar.text?.trim()?.let { text ->
             AttachmentManager.selectGallery(this, PICK_FROM_LIBRARY, recipient.address, viewModel.threadId, getMessageBody())
         }
@@ -2609,7 +2602,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun reply(messages: Set<MessageRecord>) {
-        val recipient = viewModel.recipient ?: return
+        val recipient = viewModel.recipient
 
         // hide search if open
         if(binding.searchBottomBar.isVisible) onSearchClosed()
@@ -2623,7 +2616,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     private fun sendScreenshotNotification() {
-        val recipient = viewModel.recipient ?: return
+        val recipient = viewModel.recipient
         if (recipient.isGroupOrCommunityRecipient) return
         val kind = DataExtractionNotification.Kind.Screenshot()
         val message = DataExtractionNotification(kind)
@@ -2631,7 +2624,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     private fun sendMediaSavedNotification() {
-        val recipient = viewModel.recipient ?: return
+        val recipient = viewModel.recipient
         if (recipient.isGroupOrCommunityRecipient) { return }
         val timestamp = SnodeAPI.nowWithOffset
         val kind = DataExtractionNotification.Kind.MediaSaved(timestamp)

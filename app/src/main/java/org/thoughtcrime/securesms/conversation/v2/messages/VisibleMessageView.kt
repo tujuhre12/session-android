@@ -2,7 +2,6 @@ package org.thoughtcrime.securesms.conversation.v2.messages
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.Intent
 import android.graphics.Canvas
 import android.graphics.Rect
 import android.graphics.drawable.ColorDrawable
@@ -36,6 +35,7 @@ import network.loki.messenger.libsession_util.getOrNull
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.ThemeUtil.getThemedColor
 import org.session.libsession.utilities.ViewUtil
 import org.session.libsession.utilities.getColorFromAttr
@@ -62,7 +62,6 @@ import org.thoughtcrime.securesms.util.disableClipping
 import org.thoughtcrime.securesms.util.toDp
 import org.thoughtcrime.securesms.util.toPx
 import java.util.Date
-import java.util.Locale
 import javax.inject.Inject
 import kotlin.math.abs
 import kotlin.math.min
@@ -174,7 +173,10 @@ class VisibleMessageView : FrameLayout {
         isOutgoing = message.isOutgoing
         replyDisabled = message.isOpenGroupInvitation
         val threadID = message.threadId
-        val threadRecipient = threadDb.getRecipientForThreadId(threadID)?.let(recipientRepository::getRecipientSync) ?: return
+        val threadRecipient = threadDb.getRecipientForThreadId(threadID)?.let {
+            recipientRepository.getRecipientSync(it) ?: RecipientRepository.empty(it)
+        } ?: return
+
         val isGroupThread = threadRecipient.isGroupOrCommunityRecipient
         val isStartOfMessageCluster = isStartOfMessageCluster(message, previous, isGroupThread)
         val isEndOfMessageCluster = isEndOfMessageCluster(message, next, isGroupThread)
@@ -207,13 +209,20 @@ class VisibleMessageView : FrameLayout {
                 binding.profilePictureView.setOnClickListener {
                     if (threadRecipient.isCommunityRecipient) {
                         val openGroup = lokiThreadDb.getOpenGroupChat(message.threadId)
-                        if (IdPrefix.fromValue(sender.address.address) == IdPrefix.BLINDED && openGroup?.canWrite == true) {
-                            // TODO: support v2 soon
+                        if (IdPrefix.fromValue(sender.address.address)?.isBlinded() == true
+                                && openGroup?.canWrite == true) {
+                            // If the sender is a blinded user then we will need to translate the address
+                            // to a special opengroup inbox address.
+
+                            val address = GroupUtil.getEncodedOpenGroupInboxID(
+                                openGroup,
+                                AccountId(sender.address.address)
+                            )
+
                             context.startActivity(
                                 ConversationActivityV2.createIntent(
                                     context = context,
-                                    address = sender.address,
-                                    fromGroupThreadId = message.threadId
+                                    address = address
                                 )
                             )
                         }

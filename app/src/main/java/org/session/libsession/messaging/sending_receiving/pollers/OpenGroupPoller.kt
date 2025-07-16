@@ -40,6 +40,7 @@ import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsignal.protos.SignalServiceProtos
+import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.BlindMappingRepository
@@ -329,8 +330,8 @@ class OpenGroupPoller @AssistedInject constructor(
                 if (fromOutbox) {
                     val syncTarget = blindMappingRepository.getMapping(
                         serverUrl = server,
-                        blindedAddress = Address.fromSerialized(it.recipient)
-                    )?.address ?: it.recipient
+                        blindedAddress = AccountId(it.recipient)
+                    )?.hexString ?: it.recipient
 
                     if (message is VisibleMessage) {
                         message.syncTarget = syncTarget

@@ -27,7 +27,6 @@ data class Recipient(
     val isGroupOrCommunityRecipient: Boolean get() = basic.isGroupOrCommunityRecipient
     val isCommunityRecipient: Boolean get() = basic.isCommunityRecipient
     val isCommunityInboxRecipient: Boolean get() = basic.isCommunityInboxRecipient
-    val isCommunityOutboxRecipient: Boolean get() = basic.isCommunityOutboxRecipient
     val isGroupV2Recipient: Boolean get() = basic.isGroupV2Recipient
     val isLegacyGroupRecipient: Boolean get() = basic.isLegacyGroupRecipient
     val isContactRecipient: Boolean get() = basic.isContactRecipient
@@ -48,7 +47,21 @@ data class Recipient(
         else -> true
     }
 
-    val approvedMe: Boolean get() = (basic as? BasicRecipient.Contact)?.approvedMe ?: true
+    val approvedMe: Boolean get() {
+        return when (basic) {
+            is BasicRecipient.Self -> true
+            is BasicRecipient.Group -> true
+            is BasicRecipient.Generic -> {
+                // If the recipient is a blinded address, we will never know if they approved us. So
+                // they will be treated as if they did not approve us.
+                // Of course if we can find out their real address, we will be able to know the status
+                // of approval on that real address, just not on this blinded address.
+                address.toBlindedId() == null
+            }
+            is BasicRecipient.Contact -> basic.approvedMe
+        }
+    }
+
     val blocked: Boolean get() = when (basic) {
         is BasicRecipient.Generic -> basic.blocked
         is BasicRecipient.Contact -> basic.blocked
@@ -123,7 +136,7 @@ sealed interface BasicRecipient {
     }
 
     /**
-     * A recipient that is your **real** contact.
+     * A recipient that was saved in your contact config.
      */
     data class Contact(
         override val address: Address,
@@ -165,7 +178,6 @@ sealed interface BasicRecipient {
 val BasicRecipient.isGroupOrCommunityRecipient: Boolean get() = address.isGroupOrCommunity
 val BasicRecipient.isCommunityRecipient: Boolean get() = address.isCommunity
 val BasicRecipient.isCommunityInboxRecipient: Boolean get() = address.isCommunityInbox
-val BasicRecipient.isCommunityOutboxRecipient: Boolean get() = address.isCommunityOutbox
 val BasicRecipient.isGroupV2Recipient: Boolean get() = address.isGroupV2
 val BasicRecipient.isLegacyGroupRecipient: Boolean get() = address.isLegacyGroup
 val BasicRecipient.isContactRecipient: Boolean get() = address.isContact

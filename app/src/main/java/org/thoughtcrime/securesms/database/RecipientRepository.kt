@@ -23,6 +23,7 @@ import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.GroupRecord
@@ -159,8 +160,15 @@ class RecipientRepository @Inject constructor(
             null -> {
                 // Given address is not backed by the config system so we'll get them from
                 // local database.
-
-                val settings = settingsFetcher(address)
+                // If this is a community inbox, we'll load the underlying blinded recipient settings
+                // from the db instead, this is because the "community inbox" recipient is never
+                // updated from anywhere, it's purely an address to start a conversation. The data
+                // like name and avatar were all updated to the blinded recipients.
+                val settings = if (address.isCommunityInbox) {
+                    settingsFetcher(address.toBlindedId()!!.toAddress())
+                } else {
+                    settingsFetcher(address)
+                }
 
                 when {
                     address.isLegacyGroup -> {
@@ -207,8 +215,10 @@ class RecipientRepository @Inject constructor(
                             address = address,
                             settings = settings
                         )
+
+                        val monitoringAddress = address.toBlindedId()?.toAddress() ?: address
                         changeSource =
-                            recipientDatabase.updateNotifications.filter { it == address }
+                            recipientDatabase.updateNotifications.filter { it == monitoringAddress }
                     }
 
                     else -> return null // No recipient found for this address

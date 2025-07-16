@@ -224,7 +224,7 @@ class DefaultConversationRepository @Inject constructor(
         val blindConvoFlow = (threadDb.updateNotifications
             .debounce(500) as Flow<*>)
             .onStart { emit(Unit) }
-            .map { threadDb.getBlindedConversations(approved) }
+            .map { threadDb.getBlindedConversations() }
             .distinctUntilChanged()
 
         return combine(configBasedFlow, blindConvoFlow) { configBased, blinded ->

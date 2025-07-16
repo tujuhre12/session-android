@@ -3,8 +3,10 @@ package org.session.libsession.messaging.messages
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
@@ -30,7 +32,7 @@ class ProfileUpdateHandler @Inject constructor(
     private val blindIdMappingRepository: BlindMappingRepository,
 ) {
 
-    fun handleProfileUpdate(sender: Address, updates: Updates, fromCommunity: BaseCommunityInfo?) {
+    fun handleProfileUpdate(sender: AccountId, updates: Updates, fromCommunity: BaseCommunityInfo?) {
         if (updates.name.isNullOrBlank() &&
             updates.pic == null &&
             updates.acceptsCommunityRequests == null
@@ -40,18 +42,18 @@ class ProfileUpdateHandler @Inject constructor(
         }
 
         // Unblind the sender if it's blinded and we have information to unblind it.
-        val actualSender = if (IdPrefix.fromValue(sender.address)?.isBlinded() == true && fromCommunity != null) {
+        val actualSender = if (sender.prefix?.isBlinded() == true && fromCommunity != null) {
             blindIdMappingRepository.getMapping(fromCommunity.baseUrl, sender)
         } else {
             sender
         } ?: sender
 
-        if (actualSender.address == prefs.getLocalNumber()) {
+        if (actualSender.hexString == prefs.getLocalNumber()) {
             Log.w(TAG, "Ignoring profile update for local number")
             return
         }
 
-        val actualSenderIdPrefix = IdPrefix.fromValue(actualSender.address)
+        val actualSenderIdPrefix = actualSender.prefix
 
         if (actualSenderIdPrefix == null ||
             actualSenderIdPrefix !in EnumSet.of(IdPrefix.STANDARD, IdPrefix.BLINDED, IdPrefix.BLINDEDV2)) {
@@ -64,7 +66,7 @@ class ProfileUpdateHandler @Inject constructor(
         // First, if the user is a contact, update the config and that's all we need to do.
         val isExistingContact = actualSenderIdPrefix == IdPrefix.STANDARD &&
                 configFactory.withMutableUserConfigs { configs ->
-                    val existingContact = configs.contacts.get(actualSender.address)
+                    val existingContact = configs.contacts.get(actualSender.hexString)
                     if (existingContact != null) {
                         configs.contacts.set(
                             existingContact.copy(
@@ -84,8 +86,9 @@ class ProfileUpdateHandler @Inject constructor(
         }
 
         Log.d(TAG, "Updating recipient profile for $actualSender")
+
         recipientDatabase.updateProfile(
-            actualSender,
+            actualSender.toAddress(),
             updates.name,
             updates.pic,
             updates.acceptsCommunityRequests

@@ -38,11 +38,11 @@ import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.ConfigFactoryProtocol;
 import org.session.libsession.utilities.ConfigFactoryProtocolKt;
 import org.session.libsession.utilities.DistributionTypes;
+import org.session.libsession.utilities.GroupUtil;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.AccountId;
-import org.session.libsignal.utilities.IdPrefix;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.Pair;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
@@ -52,7 +52,6 @@ import org.thoughtcrime.securesms.database.model.MessageRecord;
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord;
 import org.thoughtcrime.securesms.database.model.ThreadRecord;
 import org.thoughtcrime.securesms.database.model.content.MessageContent;
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.SlideDeck;
 import org.thoughtcrime.securesms.notifications.MarkReadReceiver;
@@ -75,7 +74,6 @@ import kotlinx.coroutines.channels.BufferOverflow;
 import kotlinx.coroutines.flow.Flow;
 import kotlinx.coroutines.flow.MutableSharedFlow;
 import kotlinx.coroutines.flow.SharedFlowKt;
-import kotlin.collections.CollectionsKt;
 import kotlinx.serialization.json.Json;
 import network.loki.messenger.libsession_util.util.GroupInfo;
 
@@ -432,19 +430,12 @@ public class ThreadDatabase extends Database {
   }
 
   /**
-   * @param approved If true, only returns approved conversations, otherwise returns unapproved conversations.
-   *                 Null means return all conversations.
-   * @return All blinded conversations in the database, with their blinded address.
+   * @return All blinded conversation addresses in the database
    */
   @NonNull
-  public List<Address> getBlindedConversations(@Nullable Boolean approved) {
-    String query = "SELECT " + TABLE_NAME + "." + ADDRESS + " FROM " + TABLE_NAME +
-            " INNER JOIN " + RecipientDatabase.TABLE_NAME + " ON " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.ADDRESS + " = " + TABLE_NAME + "." + ADDRESS +
-            " WHERE " + TABLE_NAME + "." + ADDRESS + " LIKE '" + IdPrefix.BLINDED.getValue() + "%'";
-
-    if (approved != null) {
-      query += " AND " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.APPROVED + " = " + (approved ? 1 : 0);
-    }
+  public List<Address> getBlindedConversations() {
+    final String query = "SELECT " + TABLE_NAME + "." + ADDRESS + " FROM " + TABLE_NAME +
+            " WHERE " + TABLE_NAME + "." + ADDRESS + " LIKE '" + GroupUtil.COMMUNITY_INBOX_PREFIX + "%'";
 
     try(final Cursor cursor = getReadableDatabase().rawQuery(query)) {
       final ArrayList<Address> addresses = new ArrayList<>(cursor.getCount());

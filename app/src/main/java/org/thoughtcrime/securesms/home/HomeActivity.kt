@@ -135,23 +135,27 @@ class HomeActivity : ScreenLockActionBarActivity(),
             onContactClicked = { model ->
                 val intent = when (model) {
                     is GlobalSearchAdapter.Model.Message -> ConversationActivityV2
-                        .createIntent(this,
+                        .createIntent(
+                            this,
                             address = model.messageResult.conversationRecipient.address,
                             scrollToMessage = model.messageResult.sentTimestampMs to model.messageResult.messageRecipient.address
                         )
 
                     is GlobalSearchAdapter.Model.SavedMessages -> ConversationActivityV2
-                        .createIntent(this,
+                        .createIntent(
+                            this,
                             address = Address.fromSerialized(model.currentUserPublicKey)
                         )
 
                     is GlobalSearchAdapter.Model.Contact -> ConversationActivityV2
-                        .createIntent(this,
+                        .createIntent(
+                            this,
                             address = Address.fromSerialized(model.contact.hexString)
                         )
 
                     is GlobalSearchAdapter.Model.GroupConversation -> ConversationActivityV2
-                        .createIntent(this,
+                        .createIntent(
+                            this,
                             address = Address.fromSerialized(model.groupId)
                         )
 

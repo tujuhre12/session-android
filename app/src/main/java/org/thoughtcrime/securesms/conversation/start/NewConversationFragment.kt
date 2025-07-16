@@ -99,7 +99,10 @@ class StartConversationFragment : BottomSheetDialogFragment(), StartConversation
     }
 
     override fun onContactSelected(address: String) {
-        startActivity(ConversationActivityV2.createIntent(requireContext(), Address.fromSerialized(address)))
+        startActivity(ConversationActivityV2.createIntent(
+            requireContext(),
+            Address.fromSerialized(address)
+        ))
         requireActivity().overridePendingTransition(R.anim.slide_from_bottom, R.anim.fade_scale_out)
     }
 
