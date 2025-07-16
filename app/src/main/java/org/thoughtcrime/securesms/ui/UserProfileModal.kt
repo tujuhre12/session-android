@@ -2,8 +2,10 @@ package org.thoughtcrime.securesms.ui
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateOffsetAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -14,6 +16,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -28,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
@@ -260,12 +264,12 @@ fun UserProfileModalAvatarQR(
 ){
     val animationSpec = tween<Dp>(
         durationMillis = 400,
-        easing = androidx.compose.animation.core.FastOutSlowInEasing
+        easing = FastOutSlowInEasing
     )
 
     val animationSpecFast = tween<Float>(
         durationMillis = 200,
-        easing = androidx.compose.animation.core.FastOutSlowInEasing
+        easing = FastOutSlowInEasing
     )
 
     val targetSize = when {
@@ -328,7 +332,7 @@ fun UserProfileModalAvatarQR(
     // animating the inner padding of the badge otherwise the icon looks too big within the background
     val animatedBadgeInnerPadding by animateDpAsState(
         targetValue = if (data.expandedAvatar) {
-            LocalDimensions.current.xxsSpacing
+            6.dp
         } else {
             5.dp
         },
@@ -336,14 +340,17 @@ fun UserProfileModalAvatarQR(
         label = "badge_inner_pd_animation"
     )
 
-    val badgeEndPadding by animateDpAsState(
-        targetValue = if(data.showQR) 0.dp
-        else if (data.expandedAvatar) {
-            LocalDimensions.current.contentSpacing
+    val badgeOffset by animateOffsetAsState(
+        targetValue = if (data.showQR) {
+            val cornerOffset = LocalDimensions.current.xsSpacing
+            Offset(cornerOffset.value, -cornerOffset.value)
+        } else if(data.expandedAvatar) {
+            Offset(- LocalDimensions.current.contentSpacing.value, 0f)
         } else {
-            0.dp
+            Offset.Zero
         },
-        animationSpec = animationSpec
+        animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
+        label = "badge_offset"
     )
 
     Box(
@@ -400,41 +407,37 @@ fun UserProfileModalAvatarQR(
         }
 
         // Badge
-        Box(
-            modifier = Modifier.size(animatedSize)
-        ) {
-            Crossfade(
+        Crossfade(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .offset(x = badgeOffset.x.dp, y = badgeOffset.y.dp)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) {
+                    sendCommand(UserProfileModalCommands.ToggleQR)
+                },
+            targetState = data.showQR,
+            animationSpec = tween(durationMillis = 200),
+            label = "badge_icon"
+        ) { showQR ->
+            Image(
                 modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) {
-                        sendCommand(UserProfileModalCommands.ToggleQR)
+                    .size(badgeSize)
+                    .background(
+                        shape = CircleShape,
+                        color = LocalColors.current.accent
+                    )
+                    .padding(animatedBadgeInnerPadding),
+                painter = painterResource(
+                    id = when (showQR) {
+                        true -> R.drawable.ic_user_filled_custom
+                        false -> R.drawable.ic_qr_code
                     }
-                    .padding(end = badgeEndPadding),
-                targetState = data.showQR,
-                animationSpec = tween(durationMillis = 200),
-                label = "badge_icon"
-            ) { showQR ->
-                Image(
-                    modifier = Modifier
-                        .size(badgeSize)
-                        .background(
-                            shape = CircleShape,
-                            color = LocalColors.current.accent
-                        )
-                        .padding(animatedBadgeInnerPadding),
-                    painter = painterResource(
-                        id = when (showQR) {
-                            true -> R.drawable.ic_user_filled_custom
-                            false -> R.drawable.ic_qr_code
-                        }
-                    ),
-                    contentDescription = null,
-                    colorFilter = ColorFilter.tint(Color.Black)
-                )
-            }
+                ),
+                contentDescription = null,
+                colorFilter = ColorFilter.tint(Color.Black)
+            )
         }
     }
 }
