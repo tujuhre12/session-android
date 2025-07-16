@@ -4,7 +4,6 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Context.CLIPBOARD_SERVICE
-import android.content.Intent
 import android.widget.Toast
 import com.squareup.phrase.Phrase
 import dagger.assisted.Assisted
@@ -16,16 +15,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import network.loki.messenger.R
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
-import network.loki.messenger.R
-import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
-import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
-import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2.Companion.THREAD_ID
 import org.thoughtcrime.securesms.pro.ProStatusManager
-import javax.inject.Inject
 
 /**
  * Helper class to get the information required for the user profile modal

@@ -206,18 +206,7 @@ class VisibleMessageView : FrameLayout {
                 binding.profilePictureView.publicKey = senderAccountID
                 binding.profilePictureView.update(message.individualRecipient)
                 binding.profilePictureView.setOnClickListener {
-                    //todo upm implement
-                   /* if (thread.isCommunityRecipient) {
-                        val openGroup = lokiThreadDb.getOpenGroupChat(threadID)
-                        if (IdPrefix.fromValue(senderAccountID) == IdPrefix.BLINDED && openGroup?.canWrite == true) {
-                            val intent = Intent(context, ConversationActivityV2::class.java)
-                            intent.putExtra(ConversationActivityV2.FROM_GROUP_THREAD_ID, threadID)
-                            intent.putExtra(ConversationActivityV2.ADDRESS, Address.fromSerialized(senderAccountID))
-                            context.startActivity(intent)
-                        }
-                    } else {
-                        maybeShowUserDetails(senderAccountID, threadID)
-                    }*/
+                    delegate?.showUserProfileModal(message.recipient)
                 }
                 if (thread.isCommunityRecipient) {
                     val openGroup = lokiThreadDb.getOpenGroupChat(threadID) ?: return

@@ -1929,6 +1929,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         viewHolder.view.playVoiceMessage()
     }
 
+    override fun showUserProfileModal(recipient: Recipient){
+        viewModel.showUserProfileModal(recipient)
+    }
+
     override fun sendMessage() {
         val recipient = viewModel.recipient ?: return
 
