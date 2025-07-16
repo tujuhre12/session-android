@@ -173,6 +173,7 @@ public class ThreadDatabase extends Database {
   private ConversationThreadUpdateListener updateListener;
   private final MutableSharedFlow<Long> updateNotifications = SharedFlowKt.MutableSharedFlow(0, 256, BufferOverflow.DROP_OLDEST);
   private final Json json;
+  private final TextSecurePreferences prefs;
 
   private final Lazy<@NonNull RecipientRepository> recipientRepository;
   private final Lazy<@NonNull MmsSmsDatabase> mmsSmsDatabase;
@@ -201,7 +202,12 @@ public class ThreadDatabase extends Database {
     this.smsDatabase = smsDatabase;
 
     this.json = json;
+    this.prefs = prefs;
+  }
 
+  // This method is called when the application is created, providing an opportunity to perform
+  // initialization tasks that need to be done only once.
+  public void onAppCreated() {
     if (!prefs.getMigratedDisappearingMessagesToMessageContent()) {
        migrateDisappearingMessagesToMessageContent();
        prefs.setMigratedDisappearingMessagesToMessageContent(true);
