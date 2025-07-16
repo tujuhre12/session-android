@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.ui
 
+import android.content.Intent
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -36,6 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -46,10 +48,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
+import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
+import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2.Companion.THREAD_ID
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.components.SlimAccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.SlimOutlineCopyButton
+import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -60,18 +65,19 @@ import org.thoughtcrime.securesms.ui.theme.monospace
 import org.thoughtcrime.securesms.ui.theme.primaryRed
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
+import org.thoughtcrime.securesms.util.UserProfileModalCommands
+import org.thoughtcrime.securesms.util.UserProfileModalData
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun UserProfileModal(
     data: UserProfileModalData,
-    sendCommand: (UserProfileModalCommands) -> Unit
+    sendCommand: (UserProfileModalCommands) -> Unit,
+    onDismissRequest: () -> Unit,
 ){
     // the user profile modal
     AlertDialog(
-        onDismissRequest = {
-            sendCommand(UserProfileModalCommands.HideUserProfileModal)
-        },
+        onDismissRequest = onDismissRequest,
         showCloseButton = true,
         title = null as AnnotatedString?,
         content = {
@@ -100,7 +106,7 @@ fun UserProfileModal(
                     var proBadgeModifier: Modifier = Modifier
                     if(!data.currentUserPro){
                         proBadgeModifier = proBadgeModifier.clickable {
-                            sendCommand(UserProfileModalCommands.ShowUserProfileModal)
+                            sendCommand(UserProfileModalCommands.ShowProCTA)
                         }
                     }
 
@@ -192,7 +198,7 @@ fun UserProfileModal(
                                 onDismiss = { displayTooltip = false }
                             ) {
                                 Text(
-                                    text = data.tooltipText,
+                                    text = annotatedStringResource(data.tooltipText),
                                     textAlign = TextAlign.Center,
                                     modifier = Modifier
                                         .padding(
@@ -221,12 +227,19 @@ fun UserProfileModal(
                     buttonModifier = buttonModifier.weight(1f)
                 }
 
+                val context = LocalContext.current
                 SlimAccentOutlineButton(
                     modifier = buttonModifier,
                     text = stringResource(R.string.message),
                     enabled = data.enableMessage,
                     onClick = {
-                        sendCommand(UserProfileModalCommands.HideUserProfileModal)
+                        // close dialog
+                        onDismissRequest()
+
+                        // open conversation with user
+                        context.startActivity(Intent(context, ConversationActivityV2::class.java)
+                            .putExtra(THREAD_ID, data.threadId)
+                        )
                     }
                 )
 
@@ -243,7 +256,6 @@ fun UserProfileModal(
             }
         }
     )
-
 
     // the pro CTA that comes with UPM
     if(data.showProCTA){
@@ -392,6 +404,7 @@ fun UserProfileModalAvatarQR(
                         sendCommand(UserProfileModalCommands.ToggleAvatarExpand)
                     },
                 size = animatedSize,
+                maxSizeLoad = LocalDimensions.current.iconXXLargeAvatar,
                 data = data.avatarUIData
             )
 
@@ -452,31 +465,6 @@ fun UserProfileModalAvatarQR(
     }
 }
 
-data class UserProfileModalData(
-    val name: String,
-    val subtitle: String?,
-    val isPro: Boolean,
-    val currentUserPro: Boolean,
-    val rawAddress: String,
-    val displayAddress: String,
-    val isBlinded: Boolean,
-    val tooltipText: String?,
-    val enableMessage: Boolean,
-    val expandedAvatar: Boolean,
-    val showQR: Boolean,
-    val avatarUIData: AvatarUIData,
-    val showProCTA: Boolean
-)
-
-sealed interface UserProfileModalCommands {
-    object ShowUserProfileModal: UserProfileModalCommands
-    object HideUserProfileModal: UserProfileModalCommands
-    object HideSessionProCTA: UserProfileModalCommands
-    object CopyAccountId: UserProfileModalCommands
-    object ToggleAvatarExpand: UserProfileModalCommands
-    object ToggleQR: UserProfileModalCommands
-}
-
 @Preview
 @Composable
 private fun PreviewUPM(
@@ -494,6 +482,7 @@ private fun PreviewUPM(
                     tooltipText = "Some tooltip",
                     rawAddress = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
                     displayAddress = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
+                    threadId = 0L,
                     enableMessage = false,
                     expandedAvatar = false,
                     showQR = false,
@@ -512,10 +501,10 @@ private fun PreviewUPM(
 
         UserProfileModal(
             data = data,
+            onDismissRequest = {},
             sendCommand = { command ->
                 when(command){
-                    UserProfileModalCommands.HideUserProfileModal -> {}
-                    UserProfileModalCommands.ShowUserProfileModal -> {
+                    UserProfileModalCommands.ShowProCTA -> {
                         data = data.copy(showProCTA = true)
                     }
                     UserProfileModalCommands.HideSessionProCTA -> {
@@ -552,6 +541,7 @@ private fun PreviewUPMQR(
                     tooltipText = "Some tooltip",
                     rawAddress = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
                     displayAddress = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
+                    threadId = 0L,
                     enableMessage = true,
                     expandedAvatar = false,
                     showQR = true,
@@ -570,20 +560,8 @@ private fun PreviewUPMQR(
 
         UserProfileModal(
             data = data,
-            sendCommand = { command ->
-                when(command){
-                    UserProfileModalCommands.HideUserProfileModal -> {}
-                    UserProfileModalCommands.HideSessionProCTA -> {}
-                    UserProfileModalCommands.ToggleQR -> {
-                        data = data.copy(showQR = !data.showQR)
-                    }
-                    UserProfileModalCommands.ToggleAvatarExpand -> {
-                        data = data.copy(expandedAvatar = !data.expandedAvatar)
-                    }
-                    else -> {}
-
-                }
-            }
+            onDismissRequest = {},
+            sendCommand = {}
         )
     }
 }
@@ -604,6 +582,7 @@ private fun PreviewUPMCTA(
                 tooltipText = "Some tooltip",
                 rawAddress = "158342146b...c6ed734na5",
                 displayAddress = "158342146b...c6ed734na5",
+                threadId = 0L,
                 enableMessage = false,
                 expandedAvatar = true,
                 showQR = false,
@@ -617,6 +596,7 @@ private fun PreviewUPMCTA(
                     )
                 )
             ),
+            onDismissRequest = {},
             sendCommand = {}
         )
     }
