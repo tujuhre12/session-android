@@ -1,8 +1,9 @@
 package org.thoughtcrime.securesms.ui
 
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -28,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -40,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.thoughtcrime.securesms.ui.components.Avatar
+import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.components.SlimAccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.SlimOutlineCopyButton
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -53,6 +57,7 @@ import org.thoughtcrime.securesms.ui.theme.primaryRed
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun UserProfileModal(
     data: UserProfileModalData,
@@ -66,102 +71,11 @@ fun UserProfileModal(
         showCloseButton = true,
         title = null as AnnotatedString?,
         content = {
-            // avatar
-            val scaleSpec: AnimationSpec<Dp> = tween(
-                durationMillis = 300,
-                delayMillis = 0
+            // avatar / QR
+            UserProfileModalAvatarQR(
+                data = data,
+                sendCommand = sendCommand
             )
-
-            val animatedAvatarSize by animateDpAsState(
-                targetValue = if (data.expandedAvatar) {
-                    LocalDimensions.current.iconXXLargeAvatar
-                } else {
-                    LocalDimensions.current.iconXXLarge
-                },
-                animationSpec = scaleSpec,
-                label = "avatar_size_animation"
-            )
-
-            val animatedBadgeSize by animateDpAsState(
-                targetValue = if (data.expandedAvatar) {
-                    LocalDimensions.current.iconLargeAvatar
-                } else {
-                    LocalDimensions.current.iconMedium
-                },
-                animationSpec = scaleSpec,
-                label = "badge_size_animation"
-            )
-
-            // animating the inner padding of the badge otherwise the icon looks too big within the background
-            val animatedBadgeInnerPadding by animateDpAsState(
-                targetValue = if (data.expandedAvatar) {
-                    LocalDimensions.current.xxsSpacing
-                } else {
-                    5.dp
-                },
-                animationSpec = scaleSpec,
-                label = "badge_inner_pd_animation"
-            )
-
-            // animating the end padding of the badge to keep it touching the avatar
-            val animatedBadgeEndPadding by animateDpAsState(
-                targetValue = if (data.expandedAvatar) {
-                    LocalDimensions.current.smallSpacing
-                } else {
-                    0.dp
-                },
-                animationSpec = scaleSpec,
-                label = "badge_inner_pd_animation"
-            )
-
-            Box(
-                modifier = Modifier
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null // the ripple doesn't look nice as a square with the plus icon on top too
-                    ) {
-                        sendCommand(UserProfileModalCommands.ToggleAvatarExpand)
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                // avatar and qr code
-
-                Avatar(
-                    size = animatedAvatarSize,
-                    data = data.avatarUIData
-                )
-
-                // qr/avatar button switch
-                Crossfade(
-                    modifier = Modifier.align(Alignment.TopEnd)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null // the ripple doesn't look nice as a square with the plus icon on top too
-                        ) {
-                            sendCommand(UserProfileModalCommands.ToggleQR)
-                        }
-                        .padding(end = animatedBadgeEndPadding),
-                    targetState = data.showQR,
-                    animationSpec = tween(durationMillis = 300),
-                    label = "icon_crossfade"
-                ) { showQR ->
-                    Image(
-                        modifier = Modifier
-                            .size(animatedBadgeSize)
-                            .background(
-                                shape = CircleShape,
-                                color = LocalColors.current.accent
-                            )
-                            .padding(animatedBadgeInnerPadding),
-                        painter = painterResource(id = when(showQR){
-                            true -> R.drawable.ic_user_filled_custom
-                            false -> R.drawable.ic_qr_code
-                        }),
-                        contentDescription = null,
-                        colorFilter = ColorFilter.tint(Color.Black)
-                    )
-                }
-            }
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
@@ -236,7 +150,7 @@ fun UserProfileModal(
 
                 Text(
                     modifier = accountIdModifier,
-                    text = data.address,
+                    text = data.displayAddress,
                     textAlign = TextAlign.Center,
                     style = LocalType.current.base.monospace(),
                     color = LocalColors.current.text
@@ -339,11 +253,198 @@ fun UserProfileModal(
     }
 }
 
+@Composable
+fun UserProfileModalAvatarQR(
+    data: UserProfileModalData,
+    sendCommand: (UserProfileModalCommands) -> Unit
+){
+    val animationSpec = tween<Dp>(
+        durationMillis = 400,
+        easing = androidx.compose.animation.core.FastOutSlowInEasing
+    )
+
+    val animationSpecFast = tween<Float>(
+        durationMillis = 200,
+        easing = androidx.compose.animation.core.FastOutSlowInEasing
+    )
+
+    val targetSize = when {
+        data.showQR -> LocalDimensions.current.iconXXLargeAvatar
+        data.expandedAvatar -> LocalDimensions.current.iconXXLargeAvatar
+        else -> LocalDimensions.current.iconXXLarge
+    }
+
+    val animatedSize by animateDpAsState(
+        targetValue = targetSize,
+        animationSpec = animationSpec,
+        label = "unified_size"
+    )
+
+    val animatedCornerRadius by animateDpAsState(
+        targetValue = if (data.showQR) {
+            LocalDimensions.current.shapeSmall
+        } else {
+            animatedSize / 2 // round shape
+        },
+        animationSpec = animationSpec,
+        label = "corner_radius"
+    )
+
+    // Scale animations for content
+    val avatarScale by animateFloatAsState(
+        targetValue = if (data.showQR) 0.8f else 1f,
+        animationSpec = animationSpecFast,
+        label = "avatar_scale"
+    )
+
+    val qrScale by animateFloatAsState(
+        targetValue = if (data.showQR) 1f else 0.8f,
+        animationSpec = animationSpecFast,
+        label = "qr_scale"
+    )
+
+    val avatarAlpha by animateFloatAsState(
+        targetValue = if (data.showQR) 0f else 1f,
+        animationSpec = animationSpecFast,
+        label = "avatar_alpha"
+    )
+
+    val qrAlpha by animateFloatAsState(
+        targetValue = if (data.showQR) 1f else 0f,
+        animationSpec = animationSpecFast,
+        label = "qr_alpha"
+    )
+
+    // Badge animations
+    val badgeSize by animateDpAsState(
+        targetValue = if (data.expandedAvatar || data.showQR) {
+            30.dp
+        } else {
+            LocalDimensions.current.iconMedium
+        },
+        animationSpec = animationSpec
+    )
+
+    // animating the inner padding of the badge otherwise the icon looks too big within the background
+    val animatedBadgeInnerPadding by animateDpAsState(
+        targetValue = if (data.expandedAvatar) {
+            LocalDimensions.current.xxsSpacing
+        } else {
+            5.dp
+        },
+        animationSpec = animationSpec,
+        label = "badge_inner_pd_animation"
+    )
+
+    val badgeEndPadding by animateDpAsState(
+        targetValue = if(data.showQR) 0.dp
+        else if (data.expandedAvatar) {
+            LocalDimensions.current.contentSpacing
+        } else {
+            0.dp
+        },
+        animationSpec = animationSpec
+    )
+
+    Box(
+        contentAlignment = Alignment.Center
+    ) {
+        // Main container
+        Box(
+            modifier = Modifier
+                .size(animatedSize)
+                .background(
+                    color = if (data.showQR) Color.White else Color.Transparent,
+                    shape = RoundedCornerShape(animatedCornerRadius)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            // Avatar with scale and alpha
+            Avatar(
+                modifier = Modifier
+                    .size(animatedSize)
+                    .graphicsLayer(
+                        alpha = avatarAlpha,
+                        scaleX = avatarScale,
+                        scaleY = avatarScale
+                    )
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) {
+                        sendCommand(UserProfileModalCommands.ToggleAvatarExpand)
+                    },
+                size = animatedSize,
+                data = data.avatarUIData
+            )
+
+            // QR with scale and alpha
+            Box(
+                modifier = Modifier
+                    .size(animatedSize)
+                    .graphicsLayer(
+                        alpha = qrAlpha,
+                        scaleX = qrScale,
+                        scaleY = qrScale
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                QrImage(
+                    string = data.rawAddress,
+                    modifier = Modifier
+                        .size(animatedSize)
+                        .qaTag(R.string.AccessibilityId_qrCode),
+                    icon = R.drawable.session
+                )
+            }
+        }
+
+        // Badge
+        Box(
+            modifier = Modifier.size(animatedSize)
+        ) {
+            Crossfade(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) {
+                        sendCommand(UserProfileModalCommands.ToggleQR)
+                    }
+                    .padding(end = badgeEndPadding),
+                targetState = data.showQR,
+                animationSpec = tween(durationMillis = 200),
+                label = "badge_icon"
+            ) { showQR ->
+                Image(
+                    modifier = Modifier
+                        .size(badgeSize)
+                        .background(
+                            shape = CircleShape,
+                            color = LocalColors.current.accent
+                        )
+                        .padding(animatedBadgeInnerPadding),
+                    painter = painterResource(
+                        id = when (showQR) {
+                            true -> R.drawable.ic_user_filled_custom
+                            false -> R.drawable.ic_qr_code
+                        }
+                    ),
+                    contentDescription = null,
+                    colorFilter = ColorFilter.tint(Color.Black)
+                )
+            }
+        }
+    }
+}
+
 data class UserProfileModalData(
     val name: String,
     val subtitle: String?,
     val isPro: Boolean,
-    val address: String,
+    val rawAddress: String,
+    val displayAddress: String,
     val isBlinded: Boolean,
     val tooltipText: String?,
     val enableMessage: Boolean,
@@ -375,7 +476,8 @@ private fun PreviewUPM(
                     isPro = false,
                     isBlinded = false,
                     tooltipText = "Some tooltip",
-                    address = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
+                    rawAddress = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
+                    displayAddress = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
                     enableMessage = false,
                     expandedAvatar = false,
                     showQR = false,
@@ -426,7 +528,8 @@ private fun PreviewUPMQR(
                     isPro = false,
                     isBlinded = true,
                     tooltipText = "Some tooltip",
-                    address = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
+                    rawAddress = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
+                    displayAddress = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
                     enableMessage = true,
                     expandedAvatar = false,
                     showQR = true,
@@ -476,7 +579,8 @@ private fun PreviewUPMCTA(
                 isPro = false,
                 isBlinded = true,
                 tooltipText = "Some tooltip",
-                address = "158342146b...c6ed734na5",
+                rawAddress = "158342146b...c6ed734na5",
+                displayAddress = "158342146b...c6ed734na5",
                 enableMessage = false,
                 expandedAvatar = true,
                 showQR = false,
