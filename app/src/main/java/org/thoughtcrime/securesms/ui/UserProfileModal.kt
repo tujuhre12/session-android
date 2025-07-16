@@ -95,7 +95,17 @@ fun UserProfileModal(
                 )
 
                 if(data.isPro) {
+                    // if the current user (not the user whose profile this is) is not Pro
+                    // then they should see the CTA when tapping the badge
+                    var proBadgeModifier: Modifier = Modifier
+                    if(!data.currentUserPro){
+                        proBadgeModifier = proBadgeModifier.clickable {
+                            sendCommand(UserProfileModalCommands.ShowUserProfileModal)
+                        }
+                    }
+
                     Image(
+                        modifier = proBadgeModifier,
                         painter = painterResource(id = R.drawable.ic_pro_badge),
                         contentScale = ContentScale.FillHeight,
                         contentDescription = NonTranslatableStringConstants.APP_PRO,
@@ -446,6 +456,7 @@ data class UserProfileModalData(
     val name: String,
     val subtitle: String?,
     val isPro: Boolean,
+    val currentUserPro: Boolean,
     val rawAddress: String,
     val displayAddress: String,
     val isBlinded: Boolean,
@@ -458,6 +469,7 @@ data class UserProfileModalData(
 )
 
 sealed interface UserProfileModalCommands {
+    object ShowUserProfileModal: UserProfileModalCommands
     object HideUserProfileModal: UserProfileModalCommands
     object HideSessionProCTA: UserProfileModalCommands
     object CopyAccountId: UserProfileModalCommands
@@ -476,7 +488,8 @@ private fun PreviewUPM(
                 UserProfileModalData(
                     name = "Atreyu",
                     subtitle = "(Neverending)",
-                    isPro = false,
+                    isPro = true,
+                    currentUserPro = false,
                     isBlinded = false,
                     tooltipText = "Some tooltip",
                     rawAddress = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
@@ -502,7 +515,12 @@ private fun PreviewUPM(
             sendCommand = { command ->
                 when(command){
                     UserProfileModalCommands.HideUserProfileModal -> {}
-                    UserProfileModalCommands.HideSessionProCTA -> {}
+                    UserProfileModalCommands.ShowUserProfileModal -> {
+                        data = data.copy(showProCTA = true)
+                    }
+                    UserProfileModalCommands.HideSessionProCTA -> {
+                        data = data.copy(showProCTA = false)
+                    }
                     UserProfileModalCommands.ToggleQR -> {
                         data = data.copy(showQR = !data.showQR)
                     }
@@ -529,6 +547,7 @@ private fun PreviewUPMQR(
                     name = "Atreyu",
                     subtitle = "(Neverending)",
                     isPro = false,
+                    currentUserPro = false,
                     isBlinded = true,
                     tooltipText = "Some tooltip",
                     rawAddress = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
@@ -580,6 +599,7 @@ private fun PreviewUPMCTA(
                 name = "Atreyu",
                 subtitle = "(Neverending)",
                 isPro = false,
+                currentUserPro = false,
                 isBlinded = true,
                 tooltipText = "Some tooltip",
                 rawAddress = "158342146b...c6ed734na5",
