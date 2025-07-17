@@ -149,6 +149,7 @@ fun SessionOutlinedTextField(
     maxLines: Int = if (singleLine) 1 else Int.MAX_VALUE,
     minLines: Int = 1,
     showClear: Boolean = false,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default.copy(imeAction = if (singleLine) ImeAction.Done else ImeAction.Default)
 ) {
     // in order to allow the cursor to be at the end of the text by default
     // we need o handle the TextFieldValue manually here
@@ -174,9 +175,7 @@ fun SessionOutlinedTextField(
             color = if (enabled) LocalColors.current.text(isTextErrorColor) else LocalColors.current.textSecondary),
         cursorBrush = SolidColor(LocalColors.current.text(isTextErrorColor)),
         enabled = enabled,
-        keyboardOptions = KeyboardOptions.Default.copy(
-            imeAction = if (singleLine) ImeAction.Done else ImeAction.Default
-        ),
+        keyboardOptions = keyboardOptions,
 
         keyboardActions = KeyboardActions(
             onDone = { onContinue() },

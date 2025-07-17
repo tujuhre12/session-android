@@ -24,6 +24,7 @@ import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.InputbarViewModel
 import org.thoughtcrime.securesms.InputbarViewModel.InputBarContentState
+import org.thoughtcrime.securesms.conversation.v2.ViewUtil
 import org.thoughtcrime.securesms.conversation.v2.components.LinkPreviewDraftView
 import org.thoughtcrime.securesms.conversation.v2.components.LinkPreviewDraftViewDelegate
 import org.thoughtcrime.securesms.conversation.v2.messages.QuoteView
@@ -248,6 +249,10 @@ class InputBar @JvmOverloads constructor(
         if (linkPreview != null && linkPreviewDraftView != null) {
             binding.inputBarAdditionalContentContainer.addView(linkPreviewDraftView)
         }
+
+        // focus the text and show keyboard
+        ViewUtil.focusAndShowKeyboard(binding.inputBarEditText)
+
         requestLayout()
     }
 
