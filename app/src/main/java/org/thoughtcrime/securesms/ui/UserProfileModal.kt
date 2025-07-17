@@ -81,9 +81,6 @@ fun UserProfileModal(
     sendCommand: (UserProfileModalCommands) -> Unit,
     onDismissRequest: () -> Unit,
 ){
-    //todo UPM tooltip not at the right place
-    //todo UPM differentiate between blinded and resolved
-
     // the user profile modal
     AlertDialog(
         onDismissRequest = onDismissRequest,
@@ -172,6 +169,10 @@ fun UserProfileModal(
             Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
 
             Row {
+                if(!data.tooltipText.isNullOrEmpty()){
+                    Spacer(modifier = Modifier.width(LocalDimensions.current.spacing))
+                }
+
                 Text(
                     modifier = Modifier.weight(1f, fill = false)
                         .qaTag(R.string.qa_conversation_settings_account_id),

@@ -11,11 +11,13 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.recipients.Recipient
@@ -33,7 +35,8 @@ class UserProfileUtils @AssistedInject constructor(
     @Assisted private val scope: CoroutineScope,
     private val avatarUtils: AvatarUtils,
     private val configFactory: ConfigFactoryProtocol,
-    private val proStatusManager: ProStatusManager
+    private val proStatusManager: ProStatusManager,
+    private val storage: StorageProtocol
 ) {
     private val _userProfileModalData: MutableStateFlow<UserProfileModalData?> = MutableStateFlow(null)
     val userProfileModalData: StateFlow<UserProfileModalData?>
@@ -42,20 +45,38 @@ class UserProfileUtils @AssistedInject constructor(
     init {
         Log.d("UserProfileUtils", "init")
 
-        scope.launch {
+        scope.launch(Dispatchers.Default) {
             _userProfileModalData.update { getDefaultProfileData() }
         }
     }
 
     private suspend fun getDefaultProfileData(): UserProfileModalData {
-        val address = recipient.address.toString()
+        var address = recipient.address.toString()
         val configContact = configFactory.withUserConfigs { configs ->
             configs.contacts.get(address)
         }
 
-        val isBlinded = IdPrefix.fromValue(address)?.isBlinded() == true
+        var isResolvedBlinded = false
 
-        val isResolvedBlinded = false //todo UPM implement
+        var isBlinded = IdPrefix.fromValue(address)?.isBlinded() == true
+
+        // if we have a blinded address, check if it can be resolved
+        if(isBlinded){
+            val openGroup = storage.getOpenGroup(threadId)
+            openGroup?.let {
+                val resolvedAddress = storage.getOrCreateBlindedIdMapping(
+                    address,
+                    it.server,
+                    it.publicKey
+                ).accountId
+
+                if (resolvedAddress != null) {
+                    address = resolvedAddress
+                    isResolvedBlinded = true
+                    isBlinded = false // no longer blinded
+                }
+            }
+        }
 
         // we apply the display rules from figma (the numbers being the number of characters):
         // - if the address is blinded (with a tooltip), display as 10...10
