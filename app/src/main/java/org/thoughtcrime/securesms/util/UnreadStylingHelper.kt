@@ -24,12 +24,8 @@ object UnreadStylingHelper {
         return when {
             unreadCount == 0 -> null
             unreadCount < 10000 -> unreadCount.toString()
-            else -> "9999+"
+            else -> "999+"
         }
-    }
-
-    fun getUnreadTextSize(unreadCount: Int): Float {
-        return if (unreadCount < 1000) 12.0f else 10.0f
     }
 
     fun getUnreadTypeface(isUnread: Boolean): Typeface {

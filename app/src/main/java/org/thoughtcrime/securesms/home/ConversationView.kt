@@ -70,15 +70,9 @@ class ConversationView : LinearLayout {
             binding.accentView.isVisible = isUnread
         }
 
-        binding.unreadCountTextView.apply {
-            text = UnreadStylingHelper.formatUnreadCount(unreadCount)
-            setTextSize(
-                TypedValue.COMPLEX_UNIT_DIP,
-                UnreadStylingHelper.getUnreadTextSize(unreadCount)
-            )
-        }
+        binding.unreadCountTextView.text = UnreadStylingHelper.formatUnreadCount(unreadCount)
+
         binding.unreadCountIndicator.isVisible = (isUnread) || (configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(thread) })
-        binding.unreadMentionTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, UnreadStylingHelper.getUnreadTextSize(unreadCount))
         binding.unreadMentionIndicator.isVisible = (thread.unreadMentionCount != 0 && thread.recipient.address.isGroupOrCommunity)
 
         val senderDisplayName = getTitle(thread.recipient)

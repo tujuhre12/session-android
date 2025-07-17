@@ -53,13 +53,7 @@ class MessageRequestView : LinearLayout {
             isVisible = isUnread
         }
 
-        binding.unreadCountTextView.apply {
-            text = UnreadStylingHelper.formatUnreadCount(unreadCount)
-            setTextSize(
-                TypedValue.COMPLEX_UNIT_DIP,
-                UnreadStylingHelper.getUnreadTextSize(unreadCount)
-            )
-        }
+        binding.unreadCountTextView.text = UnreadStylingHelper.formatUnreadCount(unreadCount)
         binding.unreadCountIndicator.isVisible =  isUnread
 
         binding.displayNameTextView.text = senderDisplayName
