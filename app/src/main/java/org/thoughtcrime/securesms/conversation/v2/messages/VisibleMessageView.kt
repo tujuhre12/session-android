@@ -208,6 +208,9 @@ class VisibleMessageView : FrameLayout {
                 binding.profilePictureView.setOnClickListener {
                     delegate?.showUserProfileModal(message.recipient)
                 }
+                binding.senderNameTextView.setOnClickListener {
+                    delegate?.showUserProfileModal(message.recipient)
+                }
                 if (thread.isCommunityRecipient) {
                     val openGroup = lokiThreadDb.getOpenGroupChat(threadID) ?: return
                     var standardPublicKey = ""

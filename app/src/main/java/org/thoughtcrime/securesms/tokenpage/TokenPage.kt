@@ -34,7 +34,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -66,11 +68,11 @@ import org.session.libsession.utilities.StringSubstitutionConstants.TOKEN_NAME_L
 import org.session.libsession.utilities.StringSubstitutionConstants.TOKEN_NAME_SHORT_KEY
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
-import org.thoughtcrime.securesms.ui.SimplePopup
+import org.thoughtcrime.securesms.ui.SpeechBubbleTooltip
+import org.thoughtcrime.securesms.ui.components.AccentOutlineButtonRect
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.BlurredImage
 import org.thoughtcrime.securesms.ui.components.CircularProgressIndicator
-import org.thoughtcrime.securesms.ui.components.AccentOutlineButtonRect
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.components.iconExternalLink
@@ -458,6 +460,7 @@ fun getNodeImageForSwarmSize(numNodesInOurSwarm: Int): Pair<Int, Int> {
 // Stats section that shows the number of nodes in your swarm (along with a visual representation), the
 // number of nodes securing your messages, the current SENT token price, and the total USD value securing
 // the network.
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StatsSection(
     currentSessionNodesInSwarm: Int,
@@ -534,27 +537,44 @@ fun StatsSection(
                 }
                 .height(if (cellHeight > 0.dp) cellHeight else androidx.compose.ui.unit.Dp.Unspecified)
         ) {
-            // Mutable state to keep track of whether we should display the "Price data powered by CoinGecko" popup
-            var shouldDisplayPopup by remember { mutableStateOf(false) }
-
             Box(
                 modifier = Modifier
                     .padding(LocalDimensions.current.xxxsSpacing)
                     .size(15.dp)
                     .align(Alignment.TopEnd)
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.ic_circle_help),
-                    contentDescription = null,
-                    colorFilter = ColorFilter.tint(LocalColors.current.text), // Tint the question mark icon to be our text colour (typically white)
-                    modifier = Modifier
-                        .size(15.dp)
-                        .clickable { shouldDisplayPopup = true }
-                        .qaTag("Tooltip")
-                )
+                var displayTooltip by remember { mutableStateOf(false) }
+                val tooltipState = rememberTooltipState(isPersistent = true)
 
-                if (shouldDisplayPopup) {
-                    PriceDataSourcePopup(priceDataPopupText, onDismiss = { shouldDisplayPopup = false })
+                // Show/hide tooltip based on state
+                LaunchedEffect(displayTooltip) {
+                    if (displayTooltip) {
+                        tooltipState.show()
+                    } else {
+                        tooltipState.dismiss()
+                    }
+                }
+
+                // Handle tooltip dismissal
+                LaunchedEffect(tooltipState.isVisible) {
+                    if (!tooltipState.isVisible && displayTooltip) {
+                        displayTooltip = false
+                    }
+                }
+
+                SpeechBubbleTooltip(
+                    text = priceDataPopupText,
+                    tooltipState = tooltipState
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_circle_help),
+                        contentDescription = null,
+                        colorFilter = ColorFilter.tint(LocalColors.current.text),
+                        modifier = Modifier
+                            .size(LocalDimensions.current.iconXSmall)
+                            .clickable { displayTooltip = !displayTooltip }
+                            .qaTag("Tooltip")
+                    )
                 }
             }
         }
@@ -710,29 +730,6 @@ fun SessionTokenSection(
                 onDismissRequest = { showTheOpenUrlModal = false }
             )
         }
-    }
-}
-
-// Pop-up that displays the source of the price data and when we obtained that data
-@Composable
-fun PriceDataSourcePopup(
-    priceDataPopupText: String,
-    onDismiss: () -> Unit
-) {
-    SimplePopup(
-        onDismiss = onDismiss
-    ) {
-        Text(
-            text = priceDataPopupText,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .padding(
-                    horizontal = LocalDimensions.current.smallSpacing,
-                    vertical = LocalDimensions.current.xxsSpacing
-                )
-                .qaTag("Tooltip info"),
-            style = LocalType.current.small
-        )
     }
 }
 

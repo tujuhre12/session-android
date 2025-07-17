@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -47,6 +48,9 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipState
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -55,7 +59,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
@@ -86,6 +89,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntOffset
@@ -93,7 +97,6 @@ import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideSubcomposition
@@ -104,14 +107,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
-import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel
-import org.thoughtcrime.securesms.openUrl
-import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.TertiaryFillButtonRect
 import org.thoughtcrime.securesms.ui.components.TitledRadioButton
+import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -1101,42 +1102,51 @@ fun LoadingArcOr(loading: Boolean, content: @Composable () -> Unit) {
     }
 }
 
-@Composable
-fun SimplePopup(
-    arrowSize: DpSize = DpSize(
-        LocalDimensions.current.smallSpacing,
-        LocalDimensions.current.xsSpacing
-    ),
-    onDismiss: () -> Unit,
-    content: @Composable () -> Unit
-) {
-    val popupBackgroundColour = LocalColors.current.backgroundBubbleReceived
 
-    Popup(
-        popupPositionProvider = AboveCenterPositionProvider(),
-        onDismissRequest = onDismiss
-    ) {
-        Box(
-            modifier = Modifier.clickable { onDismiss() },
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = CenterHorizontally
-            ) {
-                // Speech bubble card
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SpeechBubbleTooltip(
+    text: CharSequence,
+    modifier: Modifier = Modifier,
+    tooltipState: TooltipState = rememberTooltipState(),
+    arrowSize: DpSize = DpSize(12.dp, 6.dp),
+    content: @Composable () -> Unit,
+) {
+    val density = LocalDensity.current
+
+    TooltipBox(
+        state = tooltipState,
+        modifier = modifier,
+        positionProvider = remember {
+            CenterAbovePositionProvider(
+                density = density,
+                arrowWidthPx = with(density) { arrowSize.width.roundToPx() }
+            )
+        },
+        tooltip = {
+            val color = LocalColors.current.backgroundBubbleReceived
+
+            // speech bubble + caret
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Card(
-                    shape = RoundedCornerShape(LocalDimensions.current.spacing),
-                    colors = CardDefaults.cardColors(
-                        containerColor = popupBackgroundColour
-                    ),
-                    elevation = CardDefaults.elevatedCardElevation(4.dp)
+                    shape = RoundedCornerShape(8.dp),
+                    colors = CardDefaults.cardColors(containerColor = color),
+                    elevation = CardDefaults.elevatedCardElevation(4.dp),
                 ) {
-                    content()
+                    Text(
+                        text = annotatedStringResource(text),
+                        modifier = Modifier.padding(8.dp),
+                        style = LocalType.current.small,
+                        color = LocalColors.current.text
+                    )
                 }
 
-                // Triangle below the card to make it look like a speech bubble
+                // arrow
+                val arrowShift = with(density) { ArrowOffsetHolder.current.toDp() }
                 Canvas(
-                    modifier = Modifier.size(arrowSize)
+                    modifier = Modifier
+                        .offset(x = arrowShift)      // fine-tune caret horizontally
+                        .size(arrowSize)
                 ) {
                     val path = Path().apply {
                         moveTo(0f, 0f)
@@ -1144,32 +1154,55 @@ fun SimplePopup(
                         lineTo(size.width / 2, size.height)
                         close()
                     }
-                    drawPath(
-                        path = path,
-                        color = popupBackgroundColour
-                    )
+                    drawPath(path, color = color)
                 }
             }
         }
+    ) {
+        content()
     }
 }
 
-/**
- * Positions the popup above/centered from its parent
- */
-class AboveCenterPositionProvider() : PopupPositionProvider {
+
+object ArrowOffsetHolder {
+    var current: Int = 0
+}
+
+
+class CenterAbovePositionProvider(
+    private val density: Density,
+    private val arrowWidthPx: Int
+) : PopupPositionProvider {
+
     override fun calculatePosition(
         anchorBounds: IntRect,
         windowSize: IntSize,
         layoutDirection: LayoutDirection,
-        popupContentSize: IntSize
+        popupContentSize: IntSize,
     ): IntOffset {
-        return IntOffset(
-            anchorBounds.topCenter.x - (popupContentSize.width / 2),
-            anchorBounds.topCenter.y - popupContentSize.height
-        )
+        // 1.  Anchor centre in window coordinates
+        val anchorCx = anchorBounds.left + anchorBounds.width / 2
+
+        // 2.  Attempt to centre bubble on that X
+        var bubbleLeft = anchorCx - popupContentSize.width / 2
+
+        // 3.  Clamp so the bubble stays on-screen
+        bubbleLeft = bubbleLeft.coerceIn(0, windowSize.width - popupContentSize.width)
+
+        // 4.  Place bubble *above* the anchor
+        val bubbleTop = anchorBounds.top - popupContentSize.height
+
+        // Save the arrow offset in Density-local coordinates so
+        // the Composable that draws the arrow can read it via
+        // LocalView.current or a CompositionLocal
+        val arrowDx = anchorCx - (bubbleLeft + popupContentSize.width / 2)
+        ArrowOffsetHolder.current = arrowDx // see § 3
+
+        return IntOffset(bubbleLeft, bubbleTop)
     }
 }
+
+
 
 @Composable
 fun SearchBar(

@@ -8,6 +8,7 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateOffsetAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,8 +25,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,14 +51,14 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
-import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2.Companion.THREAD_ID
+import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2.Companion.ADDRESS
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.components.SlimAccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.SlimOutlineCopyButton
-import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -68,13 +72,18 @@ import org.thoughtcrime.securesms.util.AvatarUIElement
 import org.thoughtcrime.securesms.util.UserProfileModalCommands
 import org.thoughtcrime.securesms.util.UserProfileModalData
 
-@OptIn(ExperimentalAnimationApi::class)
+@OptIn(ExperimentalAnimationApi::class, ExperimentalMaterial3Api::class,
+    ExperimentalFoundationApi::class
+)
 @Composable
 fun UserProfileModal(
     data: UserProfileModalData,
     sendCommand: (UserProfileModalCommands) -> Unit,
     onDismissRequest: () -> Unit,
 ){
+    //todo UPM tooltip not at the right place
+    //todo UPM differentiate between blinded and resolved
+
     // the user profile modal
     AlertDialog(
         onDismissRequest = onDismissRequest,
@@ -147,7 +156,7 @@ fun UserProfileModal(
                             horizontal = LocalDimensions.current.smallSpacing,
                             vertical = LocalDimensions.current.xxxsSpacing
                         )
-                        ,
+                    ,
                     text = if(data.isBlinded) stringResource(R.string.blindedId) else stringResource(R.string.accountId),
                     style = LocalType.current.small.copy(color = LocalColors.current.textSecondary)
                 )
@@ -163,13 +172,9 @@ fun UserProfileModal(
             Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
 
             Row {
-                var accountIdModifier = Modifier.qaTag(R.string.qa_conversation_settings_account_id).weight(1f)
-                if(!data.tooltipText.isNullOrEmpty()){
-                    accountIdModifier = accountIdModifier.padding(horizontal = LocalDimensions.current.xsSpacing)
-                }
-
                 Text(
-                    modifier = accountIdModifier,
+                    modifier = Modifier.weight(1f, fill = false)
+                        .qaTag(R.string.qa_conversation_settings_account_id),
                     text = data.displayAddress,
                     textAlign = TextAlign.Center,
                     style = LocalType.current.base.monospace(),
@@ -178,10 +183,29 @@ fun UserProfileModal(
 
                 if(!data.tooltipText.isNullOrEmpty()){
                     var displayTooltip by remember { mutableStateOf(false) }
+                    val tooltipState = rememberTooltipState(isPersistent = true)
 
-                    Box(
-                        modifier = Modifier
-                            .size(LocalDimensions.current.iconXSmall)
+                    // Show/hide tooltip based on state
+                    LaunchedEffect(displayTooltip) {
+                        if (displayTooltip) {
+                            tooltipState.show()
+                        } else {
+                            tooltipState.dismiss()
+                        }
+                    }
+
+                    // Handle tooltip dismissal
+                    LaunchedEffect(tooltipState.isVisible) {
+                        if (!tooltipState.isVisible && displayTooltip) {
+                            displayTooltip = false
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(LocalDimensions.current.xsSpacing))
+
+                    SpeechBubbleTooltip(
+                        text = data.tooltipText,
+                        tooltipState = tooltipState
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.ic_circle_help),
@@ -189,27 +213,9 @@ fun UserProfileModal(
                             colorFilter = ColorFilter.tint(LocalColors.current.text),
                             modifier = Modifier
                                 .size(LocalDimensions.current.iconXSmall)
-                                .clickable { displayTooltip = true }
+                                .clickable { displayTooltip = !displayTooltip }
                                 .qaTag("Tooltip")
                         )
-
-                        if (displayTooltip) {
-                            SimplePopup(
-                                onDismiss = { displayTooltip = false }
-                            ) {
-                                Text(
-                                    text = annotatedStringResource(data.tooltipText),
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier
-                                        .padding(
-                                            horizontal = LocalDimensions.current.smallSpacing,
-                                            vertical = LocalDimensions.current.xxsSpacing
-                                        )
-                                        .qaTag("Tooltip info"),
-                                    style = LocalType.current.small
-                                )
-                            }
-                        }
                     }
                 }
             }
@@ -238,7 +244,7 @@ fun UserProfileModal(
 
                         // open conversation with user
                         context.startActivity(Intent(context, ConversationActivityV2::class.java)
-                            .putExtra(THREAD_ID, data.threadId)
+                            .putExtra(ADDRESS, Address.fromSerialized(data.rawAddress))
                         )
                     }
                 )
@@ -479,9 +485,9 @@ private fun PreviewUPM(
                     isPro = true,
                     currentUserPro = false,
                     isBlinded = false,
-                    tooltipText = "Some tooltip",
+                    tooltipText = null,
                     rawAddress = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
-                    displayAddress = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
+                    displayAddress = "123456789112345678911234567891123\n123456789112345678911234567891123",
                     threadId = 0L,
                     enableMessage = false,
                     expandedAvatar = false,
@@ -526,13 +532,73 @@ private fun PreviewUPM(
 
 @Preview
 @Composable
+private fun PreviewUPMResolved(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+) {
+    PreviewTheme(colors) {
+        var data by remember {
+            mutableStateOf(
+                UserProfileModalData(
+                    name = "Atreyu",
+                    subtitle = "(Neverending)",
+                    isPro = true,
+                    currentUserPro = false,
+                    isBlinded = false,
+                    tooltipText = "Some tooltip text that is long and should break into multiple line if necessary",
+                    rawAddress = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
+                    displayAddress = "12345678911234567891123\n45678911231234567891123\n45678911234567891123",
+                    threadId = 0L,
+                    enableMessage = false,
+                    expandedAvatar = false,
+                    showQR = false,
+                    showProCTA = false,
+                    avatarUIData = AvatarUIData(
+                        listOf(
+                            AvatarUIElement(
+                                name = "TO",
+                                color = primaryRed
+                            )
+                        )
+                    )
+                )
+            )
+        }
+
+        UserProfileModal(
+            data = data,
+            onDismissRequest = {},
+            sendCommand = { command ->
+                when(command){
+                    UserProfileModalCommands.ShowProCTA -> {
+                        data = data.copy(showProCTA = true)
+                    }
+                    UserProfileModalCommands.HideSessionProCTA -> {
+                        data = data.copy(showProCTA = false)
+                    }
+                    UserProfileModalCommands.ToggleQR -> {
+                        data = data.copy(showQR = !data.showQR)
+                    }
+                    UserProfileModalCommands.ToggleAvatarExpand -> {
+                        data = data.copy(expandedAvatar = !data.expandedAvatar)
+                    }
+                    else -> {}
+
+                }
+            }
+        )
+    }
+}
+
+
+@Preview
+@Composable
 private fun PreviewUPMQR(
     @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
 ) {
     PreviewTheme(colors) {
         var data by remember {
             mutableStateOf(
-            UserProfileModalData(
+                UserProfileModalData(
                     name = "Atreyu",
                     subtitle = "(Neverending)",
                     isPro = false,
@@ -540,7 +606,7 @@ private fun PreviewUPMQR(
                     isBlinded = true,
                     tooltipText = "Some tooltip",
                     rawAddress = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
-                    displayAddress = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
+                    displayAddress = "1111111111...1111111111",
                     threadId = 0L,
                     enableMessage = true,
                     expandedAvatar = false,
