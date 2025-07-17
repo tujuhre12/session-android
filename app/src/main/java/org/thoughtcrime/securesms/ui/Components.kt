@@ -90,7 +90,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntOffset
@@ -1253,7 +1252,7 @@ fun SearchBar(
                         LocalColors.current.textSecondary
                     ),
                     modifier = Modifier
-                        .qaTag(R.string.qa_conversation_search_clear)
+                        .qaTag(R.string.qa_input_clear)
                         .padding(
                             horizontal = LocalDimensions.current.smallSpacing,
                             vertical = LocalDimensions.current.xxsSpacing
