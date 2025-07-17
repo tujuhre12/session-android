@@ -23,7 +23,7 @@ object UnreadStylingHelper {
     fun formatUnreadCount(unreadCount: Int): String? {
         return when {
             unreadCount == 0 -> null
-            unreadCount < 10000 -> unreadCount.toString()
+            unreadCount < 1000 -> unreadCount.toString()
             else -> "999+"
         }
     }
