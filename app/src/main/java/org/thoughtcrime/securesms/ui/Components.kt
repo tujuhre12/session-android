@@ -54,6 +54,7 @@ import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -1112,97 +1113,89 @@ fun SpeechBubbleTooltip(
     arrowSize: DpSize = DpSize(12.dp, 6.dp),
     content: @Composable () -> Unit,
 ) {
+    val arrowShiftPx = remember { mutableIntStateOf(0) }
     val density = LocalDensity.current
 
     TooltipBox(
         state = tooltipState,
         modifier = modifier,
         positionProvider = remember {
-            CenterAbovePositionProvider(
-                density = density,
-                arrowWidthPx = with(density) { arrowSize.width.roundToPx() }
-            )
+            CenterAbovePositionProvider { dxPx -> arrowShiftPx.value = dxPx }
         },
         tooltip = {
-            val color = LocalColors.current.backgroundBubbleReceived
+            val bubbleColor = LocalColors.current.backgroundBubbleReceived
 
-            // speech bubble + caret
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Card(
-                    shape = RoundedCornerShape(8.dp),
-                    colors = CardDefaults.cardColors(containerColor = color),
-                    elevation = CardDefaults.elevatedCardElevation(4.dp),
+                    shape = RoundedCornerShape(50.dp),
+                    colors = CardDefaults.cardColors(containerColor = bubbleColor),
+                    elevation = CardDefaults.elevatedCardElevation(4.dp)
                 ) {
                     Text(
                         text = annotatedStringResource(text),
-                        modifier = Modifier.padding(8.dp),
+                        modifier = Modifier.padding(
+                            horizontal = LocalDimensions.current.smallSpacing,
+                            vertical = LocalDimensions.current.xxsSpacing
+                        ),
                         style = LocalType.current.small,
                         color = LocalColors.current.text
                     )
                 }
 
-                // arrow
-                val arrowShift = with(density) { ArrowOffsetHolder.current.toDp() }
+                // Arrow / Caret
+                val arrowShiftDp = with(density) { arrowShiftPx.intValue.toDp() }
                 Canvas(
                     modifier = Modifier
-                        .offset(x = arrowShift)      // fine-tune caret horizontally
+                        .offset(x = arrowShiftDp)      // fine-tune horizontally
                         .size(arrowSize)
                 ) {
-                    val path = Path().apply {
-                        moveTo(0f, 0f)
-                        lineTo(size.width, 0f)
-                        lineTo(size.width / 2, size.height)
-                        close()
-                    }
-                    drawPath(path, color = color)
+                    drawPath(
+                        path = Path().apply {
+                            moveTo(0f, 0f)
+                            lineTo(size.width, 0f)
+                            lineTo(size.width / 2, size.height)
+                            close()
+                        },
+                        color = bubbleColor
+                    )
                 }
             }
         }
     ) {
-        content()
+        content()   // the anchor
     }
 }
 
-
-object ArrowOffsetHolder {
-    var current: Int = 0
-}
-
-
 class CenterAbovePositionProvider(
-    private val density: Density,
-    private val arrowWidthPx: Int
+    private val onArrowOffsetComputed: (Int) -> Unit
 ) : PopupPositionProvider {
 
     override fun calculatePosition(
         anchorBounds: IntRect,
         windowSize: IntSize,
         layoutDirection: LayoutDirection,
-        popupContentSize: IntSize,
+        popupContentSize: IntSize
     ): IntOffset {
-        // 1.  Anchor centre in window coordinates
-        val anchorCx = anchorBounds.left + anchorBounds.width / 2
 
-        // 2.  Attempt to centre bubble on that X
+        val anchorCx = anchorBounds.left + anchorBounds.width / 2
         var bubbleLeft = anchorCx - popupContentSize.width / 2
 
-        // 3.  Clamp so the bubble stays on-screen
-        bubbleLeft = bubbleLeft.coerceIn(0, windowSize.width - popupContentSize.width)
+        // Clamp to screen so it never sticks out horizontally
+        bubbleLeft = bubbleLeft.coerceIn(
+            0,
+            windowSize.width - popupContentSize.width
+        )
 
-        // 4.  Place bubble *above* the anchor
         val bubbleTop = anchorBounds.top - popupContentSize.height
 
-        // Save the arrow offset in Density-local coordinates so
-        // the Composable that draws the arrow can read it via
-        // LocalView.current or a CompositionLocal
-        val arrowDx = anchorCx - (bubbleLeft + popupContentSize.width / 2)
-        ArrowOffsetHolder.current = arrowDx // see § 3
+        // Tell the composable how far we nudged the bubble so it can
+        // shift the caret back by the same amount
+        val arrowDxPx = anchorCx - (bubbleLeft + popupContentSize.width / 2)
+        onArrowOffsetComputed(arrowDxPx)
 
         return IntOffset(bubbleLeft, bubbleTop)
     }
 }
-
-
 
 @Composable
 fun SearchBar(
