@@ -33,6 +33,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,6 +51,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.NonTranslatableStringConstants
@@ -183,24 +185,8 @@ fun UserProfileModal(
                 )
 
                 if(!data.tooltipText.isNullOrEmpty()){
-                    var displayTooltip by remember { mutableStateOf(false) }
                     val tooltipState = rememberTooltipState(isPersistent = true)
-
-                    // Show/hide tooltip based on state
-                    LaunchedEffect(displayTooltip) {
-                        if (displayTooltip) {
-                            tooltipState.show()
-                        } else {
-                            tooltipState.dismiss()
-                        }
-                    }
-
-                    // Handle tooltip dismissal
-                    LaunchedEffect(tooltipState.isVisible) {
-                        if (!tooltipState.isVisible && displayTooltip) {
-                            displayTooltip = false
-                        }
-                    }
+                    val scope = rememberCoroutineScope()
 
                     Spacer(modifier = Modifier.width(LocalDimensions.current.xsSpacing))
 
@@ -214,7 +200,11 @@ fun UserProfileModal(
                             colorFilter = ColorFilter.tint(LocalColors.current.text),
                             modifier = Modifier
                                 .size(LocalDimensions.current.iconXSmall)
-                                .clickable { displayTooltip = !displayTooltip }
+                                .clickable {
+                                    scope.launch {
+                                        if (tooltipState.isVisible) tooltipState.dismiss() else tooltipState.show()
+                                    }
+                                }
                                 .qaTag("Tooltip")
                         )
                     }
