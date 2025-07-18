@@ -103,6 +103,7 @@ import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LargeItemButton
 import org.thoughtcrime.securesms.ui.LargeItemButtonWithDrawable
+import org.thoughtcrime.securesms.ui.LoadingDialog
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.components.AcccentOutlineCopyButton
 import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
@@ -253,12 +254,6 @@ class SettingsActivity : ScreenLockActionBarActivity() {
             )
         }
 
-        lifecycleScope.launch {
-            viewModel.uiState.collect {
-                binding.loader.isVisible = it.showLoader
-            }
-        }
-
         binding.sentLogoImageView.setSafeOnClickListener {
             viewModel.showUrlDialog("https://token.getsession.org")
         }
@@ -343,8 +338,6 @@ class SettingsActivity : ScreenLockActionBarActivity() {
     }
 
     private fun updateDisplayName(displayName: String): Boolean {
-        binding.loader.isVisible = true
-
         // We'll assume we fail & flip the flag on success
         var updateWasSuccessful = false
 
@@ -364,7 +357,6 @@ class SettingsActivity : ScreenLockActionBarActivity() {
             Toast.makeText(this@SettingsActivity, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
         }
 
-        binding.loader.isVisible = false
         return updateWasSuccessful
     }
     // endregion
@@ -612,6 +604,11 @@ class SettingsActivity : ScreenLockActionBarActivity() {
         onGalleryPicked: () -> Unit,
         onCameraPicked: () -> Unit
     ){
+        // loading
+        if(uiState.showLoader) {
+            LoadingDialog()
+        }
+
         // dialog for the avatar
         if(uiState.showAvatarDialog) {
             AvatarDialogContainer()
@@ -855,10 +852,11 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                     onClick = viewModel::saveAvatar
                 ),
                 DialogButtonData(
-                    text = GetString(R.string.remove),
+                    text = GetString(if(state.avatarDialogState is TempAvatar) R.string.clear else R.string.remove),
                     color = LocalColors.current.danger,
                     enabled = state.avatarDialogState is UserAvatar || // can remove is the user has an avatar set
-                            (state.avatarDialogState is TempAvatar && state.avatarDialogState.hasAvatar),
+                            state.avatarDialogState is TempAvatar, // can clear a temp avatar
+                    dismissOnClick = false,
                     onClick = viewModel::removeAvatar
                 )
             )
