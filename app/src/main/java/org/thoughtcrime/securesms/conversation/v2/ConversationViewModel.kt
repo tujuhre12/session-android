@@ -42,7 +42,9 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ExpirationUtil
+import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
@@ -57,6 +59,7 @@ import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.InputbarViewModel
 import org.thoughtcrime.securesms.audio.AudioSlidePlayer
+import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
@@ -114,6 +117,7 @@ class ConversationViewModel @AssistedInject constructor(
     private val proStatusManager: ProStatusManager,
     private val recipientRepository: RecipientRepository,
     private val lokiThreadDatabase: LokiThreadDatabase,
+    private val blindMappingRepository: BlindMappingRepository,
 ) : InputbarViewModel(
     application = application,
     proStatusManager = proStatusManager
@@ -269,6 +273,18 @@ class ConversationViewModel @AssistedInject constructor(
                 _inputBarState.value = it
             }
         }
+
+        // If we are able to unblind a user, we will navigate to that convo instead
+        GroupUtil.getDecodedOpenGroupInboxID(address.address)?.let { (url, _, blindId) ->
+            viewModelScope.launch {
+                blindMappingRepository.observeMapping(url, blindId)
+                    .filterNotNull()
+                    .collect { contactId ->
+                        _uiEvents.emit(ConversationUiEvent.NavigateToConversation(contactId.toAddress()))
+                    }
+            }
+        }
+
     }
 
     /**
@@ -466,7 +482,7 @@ class ConversationViewModel @AssistedInject constructor(
                 Glide.with(application).load(it)
                     .avatarOptions(
                         sizePx = loadSize,
-                        freezeFrame = proStatusManager.freezeFrameForUser(recipient?.address)
+                        freezeFrame = proStatusManager.freezeFrameForUser(recipient.address)
                     )
                     .preload(loadSize, loadSize)
             }
@@ -536,7 +552,7 @@ class ConversationViewModel @AssistedInject constructor(
         }
     }
 
-    private fun buildMessageRequestState(recipient: Recipient?): MessageRequestUiState {
+    private fun buildMessageRequestState(recipient: Recipient): MessageRequestUiState {
         // The basic requirement of showing a message request is:
         // 1. The other party has not been approved by us, AND
         // 2. We haven't sent a message to them before (if we do, we would be the one requesting permission), AND
@@ -544,8 +560,6 @@ class ConversationViewModel @AssistedInject constructor(
         // 4. The type of conversation supports message request (only 1to1 and groups v2)
 
         if (
-            recipient != null &&
-
             // Req 1: we haven't approved the other party
             (!recipient.approved && !recipient.isLocalNumber) &&
 

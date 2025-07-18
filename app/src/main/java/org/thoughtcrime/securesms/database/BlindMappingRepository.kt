@@ -54,10 +54,10 @@ class BlindMappingRepository @Inject constructor(
         }
         .distinctUntilChanged()
         .map { (allCommunities, allContacts) ->
-            allContacts.asSequence()
-                .flatMap { contactAddress ->
-                    allCommunities.asSequence()
-                        .map { community ->
+            allCommunities.asSequence()
+                .associate { community ->
+                    community.baseUrl to allContacts.asSequence()
+                        .flatMap { contactAddress ->
                             val allBlindIDs = BlindKeyAPI.blind15Ids(
                                 sessionId = contactAddress.hexString,
                                 serverPubKey = community.pubKeyHex
@@ -66,14 +66,12 @@ class BlindMappingRepository @Inject constructor(
                                 serverPubKey = community.pubKeyHex
                             )
 
-                            community.baseUrl to
-                            allBlindIDs
-                                .map(::AccountId)
-                                .associateWith { contactAddress }
+                            allBlindIDs.map { blindId ->
+                                AccountId(blindId) to contactAddress
+                            }
                         }
-
+                        .toMap()
                 }
-                .toMap()
         }
         .stateIn(GlobalScope, started = SharingStarted.Eagerly, initialValue = emptyMap())
 

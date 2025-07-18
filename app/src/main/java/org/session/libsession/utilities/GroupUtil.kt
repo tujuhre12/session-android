@@ -1,13 +1,14 @@
 package org.session.libsession.utilities
 
-import network.loki.messenger.libsession_util.util.GroupMember
-import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import java.io.IOException
+
+private typealias CommunityServerUrl = String
+private typealias CommunityPublicKey = String
 
 object GroupUtil {
     const val LEGACY_CLOSED_GROUP_PREFIX = "__textsecure_group__!"
@@ -71,12 +72,17 @@ object GroupUtil {
 
     @JvmStatic
     fun getDecodedOpenGroupInboxAccountId(groupID: String): String {
-        val decodedGroupId = getDecodedGroupID(groupID)
-        if (decodedGroupId.split("!").count() > 2) {
-            return decodedGroupId.split("!", limit = 3)[2]
-        }
-        return decodedGroupId
+        return getDecodedOpenGroupInboxID(groupID)!!.third.hexString
     }
+
+    @JvmStatic
+    fun getDecodedOpenGroupInboxID(id: String): Triple<CommunityServerUrl, CommunityPublicKey, AccountId>? {
+        val decodedGroupId = getDecodedGroupID(id)
+        val parts = decodedGroupId.split("!", limit = 3)
+        if (parts.size != 3) return null
+        return Triple(parts[0], parts[1], AccountId(parts[2]))
+    }
+
 
     @JvmStatic
     fun isCommunity(groupId: String): Boolean {
@@ -122,19 +128,4 @@ object GroupUtil {
     fun addressToGroupAccountId(address: Address): String =
         doubleDecodeGroupId(address.toGroupString())
 
-    fun createConfigMemberMap(
-        members: Collection<String>,
-        admins: Collection<String>
-    ): Map<String, Boolean> {
-        // Start with admins
-        val memberMap = admins.associateWith { true }.toMutableMap()
-
-        // Add the remaining members (there may be duplicates, so only add ones that aren't already in there from admins)
-        for (member in members) {
-            if (member !in memberMap) {
-                memberMap[member] = false
-            }
-        }
-        return memberMap
-    }
 }
