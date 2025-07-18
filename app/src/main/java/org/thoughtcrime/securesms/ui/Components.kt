@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -49,12 +48,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TooltipState
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -70,7 +69,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.CompositingStrategy
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
@@ -91,13 +89,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntRect
-import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.PopupPositionProvider
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideSubcomposition
 import com.bumptech.glide.integration.compose.RequestState
@@ -1109,31 +1101,25 @@ fun SpeechBubbleTooltip(
     text: CharSequence,
     modifier: Modifier = Modifier,
     tooltipState: TooltipState = rememberTooltipState(),
-    arrowSize: DpSize = DpSize(12.dp, 6.dp),
     content: @Composable () -> Unit,
 ) {
-    val arrowShiftPx = remember { mutableIntStateOf(0) }
-    val density = LocalDensity.current
-
     TooltipBox(
         state = tooltipState,
         modifier = modifier,
-        positionProvider = remember {
-            CenterAbovePositionProvider { dxPx -> arrowShiftPx.value = dxPx }
-        },
-        tooltip = {
+        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                tooltip = {
             val bubbleColor = LocalColors.current.backgroundBubbleReceived
 
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Column {
                 Card(
-                    shape = RoundedCornerShape(50.dp),
+                    shape = MaterialTheme.shapes.medium,
                     colors = CardDefaults.cardColors(containerColor = bubbleColor),
                     elevation = CardDefaults.elevatedCardElevation(4.dp)
                 ) {
                     Text(
                         text = annotatedStringResource(text),
                         modifier = Modifier.padding(
-                            horizontal = LocalDimensions.current.smallSpacing,
+                            horizontal = LocalDimensions.current.xsSpacing,
                             vertical = LocalDimensions.current.xxsSpacing
                         ),
                         style = LocalType.current.small,
@@ -1141,58 +1127,10 @@ fun SpeechBubbleTooltip(
                     )
                 }
 
-                // Arrow / Caret
-                val arrowShiftDp = with(density) { arrowShiftPx.intValue.toDp() }
-                Canvas(
-                    modifier = Modifier
-                        .offset(x = arrowShiftDp)      // fine-tune horizontally
-                        .size(arrowSize)
-                ) {
-                    drawPath(
-                        path = Path().apply {
-                            moveTo(0f, 0f)
-                            lineTo(size.width, 0f)
-                            lineTo(size.width / 2, size.height)
-                            close()
-                        },
-                        color = bubbleColor
-                    )
-                }
             }
         }
     ) {
-        content()   // the anchor
-    }
-}
-
-class CenterAbovePositionProvider(
-    private val onArrowOffsetComputed: (Int) -> Unit
-) : PopupPositionProvider {
-
-    override fun calculatePosition(
-        anchorBounds: IntRect,
-        windowSize: IntSize,
-        layoutDirection: LayoutDirection,
-        popupContentSize: IntSize
-    ): IntOffset {
-
-        val anchorCx = anchorBounds.left + anchorBounds.width / 2
-        var bubbleLeft = anchorCx - popupContentSize.width / 2
-
-        // Clamp to screen so it never sticks out horizontally
-        bubbleLeft = bubbleLeft.coerceIn(
-            0,
-            windowSize.width - popupContentSize.width
-        )
-
-        val bubbleTop = anchorBounds.top - popupContentSize.height
-
-        // Tell the composable how far we nudged the bubble so it can
-        // shift the caret back by the same amount
-        val arrowDxPx = anchorCx - (bubbleLeft + popupContentSize.width / 2)
-        onArrowOffsetComputed(arrowDxPx)
-
-        return IntOffset(bubbleLeft, bubbleTop)
+        content()
     }
 }
 
