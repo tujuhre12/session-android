@@ -89,7 +89,7 @@ object FileServerApi {
         }
     }
 
-    fun upload(file: ByteArray, customHeaders: Map<String, String> = mapOf()): Promise<Long, Exception> {
+    fun upload(file: ByteArray, customHeaders: Map<String, String> = mapOf()): Promise<UploadResult, Exception> {
         val request = Request(
             verb = HTTP.Verb.POST,
             endpoint = "file",
@@ -104,7 +104,13 @@ object FileServerApi {
             val hasId = json.containsKey("id")
             val id = json.getOrDefault("id", null)
             Log.d("Loki-FS", "File Upload Response hasId: $hasId of type: ${id?.javaClass}")
-            (id as? String)?.toLong() ?: throw Error.ParsingFailed
+            val idLong = (id as? String)?.toLong() ?: throw Error.ParsingFailed
+            val ttl = json.getOrDefault("expires", null) as? Double
+
+            UploadResult(
+                id = idLong,
+                ttlTimestamp = ttl?.toLong()
+            )
         }
     }
 
@@ -158,4 +164,9 @@ object FileServerApi {
             )
         }
     }
+
+    data class UploadResult(
+        val id: Long,
+        val ttlTimestamp: Long?
+    )
 }
