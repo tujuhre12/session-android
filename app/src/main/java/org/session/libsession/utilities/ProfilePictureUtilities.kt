@@ -26,8 +26,6 @@ import org.session.libsignal.utilities.retryIfNeeded
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.util.Date
-import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
 
 object ProfilePictureUtilities {
 
@@ -134,14 +132,18 @@ object ProfilePictureUtilities {
 
         // save the expiry for this profile picture, so that whe we periodically check if we should
         // reupload, we can check against this timestamp
-        TextSecurePreferences.setProfileExpiry(
-            context,
-            result.ttlTimestamp ?: DEFAULT_AVATAR_TTL
-        )
+        updateAvatarExpiryTimestamp(context, result.ttlTimestamp)
 
         val url = "${FileServerApi.FILE_SERVER_URL}/file/${result.id}"
         TextSecurePreferences.setProfilePictureURL(context, url)
 
         return url
+    }
+
+    fun updateAvatarExpiryTimestamp(context: Context, expiry: Long?){
+        TextSecurePreferences.setProfileExpiry(
+            context,
+            expiry ?: DEFAULT_AVATAR_TTL
+        )
     }
 }
