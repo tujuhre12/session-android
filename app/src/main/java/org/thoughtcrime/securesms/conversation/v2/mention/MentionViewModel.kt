@@ -108,16 +108,10 @@ class MentionViewModel(
                         )
                             .map { it.toString() }
                     }
-
-                    recipient.isGroupV2Recipient -> {
-                        storage.getMembers(recipient.address.toString()).map { it.accountId() }
-                    }
-
                     recipient.isCommunityRecipient -> mmsDatabase.getRecentChatMemberIDs(
                         threadID,
                         20
                     )
-
                     recipient.isContactRecipient -> listOf(recipient.address.toString())
                     else -> listOf()
                 }
