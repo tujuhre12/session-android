@@ -105,7 +105,6 @@ class HomeViewModel @Inject constructor(
         messageRequests(),
         hasHiddenNoteToSelf()
     ) { threads, typingStatus, messageRequests, hideNoteToSelf ->
-        Log.d ("TEST LOG", "TEST LOGGG")
         Data(
             items = buildList {
                 messageRequests?.let { add(it) }
@@ -160,19 +159,16 @@ class HomeViewModel @Inject constructor(
     private fun unapprovedConversationCount() = reloadTriggersAndContentChanges()
         .map {
             threadDb.unapprovedConversationList.use { cursor ->
-                Log.d("MessageRequests", "Cursor count: ${cursor.count}")
+                // Turn the cursor into a sequence of ThreadRecord so we can filter
+                val records = threadDb
+                    .readerFor(cursor)
+                    .run { generateSequence { next } }
+                    .toList()
 
-                val columnNames = cursor.columnNames
-                while (cursor.moveToNext()) {
-                    val row = buildString {
-                        columnNames.forEach { column ->
-                            append("$column=${cursor.getString(cursor.getColumnIndexOrThrow(column))}, ")
-                        }
-                    }
-                    Log.d("MessageRequests", "Row: $row")
+                //return only if the thread has any unread or mentions
+                records.count {
+                    it.unreadCount > 0 || it.unreadMentionCount > 0
                 }
-
-                cursor.count
             }
         }
 
