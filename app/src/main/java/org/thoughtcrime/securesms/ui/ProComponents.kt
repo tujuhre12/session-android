@@ -48,7 +48,7 @@ fun ProBadgeText(
     text: String,
     modifier: Modifier = Modifier,
     textStyle: TextStyle = LocalType.current.h5,
-    hideBadge: Boolean = false,
+    showBadge: Boolean = true,
     onBadgeClick: (() -> Unit)? = null
 ){
     Row(
@@ -65,8 +65,7 @@ fun ProBadgeText(
             overflow = TextOverflow.Ellipsis
         )
 
-        if(!hideBadge) {
-
+        if(showBadge) {
             var proBadgeModifier: Modifier = Modifier
             if(onBadgeClick != null){
                 proBadgeModifier = proBadgeModifier.clickable {
@@ -96,7 +95,7 @@ private fun PreviewProBadgeText(
             ProBadgeText(text = "Hello Pro", textStyle = LocalType.current.base)
             ProBadgeText(text = "Hello Pro")
             ProBadgeText(text = "Hello Pro with a very long name that should overflow")
-            ProBadgeText(text = "No Badge", hideBadge = true)
+            ProBadgeText(text = "No Badge", showBadge = false)
         }
     }
 }

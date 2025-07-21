@@ -51,7 +51,7 @@ class ProStatusManager @Inject constructor(
     }
 
     fun isUserPro(address: Address?): Boolean{
-        //todo PRO implement real logic once it's in
+        //todo PRO implement real logic once it's in - including the specifics for a groupsV2
         if(address == null) return false
 
         if(address.isCommunity) return true // there are no pro status for community so we consider it true so that features work, like animated images for a community
