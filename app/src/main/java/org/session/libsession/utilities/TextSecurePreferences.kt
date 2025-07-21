@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.update
+import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.TextSecurePreferences.Companion.AUTOPLAY_AUDIO_MESSAGES
@@ -1592,7 +1593,7 @@ class AppTextSecurePreferences @Inject constructor(
         val environment = getStringPreference(ENVIRONMENT, null)
         return if (environment != null) {
             Environment.valueOf(environment)
-        } else Environment.MAIN_NET
+        } else BuildConfig.DEFAULT_ENVIRONMENT
     }
 
     override fun setEnvironment(value: Environment) {
