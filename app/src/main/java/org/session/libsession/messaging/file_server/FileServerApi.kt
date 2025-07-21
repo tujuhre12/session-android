@@ -110,11 +110,12 @@ object FileServerApi {
             val id = json.getOrDefault("id", null)
             Log.d("Loki-FS", "File Upload Response hasId: $hasId of type: ${id?.javaClass}")
             val idLong = (id as? String)?.toLong() ?: throw Error.ParsingFailed
-            val ttl = json.getOrDefault("expires", null) as? Double
+            val ttl = json.getOrDefault("expires", null) as? Number
+            Log.d("Loki-FS", "File Upload Response expires (timestamp in milli): ${ttl?.let{ it.toLong() * 1000 }}")
 
             UploadResult(
                 id = idLong,
-                ttlTimestamp = ttl?.toLong()
+                ttlTimestamp = ttl?.let{ (it.toDouble() * 1000).toLong() } // from seconds to milliseconds
             )
         }
     }

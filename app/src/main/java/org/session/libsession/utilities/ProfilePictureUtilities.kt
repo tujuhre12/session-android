@@ -42,15 +42,14 @@ object ProfilePictureUtilities {
             if(TextSecurePreferences.getProfileAvatarId(context) == 0) return@launch
 
             val now = Date().time
-            val lastProfilePictureUpload = getLastProfilePictureUpload(context)
 
-            var avatarTtl = TextSecurePreferences.getProfileExpiry(context)
-            // get a default if we have no info regarding the expiry yet.
-            // todo we might want to call the /file/<ID>/info to get the ttl, or read it on download which also exposes the ttl
-            if(avatarTtl == 0L) avatarTtl = DEFAULT_AVATAR_TTL
+            val avatarTtl = TextSecurePreferences.getProfileExpiry(context)
+            // we can stop here if we have no info on expiry yet
+            // We will get that info on upload or download, and the check can happen when we next reopen the app
+            if(avatarTtl == 0L) return@launch
 
-            Log.d("Loki-Avatar", "Should reupload avatar? ${now - lastProfilePictureUpload > avatarTtl} (TTL of $avatarTtl)")
-            if (now - lastProfilePictureUpload <= avatarTtl) return@launch
+            Log.d("Loki-Avatar", "Should reupload avatar? ${now < avatarTtl} (TTL of $avatarTtl)")
+            if (now < avatarTtl) return@launch
 
             // Don't generate a new profile key here; we do that when the user changes their profile picture
             Log.d("Loki-Avatar", "Uploading Avatar Started")
