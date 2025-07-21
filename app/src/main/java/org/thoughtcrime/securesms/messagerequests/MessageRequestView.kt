@@ -50,7 +50,7 @@ class MessageRequestView : LinearLayout {
 
         binding.accentView.apply {
             this.background = UnreadStylingHelper.getAccentBackground(context)
-            visibility = if(isUnread) View.VISIBLE else View.INVISIBLE
+            isVisible = isUnread
         }
 
         binding.unreadCountTextView.text = UnreadStylingHelper.formatUnreadCount(unreadCount)
