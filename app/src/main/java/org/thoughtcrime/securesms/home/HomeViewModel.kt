@@ -74,8 +74,8 @@ class HomeViewModel @Inject constructor(
 ) : ViewModel() {
     // SharedFlow that emits whenever the user asks us to reload  the conversation
     private val manualReloadTrigger = MutableSharedFlow<Unit>(
-            extraBufferCapacity = 1,
-            onBufferOverflow = BufferOverflow.DROP_OLDEST
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
 
     private val mutableIsSearchOpen = MutableStateFlow(false)
@@ -83,9 +83,9 @@ class HomeViewModel @Inject constructor(
 
     val callBanner: StateFlow<String?> = callManager.currentConnectionStateFlow.map {
         // a call is in progress if it isn't idle nor disconnected
-        if(it !is State.Idle && it !is State.Disconnected){
+        if (it !is State.Idle && it !is State.Disconnected) {
             // call is started, we need to differentiate between in progress vs incoming
-            if(it is State.Connected) context.getString(R.string.callsInProgress)
+            if (it is State.Connected) context.getString(R.string.callsInProgress)
             else context.getString(R.string.callsIncomingUnknown)
         } else null // null when the call isn't in progress / incoming
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), initialValue = null)
@@ -105,6 +105,7 @@ class HomeViewModel @Inject constructor(
         messageRequests(),
         hasHiddenNoteToSelf()
     ) { threads, typingStatus, messageRequests, hideNoteToSelf ->
+        Log.d ("TEST LOG", "TEST LOGGG")
         Data(
             items = buildList {
                 messageRequests?.let { add(it) }
@@ -145,10 +146,10 @@ class HomeViewModel @Inject constructor(
         .onStart { emit(prefs.hasHiddenNoteToSelf()) }
 
     private fun observeTypingStatus(): Flow<Set<Long>> = typingStatusRepository
-                    .typingThreads
-                    .asFlow()
-                    .onStart { emit(emptySet()) }
-                    .distinctUntilChanged()
+        .typingThreads
+        .asFlow()
+        .onStart { emit(emptySet()) }
+        .distinctUntilChanged()
 
     private fun messageRequests() = combine(
         unapprovedConversationCount(),
@@ -157,16 +158,33 @@ class HomeViewModel @Inject constructor(
     ).flowOn(Dispatchers.Default)
 
     private fun unapprovedConversationCount() = reloadTriggersAndContentChanges()
-        .map { threadDb.unapprovedConversationList.use { cursor -> cursor.count } }
+        .map {
+            threadDb.unapprovedConversationList.use { cursor ->
+                Log.d("MessageRequests", "Cursor count: ${cursor.count}")
 
-    @Suppress("OPT_IN_USAGE")
-    private fun observeConversationList(): Flow<List<ThreadRecord>> = reloadTriggersAndContentChanges()
-        .mapLatest { _ ->
-            threadDb.approvedConversationList.use { openCursor ->
-                threadDb.readerFor(openCursor).run { generateSequence { next }.toList() }
+                val columnNames = cursor.columnNames
+                while (cursor.moveToNext()) {
+                    val row = buildString {
+                        columnNames.forEach { column ->
+                            append("$column=${cursor.getString(cursor.getColumnIndexOrThrow(column))}, ")
+                        }
+                    }
+                    Log.d("MessageRequests", "Row: $row")
+                }
+
+                cursor.count
             }
         }
-        .flowOn(Dispatchers.IO)
+
+    @Suppress("OPT_IN_USAGE")
+    private fun observeConversationList(): Flow<List<ThreadRecord>> =
+        reloadTriggersAndContentChanges()
+            .mapLatest { _ ->
+                threadDb.approvedConversationList.use { openCursor ->
+                    threadDb.readerFor(openCursor).run { generateSequence { next }.toList() }
+                }
+            }
+            .flowOn(Dispatchers.IO)
 
     @OptIn(FlowPreview::class)
     private fun reloadTriggersAndContentChanges(): Flow<*> = merge(
@@ -252,7 +270,7 @@ class HomeViewModel @Inject constructor(
         // check the pin limit before continuing
         val totalPins = storage.getTotalPinned()
         val maxPins = proStatusManager.getPinnedConversationLimit()
-        if(pinned && totalPins >= maxPins){
+        if (pinned && totalPins >= maxPins) {
             // the user has reached the pin limit, show the CTA
             _dialogsState.update {
                 it.copy(
@@ -317,12 +335,12 @@ class HomeViewModel @Inject constructor(
     )
 
     sealed interface Commands {
-        data object HidePinCTADialog: Commands
-        data object HideUserProfileModal: Commands
-        data object GoToProUpgradeScreen: Commands
+        data object HidePinCTADialog : Commands
+        data object HideUserProfileModal : Commands
+        data object GoToProUpgradeScreen : Commands
         data class HandleUserProfileCommand(
             val upmCommand: UserProfileModalCommands
-        ): Commands
+        ) : Commands
     }
 
     companion object {
