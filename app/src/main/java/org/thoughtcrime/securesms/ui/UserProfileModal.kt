@@ -98,34 +98,13 @@ fun UserProfileModal(
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
             // title
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
-
-            ) {
-                Text(
-                    text = data.name,
-                    style = LocalType.current.h5
-                )
-
-                if(data.isPro) {
-                    // if the current user (not the user whose profile this is) is not Pro
-                    // then they should see the CTA when tapping the badge
-                    var proBadgeModifier: Modifier = Modifier
-                    if(!data.currentUserPro){
-                        proBadgeModifier = proBadgeModifier.clickable {
-                            sendCommand(UserProfileModalCommands.ShowProCTA)
-                        }
-                    }
-
-                    Image(
-                        modifier = proBadgeModifier,
-                        painter = painterResource(id = R.drawable.ic_pro_badge),
-                        contentScale = ContentScale.FillHeight,
-                        contentDescription = NonTranslatableStringConstants.APP_PRO,
-                    )
-                }
-            }
+            ProBadgeText(
+                text = data.name,
+                hideBadge = !data.isPro,
+                onBadgeClick = if(!data.currentUserPro){{
+                    sendCommand(UserProfileModalCommands.ShowProCTA)
+                }} else null
+            )
 
             if(!data.subtitle.isNullOrEmpty()){
                 Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsSpacing))
