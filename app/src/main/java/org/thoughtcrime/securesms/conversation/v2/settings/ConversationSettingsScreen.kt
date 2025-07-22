@@ -137,7 +137,7 @@ fun ConversationSettings(
                         .verticalScroll(rememberScrollState()),
                     horizontalAlignment = CenterHorizontally
                 ) {
-                    Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+                    Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
                     // Profile picture
                     Avatar(

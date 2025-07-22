@@ -208,6 +208,7 @@ interface TextSecurePreferences {
     fun clearAll()
     fun getHidePassword(): Boolean
     fun setHidePassword(value: Boolean)
+    fun watchHidePassword(): StateFlow<Boolean>
     fun getLastVersionCheck(): Long
     fun setLastVersionCheck()
     fun getEnvironment(): Environment
@@ -1036,6 +1037,7 @@ class AppTextSecurePreferences @Inject constructor(
     private val localNumberState = MutableStateFlow(getStringPreference(TextSecurePreferences.LOCAL_NUMBER_PREF, null))
     private val proState = MutableStateFlow(getBooleanPreference(SET_FORCE_CURRENT_USER_PRO, false))
     private val postProLaunchState = MutableStateFlow(getBooleanPreference(SET_FORCE_POST_PRO, false))
+    private val hiddenPasswordState = MutableStateFlow(getBooleanPreference(HIDE_PASSWORD, false))
 
     override var migratedToGroupV2Config: Boolean
         get() = getBooleanPreference(TextSecurePreferences.MIGRATED_TO_GROUP_V2_CONFIG, false)
@@ -1785,6 +1787,11 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setHidePassword(value: Boolean) {
         setBooleanPreference(HIDE_PASSWORD, value)
+        hiddenPasswordState.update { value }
+    }
+
+    override fun watchHidePassword(): StateFlow<Boolean> {
+        return hiddenPasswordState
     }
 
     override fun hasSeenTokenPageNotification(): Boolean {

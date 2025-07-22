@@ -113,35 +113,9 @@ fun UserProfileModal(
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
             // account ID
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-            ){
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(1.dp)
-                        .background(color = LocalColors.current.borders)
-                )
-
-                Text(
-                    modifier = Modifier
-                        .border()
-                        .padding(
-                            horizontal = LocalDimensions.current.smallSpacing,
-                            vertical = LocalDimensions.current.xxxsSpacing
-                        )
-                    ,
-                    text = if(data.isBlinded) stringResource(R.string.blindedId) else stringResource(R.string.accountId),
-                    style = LocalType.current.small.copy(color = LocalColors.current.textSecondary)
-                )
-
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(1.dp)
-                        .background(color = LocalColors.current.borders)
-                )
-            }
+            AccountIdHeader(
+                text = if(data.isBlinded) stringResource(R.string.blindedId) else stringResource(R.string.accountId)
+            )
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
 

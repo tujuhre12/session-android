@@ -108,6 +108,43 @@ import org.thoughtcrime.securesms.ui.theme.primaryYellow
 import org.thoughtcrime.securesms.ui.theme.transparentButtonColors
 import kotlin.math.roundToInt
 
+@Composable
+fun AccountIdHeader(
+    modifier: Modifier = Modifier,
+    text: String = stringResource(R.string.accountId),
+){
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+    ){
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(1.dp)
+                .background(color = LocalColors.current.borders)
+        )
+
+        Text(
+            modifier = Modifier
+                .border()
+                .padding(
+                    horizontal = LocalDimensions.current.smallSpacing,
+                    vertical = LocalDimensions.current.xxxsSpacing
+                )
+            ,
+            text = text,
+            style = LocalType.current.small.copy(color = LocalColors.current.textSecondary)
+        )
+
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(1.dp)
+                .background(color = LocalColors.current.borders)
+        )
+    }
+}
+
 data class RadioOption<T>(
     val value: T,
     val title: GetString,
