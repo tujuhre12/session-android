@@ -158,19 +158,7 @@ class HomeViewModel @Inject constructor(
 
     private fun unapprovedConversationCount() = reloadTriggersAndContentChanges()
         .map {
-            threadDb.unapprovedConversationList.use { cursor ->
-                // Turn the cursor into a sequence of ThreadRecord so we can filter
-                // We can also use raw-cursor approach here if this proves to be memory-heavy
-                val records = threadDb
-                    .readerFor(cursor)
-                    .run { generateSequence { next } }
-                    .toList()
-
-                //count only if the thread has any unread or mentions
-                records.count {
-                    it.unreadCount > 0 || it.unreadMentionCount > 0
-                }
-            }
+            threadDb.getUnapprovedUnreadConversationCount().toInt()
         }
 
     @Suppress("OPT_IN_USAGE")
