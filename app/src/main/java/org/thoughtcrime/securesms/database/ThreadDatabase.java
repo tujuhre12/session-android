@@ -524,7 +524,7 @@ public class ThreadDatabase extends Database {
 
     String countSql = "SELECT COUNT(*) FROM (" + baseSql + ")";
 
-    // try-with-resourse to close the statement
+    // try-with-resource to close the statement
     try (SQLiteStatement stmt = getReadableDatabase().compileStatement(countSql)) {
         return stmt.simpleQueryForLong();
     }
