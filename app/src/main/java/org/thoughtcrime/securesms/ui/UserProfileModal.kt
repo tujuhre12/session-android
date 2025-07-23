@@ -51,16 +51,19 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.squareup.phrase.Phrase
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.NonTranslatableStringConstants
+import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2.Companion.ADDRESS
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.components.SlimAccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.SlimOutlineCopyButton
+import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -212,6 +215,22 @@ fun UserProfileModal(
             }
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
+
+            // show a message if the user can't be messaged
+            if(data.isBlinded && !data.enableMessage){
+                Text(
+                    modifier = Modifier.padding(horizontal = LocalDimensions.current.xsSpacing),
+                    text = annotatedStringResource(
+                        Phrase.from(LocalContext.current, R.string.messageRequestsTurnedOff)
+                        .put(NAME_KEY, data.name)
+                        .format()
+                    ),
+                    textAlign = TextAlign.Center,
+                    style = LocalType.current.small.copy(color = LocalColors.current.textSecondary)
+                )
+
+                Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsSpacing))
+            }
 
             // buttons
             Row(
@@ -427,37 +446,39 @@ fun UserProfileModalAvatarQR(
         }
 
         // Badge
-        Crossfade(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .offset(x = badgeOffset.x.dp, y = badgeOffset.y.dp)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) {
-                    sendCommand(UserProfileModalCommands.ToggleQR)
-                },
-            targetState = data.showQR,
-            animationSpec = tween(durationMillis = 200),
-            label = "badge_icon"
-        ) { showQR ->
-            Image(
+        if(!data.isBlinded) {
+            Crossfade(
                 modifier = Modifier
-                    .size(badgeSize)
-                    .background(
-                        shape = CircleShape,
-                        color = LocalColors.current.accent
-                    )
-                    .padding(animatedBadgeInnerPadding),
-                painter = painterResource(
-                    id = when (showQR) {
-                        true -> R.drawable.ic_user_filled_custom
-                        false -> R.drawable.ic_qr_code
-                    }
-                ),
-                contentDescription = null,
-                colorFilter = ColorFilter.tint(Color.Black)
-            )
+                    .align(Alignment.TopEnd)
+                    .offset(x = badgeOffset.x.dp, y = badgeOffset.y.dp)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) {
+                        sendCommand(UserProfileModalCommands.ToggleQR)
+                    },
+                targetState = data.showQR,
+                animationSpec = tween(durationMillis = 200),
+                label = "badge_icon"
+            ) { showQR ->
+                Image(
+                    modifier = Modifier
+                        .size(badgeSize)
+                        .background(
+                            shape = CircleShape,
+                            color = LocalColors.current.accent
+                        )
+                        .padding(animatedBadgeInnerPadding),
+                    painter = painterResource(
+                        id = when (showQR) {
+                            true -> R.drawable.ic_user_filled_custom
+                            false -> R.drawable.ic_qr_code
+                        }
+                    ),
+                    contentDescription = null,
+                    colorFilter = ColorFilter.tint(Color.Black)
+                )
+            }
         }
     }
 }
@@ -480,7 +501,7 @@ private fun PreviewUPM(
                     rawAddress = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
                     displayAddress = "123456789112345678911234567891123\n123456789112345678911234567891123",
                     threadId = 0L,
-                    enableMessage = false,
+                    enableMessage = true,
                     expandedAvatar = false,
                     showQR = false,
                     showProCTA = false,
@@ -539,9 +560,9 @@ private fun PreviewUPMResolved(
                     rawAddress = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
                     displayAddress = "12345678911234567891123\n45678911231234567891123\n45678911234567891123",
                     threadId = 0L,
-                    enableMessage = false,
+                    enableMessage = true,
                     expandedAvatar = false,
-                    showQR = false,
+                    showQR = true,
                     showProCTA = false,
                     avatarUIData = AvatarUIData(
                         listOf(
@@ -599,9 +620,9 @@ private fun PreviewUPMQR(
                     rawAddress = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
                     displayAddress = "1111111111...1111111111",
                     threadId = 0L,
-                    enableMessage = true,
+                    enableMessage = false,
                     expandedAvatar = false,
-                    showQR = true,
+                    showQR = false,
                     showProCTA = false,
                     avatarUIData = AvatarUIData(
                         listOf(
