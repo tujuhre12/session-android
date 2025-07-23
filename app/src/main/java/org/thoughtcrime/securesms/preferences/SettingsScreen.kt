@@ -463,7 +463,7 @@ fun Buttons(
                     modifier = Modifier.qaTag(R.string.qa_settings_item_donate),
                     colors = accentTextButtonColors()
                 ) {
-                    sendCommand(ShowUrlDialog("https://session.foundation/donate#app"))
+                    sendCommand(OnDonateClicked)
                 }
                 Divider()
 

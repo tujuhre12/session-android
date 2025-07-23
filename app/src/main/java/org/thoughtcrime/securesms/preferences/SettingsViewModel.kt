@@ -44,6 +44,7 @@ import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSi
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.profiles.ProfileMediaConstraints
+import org.thoughtcrime.securesms.reviews.InAppReviewManager
 import org.thoughtcrime.securesms.util.AnimatedImageUtils
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
@@ -65,7 +66,8 @@ class SettingsViewModel @Inject constructor(
     private val avatarUtils: AvatarUtils,
     private val proStatusManager: ProStatusManager,
     private val clearDataUtils: ClearDataUtils,
-    private val storage: StorageProtocol
+    private val storage: StorageProtocol,
+    private val inAppReviewManager: InAppReviewManager
 ) : ViewModel() {
     private val TAG = "SettingsViewModel"
 
@@ -551,6 +553,13 @@ class SettingsViewModel @Inject constructor(
                     )
                 }
             }
+
+            is Commands.OnDonateClicked -> {
+                viewModelScope.launch {
+                    inAppReviewManager.onEvent(InAppReviewManager.Event.DonateButtonClicked)
+                }
+                showUrlDialog( "https://session.foundation/donate#app")
+            }
         }
     }
 
@@ -619,6 +628,8 @@ class SettingsViewModel @Inject constructor(
         data object ShowAnimatedProCTA: Commands
         data object HideAnimatedProCTA: Commands
         data object GoToProUpgradeScreen: Commands
+
+        data object OnDonateClicked: Commands
 
         data class ClearData(val clearNetwork: Boolean): Commands
     }
