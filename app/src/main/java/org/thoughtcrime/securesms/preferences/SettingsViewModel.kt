@@ -4,7 +4,6 @@ import android.content.Context
 import android.net.Uri
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
 import com.canhub.cropper.CropImage
 import com.canhub.cropper.CropImageView
@@ -32,6 +31,7 @@ import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ProfileKeyUtil
 import org.session.libsession.utilities.ProfilePictureUtilities
+import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.StringSubstitutionConstants.VERSION_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UsernameUtils
@@ -40,6 +40,7 @@ import org.session.libsignal.utilities.ExternalStorageUtil.getImageDir
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.NoExternalStorageException
 import org.session.libsignal.utilities.Util.SECURE_RANDOM
+import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.profiles.ProfileMediaConstraints
@@ -341,10 +342,6 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun updateName(displayName: String) {
-        usernameUtils.saveCurrentUserName(displayName)
-    }
-
     fun hasNetworkConnection(): Boolean = connectivity.networkAvailable.value
 
     fun isAnimated(uri: Uri) = proStatusManager.isPostPro() // block animated avatars prior to pro
@@ -433,12 +430,21 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    private fun setUsername(name: String){
+        if(!hasNetworkConnection()){
+            Log.w(TAG, "Cannot update display name - no network connection.")
+            Toast.makeText(context, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
+            return
+        }
+
+        // save username
+        _uiState.update { it.copy(username = name) }
+        prefs.setProfileName(name)
+        usernameUtils.saveCurrentUserName(name)
+    }
+
     fun onCommand(command: Commands) {
         when (command) {
-            is Commands.ShowEditName -> {
-                //todo BADGE implement
-            }
-
             is Commands.ShowClearDataDialog -> {
                 _uiState.update { it.copy(clearDataDialog = ClearDataState.Default) }
             }
@@ -498,6 +504,53 @@ class SettingsViewModel @Inject constructor(
             is Commands.ClearData -> {
                 clearData(command.clearNetwork)
             }
+
+            is Commands.ShowUsernameDialog -> {
+                _uiState.update {
+                    it.copy(usernameDialog = UsernameDialogData(
+                        currentName = it.username,
+                        inputName = it.username,
+                        setEnabled = false,
+                        error = null
+                    ))
+                }
+            }
+
+
+            is Commands.HideUsernameDialog -> {
+                _uiState.update { it.copy(usernameDialog = null) }
+            }
+
+            is Commands.SetUsername -> {
+                _uiState.value.usernameDialog?.inputName?.trim()?.let {
+                    setUsername(it)
+                }
+
+                // hide username dialog
+                _uiState.update { it.copy(usernameDialog = null) }
+            }
+
+            is Commands.UpdateUsername -> {
+                val trimmedName = command.name.trim()
+
+                val error: String? = when {
+                    trimmedName.textSizeInBytes() >  SSKEnvironment.ProfileManagerProtocol.NAME_PADDED_LENGTH ->
+                        context.getString(R.string.displayNameErrorDescriptionShorter)
+
+                    else -> null
+                }
+
+                _uiState.update { it.copy(usernameDialog =
+                    it.usernameDialog?.copy(
+                            inputName = command.name,
+                            setEnabled = trimmedName.isNotEmpty() && // can save if we have an input
+                                    trimmedName != it.usernameDialog.currentName && // ... and it isn't the same as what is already saved
+                                    error == null, // ... and there are no errors
+                            error = error
+                        )
+                    )
+                }
+            }
         }
     }
 
@@ -519,6 +572,13 @@ class SettingsViewModel @Inject constructor(
         data object Error: ClearDataState
     }
 
+    data class UsernameDialogData(
+        val currentName: String?, // the currently saved name
+        val inputName: String?, // the name being inputted
+        val setEnabled: Boolean,
+        val error: String?
+    )
+
     data class UIState(
         val username: String,
         val accountID: String,
@@ -534,13 +594,12 @@ class SettingsViewModel @Inject constructor(
         val showAvatarPickerOptionCamera: Boolean = false,
         val showAvatarPickerOptions: Boolean = false,
         val showAnimatedProCTA: Boolean = false,
+        val usernameDialog: UsernameDialogData? = null,
         val isPro: Boolean,
         val isPostPro: Boolean
     )
 
     sealed interface Commands {
-        data object ShowEditName: Commands
-
         data object ShowClearDataDialog: Commands
         data object HideClearDataDialog: Commands
         data class ShowUrlDialog(val url: String): Commands
@@ -551,6 +610,11 @@ class SettingsViewModel @Inject constructor(
         data object SaveAvatar: Commands
         data object RemoveAvatar: Commands
         data object OnAvatarDialogDismissed: Commands
+
+        data object ShowUsernameDialog : Commands
+        data object HideUsernameDialog : Commands
+        data object SetUsername: Commands
+        data class UpdateUsername(val name: String): Commands
 
         data object ShowAnimatedProCTA: Commands
         data object HideAnimatedProCTA: Commands

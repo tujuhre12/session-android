@@ -3,7 +3,6 @@ package org.thoughtcrime.securesms.preferences
 import android.annotation.SuppressLint
 import androidx.activity.compose.LocalActivity
 import androidx.annotation.DrawableRes
-import androidx.appcompat.content.res.AppCompatResources
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.Image
@@ -13,6 +12,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -37,6 +37,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,27 +47,32 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.squareup.phrase.Phrase
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.NonTranslatableStringConstants.NETWORK_NAME
-import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.HideDeleteEveryoneDialog
-import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.MarkAsDeletedForEveryone
-import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.MarkAsDeletedLocally
+import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.HideNicknameDialog
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.RemoveNickname
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.SetNickname
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.UpdateNickname
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.home.PathActivity
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
@@ -98,6 +104,7 @@ import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.BaseBottomSheet
 import org.thoughtcrime.securesms.ui.components.BasicAppBar
 import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
+import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.getCellBottomShape
@@ -160,7 +167,7 @@ fun Settings(
                     val activity = LocalActivity.current
 
                     IconButton(onClick = {
-                        sendCommand(ShowEditName)
+                        sendCommand(ShowUsernameDialog)
                     }) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_pencil),
@@ -237,7 +244,13 @@ fun Settings(
 
             // name
             ProBadgeText(
-                modifier = Modifier.qaTag(R.string.AccessibilityId_displayName),
+                modifier = Modifier.qaTag(R.string.AccessibilityId_displayName)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) {
+                        sendCommand(ShowUsernameDialog)
+                    },
                 text = uiState.username,
                 showBadge = uiState.isPro,
             )
@@ -335,6 +348,54 @@ fun Settings(
                 onDismissRequest =  { sendCommand(HideAvatarPickerOptions) },
                 onGalleryPicked = onGalleryPicked,
                 onCameraPicked = onCameraPicked
+            )
+        }
+
+        // username
+        if(uiState.usernameDialog != null){
+
+            val focusRequester = remember { FocusRequester() }
+            LaunchedEffect (Unit) {
+                focusRequester.requestFocus()
+            }
+
+            AlertDialog(
+                onDismissRequest = {
+                    // hide dialog
+                    sendCommand(HideUsernameDialog)
+                },
+                title = stringResource(R.string.displayNameSet),
+                text = stringResource(R.string.displayNameVisible),
+                showCloseButton = true,
+                content = {
+                    SessionOutlinedTextField(
+                        text = uiState.usernameDialog.inputName ?: "",
+                        modifier = Modifier
+                            .focusRequester(focusRequester)
+                            .padding(top = LocalDimensions.current.smallSpacing),
+                        placeholder = stringResource(R.string.displayNameEnter),
+                        innerPadding = PaddingValues(LocalDimensions.current.smallSpacing),
+                        onChange = { updatedText ->
+                            sendCommand(UpdateUsername(updatedText))
+                        },
+                        showClear = true,
+                        singleLine = true,
+                        onContinue = { sendCommand(SetUsername) },
+                        error = uiState.usernameDialog.error,
+                    )
+                },
+                buttons = listOf(
+                    DialogButtonData(
+                        text = GetString(stringResource(id = R.string.save)),
+                        enabled = uiState.usernameDialog.setEnabled,
+                        onClick = { sendCommand(SetUsername) },
+                        qaTag = stringResource(R.string.qa_settings_dialog_username_save),
+                    ),
+                    DialogButtonData(
+                        text = GetString(stringResource(R.string.cancel)),
+                        qaTag = stringResource(R.string.qa_settings_dialog_username_cancel),
+                    )
+                )
             )
         }
 
@@ -867,7 +928,6 @@ private fun SettingsScreenPreview() {
                 accountID = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
                 hasPath = true,
                 version = "1.26.0",
-                clearDataDialog = SettingsViewModel.ClearDataState.Clearing
             ),
             sendCommand = {},
             onGalleryPicked = {},
