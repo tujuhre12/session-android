@@ -84,7 +84,7 @@ public abstract class AbstractNotificationBuilder extends NotificationCompat.Bui
     text = text == null ? "" : text;
 
     return text.length() <= MAX_DISPLAY_LENGTH ? text
-                                               : text.subSequence(0, MAX_DISPLAY_LENGTH - 1) +"\u2026";
+                                               : text.subSequence(0, MAX_DISPLAY_LENGTH - 3) +"\u2026";
   }
 
   @Override
