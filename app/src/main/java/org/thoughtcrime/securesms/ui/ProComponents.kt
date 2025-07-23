@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -31,8 +32,10 @@ import androidx.compose.ui.unit.dp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideSubcomposition
 import com.bumptech.glide.integration.compose.RequestState
+import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.TertiaryFillButtonRect
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -423,11 +426,21 @@ fun PinProCTA(
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
 ){
+    val context = LocalContext.current
+    
     SimpleSessionProCTA(
         modifier = modifier,
         heroImage = R.drawable.cta_hero_pins,
-        text = if(overTheLimit) stringResource(R.string.proCallToActionPinnedConversations)
-        else stringResource(R.string.proCallToActionPinnedConversationsMoreThan),
+        text = if(overTheLimit)
+            Phrase.from(context, R.string.proCallToActionPinnedConversations)
+                .put(APP_PRO_KEY, NonTranslatableStringConstants.SESSION_PRO)
+                .format()
+                .toString()
+        else
+            Phrase.from(context, R.string.proCallToActionPinnedConversationsMoreThan)
+                .put(APP_PRO_KEY, NonTranslatableStringConstants.SESSION_PRO)
+                .format()
+                .toString(),
         features = listOf(
             CTAFeature.Icon(stringResource(R.string.proFeatureListPinnedConversations)),
             CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
