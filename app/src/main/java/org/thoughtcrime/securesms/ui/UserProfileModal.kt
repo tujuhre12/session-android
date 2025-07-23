@@ -405,20 +405,24 @@ fun UserProfileModalAvatarQR(
             contentAlignment = Alignment.Center
         ) {
             // Avatar with scale and alpha
+            var avatarModifier: Modifier = Modifier
+            if(!data.showQR){
+                avatarModifier = avatarModifier.clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) {
+                    sendCommand(UserProfileModalCommands.ToggleAvatarExpand)
+                }
+            }
             Avatar(
-                modifier = Modifier
+                modifier = avatarModifier
                     .size(animatedSize)
                     .graphicsLayer(
                         alpha = avatarAlpha,
                         scaleX = avatarScale,
                         scaleY = avatarScale
                     )
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) {
-                        sendCommand(UserProfileModalCommands.ToggleAvatarExpand)
-                    },
+                    ,
                 size = animatedSize,
                 maxSizeLoad = LocalDimensions.current.iconXXLargeAvatar,
                 data = data.avatarUIData
