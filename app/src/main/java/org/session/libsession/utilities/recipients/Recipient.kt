@@ -13,6 +13,7 @@ import org.thoughtcrime.securesms.database.RecipientDatabase
 import java.time.ZonedDateTime
 
 data class Recipient(
+    val address: Address,
     val basic: BasicRecipient,
     val mutedUntil: ZonedDateTime?,
     val autoDownloadAttachments: Boolean?,
@@ -22,18 +23,16 @@ data class Recipient(
     val notificationChannel: String? = null,
 ) {
     val isLocalNumber: Boolean get() = basic.isLocalNumber
-    val address: Address get() = basic.address
+    val isGroupOrCommunityRecipient: Boolean get() = address.isGroupOrCommunity
+    val isCommunityRecipient: Boolean get() = address.isCommunity
+    val isCommunityInboxRecipient: Boolean get() = address.isCommunityInbox
+    val isGroupV2Recipient: Boolean get() = address.isGroupV2
+    val isLegacyGroupRecipient: Boolean get() = address.isLegacyGroup
+    val isContactRecipient: Boolean get() = address.isContact
+    val is1on1: Boolean get() = !isLocalNumber && address.isContact
+    val isGroupRecipient: Boolean get() = address.isGroup
+
     val avatar: RemoteFile? get() = basic.avatar
-
-    val isGroupOrCommunityRecipient: Boolean get() = basic.isGroupOrCommunityRecipient
-    val isCommunityRecipient: Boolean get() = basic.isCommunityRecipient
-    val isCommunityInboxRecipient: Boolean get() = basic.isCommunityInboxRecipient
-    val isGroupV2Recipient: Boolean get() = basic.isGroupV2Recipient
-    val isLegacyGroupRecipient: Boolean get() = basic.isLegacyGroupRecipient
-    val isContactRecipient: Boolean get() = basic.isContactRecipient
-    val is1on1: Boolean get() = basic.is1on1
-    val isGroupRecipient: Boolean get() = basic.isGroupRecipient
-
     val expiryMode: ExpiryMode get() = when (basic) {
         is BasicRecipient.Self -> basic.expiryMode
         is BasicRecipient.Contact -> basic.expiryMode
@@ -86,7 +85,8 @@ data class Recipient(
     companion object {
         fun empty(address: Address): Recipient {
             return Recipient(
-                basic = BasicRecipient.Generic(address),
+                basic = BasicRecipient.Generic(),
+                address = address,
                 mutedUntil = null,
                 autoDownloadAttachments = true,
                 notifyType = RecipientDatabase.NOTIFY_TYPE_ALL,
@@ -97,7 +97,6 @@ data class Recipient(
 }
 
 sealed interface BasicRecipient {
-    val address: Address
     val isLocalNumber: Boolean
     val avatar: RemoteFile?
     val priority: Long
@@ -108,7 +107,6 @@ sealed interface BasicRecipient {
     sealed interface ConfigBasedRecipient : BasicRecipient
 
     data class Generic(
-        override val address: Address,
         val displayName: String = "",
         override val avatar: RemoteFile? = null,
         override val isLocalNumber: Boolean = false,
@@ -121,7 +119,6 @@ sealed interface BasicRecipient {
      */
     data class Self(
         val name: String,
-        override val address: Address,
         override val avatar: RemoteFile.Encrypted?,
         val expiryMode: ExpiryMode,
         val acceptsCommunityMessageRequests: Boolean,
@@ -135,7 +132,6 @@ sealed interface BasicRecipient {
      * A recipient that was saved in your contact config.
      */
     data class Contact(
-        override val address: Address,
         val name: String,
         val nickname: String?,
         override val avatar: RemoteFile.Encrypted?,
@@ -156,7 +152,6 @@ sealed interface BasicRecipient {
      * A recipient that is a groupv2.
      */
     data class Group(
-        override val address: Address,
         val name: String,
         override val avatar: RemoteFile.Encrypted?,
         val expiryMode: ExpiryMode,
@@ -167,15 +162,6 @@ sealed interface BasicRecipient {
             get() = false
     }
 }
-
-val BasicRecipient.isGroupOrCommunityRecipient: Boolean get() = address.isGroupOrCommunity
-val BasicRecipient.isCommunityRecipient: Boolean get() = address.isCommunity
-val BasicRecipient.isCommunityInboxRecipient: Boolean get() = address.isCommunityInbox
-val BasicRecipient.isGroupV2Recipient: Boolean get() = address.isGroupV2
-val BasicRecipient.isLegacyGroupRecipient: Boolean get() = address.isLegacyGroup
-val BasicRecipient.isContactRecipient: Boolean get() = address.isContact
-val BasicRecipient.is1on1: Boolean get() = !isLocalNumber && address.isContact
-val BasicRecipient.isGroupRecipient: Boolean get() = address.isGroup
 
 
 /**

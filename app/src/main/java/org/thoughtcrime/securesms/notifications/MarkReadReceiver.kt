@@ -19,7 +19,7 @@ import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isReadReceiptsEnabled
 import org.session.libsession.utilities.associateByNotNull
 import org.session.libsession.utilities.recipients.BasicRecipient
-import org.session.libsession.utilities.recipients.isGroupOrCommunityRecipient
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ExpiryType
 import org.thoughtcrime.securesms.database.MarkedMessageInfo
@@ -129,8 +129,8 @@ class MarkReadReceiver : BroadcastReceiver() {
                 }
         }
 
-        private val BasicRecipient.shouldSendReadReceipt: Boolean
-            get() = when (this) {
+        private val Recipient.shouldSendReadReceipt: Boolean
+            get() = when (basic) {
                 is BasicRecipient.Contact -> approved && !blocked
                 is BasicRecipient.Generic -> !isGroupOrCommunityRecipient && !blocked
                 else -> false
@@ -145,7 +145,7 @@ class MarkReadReceiver : BroadcastReceiver() {
             val recipientRepository = MessagingModuleConfiguration.shared.recipientRepository
 
             markedReadMessages.map { it.syncMessageId }
-                .filter { recipientRepository.getBasicRecipientFast(it.address)?.shouldSendReadReceipt == true }
+                .filter { recipientRepository.getRecipientSync(it.address)?.shouldSendReadReceipt == true }
                 .groupBy { it.address }
                 .forEach { (address, messages) ->
                     messages.map { it.timetamp }

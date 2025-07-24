@@ -418,7 +418,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
             .filter { it.address.address != publicKey }
             // Get the name that we will display and sort by, and uppercase it to
             // help with sorting and we need the char uppercased later.
-            .map { NamedValue(it.displayName.uppercase(), it) }
+            .map { NamedValue(it.displayName().uppercase(), it) }
             // Digits are all grouped under a #, the rest are grouped by their first character.uppercased()
             // If there is no name, they go under Unknown
             .groupBy { it.name?.run { first().takeUnless(Char::isDigit)?.toString() ?: numbersTitle } ?: unknownTitle }

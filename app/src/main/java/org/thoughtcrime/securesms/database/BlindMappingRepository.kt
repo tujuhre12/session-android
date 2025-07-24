@@ -1,10 +1,10 @@
 package org.thoughtcrime.securesms.database
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -15,6 +15,7 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.util.mapStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -29,6 +30,7 @@ private typealias BlindedAddress = AccountId
 class BlindMappingRepository @Inject constructor(
     configFactory: ConfigFactory,
     prefs: TextSecurePreferences,
+    @param:ManagerScope private val scope: CoroutineScope,
 ) {
 
     /**
@@ -82,6 +84,14 @@ class BlindMappingRepository @Inject constructor(
         return mappings.value[serverUrl]?.get(blindedAddress)
     }
 
+    fun findMappings(blindedAddress: BlindedAddress): Sequence<Pair<CommunityServerUrl, AccountId>> {
+        return mappings.value
+            .asSequence()
+            .mapNotNull { (url, mapping) ->
+                mapping.get(blindedAddress)?.let { url to it }
+            }
+    }
+
     fun getReverseMappings(
         contactAddress: AccountId,
     ): List<Pair<CommunityServerUrl, BlindedAddress>> {
@@ -95,6 +105,6 @@ class BlindMappingRepository @Inject constructor(
         communityAddress: CommunityServerUrl,
         blindedAddress: BlindedAddress
     ): StateFlow<AccountId?> {
-        return mappings.mapStateFlow(GlobalScope) { it[communityAddress]?.get(blindedAddress) }
+        return mappings.mapStateFlow(scope) { it[communityAddress]?.get(blindedAddress) }
     }
 }

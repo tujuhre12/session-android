@@ -64,6 +64,7 @@ class RecipientRepository @Inject constructor(
     private val preferences: TextSecurePreferences,
     private val lokiThreadDatabase: LokiThreadDatabase,
     private val storage: Lazy<StorageProtocol>,
+    private val blindedIdMappingRepository: BlindMappingRepository,
 ) {
     private val recipientCache = HashMap<Address, WeakReference<SharedFlow<Recipient?>>>()
 
@@ -119,19 +120,23 @@ class RecipientRepository @Inject constructor(
         settingsFetcher: (address: Address) -> RecipientSettings?,
         openGroupFetcher: (address: Address) -> OpenGroup?
     ): Pair<Recipient?, Flow<*>>? {
-        val basicRecipient = getBasicRecipientFast(address)
+        val basicRecipient =
+            address.toBlindedId()?.let { blindedIdMappingRepository.findMappings(it).firstOrNull()?.second }
+                ?.let { getBasicRecipientFast(it.toAddress()) }
+                ?: getBasicRecipientFast(address)
 
         val changeSource: Flow<*>
         val value: Recipient?
 
         when (basicRecipient) {
             is BasicRecipient.Self -> {
-                value = createLocalRecipient(basicRecipient)
+                value = createLocalRecipient(address, basicRecipient)
                 changeSource = configFactory.userConfigsChanged()
             }
 
             is BasicRecipient.Contact -> {
                 value = createContactRecipient(
+                    address = address,
                     basic = basicRecipient,
                     fallbackSettings = settingsFetcher(address)
                 )
@@ -144,6 +149,7 @@ class RecipientRepository @Inject constructor(
 
             is BasicRecipient.Group -> {
                 value = createGroupV2Recipient(
+                    address = address,
                     basic = basicRecipient,
                     settings = settingsFetcher(address)
                 )
@@ -293,7 +299,6 @@ class RecipientRepository @Inject constructor(
             address.address.equals(preferences.getLocalNumber(), ignoreCase = true) -> {
                 configFactory.withUserConfigs { configs ->
                     BasicRecipient.Self(
-                        address = address,
                         name = configs.userProfile.getName().orEmpty(),
                         avatar = configs.userProfile.getPic().toRecipientAvatar(),
                         expiryMode = configs.userProfile.getNtsExpiry(),
@@ -310,7 +315,6 @@ class RecipientRepository @Inject constructor(
                     configs.contacts.get(address.address)
                 }?.let { contact ->
                     BasicRecipient.Contact(
-                        address = address,
                         name = contact.name,
                         nickname = contact.nickname.takeIf { it.isNotBlank() },
                         avatar = contact.profilePicture.toRecipientAvatar(),
@@ -329,7 +333,6 @@ class RecipientRepository @Inject constructor(
                 val groupInfo = configFactory.getGroup(groupId) ?: return null
                 configFactory.withGroupConfigs(groupId) { configs ->
                     BasicRecipient.Group(
-                        address = address,
                         avatar = configs.groupInfo.getProfilePic().toRecipientAvatar(),
                         expiryMode = configs.groupInfo.expiryMode,
                         name = configs.groupInfo.getName() ?: groupInfo.name,
@@ -360,8 +363,9 @@ class RecipientRepository @Inject constructor(
     companion object {
         private const val TAG = "RecipientRepository"
 
-        private fun createLocalRecipient(basic: BasicRecipient.Self): Recipient {
+        private fun createLocalRecipient(address: Address, basic: BasicRecipient.Self): Recipient {
             return Recipient(
+                address = address,
                 basic = basic,
                 mutedUntil = null,
                 autoDownloadAttachments = true,
@@ -387,10 +391,12 @@ class RecipientRepository @Inject constructor(
             }
 
         private fun createGroupV2Recipient(
+            address: Address,
             basic: BasicRecipient.Group,
             settings: RecipientSettings?
         ): Recipient {
             return Recipient(
+                address = address,
                 basic = basic,
                 mutedUntil = settings?.muteUntilDate,
                 notifyType = settings?.notifyType ?: RecipientDatabase.NOTIFY_TYPE_ALL,
@@ -404,10 +410,12 @@ class RecipientRepository @Inject constructor(
          * Creates a RecipientV2 instance from the provided Contact config and optional fallback settings.
          */
         private fun createContactRecipient(
+            address: Address,
             basic: BasicRecipient.Contact,
             fallbackSettings: RecipientSettings?, // Local db data
         ): Recipient {
             return Recipient(
+                address = address,
                 basic = basic,
                 mutedUntil = fallbackSettings?.muteUntilDate,
                 autoDownloadAttachments = fallbackSettings?.autoDownloadAttachments,
@@ -423,8 +431,8 @@ class RecipientRepository @Inject constructor(
             settings: RecipientSettings?,
         ): Recipient {
             return Recipient(
+                address = address,
                 basic = BasicRecipient.Generic(
-                    address = address,
                     displayName = community.name,
                     avatar = community.imageId?.let {
                         RemoteFile.Community(
@@ -450,8 +458,8 @@ class RecipientRepository @Inject constructor(
             settings: RecipientSettings?, // Local db data
         ): Recipient {
             return Recipient(
+                address = address,
                 basic = BasicRecipient.Generic(
-                    address = address,
                     displayName = group.title,
                     avatar = if (group.url != null && group.avatarId != null) {
                         RemoteFile.Community(
@@ -480,8 +488,8 @@ class RecipientRepository @Inject constructor(
             settings: RecipientSettings,
         ): Recipient {
             return Recipient(
+                address = address,
                 basic = BasicRecipient.Generic(
-                    address = address,
                     displayName = settings.systemDisplayName?.takeIf { it.isNotBlank() }
                         ?: settings.profileName.orEmpty(),
                     avatar = settings.profileAvatar?.let {
@@ -506,8 +514,8 @@ class RecipientRepository @Inject constructor(
             groupMember: GroupMember,
         ): Recipient {
             return Recipient(
+                address = address,
                 basic = BasicRecipient.Generic(
-                    address = address,
                     displayName = groupMember.name,
                     avatar = groupMember.profilePic()?.toRecipientAvatar(),
                 ),
@@ -520,7 +528,8 @@ class RecipientRepository @Inject constructor(
 
         fun empty(address: Address): Recipient {
             return Recipient(
-                basic = BasicRecipient.Generic(address = address),
+                address = address,
+                basic = BasicRecipient.Generic(),
                 mutedUntil = null,
                 autoDownloadAttachments = null,
                 notifyType = RecipientDatabase.NOTIFY_TYPE_ALL,

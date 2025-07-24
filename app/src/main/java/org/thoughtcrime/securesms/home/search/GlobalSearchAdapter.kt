@@ -13,6 +13,7 @@ import network.loki.messenger.databinding.ViewGlobalSearchSubheaderBinding
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.recipients.BasicRecipient
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.search.model.MessageResult
 import org.thoughtcrime.securesms.ui.GetString
@@ -165,7 +166,7 @@ class GlobalSearchAdapter(
 
         data class SavedMessages(val currentUserPublicKey: String): Model // Note: "Note to Self" counts as SavedMessages rather than a Contact where `isSelf` is true.
         data class Contact(val contact: AccountId, val name: String, val isSelf: Boolean) : Model {
-            constructor(contact: BasicRecipient.Contact, isSelf: Boolean):
+            constructor(contact: Recipient, isSelf: Boolean):
                     this(AccountId(contact.address.address), contact.searchName, isSelf)
         }
         data class GroupConversation(

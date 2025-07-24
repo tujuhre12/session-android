@@ -9,7 +9,6 @@ import androidx.recyclerview.widget.DiffUtil
 import network.loki.messenger.R
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.recipients.BasicRecipient
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.truncateIdForDisplay
@@ -149,10 +148,6 @@ fun ContentView.bindModel(query: String?, model: Message, dateUtils: DateUtils) 
         else model.messageResult.conversationRecipient.searchName
     searchResultSubtitle.isVisible = true
 }
-
-val BasicRecipient.Contact.searchName: String
-    get() = displayName.takeIf { it.isNotBlank() && !it.looksLikeAccountId }
-        ?: address.toString().let(::truncateIdForDisplay)
 
 val Recipient.searchName: String
     get() = displayName().takeIf { it.isNotBlank() && !it.looksLikeAccountId }

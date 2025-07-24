@@ -18,12 +18,12 @@ public class SearchResult {
   public static final SearchResult EMPTY = new SearchResult("", CursorList.emptyList(), CursorList.emptyList(), CursorList.emptyList());
 
   private final String                    query;
-  private final List<BasicRecipient.Contact>     contacts;
+  private final List<Recipient>     contacts;
   private final List<GroupRecord>  conversations;
   private final CursorList<MessageResult> messages;
 
   public SearchResult(@NonNull String                    query,
-                      @NonNull List<BasicRecipient.Contact>     contacts,
+                      @NonNull List<Recipient>     contacts,
                       @NonNull List<GroupRecord>  conversations,
                       @NonNull CursorList<MessageResult> messages)
   {
@@ -33,7 +33,7 @@ public class SearchResult {
     this.messages      = messages;
   }
 
-  public List<BasicRecipient.Contact> getContacts() {
+  public List<Recipient> getContacts() {
     return contacts;
   }
 

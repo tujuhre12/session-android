@@ -59,10 +59,8 @@ class UserProfileUtils @AssistedInject constructor(
     }
 
     private suspend fun getDefaultProfileData(): UserProfileModalData {
-        val isUserAddressBlinded = IdPrefix.fromValue(userAddress.address)?.isBlinded() == true
-
         // if we have a blinded address, check if it can be resolved
-        val recipient = (if (isUserAddressBlinded) storage.getOpenGroup(threadId) else null)
+        val recipient = (if (userAddress.isBlinded) storage.getOpenGroup(threadId) else null)
             ?.let { openGroup ->
                 blindedIdMappingRepository.getMapping(
                     serverUrl = openGroup.server,
@@ -72,20 +70,19 @@ class UserProfileUtils @AssistedInject constructor(
             ?.let { recipientRepository.getRecipient(it.toAddress()) }
             ?: recipientRepository.getRecipientOrEmpty(userAddress)
 
-        val isResolvedBlinded = isUserAddressBlinded && recipient.address != userAddress
 
         // we apply the display rules from figma (the numbers being the number of characters):
         // - if the address is blinded (with a tooltip), display as 10...10
         // - if the address is a resolved blinded id (with a tooltip) 23 / 23 / 20
         // - for the rest: non blinded address which aren't from a community, break in 33 / 33
         val (displayAddress, tooltipText) = when {
-            isUserAddressBlinded && !isResolvedBlinded -> {
+            recipient.address.isBlinded -> {
                 "${userAddress.address.take(10)}...${userAddress.address.takeLast(10)}" to
                         context.getString(R.string.tooltipBlindedIdCommunities)
             }
 
-            isResolvedBlinded -> {
-                "${userAddress.address.substring(0, 23)}\n${userAddress.address.substring(23, 46)}\n${userAddress.address.substring(46)}" to
+            userAddress.isBlinded -> {
+                "${recipient.address.address.substring(0, 23)}\n${recipient.address.address.substring(23, 46)}\n${recipient.address.address.substring(46)}" to
                         Phrase.from(context, R.string.tooltipAccountIdVisible)
                             .put(NAME_KEY, recipient.displayName())
                             .format()
@@ -99,15 +96,15 @@ class UserProfileUtils @AssistedInject constructor(
         return UserProfileModalData(
             name = recipient.displayName(),
             subtitle = (recipient.basic as? BasicRecipient.Contact)?.nickname?.takeIf { it.isNotBlank() }?.let { "($it)" },
-            avatarUIData = avatarUtils.getUIDataFromAccountId(accountId = userAddress.address),
-            isPro = proStatusManager.isUserPro(userAddress),
+            avatarUIData = avatarUtils.getUIDataFromAccountId(accountId = recipient.address.address),
+            isPro = proStatusManager.isUserPro(recipient.address),
             currentUserPro = proStatusManager.isCurrentUserPro(),
-            rawAddress = userAddress.address,
+            rawAddress = recipient.address.address,
             displayAddress = displayAddress,
             threadId = threadId,
-            isBlinded = isUserAddressBlinded,
+            isBlinded = recipient.address.isBlinded,
             tooltipText = tooltipText,
-            enableMessage = !isUserAddressBlinded || recipient.acceptsCommunityMessageRequests,
+            enableMessage = !recipient.address.isBlinded || recipient.acceptsCommunityMessageRequests,
             expandedAvatar = false,
             showQR = false,
             showProCTA = false

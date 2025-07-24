@@ -91,7 +91,7 @@ class SearchRepository @Inject constructor(
         ).mapTo(hashSetOf()) { it.address }
     }
 
-    fun queryContacts(searchName: String? = null): List<BasicRecipient.Contact> {
+    fun queryContacts(searchName: String? = null): List<Recipient> {
         return conversationRepository.getConfigBasedConversations(
             nts = { false },
             contactFilter = {
@@ -104,8 +104,7 @@ class SearchRepository @Inject constructor(
             groupFilter = { false },
             communityFilter = { false },
             legacyFilter = { false },
-        ).mapNotNull(recipientRepository::getBasicRecipientFast)
-            .filterIsInstance<BasicRecipient.Contact>()
+        ).mapNotNull(recipientRepository::getRecipientSync)
     }
 
     private fun queryConversations(

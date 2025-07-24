@@ -39,6 +39,9 @@ data class Address private constructor(val address: String) : Parcelable, Compar
     val isContact: Boolean
         get() = !(isGroupOrCommunity || isCommunityInbox)
 
+    val isBlinded: Boolean
+        get() = IdPrefix.fromValue(address)?.isBlinded() == true
+
     /**
      * Extracts the blinded ID from the address if it is somehow encoded within this address.
      */
