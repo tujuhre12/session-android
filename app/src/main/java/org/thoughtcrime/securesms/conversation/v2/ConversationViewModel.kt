@@ -1249,10 +1249,10 @@ class ConversationViewModel @AssistedInject constructor(
         _uiEvents.tryEmit(ConversationUiEvent.ShowNotificationSettings(address))
     }
 
-    fun showUserProfileModal(recipient: Recipient) {
+    fun showUserProfileModal(address: Address) {
         // get the helper class for the selected user
         userProfileModalUtils = upmFactory.create(
-            recipient = recipient,
+            userAddress = address,
             threadId = threadId,
             scope = viewModelScope
         )

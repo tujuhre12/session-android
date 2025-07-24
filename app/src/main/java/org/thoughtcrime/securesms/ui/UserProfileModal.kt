@@ -59,7 +59,6 @@ import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
-import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2.Companion.ADDRESS
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.components.SlimAccentOutlineButton
@@ -237,8 +236,10 @@ fun UserProfileModal(
                         onDismissRequest()
 
                         // open conversation with user
-                        context.startActivity(Intent(context, ConversationActivityV2::class.java)
-                            .putExtra(ADDRESS, Address.fromSerialized(data.rawAddress))
+                        context.startActivity(
+                            ConversationActivityV2.createIntent(
+                                context, Address.fromSerialized(data.rawAddress)
+                            )
                         )
                     }
                 )

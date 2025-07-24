@@ -55,10 +55,10 @@ class ConversationView : LinearLayout {
         this.thread = thread
         binding.iconPinned.isVisible = thread.isPinned
 
+        val unreadCount = thread.unreadCount
         val isUnread = unreadCount > 0 && !thread.isRead
         binding.root.background = UnreadStylingHelper.getUnreadBackground(context, isUnread)
 
-        val unreadCount = thread.unreadCount
         if (thread.recipient.blocked) {
             binding.accentView.setBackgroundColor(ThemeUtil.getThemedColor(context, R.attr.danger))
             binding.accentView.visibility = View.VISIBLE

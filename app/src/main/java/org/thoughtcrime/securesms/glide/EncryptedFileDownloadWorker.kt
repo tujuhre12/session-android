@@ -41,7 +41,7 @@ class EncryptedFileDownloadWorker @AssistedInject constructor(
         }
 
     override suspend fun downloadFile(): ByteArraySlice {
-        return FileServerApi.download(fileId).await()
+        return FileServerApi.download(fileId).await().body
     }
 
     override fun getFilesFromInputData(): DownloadedFiles = getFileForUrl(context, folderName, fileId)

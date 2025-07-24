@@ -1967,7 +1967,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun showUserProfileModal(recipient: Recipient){
-        viewModel.showUserProfileModal(recipient)
+        viewModel.showUserProfileModal(recipient.address)
     }
 
     override fun sendMessage() {
