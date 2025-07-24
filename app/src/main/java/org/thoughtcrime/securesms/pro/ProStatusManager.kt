@@ -54,7 +54,7 @@ class ProStatusManager @Inject constructor(
         //todo PRO implement real logic once it's in - including the specifics for a groupsV2
         if(address == null) return false
 
-        if(address.isCommunity) return true // there are no pro status for community so we consider it true so that features work, like animated images for a community
+        if(address.isCommunity) return false
         else if(address.toString() == prefs.getLocalNumber()) return isCurrentUserPro()
         else if(prefs.forceOtherUsersAsPro()) return true
 
@@ -65,7 +65,7 @@ class ProStatusManager @Inject constructor(
      * Logic to determine if we should animate the avatar for a user or freeze it on the first frame
      */
     fun freezeFrameForUser(address: Address?): Boolean{
-        return if(!isPostPro()) false else !isUserPro(address)
+        return if(!isPostPro() || address?.isCommunity == true) false else !isUserPro(address)
     }
 
     /**
@@ -85,7 +85,7 @@ class ProStatusManager @Inject constructor(
     }
 
     fun shouldShowProBadge(address: Address?): Boolean {
-        return isPostPro() && address?.isCommunity == false && isUserPro(address)
+        return isPostPro() && isUserPro(address) //todo PRO also check flag to see if user wants to hide their badge here
     }
 
     fun getCharacterLimit(): Int {

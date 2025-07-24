@@ -86,7 +86,8 @@ class SettingsViewModel @Inject constructor(
         version = getVersionNumber(),
         recoveryHidden = prefs.getHidePassword(),
         isPro = proStatusManager.isCurrentUserPro(),
-        isPostPro = proStatusManager.isPostPro()
+        isPostPro = proStatusManager.isPostPro(),
+        showProBadge = proStatusManager.shouldShowProBadge(userRecipient.address),
     ))
     val uiState: StateFlow<UIState>
         get() = _uiState
@@ -605,7 +606,8 @@ class SettingsViewModel @Inject constructor(
         val showAnimatedProCTA: Boolean = false,
         val usernameDialog: UsernameDialogData? = null,
         val isPro: Boolean,
-        val isPostPro: Boolean
+        val isPostPro: Boolean,
+        val showProBadge: Boolean
     )
 
     sealed interface Commands {

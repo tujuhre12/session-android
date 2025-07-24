@@ -511,6 +511,7 @@ class ConversationViewModel(
                 avatarUIData = avatarData,
                 // show the pro badge when a conversation/user is pro, except for communities
                 showProBadge = proStatusManager.shouldShowProBadge(conversation?.address)
+                        && conversation?.isLocalNumber == false // do not show for note to self
             )
             // also preload the larger version of the avatar in case the user goes to the settings
             avatarData.elements.mapNotNull { it.contactPhoto }.forEach {

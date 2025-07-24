@@ -103,7 +103,7 @@ fun UserProfileModal(
             // title
             ProBadgeText(
                 text = data.name,
-                showBadge = data.isPro,
+                showBadge = data.showProBadge,
                 onBadgeClick = if(!data.currentUserPro){{
                     sendCommand(UserProfileModalCommands.ShowProCTA)
                 }} else null
@@ -454,7 +454,7 @@ private fun PreviewUPM(
                 UserProfileModalData(
                     name = "Atreyu",
                     subtitle = "(Neverending)",
-                    isPro = true,
+                    showProBadge = true,
                     currentUserPro = false,
                     isBlinded = false,
                     tooltipText = null,
@@ -513,7 +513,7 @@ private fun PreviewUPMResolved(
                 UserProfileModalData(
                     name = "Atreyu",
                     subtitle = "(Neverending)",
-                    isPro = true,
+                    showProBadge = true,
                     currentUserPro = false,
                     isBlinded = false,
                     tooltipText = "Some tooltip text that is long and should break into multiple line if necessary",
@@ -573,7 +573,7 @@ private fun PreviewUPMQR(
                 UserProfileModalData(
                     name = "Atreyu",
                     subtitle = "(Neverending)",
-                    isPro = false,
+                    showProBadge = false,
                     currentUserPro = false,
                     isBlinded = true,
                     tooltipText = "Some tooltip",
@@ -614,7 +614,7 @@ private fun PreviewUPMCTA(
             data = UserProfileModalData(
                 name = "Atreyu",
                 subtitle = "(Neverending)",
-                isPro = false,
+                showProBadge = false,
                 currentUserPro = false,
                 isBlinded = true,
                 tooltipText = "Some tooltip",

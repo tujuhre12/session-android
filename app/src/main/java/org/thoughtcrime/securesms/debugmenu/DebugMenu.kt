@@ -267,7 +267,7 @@ fun DebugMenu(
                     )
 
                     Text(
-                        text = "For avatar animation changes based on the values changed above, please restart the app",
+                        text = "For avatar animation or Pro badge changes based on the values modified above, please restart the app",
                         style = LocalType.current.base.copy(color = LocalColors.current.warning)
                     )
                 }

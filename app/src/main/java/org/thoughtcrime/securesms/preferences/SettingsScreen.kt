@@ -252,7 +252,7 @@ fun Settings(
                         sendCommand(ShowUsernameDialog)
                     },
                 text = uiState.username,
-                showBadge = uiState.isPro,
+                showBadge = uiState.showProBadge,
             )
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
@@ -924,6 +924,7 @@ private fun SettingsScreenPreview() {
                 ),
                 isPro = false,
                 isPostPro = false,
+                showProBadge = true,
                 username = "Atreyu",
                 accountID = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
                 hasPath = true,
