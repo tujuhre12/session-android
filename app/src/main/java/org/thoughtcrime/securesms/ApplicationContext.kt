@@ -53,9 +53,8 @@ import org.session.libsession.messaging.sending_receiving.notifications.MessageN
 import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPollerManager
 import org.session.libsession.messaging.sending_receiving.pollers.PollerManager
 import org.session.libsession.snode.SnodeClock
-import org.session.libsession.snode.SnodeModule.Companion.configure
+import org.session.libsession.snode.SnodeModule
 import org.session.libsession.utilities.Device
-import org.session.libsession.utilities.Environment
 import org.session.libsession.utilities.ProfilePictureUtilities.resubmitProfilePictureIfNeeded
 import org.session.libsession.utilities.SSKEnvironment.Companion.configure
 import org.session.libsession.utilities.TextSecurePreferences
@@ -104,6 +103,7 @@ import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
 import org.thoughtcrime.securesms.tokenpage.TokenDataManager
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.Broadcaster
+import org.thoughtcrime.securesms.util.CurrentActivityObserver
 import org.thoughtcrime.securesms.util.VersionDataFetcher
 import org.thoughtcrime.securesms.webrtc.CallMessageProcessor
 import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge
@@ -164,6 +164,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
     @Inject lateinit var migrationManager: Lazy<DatabaseMigrationManager>
     @Inject lateinit var appDisguiseManager: Lazy<AppDisguiseManager>
     @Inject lateinit var persistentLogger: Lazy<PersistentLogger>
+    @Inject lateinit var currentActivityObserver: Lazy<CurrentActivityObserver>
 
     @get:Deprecated(message = "Use proper DI to inject this component")
     @Inject
@@ -305,8 +306,12 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
         configureKovenant()
         broadcaster = Broadcaster(this)
-        val useTestNet = textSecurePreferences.get().getEnvironment() == Environment.TEST_NET
-        configure(apiDB.get(), broadcaster!!, useTestNet)
+        SnodeModule.configure(
+            storage = apiDB.get(),
+            broadcaster = broadcaster!!,
+            environment = textSecurePreferences.get().getEnvironment()
+        )
+
         configure(
             typingIndicators = typingStatusRepository.get(),
             readReceiptManager = readReceiptManager.get(),
@@ -388,6 +393,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         groupPollerManager.get()
         expiredGroupManager.get()
         openGroupPollerManager.get()
+        currentActivityObserver.get()
 
         threadDatabase.get().onAppCreated()
     }

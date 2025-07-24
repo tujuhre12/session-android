@@ -85,6 +85,9 @@ import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.avatarOptions
+import org.thoughtcrime.securesms.util.UserProfileModalCommands
+import org.thoughtcrime.securesms.util.UserProfileModalData
+import org.thoughtcrime.securesms.util.UserProfileUtils
 import org.thoughtcrime.securesms.util.mapStateFlow
 import org.thoughtcrime.securesms.util.mapToStateFlow
 import org.thoughtcrime.securesms.webrtc.CallManager
@@ -118,6 +121,7 @@ class ConversationViewModel @AssistedInject constructor(
     private val recipientRepository: RecipientRepository,
     private val lokiThreadDatabase: LokiThreadDatabase,
     private val blindMappingRepository: BlindMappingRepository,
+    private val upmFactory: UserProfileUtils.UserProfileUtilsFactory
 ) : InputbarViewModel(
     application = application,
     proStatusManager = proStatusManager
@@ -186,6 +190,9 @@ class ConversationViewModel @AssistedInject constructor(
             showSearch = false,
             avatarUIData = AvatarUIData(emptyList())
         ))
+
+    private var userProfileModalJob: Job? = null
+    private var userProfileModalUtils: UserProfileUtils? = null
 
     val recipient: Recipient
         get() = recipientFlow.value
@@ -1177,6 +1184,14 @@ class ConversationViewModel @AssistedInject constructor(
             is Commands.NavigateToConversation -> {
                 _uiEvents.tryEmit(ConversationUiEvent.NavigateToConversation(command.address))
             }
+
+            is Commands.HideUserProfileModal -> {
+                _dialogsState.update { it.copy(userProfileModal = null) }
+            }
+
+            is Commands.HandleUserProfileCommand -> {
+                userProfileModalUtils?.onCommand(command.upmCommand)
+            }
         }
     }
 
@@ -1234,6 +1249,22 @@ class ConversationViewModel @AssistedInject constructor(
         _uiEvents.tryEmit(ConversationUiEvent.ShowNotificationSettings(address))
     }
 
+    fun showUserProfileModal(recipient: Recipient) {
+        // get the helper class for the selected user
+        userProfileModalUtils = upmFactory.create(
+            recipient = recipient,
+            threadId = threadId,
+            scope = viewModelScope
+        )
+
+        // cancel previous job if any then listen in on the changes
+        userProfileModalJob?.cancel()
+        userProfileModalJob = viewModelScope.launch {
+            userProfileModalUtils?.userProfileModalData?.collect { upmData ->
+                _dialogsState.update { it.copy(userProfileModal = upmData) }
+            }
+        }
+    }
 
     @AssistedFactory
     interface Factory {
@@ -1246,6 +1277,7 @@ class ConversationViewModel @AssistedInject constructor(
         val deleteEveryone: DeleteForEveryoneDialogData? = null,
         val recreateGroupConfirm: Boolean = false,
         val recreateGroupData: RecreateGroupDialogData? = null,
+        val userProfileModal: UserProfileModalData? = null,
     )
 
     data class RecreateGroupDialogData(
@@ -1282,6 +1314,11 @@ class ConversationViewModel @AssistedInject constructor(
         data object HideRecreateGroupConfirm : Commands
         data object HideRecreateGroup : Commands
         data class NavigateToConversation(val address: Address) : Commands
+
+        data object HideUserProfileModal: Commands
+        data class HandleUserProfileCommand(
+            val upmCommand: UserProfileModalCommands
+        ): Commands
     }
 }
 

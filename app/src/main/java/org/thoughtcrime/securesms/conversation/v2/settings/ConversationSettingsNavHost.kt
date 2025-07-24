@@ -317,7 +317,7 @@ fun ConversationSettingsNavHost(
                         factory.create(
                             address = address,
                             isNewConfigEnabled = ExpirationConfiguration.isNewConfigEnabled,
-                            showDebugOptions = BuildConfig.DEBUG
+                            showDebugOptions = BuildConfig.BUILD_TYPE != "release"
                         )
                     }
 

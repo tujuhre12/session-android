@@ -24,7 +24,7 @@ class DisappearingMessagesActivity: FullComposeScreenLockActivity() {
                         "DisappearingMessagesActivity requires an Address to be passed in via the intent."
                     },
                     isNewConfigEnabled = ExpirationConfiguration.isNewConfigEnabled,
-                    showDebugOptions = BuildConfig.DEBUG
+                    showDebugOptions = BuildConfig.BUILD_TYPE != "release"
                 )
             }
 

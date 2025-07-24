@@ -19,10 +19,8 @@ import android.widget.FrameLayout
 import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
-import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
@@ -56,7 +54,6 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.groups.OpenGroupManager
-import org.thoughtcrime.securesms.home.UserDetailsBottomSheet
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.disableClipping
 import org.thoughtcrime.securesms.util.toDp
@@ -207,28 +204,10 @@ class VisibleMessageView : FrameLayout {
             if (isEndOfMessageCluster) {
                 binding.profilePictureView.update(sender)
                 binding.profilePictureView.setOnClickListener {
-                    if (threadRecipient.isCommunityRecipient) {
-                        val openGroup = lokiThreadDb.getOpenGroupChat(message.threadId)
-                        if (IdPrefix.fromValue(sender.address.address)?.isBlinded() == true
-                                && openGroup?.canWrite == true) {
-                            // If the sender is a blinded user then we will need to translate the address
-                            // to a special opengroup inbox address.
-
-                            val address = GroupUtil.getEncodedOpenGroupInboxID(
-                                openGroup,
-                                AccountId(sender.address.address)
-                            )
-
-                            context.startActivity(
-                                ConversationActivityV2.createIntent(
-                                    context = context,
-                                    address = address
-                                )
-                            )
-                        }
-                    } else {
-                        maybeShowUserDetails(sender.address.address, message.threadId)
-                    }
+                    delegate?.showUserProfileModal(message.recipient)
+                }
+                binding.senderNameTextView.setOnClickListener {
+                    delegate?.showUserProfileModal(message.recipient)
                 }
                 if (threadRecipient.isCommunityRecipient) {
                     val openGroup = lokiThreadDb.getOpenGroupChat(message.threadId) ?: return
@@ -646,16 +625,6 @@ class VisibleMessageView : FrameLayout {
     }
 
     fun onContentClick(event: MotionEvent) = binding.messageContentView.root.onContentClick(event)
-
-    private fun maybeShowUserDetails(publicKey: String, threadID: Long) {
-        UserDetailsBottomSheet().apply {
-            arguments = bundleOf(
-                UserDetailsBottomSheet.ARGUMENT_PUBLIC_KEY to publicKey,
-                UserDetailsBottomSheet.ARGUMENT_THREAD_ID to threadID
-            )
-            show((this@VisibleMessageView.context as AppCompatActivity).supportFragmentManager, tag)
-        }
-    }
 
     fun playVoiceMessage() {
         binding.messageContentView.root.playVoiceMessage()

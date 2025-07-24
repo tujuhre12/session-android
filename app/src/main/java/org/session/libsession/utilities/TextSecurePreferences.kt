@@ -12,11 +12,17 @@ import androidx.core.content.edit
 import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
+import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.TextSecurePreferences.Companion.AUTOPLAY_AUDIO_MESSAGES
@@ -216,6 +222,8 @@ interface TextSecurePreferences {
 
     var selectedActivityAliasName: String?
 
+    var inAppReviewState: String?
+
     companion object {
         val TAG = TextSecurePreferences::class.simpleName
 
@@ -292,6 +300,7 @@ interface TextSecurePreferences {
         val IS_PUSH_ENABLED get() = "pref_is_using_fcm$pushSuffix"
         const val CONFIGURATION_SYNCED = "pref_configuration_synced"
         const val LAST_PROFILE_UPDATE_TIME = "pref_last_profile_update_time"
+        const val PROFILE_PIC_EXPIRY = "profile_pic_expiry"
         const val LAST_OPEN_DATE = "pref_last_open_date"
         const val HAS_HIDDEN_MESSAGE_REQUESTS = "pref_message_requests_hidden"
         const val SET_FORCE_CURRENT_USER_PRO = "pref_force_current_user_pro"
@@ -356,6 +365,8 @@ interface TextSecurePreferences {
         const val TIME_FORMAT_PREF = "libsession.TIME_FORMAT_PREF"
 
         const val FORCED_SHORT_TTL = "forced_short_ttl"
+
+        const val IN_APP_REVIEW_STATE = "in_app_review_state"
 
         @JvmStatic
         fun getConfigurationMessageSynced(context: Context): Boolean {
@@ -847,6 +858,16 @@ interface TextSecurePreferences {
         @JvmStatic
         fun setLastProfilePictureUpload(context: Context, newValue: Long) {
             setLongPreference(context, "last_profile_picture_upload", newValue)
+        }
+
+        @JvmStatic
+        fun getProfileExpiry(context: Context): Long{
+            return getLongPreference(context, PROFILE_PIC_EXPIRY, 0)
+        }
+
+        @JvmStatic
+        fun setProfileExpiry(context: Context, newValue: Long){
+            setLongPreference(context, PROFILE_PIC_EXPIRY, newValue)
         }
 
         fun getLastSnodePoolRefreshDate(context: Context?): Long {
@@ -1496,7 +1517,7 @@ class AppTextSecurePreferences @Inject constructor(
         val environment = getStringPreference(ENVIRONMENT, null)
         return if (environment != null) {
             Environment.valueOf(environment)
-        } else Environment.MAIN_NET
+        } else BuildConfig.DEFAULT_ENVIRONMENT
     }
 
     override fun setEnvironment(value: Environment) {
@@ -1695,6 +1716,10 @@ class AppTextSecurePreferences @Inject constructor(
     override fun setForcedShortTTL(value: Boolean) {
         setBooleanPreference(FORCED_SHORT_TTL, value)
     }
+
+    override var inAppReviewState: String?
+        get() = getStringPreference(TextSecurePreferences.IN_APP_REVIEW_STATE, null)
+        set(value) = setStringPreference(TextSecurePreferences.IN_APP_REVIEW_STATE, value)
 
     override var deprecationStateOverride: String?
         get() = getStringPreference(TextSecurePreferences.DEPRECATED_STATE_OVERRIDE, null)

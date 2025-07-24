@@ -92,7 +92,8 @@ class ConversationViewModelTest: BaseViewModelTest() {
             openGroupManager = mock {
                 on { getCommunitiesWriteAccessFlow() } doReturn MutableStateFlow(emptyMap())
             },
-            proStatusManager = mock()
+            proStatusManager = mock(),
+            upmFactory = mock(),
         )
     }
 

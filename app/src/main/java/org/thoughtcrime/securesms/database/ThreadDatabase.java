@@ -28,6 +28,7 @@ import android.net.Uri;
 import com.annimon.stream.Stream;
 
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
+import net.zetetic.database.sqlcipher.SQLiteStatement;
 
 import org.json.JSONArray;
 import org.jspecify.annotations.NonNull;
@@ -43,6 +44,7 @@ import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.AccountId;
+import org.session.libsignal.utilities.IdPrefix;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.Pair;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
@@ -459,6 +461,29 @@ public class ThreadDatabase extends Database {
   public List<kotlin.Pair<Address, Long>> getAllThreads() {
     return getAllThreads(getReadableDatabase());
   }
+
+    // Returns the count directly instead of having to use cursor
+    public long getUnapprovedUnreadConversationCount() {
+        String where =
+                "(" + MESSAGE_COUNT + " != 0 OR "
+                        + TABLE_NAME + "." + ADDRESS + " LIKE '" + IdPrefix.GROUP.getValue() + "%')" +
+                        " AND " + ARCHIVED             + " = 0" +
+                        " AND " + HAS_SENT             + " = 0" +
+                        " AND " + RecipientDatabase.APPROVED + " = 0" +
+                        " AND " + RecipientDatabase.BLOCK    + " = 0" +
+                        " AND " + GroupDatabase.GROUP_ID     + " IS NULL" +
+                        " AND (" + UNREAD_COUNT       + " > 0 OR "
+                        + UNREAD_MENTION_COUNT + " > 0)";
+
+        String baseSql = createQuery(where, /* limit= */ 0);
+
+        String countSql = "SELECT COUNT(*) FROM (" + baseSql + ")";
+
+        // try-with-resource to close the statement
+        try (SQLiteStatement stmt = getReadableDatabase().compileStatement(countSql)) {
+            return stmt.simpleQueryForLong();
+        }
+    }
 
   private List<kotlin.Pair<Address, Long>> getAllThreads(SQLiteDatabase db) {
     final String query = "SELECT " + ID + ", " + ADDRESS + " FROM " + TABLE_NAME + " WHERE nullif(" + ADDRESS + ", '') IS NOT NULL";

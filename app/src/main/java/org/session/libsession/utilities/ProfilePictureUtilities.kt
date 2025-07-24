@@ -15,8 +15,8 @@ import java.util.Date
 
 object ProfilePictureUtilities {
 
-    const val DEFAULT_AVATAR_TTL = 14 * 24 * 60 * 60 * 1000 // 14 days
-    const val DEBUG_AVATAR_TTL = 30 // 30 seconds
+    const val DEFAULT_AVATAR_TTL: Long = 14 * 24 * 60 * 60 * 1000 // 14 days
+    const val DEBUG_AVATAR_TTL: Long = 30 // 30 seconds
 
     @OptIn(DelicateCoroutinesApi::class)
     fun resubmitProfilePictureIfNeeded(context: Context) {
@@ -95,7 +95,6 @@ object ProfilePictureUtilities {
         val b = Buffer()
         drb.writeTo(b)
         val data = b.readByteArray()
-        var id: Long = 0
 
         // add a custom TTL header if we have enabled it i the debug menu
         val customHeaders = if(TextSecurePreferences.forcedShortTTL(context)){
@@ -103,14 +102,27 @@ object ProfilePictureUtilities {
         } else mapOf()
 
         // this can throw an error
-        id = retryIfNeeded(4) {
+        val result = retryIfNeeded(4) {
             FileServerApi.upload(file = data, customHeaders = customHeaders)
         }.await()
 
         TextSecurePreferences.setLastProfilePictureUpload(context, Date().time)
-        val url = "${FileServerApi.FILE_SERVER_URL}/file/$id"
+//        TextSecurePreferences.setProfilePictureURL(context, url)
+
+        // save the expiry for this profile picture, so that whe we periodically check if we should
+        // reupload, we can check against this timestamp
+        updateAvatarExpiryTimestamp(context, result.ttlTimestamp)
+
+        val url = "${FileServerApi.FILE_SERVER_URL}/file/${result.id}"
 //        TextSecurePreferences.setProfilePictureURL(context, url)
 
         return url
+    }
+
+    fun updateAvatarExpiryTimestamp(context: Context, expiry: Long?){
+        TextSecurePreferences.setProfileExpiry(
+            context,
+            expiry ?: DEFAULT_AVATAR_TTL
+        )
     }
 }

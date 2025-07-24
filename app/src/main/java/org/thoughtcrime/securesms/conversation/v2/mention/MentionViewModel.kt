@@ -169,7 +169,6 @@ class MentionViewModel @AssistedInject constructor(
             .flowOn(dispatcher)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(10_000L), null)
 
-
     @OptIn(ExperimentalCoroutinesApi::class)
     val autoCompleteState: StateFlow<AutoCompleteState> = editable
         .observeMentionSearchQuery()
@@ -187,7 +186,12 @@ class MentionViewModel @AssistedInject constructor(
                     val filtered = if (query.query.isBlank()) {
                         members.mapTo(mutableListOf()) { Candidate(it, it.name, 0) }
                     } else {
-                        members.mapNotNullTo(mutableListOf()) { searchAndHighlight(it, query.query) }
+                        members.mapNotNullTo(mutableListOf()) {
+                            searchAndHighlight(
+                                it,
+                                query.query
+                            )
+                        }
                     }
 
                     filtered.sortWith(Candidate.MENTION_LIST_COMPARATOR)
@@ -196,6 +200,13 @@ class MentionViewModel @AssistedInject constructor(
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), AutoCompleteState.Idle)
+
+    private fun buildMember(
+        id: String,
+        name: String,
+        isModerator: Boolean,
+        isMe: Boolean
+    ) = Member(publicKey = id, name = name, isModerator = isModerator, isMe = isMe)
 
     private fun searchAndHighlight(
         haystack: Member,
@@ -221,11 +232,12 @@ class MentionViewModel @AssistedInject constructor(
     fun onCandidateSelected(candidatePublicKey: String) {
         val query = editable.mentionSearchQuery ?: return
         val autoCompleteState = autoCompleteState.value as? AutoCompleteState.Result ?: return
-        val candidate = autoCompleteState.members.find { it.member.publicKey == candidatePublicKey } ?: return
+        val candidate =
+            autoCompleteState.members.find { it.member.publicKey == candidatePublicKey } ?: return
 
         editable.addMention(
             candidate.member,
-            query.mentionSymbolStartAt .. (query.mentionSymbolStartAt + query.query.length + 1)
+            query.mentionSymbolStartAt..(query.mentionSymbolStartAt + query.query.length + 1)
         )
     }
 

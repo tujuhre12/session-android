@@ -34,6 +34,7 @@ import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.RadioOption
+import org.thoughtcrime.securesms.ui.UserProfileModal
 import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -220,6 +221,19 @@ fun ConversationV2Dialogs(
                     },
                 )
             }
+        }
+
+        // user profile modal
+        if(dialogsState.userProfileModal != null){
+            UserProfileModal(
+                data = dialogsState.userProfileModal,
+                onDismissRequest = {
+                    sendCommand(ConversationViewModel.Commands.HideUserProfileModal)
+                },
+                sendCommand = {
+                    sendCommand(ConversationViewModel.Commands.HandleUserProfileCommand(it))
+                },
+            )
         }
     }
 }

@@ -222,6 +222,17 @@ class SettingsViewModel @Inject constructor(
 
 
     fun removeAvatar() {
+        // if the user has a temporary avatar selected, clear that and redisplay the default avatar instead
+        if (uiState.value.avatarDialogState is AvatarDialogState.TempAvatar) {
+            viewModelScope.launch {
+                _uiState.update { it.copy(avatarDialogState = getDefaultAvatarDialogState()) }
+            }
+            return
+        }
+
+        onAvatarDialogDismissed()
+
+        // otherwise this action is for removing the existing avatar
         val haveNetworkConnection = connectivity.networkAvailable.value
         if (!haveNetworkConnection) {
             Log.w(TAG, "Cannot remove profile picture - no network connection.")

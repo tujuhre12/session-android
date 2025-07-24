@@ -25,6 +25,7 @@ import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_NONE
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.util.DateUtils
+import org.thoughtcrime.securesms.util.UnreadStylingHelper
 import org.thoughtcrime.securesms.util.getAccentColor
 import org.thoughtcrime.securesms.util.getConversationUnread
 
@@ -54,36 +55,23 @@ class ConversationView : LinearLayout {
         this.thread = thread
         binding.iconPinned.isVisible = thread.isPinned
 
-        binding.root.background = if (thread.unreadCount > 0) {
-            ContextCompat.getDrawable(context, R.drawable.conversation_unread_background)
-        } else {
-            ContextCompat.getDrawable(context, R.drawable.conversation_view_background)
-        }
+        val isUnread = unreadCount > 0 && !thread.isRead
+        binding.root.background = UnreadStylingHelper.getUnreadBackground(context, isUnread)
 
         val unreadCount = thread.unreadCount
         if (thread.recipient.blocked) {
             binding.accentView.setBackgroundColor(ThemeUtil.getThemedColor(context, R.attr.danger))
             binding.accentView.visibility = View.VISIBLE
         } else {
-            val accentColor = context.getAccentColor()
-            val background = ColorDrawable(accentColor)
-            binding.accentView.background = background
+            binding.accentView.background = UnreadStylingHelper.getAccentBackground(context)
             // Using thread.isRead we can determine if the last message was our own, and display it as 'read' even though previous messages may not be
             // This would also not trigger the disappearing message timer which may or may not be desirable
-            binding.accentView.visibility = if (unreadCount > 0 && !thread.isRead) View.VISIBLE else View.INVISIBLE
+            binding.accentView.visibility = if(isUnread) View.VISIBLE else View.INVISIBLE
         }
 
-        val formattedUnreadCount = if (unreadCount == 0) {
-            null
-        } else {
-            if (unreadCount < 10000) unreadCount.toString() else "9999+"
-        }
+        binding.unreadCountTextView.text = UnreadStylingHelper.formatUnreadCount(unreadCount)
 
-        binding.unreadCountTextView.text = formattedUnreadCount
-        val textSize = if (unreadCount < 1000) 12.0f else 10.0f
-        binding.unreadCountTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, textSize)
-        binding.unreadCountIndicator.isVisible = (unreadCount != 0 && !thread.isRead) || (configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(thread) })
-        binding.unreadMentionTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, textSize)
+        binding.unreadCountIndicator.isVisible = (isUnread) || (configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(thread) })
         binding.unreadMentionIndicator.isVisible = (thread.unreadMentionCount != 0 && thread.recipient.address.isGroupOrCommunity)
 
         val senderDisplayName = getTitle(thread.recipient)
@@ -103,15 +91,19 @@ class ConversationView : LinearLayout {
 
         binding.muteIndicatorImageView.setImageResource(drawableRes)
 
-        binding.snippetTextView.text = highlightMentions(
+        val snippet =  highlightMentions(
             text = thread.getDisplayBody(context),
             formatOnly = true, // no styling here, only text formatting
             threadID = thread.threadId,
             context = context
         )
 
-        binding.snippetTextView.typeface = if (unreadCount > 0 && !thread.isRead) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
-        binding.snippetTextView.visibility = if (isTyping) View.GONE else View.VISIBLE
+        binding.snippetTextView.apply {
+            text = snippet
+            typeface = UnreadStylingHelper.getUnreadTypeface(isUnread)
+            visibility = if (isTyping) View.GONE else View.VISIBLE
+        }
+
         if (isTyping) {
             binding.typingIndicatorView.root.startAnimation()
         } else {

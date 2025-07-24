@@ -7,6 +7,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -36,7 +38,12 @@ import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
+import org.thoughtcrime.securesms.reviews.InAppReviewManager
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
+import org.thoughtcrime.securesms.util.UserProfileModalCommands
+import org.thoughtcrime.securesms.util.UserProfileModalData
+import org.thoughtcrime.securesms.util.UserProfileUtils
+import org.thoughtcrime.securesms.util.observeChanges
 import org.thoughtcrime.securesms.webrtc.CallManager
 import org.thoughtcrime.securesms.webrtc.data.State
 import javax.inject.Inject
@@ -52,11 +59,12 @@ class HomeViewModel @Inject constructor(
     private val groupManager: GroupManagerV2,
     private val conversationRepository: ConversationRepository,
     private val proStatusManager: ProStatusManager,
+    private val upmFactory: UserProfileUtils.UserProfileUtilsFactory,
 ) : ViewModel() {
     // SharedFlow that emits whenever the user asks us to reload  the conversation
     private val manualReloadTrigger = MutableSharedFlow<Unit>(
-            extraBufferCapacity = 1,
-            onBufferOverflow = BufferOverflow.DROP_OLDEST
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
 
     private val mutableIsSearchOpen = MutableStateFlow(false)
@@ -64,9 +72,9 @@ class HomeViewModel @Inject constructor(
 
     val callBanner: StateFlow<String?> = callManager.currentConnectionStateFlow.map {
         // a call is in progress if it isn't idle nor disconnected
-        if(it !is State.Idle && it !is State.Disconnected){
+        if (it !is State.Idle && it !is State.Disconnected) {
             // call is started, we need to differentiate between in progress vs incoming
-            if(it is State.Connected) context.getString(R.string.callsInProgress)
+            if (it is State.Connected) context.getString(R.string.callsInProgress)
             else context.getString(R.string.callsIncomingUnknown)
         } else null // null when the call isn't in progress / incoming
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), initialValue = null)
@@ -120,11 +128,14 @@ class HomeViewModel @Inject constructor(
         emit(null)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
+    private var userProfileModalJob: Job? = null
+    private var userProfileModalUtils: UserProfileUtils? = null
+
     private fun observeTypingStatus(): Flow<Set<Long>> = typingStatusRepository
-                    .typingThreads
-                    .asFlow()
-                    .onStart { emit(emptySet()) }
-                    .distinctUntilChanged()
+        .typingThreads
+        .asFlow()
+        .onStart { emit(emptySet()) }
+        .distinctUntilChanged()
 
 
     fun tryReload() = manualReloadTrigger.tryEmit(Unit)
@@ -189,7 +200,7 @@ class HomeViewModel @Inject constructor(
         // check the pin limit before continuing
         val totalPins = storage.getTotalPinned()
         val maxPins = proStatusManager.getPinnedConversationLimit()
-        if(pinned && totalPins >= maxPins){
+        if (pinned && totalPins >= maxPins) {
             // the user has reached the pin limit, show the CTA
             _dialogsState.update {
                 it.copy(
@@ -217,11 +228,36 @@ class HomeViewModel @Inject constructor(
                 //todo PRO go to screen once it exists
             }
 
+            is Commands.HideUserProfileModal -> {
+                _dialogsState.update { it.copy(userProfileModal = null) }
+            }
+
+            is Commands.HandleUserProfileCommand -> {
+                userProfileModalUtils?.onCommand(command.upmCommand)
+            }
+        }
+    }
+
+    fun showUserProfileModal(thread: ThreadRecord) {
+        // get the helper class for the selected user
+        userProfileModalUtils = upmFactory.create(
+            recipient = thread.recipient,
+            threadId = thread.threadId,
+            scope = viewModelScope
+        )
+
+        // cancel previous job if any then listen in on the changes
+        userProfileModalJob?.cancel()
+        userProfileModalJob = viewModelScope.launch {
+            userProfileModalUtils?.userProfileModalData?.collect { upmData ->
+                _dialogsState.update { it.copy(userProfileModal = upmData) }
+            }
         }
     }
 
     data class DialogsState(
         val pinCTA: PinProCTA? = null,
+        val userProfileModal: UserProfileModalData? = null
     )
 
     data class PinProCTA(
@@ -229,8 +265,12 @@ class HomeViewModel @Inject constructor(
     )
 
     sealed interface Commands {
-        data object HidePinCTADialog: Commands
-        data object GoToProUpgradeScreen: Commands
+        data object HidePinCTADialog : Commands
+        data object HideUserProfileModal : Commands
+        data object GoToProUpgradeScreen : Commands
+        data class HandleUserProfileCommand(
+            val upmCommand: UserProfileModalCommands
+        ) : Commands
     }
 
     companion object {
