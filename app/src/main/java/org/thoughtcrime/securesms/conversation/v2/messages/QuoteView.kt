@@ -4,8 +4,11 @@ import android.content.Context
 import android.content.res.ColorStateList
 import android.util.AttributeSet
 import androidx.annotation.ColorInt
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.content.res.use
@@ -28,6 +31,7 @@ import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.setThemedContent
+import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.util.MediaUtil
@@ -95,9 +99,15 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
         // set up quote author
         binding.quoteAuthor.apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            var modifier: Modifier = Modifier
+            if(mode == Mode.Regular){
+                modifier = modifier.widthIn(max = 240.dp) // this value is hardcoded in the xml files > when we move to compose proper this value will be in the dimension file
+            }
+
             setThemedContent {
                 ProBadgeText(
-                    text = authorDisplayName,
+                    modifier = modifier,
+                    text = authorDisplayName, //todo badge we need to rework te naming logic to get the name (no account id for blinded here...) - waiting on the Recipient refactor
                     textStyle = LocalType.current.small.bold().copy(color = Color(textColor)),
                     showBadge = proStatusManager.isUserPro(authorRecipient.address),
                     invertBadgeColor = isOutgoingMessage && mode == Mode.Regular
