@@ -16,6 +16,7 @@ import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityMessageRequestsBinding
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
+import org.session.libsession.utilities.recipients.displayName
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -86,7 +87,7 @@ class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClick
         showSessionDialog {
             title(R.string.block)
             text(Phrase.from(context, R.string.blockDescription)
-                .put(NAME_KEY, thread.recipient.displayName)
+                .put(NAME_KEY, thread.recipient.displayName())
                 .format())
             dangerButton(R.string.block, R.string.AccessibilityId_blockConfirm) {
                 doBlock()

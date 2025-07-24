@@ -24,6 +24,7 @@ import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.recipients.BasicRecipient
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
@@ -86,7 +87,7 @@ class UserProfileUtils @AssistedInject constructor(
             isResolvedBlinded -> {
                 "${userAddress.address.substring(0, 23)}\n${userAddress.address.substring(23, 46)}\n${userAddress.address.substring(46)}" to
                         Phrase.from(context, R.string.tooltipAccountIdVisible)
-                            .put(NAME_KEY, recipient.displayName)
+                            .put(NAME_KEY, recipient.displayName())
                             .format()
             }
 
@@ -96,7 +97,7 @@ class UserProfileUtils @AssistedInject constructor(
         }
 
         return UserProfileModalData(
-            name = recipient.displayName,
+            name = recipient.displayName(),
             subtitle = (recipient.basic as? BasicRecipient.Contact)?.nickname?.takeIf { it.isNotBlank() }?.let { "($it)" },
             avatarUIData = avatarUtils.getUIDataFromAccountId(accountId = userAddress.address),
             isPro = proStatusManager.isUserPro(userAddress),

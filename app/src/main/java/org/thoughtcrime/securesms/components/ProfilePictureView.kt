@@ -23,6 +23,7 @@ import org.session.libsession.utilities.AppTextSecurePreferences
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.GroupDatabase
@@ -103,8 +104,8 @@ class ProfilePictureView @JvmOverloads constructor(
         address: Address,
         profileViewDataType: ProfileViewDataType = ProfileViewDataType.OneOnOne
     ) {
-        fun getUserDisplayName(publicKey: String): String = recipientRepository.getRecipientDisplayNameSync(
-            Address.fromSerialized(publicKey))
+        fun getUserDisplayName(publicKey: String): String = recipientRepository.getRecipientSyncOrEmpty(
+            Address.fromSerialized(publicKey)).displayName()
 
         // group avatar
         if (profileViewDataType is ProfileViewDataType.GroupvV2 || profileViewDataType is ProfileViewDataType.LegacyGroup) {

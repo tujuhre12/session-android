@@ -34,6 +34,7 @@ import network.loki.messenger.R;
 import org.session.libsession.messaging.utilities.UpdateMessageData;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsession.utilities.recipients.RecipientKt;
 import org.thoughtcrime.securesms.database.MmsSmsColumns;
 import org.thoughtcrime.securesms.database.SmsDatabase;
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate;
@@ -77,7 +78,7 @@ public class ThreadRecord extends DisplayRecord {
   }
 
     private String getName() {
-        return getRecipient().getDisplayName();
+        return RecipientKt.displayName(getRecipient());
     }
 
     @Override
@@ -196,7 +197,7 @@ public class ThreadRecord extends DisplayRecord {
                 prefix = context.getString(R.string.you);
             }
             else if(lastMessage != null){
-                prefix = lastMessage.getIndividualRecipient().getDisplayName();
+                prefix = RecipientKt.displayName(lastMessage.getIndividualRecipient());
             }
 
             return Phrase.from(context.getString(R.string.messageSnippetGroup))

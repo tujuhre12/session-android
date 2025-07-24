@@ -27,6 +27,7 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.displayName
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.MediaPreviewArgs
 import org.thoughtcrime.securesms.database.AttachmentDatabase
@@ -171,7 +172,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
                     status = status,
                     senderInfo = sender.run {
                         TitledText(
-                            if(messageRecord.isOutgoing) context.getString(R.string.you) else displayName,
+                            if(messageRecord.isOutgoing) context.getString(R.string.you) else displayName(),
                             address.toString()
                         )
                     },

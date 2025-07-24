@@ -15,6 +15,7 @@ import network.loki.messenger.databinding.ViewMessageRequestBinding
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities.highlightMentions
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.displayName
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.UnreadStylingHelper
 import org.thoughtcrime.securesms.util.getAccentColor
@@ -84,7 +85,7 @@ class MessageRequestView : LinearLayout {
         return if (recipient.isLocalNumber) {
             context.getString(R.string.noteToSelf)
         } else {
-            recipient.displayName // Internally uses the Contact API
+            recipient.displayName() // Internally uses the Contact API
         }
     }
     // endregion

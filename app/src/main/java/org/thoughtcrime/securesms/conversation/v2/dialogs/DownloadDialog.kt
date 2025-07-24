@@ -11,6 +11,7 @@ import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.StringSubstitutionConstants.CONVERSATION_NAME_KEY
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.displayName
 import org.thoughtcrime.securesms.createSessionDialog
 import org.thoughtcrime.securesms.database.SessionContactDatabase
 import org.thoughtcrime.securesms.util.createAndStartAttachmentDownload
@@ -30,7 +31,7 @@ class AutoDownloadDialog(private val threadRecipient: Recipient,
         title(getString(R.string.attachmentsAutoDownloadModalTitle))
 
         val explanation = Phrase.from(context, R.string.attachmentsAutoDownloadModalDescription)
-            .put(CONVERSATION_NAME_KEY, threadRecipient.displayName)
+            .put(CONVERSATION_NAME_KEY, threadRecipient.displayName())
             .format()
         text(explanation)
 

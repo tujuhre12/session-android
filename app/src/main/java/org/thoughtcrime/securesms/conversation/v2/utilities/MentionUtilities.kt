@@ -17,6 +17,7 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.getColorFromAttr
+import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.thoughtcrime.securesms.conversation.v2.mention.MentionEditable
 import org.thoughtcrime.securesms.conversation.v2.mention.MentionViewModel
@@ -95,9 +96,9 @@ object MentionUtilities {
                 val userDisplayName: String = if (isYou) {
                     context.getString(R.string.you)
                 } else {
-                    MessagingModuleConfiguration.shared.recipientRepository.getRecipientDisplayNameSync(
+                    MessagingModuleConfiguration.shared.recipientRepository.getRecipientSyncOrEmpty(
                         Address.fromSerialized(publicKey)
-                    )
+                    ).displayName()
                 }
 
                 val mention = "@$userDisplayName"

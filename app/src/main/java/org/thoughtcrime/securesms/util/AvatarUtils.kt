@@ -26,6 +26,7 @@ import network.loki.messenger.R
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
@@ -127,7 +128,7 @@ class AvatarUtils @Inject constructor(
 
     private fun getUIElementForRecipient(recipient: Recipient): AvatarUIElement {
         // name
-        val name = recipient.displayName
+        val name = recipient.displayName()
 
         val defaultColor = Color(getColorFromKey(recipient.address.toString()))
 

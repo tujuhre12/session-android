@@ -47,6 +47,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
@@ -448,7 +449,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         // name
         val name = when {
             conversation.isLocalNumber -> context.getString(R.string.noteToSelf)
-            else -> conversation.displayName
+            else -> conversation.displayName()
         }
 
         // account ID
@@ -781,7 +782,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 showSimpleDialog = SimpleDialogData(
                     title = context.getString(R.string.block),
                     message = Phrase.from(context, R.string.blockDescription)
-                        .put(NAME_KEY, recipient?.displayName ?: "")
+                        .put(NAME_KEY, recipient?.displayName().orEmpty())
                         .format(),
                     positiveText = context.getString(R.string.block),
                     negativeText = context.getString(R.string.cancel),
@@ -800,7 +801,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 showSimpleDialog = SimpleDialogData(
                     title = context.getString(R.string.blockUnblock),
                     message = Phrase.from(context, R.string.blockUnblockName)
-                        .put(NAME_KEY, recipient?.displayName ?: "")
+                        .put(NAME_KEY, recipient?.displayName().orEmpty())
                         .format(),
                     positiveText = context.getString(R.string.blockUnblock),
                     negativeText = context.getString(R.string.cancel),
@@ -886,7 +887,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 showSimpleDialog = SimpleDialogData(
                     title = context.getString(R.string.contactDelete),
                     message = Phrase.from(context, R.string.deleteContactDescription)
-                        .put(NAME_KEY, recipient?.displayName ?: "")
+                        .put(NAME_KEY, recipient?.displayName().orEmpty())
                         .format(),
                     positiveText = context.getString(R.string.delete),
                     negativeText = context.getString(R.string.cancel),
@@ -918,7 +919,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 showSimpleDialog = SimpleDialogData(
                     title = context.getString(R.string.conversationsDelete),
                     message = Phrase.from(context, R.string.deleteConversationDescription)
-                        .put(NAME_KEY, recipient?.displayName ?: "")
+                        .put(NAME_KEY, recipient?.displayName().orEmpty())
                         .format(),
                     positiveText = context.getString(R.string.delete),
                     negativeText = context.getString(R.string.cancel),
@@ -949,7 +950,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 showSimpleDialog = SimpleDialogData(
                     title = context.getString(R.string.communityLeave),
                     message = Phrase.from(context, R.string.groupLeaveDescription)
-                        .put(GROUP_NAME_KEY, recipient?.displayName ?: "")
+                        .put(GROUP_NAME_KEY, recipient?.displayName().orEmpty())
                         .format(),
                     positiveText = context.getString(R.string.leave),
                     negativeText = context.getString(R.string.cancel),
@@ -982,26 +983,26 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
         // default to 1on1
         var message: CharSequence = Phrase.from(context, R.string.clearMessagesChatDescriptionUpdated)
-            .put(NAME_KEY,conversation.displayName)
+            .put(NAME_KEY,conversation.displayName())
             .format()
 
         when{
             conversation.isGroupV2Recipient -> {
                 if(groupV2?.hasAdminKey() == true){
                     // group admin clearing messages have a dedicated custom dialog
-                    _dialogState.update { it.copy(groupAdminClearMessagesDialog = GroupAdminClearMessageDialog(conversation.displayName)) }
+                    _dialogState.update { it.copy(groupAdminClearMessagesDialog = GroupAdminClearMessageDialog(conversation.displayName())) }
                     return
 
                 } else {
                     message = Phrase.from(context, R.string.clearMessagesGroupDescriptionUpdated)
-                        .put(GROUP_NAME_KEY, conversation.displayName)
+                        .put(GROUP_NAME_KEY, conversation.displayName())
                         .format()
                 }
             }
 
             conversation.isCommunityRecipient -> {
                 message = Phrase.from(context, R.string.clearMessagesCommunityUpdated)
-                    .put(COMMUNITY_NAME_KEY, conversation.displayName)
+                    .put(COMMUNITY_NAME_KEY, conversation.displayName())
                     .format()
             }
 
@@ -1092,7 +1093,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 hideLoading()
 
                 val txt = Phrase.from(context, R.string.groupLeaveErrorFailed)
-                    .put(GROUP_NAME_KEY, conversation.displayName)
+                    .put(GROUP_NAME_KEY, conversation.displayName())
                     .format().toString()
                 Toast.makeText(context, txt, Toast.LENGTH_LONG).show()
             }

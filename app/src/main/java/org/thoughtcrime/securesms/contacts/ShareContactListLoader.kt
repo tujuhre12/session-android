@@ -6,6 +6,7 @@ import kotlinx.coroutines.runBlocking
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.displayName
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.repository.ConversationRepository
@@ -35,7 +36,7 @@ class ShareContactListLoader(
                     return@filter openGroup.canWrite
                 }
                 if (filter.isNullOrEmpty()) return@filter true
-                recipient.displayName.contains(filter.trim(), true) || recipient.address.toString().contains(filter.trim(), true)
+                recipient.displayName().contains(filter.trim(), true) || recipient.address.toString().contains(filter.trim(), true)
             }
             .toMutableList()
 
@@ -47,6 +48,6 @@ class ShareContactListLoader(
     companion object {
         private val COMPARATOR = compareByDescending<ThreadRecord> { it.recipient.isLocalNumber } // NTS come first
             .thenByDescending { it.lastMessage?.timestamp ?: 0L } // then order by last message time
-            .thenBy { it.recipient.displayName }
+            .thenBy { it.recipient.displayName() }
     }
 }

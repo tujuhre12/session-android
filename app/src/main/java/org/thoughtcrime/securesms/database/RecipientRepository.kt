@@ -20,6 +20,7 @@ import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISI
 import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
+import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.utilities.Address
@@ -35,7 +36,6 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientSettings
 import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRecipientAvatar
-import org.session.libsession.utilities.recipients.displayNameOrFallback
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
@@ -221,6 +221,29 @@ class RecipientRepository @Inject constructor(
                             recipientDatabase.updateNotifications.filter { it == monitoringAddress }
                     }
 
+                    IdPrefix.fromValue(address.address) == IdPrefix.STANDARD -> {
+                        // If we are a standard address, last attempt to find the
+                        // recipient inside all closed groups' member list
+                        // members:
+                        val allGroups = configFactory.withUserConfigs { it.userGroups.allClosedGroupInfo() }
+                        val groupMember = allGroups
+                            .asSequence()
+                            .mapNotNull { groupInfo ->
+                                configFactory.withGroupConfigs(AccountId(groupInfo.groupAccountId)) {
+                                    it.groupMembers.get(address.address)
+                                }
+                            }
+                            .firstOrNull() ?: return null
+
+                        value = createGroupMemberRecipient(address, groupMember)
+                        changeSource = merge(
+                            configFactory.configUpdateNotifications.filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
+                                .filter { it.groupId.hexString == address.address },
+                            configFactory.userConfigsChanged(),
+                            recipientDatabase.updateNotifications.filter { it == address }
+                        )
+                    }
+
                     else -> return null // No recipient found for this address
                 }
             }
@@ -256,30 +279,6 @@ class RecipientRepository @Inject constructor(
             settingsFetcher = recipientDatabase::getRecipientSettings,
             openGroupFetcher = storage.get()::getOpenGroup
         )?.first
-    }
-
-    /**
-     * Returns the recipient name for the given address. This will try to get the information
-     * as efficiently as possible, but if it fails to do so a blocking call to the database
-     * might be made.
-     *
-     * If you know the recipient is backed by the config system, it's better to use
-     * [getBasicRecipientFast] instead.
-     */
-    @DelicateCoroutinesApi
-    inline fun getRecipientDisplayNameSync(
-        address: Address,
-        fallbackName: () -> String? = { null }
-    ): String {
-        val basic = getBasicRecipientFast(address)
-        if (basic != null) {
-            return basic.displayName
-        }
-
-        return getRecipientSync(address).displayNameOrFallback(
-            fallbackName = fallbackName,
-            address = address.address,
-        )
     }
 
     /**
@@ -499,6 +498,23 @@ class RecipientRepository @Inject constructor(
                 autoDownloadAttachments = settings.autoDownloadAttachments,
                 notifyType = settings.notifyType,
                 acceptsCommunityMessageRequests = !settings.blocksCommunityMessagesRequests,
+            )
+        }
+
+        private fun createGroupMemberRecipient(
+            address: Address,
+            groupMember: GroupMember,
+        ): Recipient {
+            return Recipient(
+                basic = BasicRecipient.Generic(
+                    address = address,
+                    displayName = groupMember.name,
+                    avatar = groupMember.profilePic()?.toRecipientAvatar(),
+                ),
+                mutedUntil = null,
+                autoDownloadAttachments = null,
+                notifyType = RecipientDatabase.NOTIFY_TYPE_ALL,
+                acceptsCommunityMessageRequests = false,
             )
         }
 

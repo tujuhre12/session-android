@@ -79,6 +79,7 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.components.MediaView
 import org.thoughtcrime.securesms.components.dialogs.DeleteMediaPreviewDialog
@@ -297,7 +298,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
             }
 
             if (mediaItem.outgoing) supportActionBar?.title = getString(R.string.you)
-            else if (recipient != null) supportActionBar?.title = recipient.displayName
+            else if (recipient != null) supportActionBar?.title = recipient.displayName()
             else supportActionBar?.title = ""
 
             supportActionBar?.subtitle = relativeTimeSpan

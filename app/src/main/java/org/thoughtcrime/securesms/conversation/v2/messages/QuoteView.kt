@@ -16,7 +16,7 @@ import network.loki.messenger.databinding.ViewQuoteBinding
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.recipients.displayNameOrFallback
+import org.session.libsession.utilities.recipients.displayName
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.mms.SlideDeck
@@ -73,7 +73,7 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
 
         val authorDisplayName =
             if (author.isLocalNumber) context.getString(R.string.you)
-            else author.displayNameOrFallback(address = authorPublicKey)
+            else author.displayName(attachesBlindedId = true)
 
         binding.quoteViewAuthorTextView.text = authorDisplayName
         val textColor = getTextColor(isOutgoingMessage)

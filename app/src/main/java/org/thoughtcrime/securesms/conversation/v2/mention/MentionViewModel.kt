@@ -37,6 +37,7 @@ import network.loki.messenger.R
 import network.loki.messenger.libsession_util.allWithStatus
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
@@ -159,7 +160,7 @@ class MentionViewModel @AssistedInject constructor(
                     .map { contact ->
                         Member(
                             publicKey = contact.address.toString(),
-                            name = contact.displayName,
+                            name = contact.displayName(attachesBlindedId = true),
                             isModerator = contact.address.address in moderatorIDs,
                             isMe = false
                         )

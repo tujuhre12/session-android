@@ -34,6 +34,7 @@ import org.session.libsession.messaging.messages.control.DataExtractionNotificat
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.recipients.displayName
 import org.thoughtcrime.securesms.MediaPreviewActivity
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.MediaDatabase
@@ -95,7 +96,7 @@ class MediaOverviewViewModel @AssistedInject constructor(
         .map { recipient ->
             when {
                 recipient.isLocalNumber -> application.getString(R.string.noteToSelf)
-                else -> recipient.displayName
+                else -> recipient.displayName()
             }
         }
         .stateIn(viewModelScope, SharingStarted.Eagerly, "")

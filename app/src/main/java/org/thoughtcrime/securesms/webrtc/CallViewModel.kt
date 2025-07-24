@@ -16,7 +16,7 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.currentUserName
-import org.session.libsession.utilities.recipients.displayNameOrFallback
+import org.session.libsession.utilities.recipients.displayName
 import org.thoughtcrime.securesms.conversation.v2.ViewUtil
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_ANSWER_INCOMING
@@ -203,8 +203,8 @@ class CallViewModel @Inject constructor(
     fun hangUp() = rtcCallBridge.handleLocalHangup(null)
 
     fun getContactName(accountID: String) =
-        recipientRepository.getRecipientSync(Address.fromSerialized(accountID))
-            .displayNameOrFallback(address = accountID)
+        recipientRepository.getRecipientSyncOrEmpty(Address.fromSerialized(accountID))
+            .displayName()
 
     fun getCurrentUsername() = configFactory.currentUserName
 

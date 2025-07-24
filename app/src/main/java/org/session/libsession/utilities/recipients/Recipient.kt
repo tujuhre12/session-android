@@ -8,6 +8,7 @@ import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.truncateIdForDisplay
+import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.database.RecipientDatabase
 import java.time.ZonedDateTime
 
@@ -33,7 +34,6 @@ data class Recipient(
     val is1on1: Boolean get() = basic.is1on1
     val isGroupRecipient: Boolean get() = basic.isGroupRecipient
 
-    val displayName: String get() = basic.displayName
     val expiryMode: ExpiryMode get() = when (basic) {
         is BasicRecipient.Self -> basic.expiryMode
         is BasicRecipient.Contact -> basic.expiryMode
@@ -99,7 +99,6 @@ data class Recipient(
 sealed interface BasicRecipient {
     val address: Address
     val isLocalNumber: Boolean
-    val displayName: String
     val avatar: RemoteFile?
     val priority: Long
 
@@ -110,7 +109,7 @@ sealed interface BasicRecipient {
 
     data class Generic(
         override val address: Address,
-        override val displayName: String = "",
+        val displayName: String = "",
         override val avatar: RemoteFile? = null,
         override val isLocalNumber: Boolean = false,
         val blocked: Boolean = false,
@@ -128,9 +127,6 @@ sealed interface BasicRecipient {
         val acceptsCommunityMessageRequests: Boolean,
         override val priority: Long,
     ) : ConfigBasedRecipient {
-        override val displayName: String
-            get() = name
-
         override val isLocalNumber: Boolean
             get() = true
     }
@@ -149,7 +145,7 @@ sealed interface BasicRecipient {
         val expiryMode: ExpiryMode,
         override val priority: Long,
     ) : ConfigBasedRecipient {
-        override val displayName: String
+        val displayName: String
             get() = nickname?.takeIf { it.isNotBlank() } ?: name
 
         override val isLocalNumber: Boolean
@@ -167,9 +163,6 @@ sealed interface BasicRecipient {
         val approved: Boolean,
         override val priority: Long,
     ) : ConfigBasedRecipient {
-        override val displayName: String
-            get() = name
-
         override val isLocalNumber: Boolean
             get() = false
     }
@@ -249,8 +242,28 @@ fun RemoteFile.toUserPic(): UserPic? {
     }
 }
 
-inline fun Recipient?.displayNameOrFallback(fallbackName: () -> String? = { null }, address: String): String {
-    return (this?.displayName ?: fallbackName())
-        ?.takeIf { it.isNotBlank() }
-        ?: truncateIdForDisplay(address)
+/**
+ * Retrieve the
+ */
+@JvmOverloads
+fun Recipient.displayName(
+    attachesBlindedId: Boolean = false,
+): String {
+    val name = when (basic) {
+        is BasicRecipient.Self -> basic.name
+        is BasicRecipient.Contact -> basic.displayName
+        is BasicRecipient.Group -> basic.name
+        is BasicRecipient.Generic -> basic.displayName
+    }
+
+    if (name.isBlank()) {
+        return truncateIdForDisplay(address.address)
+    }
+
+    if (attachesBlindedId &&
+        IdPrefix.fromValue(address.address)?.isBlinded() == true) {
+        return "$name (${truncateIdForDisplay(address.address)})"
+    }
+
+    return name
 }

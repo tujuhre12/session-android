@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.session.libsession.database.StorageProtocol;
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager;
 import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsession.utilities.recipients.RecipientKt;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.ShareActivity;
 import org.thoughtcrime.securesms.contacts.ShareContactListLoader;
@@ -85,7 +86,7 @@ public class DirectShareService extends ChooserTargetService {
         bundle.putParcelable(ShareActivity.EXTRA_ADDRESS, recipient.getAddress());
         bundle.setClassLoader(getClassLoader());
 
-        results.add(new ChooserTarget(recipient.getDisplayName(), Icon.createWithBitmap(avatar), 1.0f, componentName, bundle));
+        results.add(new ChooserTarget(RecipientKt.displayName(recipient), Icon.createWithBitmap(avatar), 1.0f, componentName, bundle));
     }
 
     return results;

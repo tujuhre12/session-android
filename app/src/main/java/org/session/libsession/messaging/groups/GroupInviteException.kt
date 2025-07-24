@@ -8,6 +8,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.COUNT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.OTHER_NAME_KEY
+import org.session.libsession.utilities.recipients.displayName
 import org.thoughtcrime.securesms.database.RecipientRepository
 
 /**
@@ -32,7 +33,7 @@ class GroupInviteException(
 
     fun format(context: Context, recipientRepository: RecipientRepository): CharSequence {
         val getInviteeName = { accountId: String ->
-            recipientRepository.getRecipientDisplayNameSync(Address.fromSerialized(accountId))
+            recipientRepository.getRecipientSyncOrEmpty(Address.fromSerialized(accountId)).displayName()
         }
 
         val first = inviteeAccountIds.first().let(getInviteeName)

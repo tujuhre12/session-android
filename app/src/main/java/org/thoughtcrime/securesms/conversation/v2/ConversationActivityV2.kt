@@ -110,6 +110,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOT
 import org.session.libsession.utilities.concurrent.SimpleTask
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.crypto.MnemonicCodec
 import org.session.libsignal.utilities.ListenableFuture
 import org.session.libsignal.utilities.Log
@@ -947,7 +948,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         if (shouldShowLegacy) {
 
             val txt = Phrase.from(this, R.string.disappearingMessagesLegacy)
-                .put(NAME_KEY, legacyRecipient.displayName)
+                .put(NAME_KEY, legacyRecipient.displayName())
                 .format()
             binding.conversationHeader.outdatedDisappearingBannerTextView.text = txt
         }
@@ -1370,12 +1371,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             binding.conversationRecyclerView.isVisible = false
             binding.placeholderText.text = when (groupThreadStatus) {
                 GroupThreadStatus.Kicked -> Phrase.from(this, R.string.groupRemovedYou)
-                    .put(GROUP_NAME_KEY, recipient.displayName)
+                    .put(GROUP_NAME_KEY, recipient.displayName())
                     .format()
                     .toString()
 
                 GroupThreadStatus.Destroyed -> Phrase.from(this, R.string.groupDeletedMemberDescription)
-                    .put(GROUP_NAME_KEY, recipient.displayName)
+                    .put(GROUP_NAME_KEY, recipient.displayName())
                     .format()
                     .toString()
 
@@ -1399,7 +1400,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             // If we're trying to message someone who has blocked community message requests
             !recipient.acceptsCommunityMessageRequests -> {
                 Phrase.from(applicationContext, R.string.messageRequestsTurnedOff)
-                    .put(NAME_KEY, recipient.displayName)
+                    .put(NAME_KEY, recipient.displayName())
                     .format()
             }
 
@@ -1407,7 +1408,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             recipient.isCommunityInboxRecipient ||
                     recipient.is1on1 || recipient.isGroupOrCommunityRecipient -> {
                 Phrase.from(applicationContext, R.string.groupNoMessages)
-                    .put(GROUP_NAME_KEY, recipient.displayName)
+                    .put(GROUP_NAME_KEY, recipient.displayName())
                     .format()
             }
 
@@ -1494,7 +1495,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val name = if (recipient.isGroupV2Recipient && invitingAdmin != null) {
             invitingAdmin.searchName
         } else {
-            recipient.displayName
+            recipient.displayName()
         }
 
         showSessionDialog {
@@ -1531,7 +1532,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             title(R.string.blockUnblock)
             text(
                 Phrase.from(context, R.string.blockUnblockName)
-                    .put(NAME_KEY, recipient.displayName)
+                    .put(NAME_KEY, recipient.displayName())
                     .format()
             )
             dangerButton(R.string.blockUnblock, R.string.AccessibilityId_unblockConfirm) { viewModel.unblock() }
@@ -1975,7 +1976,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         // show the unblock dialog when trying to send a message to a blocked contact
         if (recipient.isContactRecipient && recipient.blocked) {
-            BlockedDialog(recipient.address, recipient.displayName).show(supportFragmentManager, "Blocked Dialog")
+            BlockedDialog(recipient.address, recipient.displayName()).show(supportFragmentManager, "Blocked Dialog")
             return
         }
 

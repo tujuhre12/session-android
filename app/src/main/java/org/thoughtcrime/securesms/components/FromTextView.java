@@ -16,6 +16,7 @@ import android.util.AttributeSet;
 import network.loki.messenger.R;
 
 import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsession.utilities.recipients.RecipientKt;
 import org.thoughtcrime.securesms.components.emoji.EmojiTextView;
 import org.thoughtcrime.securesms.util.ResUtil;
 import org.session.libsession.utilities.CenterAlignedRelativeSizeSpan;
@@ -37,7 +38,7 @@ public class FromTextView extends EmojiTextView {
   }
 
   public void setText(Recipient recipient, boolean read) {
-    String fromString = recipient.getDisplayName();
+    final String fromString = RecipientKt.displayName(recipient);
 
     int typeface;
 
@@ -56,8 +57,8 @@ public class FromTextView extends EmojiTextView {
 
     if (recipient.isLocalNumber()) {
       builder.append(getContext().getString(R.string.noteToSelf));
-    } else if (!TextUtils.isEmpty(recipient.getDisplayName())) {
-      SpannableString profileName = new SpannableString(" (~" + recipient.getDisplayName() + ") ");
+    } else if (!TextUtils.isEmpty(fromString)) {
+      SpannableString profileName = new SpannableString(" (~" + fromString + ") ");
       profileName.setSpan(new CenterAlignedRelativeSizeSpan(0.75f), 0, profileName.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
       profileName.setSpan(new TypefaceSpan("sans-serif-light"), 0, profileName.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
       profileName.setSpan(new ForegroundColorSpan(ResUtil.getColor(getContext(), R.attr.conversation_list_item_subject_color)), 0, profileName.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);

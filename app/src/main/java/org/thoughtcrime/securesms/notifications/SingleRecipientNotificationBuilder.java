@@ -29,6 +29,7 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import org.session.libsession.utilities.NotificationPrivacyPreference;
 import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsession.utilities.recipients.RecipientKt;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader;
 import org.thoughtcrime.securesms.mms.Slide;
@@ -73,7 +74,7 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
     setChannelId(channelId != null ? channelId : NotificationChannels.getMessagesChannel(context));
 
     if (privacy.isDisplayContact()) {
-      setContentTitle(recipient.getDisplayName());
+      setContentTitle(RecipientKt.displayName(recipient));
 
       Object avatar = recipient.getAvatar();
       if (avatar != null) {
@@ -116,7 +117,7 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
     SpannableStringBuilder stringBuilder = new SpannableStringBuilder();
 
     if (privacy.isDisplayContact() && threadRecipient.isGroupOrCommunityRecipient()) {
-      stringBuilder.append(Util.getBoldedString(individualRecipient.getDisplayName() + ": "));
+      stringBuilder.append(Util.getBoldedString(RecipientKt.displayName(individualRecipient) + ": "));
     }
 
     if (privacy.isDisplayMessage()) {
@@ -203,7 +204,7 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
     SpannableStringBuilder stringBuilder = new SpannableStringBuilder();
 
     if (privacy.isDisplayContact() && threadRecipient.isGroupOrCommunityRecipient()) {
-      stringBuilder.append(Util.getBoldedString(individualRecipient.getDisplayName() + ": "));
+      stringBuilder.append(Util.getBoldedString(RecipientKt.displayName(individualRecipient) + ": "));
     }
 
     if (privacy.isDisplayMessage()) {
@@ -316,7 +317,7 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
 
   private static Drawable getPlaceholderDrawable(AvatarUtils avatarUtils, Recipient recipient) {
     String publicKey = recipient.getAddress().toString();
-    String displayName = recipient.getDisplayName();
+    String displayName = RecipientKt.displayName(recipient);
     return avatarUtils.generateTextBitmap(ICON_SIZE, publicKey, displayName);
   }
 }

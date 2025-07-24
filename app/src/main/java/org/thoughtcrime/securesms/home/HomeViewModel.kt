@@ -31,6 +31,7 @@ import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.currentUserName
+import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.model.ThreadRecord
@@ -275,6 +276,6 @@ class HomeViewModel @Inject constructor(
             .thenByDescending { it.recipient.priority }
             .thenByDescending { it.lastMessage?.timestamp ?: 0L }
             .thenByDescending { it.date }
-            .thenBy { it.recipient.displayName }
+            .thenBy { it.recipient.displayName() }
     }
 }

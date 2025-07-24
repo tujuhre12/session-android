@@ -26,6 +26,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
 import org.session.libsession.utilities.getColorFromAttr
+import org.session.libsession.utilities.recipients.displayName
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessages
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageRecord
@@ -131,13 +132,14 @@ class ControlMessageView : LinearLayout {
             message.isMessageRequestResponse -> {
                 val msgRecipient = message.recipient.address.toString()
                 val me = TextSecurePreferences.getLocalNumber(context)
-                binding.textView.text =  if(me == msgRecipient) { // you accepted the user's request
-                    val threadRecipient = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(message.threadId)
-                        ?.let { recipientRepository.getRecipientSync(it) }
-                    context.getSubbedCharSequence(
-                        R.string.messageRequestYouHaveAccepted,
-                        NAME_KEY to (threadRecipient?.displayName ?: "")
-                    )
+                binding.textView.text =  if (me == msgRecipient) { // you accepted the user's request
+                    DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(message.threadId)
+                        ?.let { recipientRepository.getRecipientSyncOrEmpty(it) }
+                        ?.let { recipient ->  context.getSubbedCharSequence(
+                            R.string.messageRequestYouHaveAccepted,
+                            NAME_KEY to recipient.displayName()
+                            )
+                        }
                 } else { // they accepted your request
                     context.getString(R.string.messageRequestsAccepted)
                 }
@@ -191,13 +193,13 @@ class ControlMessageView : LinearLayout {
                                 context.showSessionDialog {
                                     val titleTxt = context.getSubbedString(
                                         R.string.callsMissedCallFrom,
-                                        NAME_KEY to message.individualRecipient.displayName
+                                        NAME_KEY to message.individualRecipient.displayName()
                                     )
                                     title(titleTxt)
 
                                     val bodyTxt = context.getSubbedCharSequence(
                                         R.string.callsYouMissedCallPermissions,
-                                        NAME_KEY to message.individualRecipient.displayName
+                                        NAME_KEY to message.individualRecipient.displayName()
                                     )
                                     text(bodyTxt)
 
@@ -220,13 +222,13 @@ class ControlMessageView : LinearLayout {
                                 context.showSessionDialog {
                                     val titleTxt = context.getSubbedString(
                                         R.string.callsMissedCallFrom,
-                                        NAME_KEY to message.individualRecipient.displayName
+                                        NAME_KEY to message.individualRecipient.displayName()
                                     )
                                     title(titleTxt)
 
                                     val bodyTxt = context.getSubbedCharSequence(
                                         R.string.callsMicrophonePermissionsRequired,
-                                        NAME_KEY to message.individualRecipient.displayName
+                                        NAME_KEY to message.individualRecipient.displayName()
                                     )
                                     text(bodyTxt)
 

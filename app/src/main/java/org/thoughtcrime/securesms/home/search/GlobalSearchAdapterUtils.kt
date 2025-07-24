@@ -11,6 +11,7 @@ import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.BasicRecipient
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.ContentView
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.Model.GroupConversation
@@ -136,7 +137,7 @@ fun ContentView.bindModel(query: String?, model: Message, dateUtils: DateUtils) 
     val textSpannable = SpannableStringBuilder()
     if (model.messageResult.conversationRecipient != model.messageResult.messageRecipient) {
         // group chat, bind
-        val text = "${model.messageResult.messageRecipient.displayName}: "
+        val text = "${model.messageResult.messageRecipient.displayName()}: "
         textSpannable.append(text)
     }
     textSpannable.append(getHighlight(
@@ -149,10 +150,12 @@ fun ContentView.bindModel(query: String?, model: Message, dateUtils: DateUtils) 
     searchResultSubtitle.isVisible = true
 }
 
-val BasicRecipient.searchName: String
+val BasicRecipient.Contact.searchName: String
     get() = displayName.takeIf { it.isNotBlank() && !it.looksLikeAccountId }
         ?: address.toString().let(::truncateIdForDisplay)
 
-val Recipient.searchName: String get() = basic.searchName
+val Recipient.searchName: String
+    get() = displayName().takeIf { it.isNotBlank() && !it.looksLikeAccountId }
+        ?: address.toString().let(::truncateIdForDisplay)
 
 private val String.looksLikeAccountId: Boolean get() = length > 60 && all { it.isDigit() || it.isLetter() }

@@ -9,6 +9,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewUserBinding
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.displayName
 
 @AndroidEntryPoint
 class UserView : LinearLayout {
@@ -50,13 +51,13 @@ class UserView : LinearLayout {
             return when {
                 isLocalUser && showCurrentUserAsNoteToSelf -> context.getString(R.string.noteToSelf)
                 isLocalUser && !showCurrentUserAsNoteToSelf -> context.getString(R.string.you)
-                else -> user.displayName
+                else -> user.displayName()
             }
         }
 
         binding.profilePictureView.update(user)
         binding.actionIndicatorImageView.setImageResource(R.drawable.ic_radio_unselected)
-        binding.nameTextView.text = if (user.isGroupOrCommunityRecipient) user.displayName else getUserDisplayName()
+        binding.nameTextView.text = if (user.isGroupOrCommunityRecipient) user.displayName() else getUserDisplayName()
         when (actionIndicator) {
             ActionIndicator.None -> {
                 binding.actionIndicatorImageView.visibility = View.GONE

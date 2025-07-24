@@ -25,7 +25,7 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.GroupDisplayInfo
-import org.session.libsession.utilities.recipients.displayNameOrFallback
+import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.util.AvatarUIData
@@ -34,7 +34,7 @@ import java.util.EnumSet
 
 abstract class BaseGroupMembersViewModel(
     private val groupId: AccountId,
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val storage: StorageProtocol,
     private val configFactory: ConfigFactoryProtocol,
     private val avatarUtils: AvatarUtils,
@@ -102,8 +102,8 @@ abstract class BaseGroupMembersViewModel(
         val name = if (isMyself) {
             context.getString(R.string.you)
         } else {
-            recipientRepository.getRecipient(Address.fromSerialized(memberAccountId.hexString))
-                .displayNameOrFallback(fallbackName = { member.name }, address = memberAccountId.hexString)
+            recipientRepository.getRecipientOrEmpty(Address.fromSerialized(memberAccountId.hexString))
+                .displayName()
         }
 
         val highlightStatus = status in EnumSet.of(

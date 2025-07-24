@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.recipients.displayName
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import javax.inject.Inject
@@ -53,6 +54,6 @@ class MessageRequestsViewModel @Inject constructor(
     companion object {
         private val COMPARATOR get() = compareByDescending<ThreadRecord> { it.lastMessage?.timestamp ?: 0 }
             .thenByDescending { it.date }
-            .thenBy { it.recipient.displayName }
+            .thenBy { it.recipient.displayName() }
     }
 }

@@ -3,22 +3,18 @@ package org.thoughtcrime.securesms.home
 import android.content.Context
 import android.content.res.ColorStateList
 import android.content.res.Resources
-import android.graphics.Typeface
-import android.graphics.drawable.ColorDrawable
 import android.util.AttributeSet
-import android.util.TypedValue
 import android.view.View
 import android.widget.LinearLayout
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
-import java.util.Locale
-import javax.inject.Inject
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewConversationBinding
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.displayName
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities.highlightMentions
 import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_ALL
 import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_NONE
@@ -26,8 +22,8 @@ import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.UnreadStylingHelper
-import org.thoughtcrime.securesms.util.getAccentColor
 import org.thoughtcrime.securesms.util.getConversationUnread
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class ConversationView : LinearLayout {
@@ -134,7 +130,7 @@ class ConversationView : LinearLayout {
 
     private fun getTitle(recipient: Recipient): String = when {
         recipient.isLocalNumber -> context.getString(R.string.noteToSelf)
-        else -> recipient.displayName // Internally uses the Contact API
+        else -> recipient.displayName() // Internally uses the Contact API
     }
     // endregion
 }

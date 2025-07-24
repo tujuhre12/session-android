@@ -9,6 +9,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import org.session.libsession.utilities.recipients.RecipientKt;
 import org.thoughtcrime.securesms.components.ProfilePictureView;
 import org.thoughtcrime.securesms.components.emoji.EmojiImageView;
 import org.thoughtcrime.securesms.database.model.MessageId;
@@ -161,7 +162,7 @@ final class ReactionRecipientsAdapter extends RecyclerView.Adapter<ReactionRecip
         this.recipient.setText(R.string.you);
         this.remove.setVisibility(canRemove ? View.VISIBLE : View.GONE);
       } else {
-        String name = reaction.getSender().getDisplayName();
+        String name = RecipientKt.displayName(reaction.getSender());
         this.recipient.setText(name);
         this.remove.setVisibility(View.GONE);
       }

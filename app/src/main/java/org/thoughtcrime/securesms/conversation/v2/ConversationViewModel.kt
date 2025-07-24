@@ -51,6 +51,7 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.recipients.getType
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
@@ -476,7 +477,7 @@ class ConversationViewModel @AssistedInject constructor(
         // calculate the main app bar data
         val avatarData = avatarUtils.getUIDataFromRecipient(conversation)
         return ConversationAppBarData(
-            title = conversation.takeUnless { it.isLocalNumber }?.displayName ?: application.getString(R.string.noteToSelf),
+            title = conversation.takeUnless { it.isLocalNumber }?.displayName() ?: application.getString(R.string.noteToSelf),
             pagerData = pagerData,
             showCall = conversation.showCallMenu,
             showAvatar = showOptionsMenu,

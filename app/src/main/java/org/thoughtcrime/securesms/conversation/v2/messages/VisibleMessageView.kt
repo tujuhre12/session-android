@@ -33,15 +33,13 @@ import network.loki.messenger.libsession_util.getOrNull
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.ThemeUtil.getThemedColor
 import org.session.libsession.utilities.ViewUtil
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.modifyLayoutParams
-import org.session.libsession.utilities.recipients.displayNameOrFallback
+import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
-import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
@@ -241,7 +239,7 @@ class VisibleMessageView : FrameLayout {
             }
         }
         binding.senderNameTextView.isVisible = !message.isOutgoing && (isStartOfMessageCluster && (isGroupThread || snIsSelected))
-        binding.senderNameTextView.text = sender.displayNameOrFallback(address = sender.address.address)
+        binding.senderNameTextView.text = sender.displayName(attachesBlindedId = true)
 
         // Unread marker
         val shouldShowUnreadMarker = lastSeen != -1L && message.timestamp > lastSeen && (previous == null || previous.timestamp <= lastSeen) && !message.isOutgoing
