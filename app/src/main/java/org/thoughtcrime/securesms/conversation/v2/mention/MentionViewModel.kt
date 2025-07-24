@@ -102,15 +102,6 @@ class MentionViewModel(
                     "Recipient not found for thread ID: $threadID"
                 }
 
-                val cursor = mmsSmsDatabase.getConversation(threadID, true)
-                mmsSmsDatabase.readerFor(cursor).use { reader ->
-                    while (reader.next != null) {
-                        if (!reader.current.isOutgoing) {
-
-                        }
-                    }
-                }
-
                 val memberIDs = when {
                     recipient.isLegacyGroupRecipient -> {
                         groupDatabase.getGroupMemberAddresses(
