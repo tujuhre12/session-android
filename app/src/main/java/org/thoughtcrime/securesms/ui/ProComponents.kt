@@ -78,7 +78,7 @@ fun ProBadgeText(
             }
 
             Image(
-                modifier = proBadgeModifier.height(textStyle.lineHeight.value.dp),
+                modifier = proBadgeModifier.height(textStyle.lineHeight.value.dp * 0.8f),
                 painter = painterResource(id = if(invertBadgeColor) R.drawable.ic_pro_badge_inverted else R.drawable.ic_pro_badge),
                 contentDescription = NonTranslatableStringConstants.APP_PRO,
             )

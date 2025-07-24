@@ -172,7 +172,7 @@ fun ConversationSettings(
                                 // make the component clickable is there is an edit action
                                 if (data.editCommand != null) Modifier.clickable(
                                     interactionSource = remember { MutableInteractionSource() },
-                                    indication = ripple(bounded = false),
+                                    indication = null,
                                     onClick = { sendCommand(data.editCommand) }
                                 )
                                 else Modifier
