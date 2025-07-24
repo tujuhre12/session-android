@@ -52,6 +52,7 @@ fun ProBadgeText(
     modifier: Modifier = Modifier,
     textStyle: TextStyle = LocalType.current.h5,
     showBadge: Boolean = true,
+    invertBadgeColor: Boolean = false,
     onBadgeClick: (() -> Unit)? = null
 ){
     Row(
@@ -78,7 +79,7 @@ fun ProBadgeText(
 
             Image(
                 modifier = proBadgeModifier.height(textStyle.lineHeight.value.dp),
-                painter = painterResource(id = R.drawable.ic_pro_badge),
+                painter = painterResource(id = if(invertBadgeColor) R.drawable.ic_pro_badge_inverted else R.drawable.ic_pro_badge),
                 contentDescription = NonTranslatableStringConstants.APP_PRO,
             )
         }
@@ -97,6 +98,7 @@ private fun PreviewProBadgeText(
         ) {
             ProBadgeText(text = "Hello Pro", textStyle = LocalType.current.base)
             ProBadgeText(text = "Hello Pro")
+            ProBadgeText(text = "Inverted Badge Color", invertBadgeColor = true)
             ProBadgeText(text = "Hello Pro with a very long name that should overflow")
             ProBadgeText(text = "No Badge", showBadge = false)
         }
