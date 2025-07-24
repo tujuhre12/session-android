@@ -258,7 +258,7 @@ class VisibleMessageView : FrameLayout {
             val contactContext =
                 if (thread.isCommunityRecipient) ContactContext.OPEN_GROUP else ContactContext.REGULAR
 
-            // set up quote author
+            // set up message author
             binding.senderName.apply {
                 setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
                 setThemedContent {
@@ -270,7 +270,7 @@ class VisibleMessageView : FrameLayout {
                             groupId = groupId
                         ),
                         textStyle = LocalType.current.base.bold().copy(color = LocalColors.current.text),
-                        showBadge = proStatusManager.isUserPro(message.recipient.address),
+                        showBadge = proStatusManager.shouldShowProBadge(message.recipient.address),
                     )
                 }
             }

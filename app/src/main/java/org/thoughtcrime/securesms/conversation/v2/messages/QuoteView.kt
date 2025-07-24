@@ -101,7 +101,7 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             var modifier: Modifier = Modifier
             if(mode == Mode.Regular){
-                modifier = modifier.widthIn(max = 240.dp) // this value is hardcoded in the xml files > when we move to compose proper this value will be in the dimension file
+                modifier = modifier.widthIn(max = 240.dp) // this value is hardcoded in the xml files > when we move to composable messages this will be handled better internally
             }
 
             setThemedContent {
@@ -109,7 +109,7 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
                     modifier = modifier,
                     text = authorDisplayName, //todo badge we need to rework te naming logic to get the name (no account id for blinded here...) - waiting on the Recipient refactor
                     textStyle = LocalType.current.small.bold().copy(color = Color(textColor)),
-                    showBadge = proStatusManager.isUserPro(authorRecipient.address),
+                    showBadge = proStatusManager.shouldShowProBadge(authorRecipient.address),
                     invertBadgeColor = isOutgoingMessage && mode == Mode.Regular
                 )
             }

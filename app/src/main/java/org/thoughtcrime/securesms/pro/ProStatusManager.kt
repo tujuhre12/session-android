@@ -84,6 +84,10 @@ class ProStatusManager @Inject constructor(
         return prefs.forcePostPro()
     }
 
+    fun shouldShowProBadge(address: Address?): Boolean {
+        return isPostPro() && address?.isCommunity == false && isUserPro(address)
+    }
+
     fun getCharacterLimit(): Int {
         return if (isCurrentUserPro()) MAX_CHARACTER_PRO else MAX_CHARACTER_REGULAR
     }
