@@ -45,7 +45,6 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 
-
 @Composable
 fun ProBadgeText(
     text: String,
@@ -53,35 +52,46 @@ fun ProBadgeText(
     textStyle: TextStyle = LocalType.current.h5,
     showBadge: Boolean = true,
     invertBadgeColor: Boolean = false,
+    badgeAtStart: Boolean = false,
     onBadgeClick: (() -> Unit)? = null
-){
+) {
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
-
     ) {
-        Text(
-            modifier = Modifier.weight(1f, fill = false),
-            text = text,
-            style = textStyle,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-
-        if(showBadge) {
-            var proBadgeModifier: Modifier = Modifier
-            if(onBadgeClick != null){
-                proBadgeModifier = proBadgeModifier.clickable {
-                    onBadgeClick()
+        val proBadgeContent = @Composable {
+            if (showBadge) {
+                var proBadgeModifier: Modifier = Modifier
+                if (onBadgeClick != null) {
+                    proBadgeModifier = proBadgeModifier.clickable {
+                        onBadgeClick()
+                    }
                 }
+                Image(
+                    modifier = proBadgeModifier.height(textStyle.lineHeight.value.dp * 0.8f),
+                    painter = painterResource(id = if (invertBadgeColor) R.drawable.ic_pro_badge_inverted else R.drawable.ic_pro_badge),
+                    contentDescription = NonTranslatableStringConstants.APP_PRO,
+                )
             }
+        }
 
-            Image(
-                modifier = proBadgeModifier.height(textStyle.lineHeight.value.dp * 0.8f),
-                painter = painterResource(id = if(invertBadgeColor) R.drawable.ic_pro_badge_inverted else R.drawable.ic_pro_badge),
-                contentDescription = NonTranslatableStringConstants.APP_PRO,
+        val textContent = @Composable {
+            Text(
+                modifier = Modifier.weight(1f, fill = false),
+                text = text,
+                style = textStyle,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
+        }
+
+        if (badgeAtStart) {
+            proBadgeContent()
+            textContent()
+        } else {
+            textContent()
+            proBadgeContent()
         }
     }
 }
@@ -328,23 +338,12 @@ fun SessionProActivatedCTA(
                             .padding(LocalDimensions.current.smallSpacing)
                     ) {
                         // title
-                        Row(
+                        ProBadgeText(
                             modifier = Modifier.align(Alignment.CenterHorizontally),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
-
-                        ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.ic_pro_badge),
-                                contentScale = ContentScale.FillHeight,
-                                contentDescription = NonTranslatableStringConstants.APP_PRO,
-                            )
-
-                            Text(
-                                text = stringResource(R.string.proActivated),
-                                style = LocalType.current.h5
-                            )
-                        }
+                            text = stringResource(R.string.proActivated),
+                            textStyle = LocalType.current.h5,
+                            badgeAtStart = true
+                        )
 
                         Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
 

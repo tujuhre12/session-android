@@ -740,7 +740,7 @@ fun AvatarDialog(
 
             // animated Pro title
             if(isPostPro){
-                Row(
+                ProBadgeText(
                     modifier = Modifier
                         .padding(
                             top = LocalDimensions.current.xxxsSpacing,
@@ -749,33 +749,11 @@ fun AvatarDialog(
                         .clickable {
                             sendCommand(ShowAnimatedProCTA)
                         },
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
-                ) {
-                    if(isPro) {
-                        Image(
-                            modifier = Modifier.height(LocalType.current.base.lineHeight.value.dp),
-                            painter = painterResource(id = R.drawable.ic_pro_badge),
-                            contentDescription = NonTranslatableStringConstants.APP_PRO,
-                        )
-
-                        Text(
-                            text = stringResource(R.string.proAnimatedDisplayPictureModalDescription),
-                            style = LocalType.current.base.copy(color = LocalColors.current.textSecondary)
-                        )
-                    } else {
-                        Text(
-                            text = stringResource(R.string.proAnimatedDisplayPicturesNonProModalDescription),
-                            style = LocalType.current.base.copy(color = LocalColors.current.textSecondary)
-                        )
-
-                        Image(
-                            modifier = Modifier.height(LocalType.current.base.lineHeight.value.dp),
-                            painter = painterResource(id = R.drawable.ic_pro_badge),
-                            contentDescription = NonTranslatableStringConstants.APP_PRO,
-                        )
-                    }
-                }
+                    text = stringResource(if(isPro) R.string.proAnimatedDisplayPictureModalDescription
+                    else R.string.proAnimatedDisplayPicturesNonProModalDescription),
+                    textStyle = LocalType.current.base.copy(color = LocalColors.current.textSecondary),
+                    badgeAtStart = isPro
+                )
             }
 
             // main container that control the overall size and adds the rounded bg
@@ -923,7 +901,7 @@ private fun SettingsScreenPreview() {
                     )
                 ),
                 isPro = false,
-                isPostPro = false,
+                isPostPro = true,
                 showProBadge = true,
                 username = "Atreyu",
                 accountID = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
