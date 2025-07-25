@@ -56,7 +56,6 @@ import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
-import org.session.libsession.utilities.recipients.RecipientSettings
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
@@ -98,7 +97,7 @@ open class Storage @Inject constructor(
     private val configFactory: ConfigFactory,
     private val jobDatabase: SessionJobDatabase,
     private val threadDatabase: ThreadDatabase,
-    private val recipientDatabase: RecipientDatabase,
+    private val recipientDatabase: RecipientSettingsDatabase,
     private val attachmentDatabase: AttachmentDatabase,
     private val lokiAPIDatabase: LokiAPIDatabase,
     private val groupDatabase: GroupDatabase,
@@ -211,11 +210,6 @@ open class Storage @Inject constructor(
                 profileKey = pic.key.data.takeIf { pic.url.isNotBlank() },
             )
         }
-    }
-
-    override fun setBlocksCommunityMessageRequests(recipient: Address, blocksMessageRequests: Boolean) {
-        val db = recipientDatabase
-        db.setBlocksCommunityMessageRequests(recipient, blocksMessageRequests)
     }
 
     override fun getOrGenerateRegistrationID(): Int {
@@ -1079,7 +1073,7 @@ open class Storage @Inject constructor(
     }
 
     private fun deleteContact(accountId: String){
-        recipientDatabase.deleteRecipient(accountId)
+        recipientDatabase.delete(Address.fromSerialized(accountId))
 
         val threadId: Long = threadDatabase.getThreadIdIfExistsFor(accountId)
         deleteConversation(threadId)
@@ -1089,10 +1083,6 @@ open class Storage @Inject constructor(
 
     override fun getRecipientForThread(threadId: Long): Address? {
         return threadDatabase.getRecipientForThreadId(threadId)
-    }
-
-    override fun getRecipientSettings(address: Address): RecipientSettings? {
-        return recipientDatabase.getRecipientSettings(address)
     }
 
     override fun syncLibSessionContacts(contacts: List<LibSessionContact>, timestamp: Long?) {
@@ -1107,30 +1097,15 @@ open class Storage @Inject constructor(
                 }
             }
         }
-
-        // if we have contacts locally but that are missing from the config, remove their corresponding thread
-        val currentUserKey = getUserPublicKey()
-
-        //NOTE: We used to cycle through all Contact here instead or all Recipients, but turns out a Contact isn't saved until we have a name, nickname or avatar
-        // which in the case of contacts we are messaging for the first time and who haven't yet approved us, it won't be the case
-        // But that person is saved in the Recipient db. We might need to investigate how to clean the relationship between Recipients, Contacts and config Contacts.
-        val removedContacts = recipientDatabase.allRecipients.filter { localContact ->
-            IdPrefix.fromValue(localContact.toString()) == IdPrefix.STANDARD && // only want standard address
-            localContact.isContact && // only for conversations
-            localContact.address != currentUserKey && // we don't want to remove ourselves (ie, our Note to Self)
-            contacts.none { it.id == localContact.address } // we don't want to remove contacts that are present in the config
-        }
-        removedContacts.forEach {
-            deleteContact(it.address)
-        }
     }
 
     override fun setAutoDownloadAttachments(
         recipient: Address,
         shouldAutoDownloadAttachments: Boolean
     ) {
-        val recipientDb = recipientDatabase
-        recipientDb.setAutoDownloadAttachments(recipient, shouldAutoDownloadAttachments)
+        recipientDatabase.save(recipient) {
+            it.copy(autoDownloadAttachments = shouldAutoDownloadAttachments)
+        }
     }
 
     override fun getLastUpdated(threadID: Long): Long {
@@ -1373,7 +1348,6 @@ open class Storage @Inject constructor(
 
         if (userPublicKey == senderPublicKey) {
             val requestRecipient = fromSerialized(recipientPublicKey)
-            recipientDatabase.setApproved(requestRecipient, true)
             val threadId = threadDatabase.getOrCreateThreadIdFor(requestRecipient)
             threadDatabase.setHasSent(threadId, true)
         } else {
@@ -1616,9 +1590,6 @@ open class Storage @Inject constructor(
     }
 
     override fun setBlocked(recipients: Iterable<Address>, isBlocked: Boolean, fromConfigUpdate: Boolean) {
-        val recipientDb = recipientDatabase
-        recipientDb.setBlocked(recipients, isBlocked)
-
         if (!fromConfigUpdate) {
             val currentUserKey = getUserPublicKey()
             configFactory.withMutableUserConfigs { configs ->
@@ -1633,22 +1604,10 @@ open class Storage @Inject constructor(
     }
 
     override fun blockedContacts(): List<Recipient> {
-        val allBlockedContacts = hashSetOf<Address>()
-
-        // Source data from config first
-        configFactory.withUserConfigs {
-            it.contacts.all()
-        }.asSequence()
+        return configFactory.withUserConfigs { it.contacts.all() }.asSequence()
             .filter { it.blocked }
-            .mapTo(allBlockedContacts) { Address.fromSerialized(it.id) }
-
-        // Source data from the local database. This might contain something that is not synced
-        // to the config system.e
-        allBlockedContacts.addAll(recipientDatabase.blockedContacts)
-
-        return allBlockedContacts.map {
-            recipientRepository.getRecipientSync(it) ?: Recipient.empty(it)
-        }
+            .map { recipientRepository.getRecipientSyncOrEmpty(Address.fromSerialized(it.id)) }
+            .toList()
     }
 
     override fun getExpirationConfiguration(threadId: Long): ExpiryMode {

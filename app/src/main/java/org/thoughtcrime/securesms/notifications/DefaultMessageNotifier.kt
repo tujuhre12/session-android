@@ -30,7 +30,6 @@ import android.text.TextUtils
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.annimon.stream.Stream
 import com.squareup.phrase.Phrase
 import me.leolin.shortcutbadger.ShortcutBadger
 import network.loki.messenger.R
@@ -45,7 +44,6 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.getRepea
 import org.session.libsession.utilities.TextSecurePreferences.Companion.hasHiddenMessageRequests
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isNotificationsEnabled
 import org.session.libsession.utilities.TextSecurePreferences.Companion.removeHasHiddenMessageRequests
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
@@ -54,22 +52,15 @@ import org.session.libsignal.utilities.Util
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities.highlightMentions
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities.getUserED25519KeyPair
-import org.thoughtcrime.securesms.database.MmsDatabase.Companion.MESSAGE_BOX
-import org.thoughtcrime.securesms.database.MmsSmsColumns
-import org.thoughtcrime.securesms.database.MmsSmsColumns.NOTIFIED
-import org.thoughtcrime.securesms.database.MmsSmsColumns.READ
-import org.thoughtcrime.securesms.database.MmsSmsDatabase.MMS_TRANSPORT
-import org.thoughtcrime.securesms.database.MmsSmsDatabase.TRANSPORT
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
+import org.thoughtcrime.securesms.database.MmsSmsColumns.NOTIFIED
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
-import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.ThreadDatabase
-import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
-import org.thoughtcrime.securesms.database.model.ReactionRecord
+import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.util.AvatarUtils
@@ -530,12 +521,12 @@ class DefaultMessageNotifier @Inject constructor(
             }
 
             // Check notification settings
-            if (threadRecipients?.notifyType == RecipientDatabase.NOTIFY_TYPE_NONE) continue
+            if (threadRecipients?.notifyType == NotifyType.NONE) continue
 
             val userPublicKey = getLocalNumber(context)
 
             // Check mentions-only setting
-            if (threadRecipients?.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS) {
+            if (threadRecipients?.notifyType == NotifyType.MENTIONS) {
                 var blindedPublicKey = cache[threadId]
                 if (blindedPublicKey == null) {
                     blindedPublicKey = generateBlindedId(threadId, context)

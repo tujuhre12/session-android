@@ -15,6 +15,7 @@ import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.RecipientDatabase
+import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.util.getConversationUnread
@@ -97,7 +98,7 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
 
         val notificationIconRes = when{
             recipient.isMuted() -> R.drawable.ic_volume_off
-            recipient.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS ->
+            recipient.notifyType == NotifyType.MENTIONS ->
                 R.drawable.ic_at_sign
             else -> R.drawable.ic_volume_2
         }

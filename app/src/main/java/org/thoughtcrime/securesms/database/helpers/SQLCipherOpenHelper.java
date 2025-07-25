@@ -43,6 +43,7 @@ import org.thoughtcrime.securesms.database.MmsDatabase;
 import org.thoughtcrime.securesms.database.PushDatabase;
 import org.thoughtcrime.securesms.database.ReactionDatabase;
 import org.thoughtcrime.securesms.database.RecipientDatabase;
+import org.thoughtcrime.securesms.database.RecipientSettingsDatabase;
 import org.thoughtcrime.securesms.database.SearchDatabase;
 import org.thoughtcrime.securesms.database.SessionContactDatabase;
 import org.thoughtcrime.securesms.database.SessionJobDatabase;
@@ -102,9 +103,10 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int lokiV49                          = 70;
   private static final int lokiV50                          = 71;
   private static final int lokiV51                          = 72;
+  private static final int lokiV52                          = 73;
 
   // Loki - onUpgrade(...) must be updated to use Loki version numbers if Signal makes any database changes
-  private static final int    DATABASE_VERSION         = lokiV51;
+  private static final int    DATABASE_VERSION         = lokiV52;
   private static final int    MIN_DATABASE_VERSION     = lokiV7;
   public static final String  DATABASE_NAME            = "session.db";
 
@@ -244,6 +246,9 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     db.execSQL(MmsDatabase.ADD_IS_GROUP_UPDATE_COLUMN);
     db.execSQL(MmsDatabase.ADD_MESSAGE_CONTENT_COLUMN);
     db.execSQL(ThreadDatabase.ADD_SNIPPET_CONTENT_COLUMN);
+
+    db.execSQL(RecipientSettingsDatabase.MIGRATION_CREATE_TABLE);
+    db.execSQL(RecipientSettingsDatabase.MIGRATE_DROP_OLD_TABLE);
   }
 
   @Override
@@ -546,6 +551,12 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
         db.execSQL(MmsDatabase.ADD_MESSAGE_CONTENT_COLUMN);
         db.execSQL(MmsDatabase.MIGRATE_EXPIRY_CONTROL_MESSAGES);
         db.execSQL(ThreadDatabase.ADD_SNIPPET_CONTENT_COLUMN);
+      }
+
+      if (oldVersion < lokiV52) {
+        db.execSQL(RecipientSettingsDatabase.MIGRATION_CREATE_TABLE);
+        db.execSQL(RecipientSettingsDatabase.MIGRATE_MOVE_DATA_FROM_OLD_TABLE);
+        db.execSQL(RecipientSettingsDatabase.MIGRATE_DROP_OLD_TABLE);
       }
 
       db.setTransactionSuccessful();

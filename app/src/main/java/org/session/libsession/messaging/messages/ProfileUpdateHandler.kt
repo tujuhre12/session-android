@@ -12,6 +12,7 @@ import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.RecipientDatabase
+import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import java.util.EnumSet
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -27,7 +28,7 @@ import javax.inject.Singleton
 @Singleton
 class ProfileUpdateHandler @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
-    private val recipientDatabase: RecipientDatabase,
+    private val recipientDatabase: RecipientSettingsDatabase,
     private val prefs: TextSecurePreferences,
     private val blindIdMappingRepository: BlindMappingRepository,
 ) {
@@ -87,12 +88,13 @@ class ProfileUpdateHandler @Inject constructor(
 
         Log.d(TAG, "Updating recipient profile for $actualSender")
 
-        recipientDatabase.updateProfile(
-            actualSender.toAddress(),
-            updates.name,
-            updates.pic,
-            updates.acceptsCommunityRequests
-        )
+        recipientDatabase.save(actualSender.toAddress()) {
+            it.copy(
+                name = updates.name ?: it.name,
+                profilePic = updates.pic ?: it.profilePic,
+                blocksCommunityMessagesRequests = updates.acceptsCommunityRequests?.let { accept -> !accept } ?: it.blocksCommunityMessagesRequests
+            )
+        }
     }
 
     data class Updates(

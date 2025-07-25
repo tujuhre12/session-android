@@ -26,7 +26,6 @@ import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupDisplayInfo
 import org.session.libsession.utilities.GroupRecord
-import org.session.libsession.utilities.recipients.RecipientSettings
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
@@ -46,7 +45,6 @@ interface StorageProtocol {
     fun getUserX25519KeyPair(): ECKeyPair
     fun getUserBlindedAccountId(serverPublicKey: String): AccountId?
     fun getUserProfile(): Profile
-    fun setBlocksCommunityMessageRequests(recipient: Address, blocksMessageRequests: Boolean)
 
     // Signal
     fun getOrGenerateRegistrationID(): Int
@@ -192,7 +190,6 @@ interface StorageProtocol {
     // Contacts
     fun deleteContactAndSyncConfig(accountId: String)
     fun getRecipientForThread(threadId: Long): Address?
-    fun getRecipientSettings(address: Address): RecipientSettings?
     fun syncLibSessionContacts(contacts: List<LibSessionContact>, timestamp: Long?)
     fun setAutoDownloadAttachments(recipient: Address, shouldAutoDownloadAttachments: Boolean)
 

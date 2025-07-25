@@ -16,8 +16,7 @@ import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities.highlightMentions
-import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_ALL
-import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_NONE
+import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.util.DateUtils
@@ -77,9 +76,9 @@ class ConversationView : LinearLayout {
         ) }
 
         val recipient = thread.recipient
-        binding.muteIndicatorImageView.isVisible = recipient.isMuted() || recipient.notifyType != NOTIFY_TYPE_ALL
+        binding.muteIndicatorImageView.isVisible = recipient.isMuted() || recipient.notifyType != NotifyType.ALL
 
-        val drawableRes = if (recipient.isMuted() || recipient.notifyType == NOTIFY_TYPE_NONE) {
+        val drawableRes = if (recipient.isMuted() || recipient.notifyType == NotifyType.NONE) {
             R.drawable.ic_volume_off
         } else {
             R.drawable.ic_at_sign

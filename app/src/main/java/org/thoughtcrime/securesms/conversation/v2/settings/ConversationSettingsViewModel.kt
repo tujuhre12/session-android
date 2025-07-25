@@ -58,6 +58,7 @@ import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSi
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.dependencies.ConfigFactory.Companion.MAX_GROUP_DESCRIPTION_BYTES
 import org.thoughtcrime.securesms.dependencies.ConfigFactory.Companion.MAX_NAME_BYTES
 import org.thoughtcrime.securesms.groups.OpenGroupManager
@@ -719,7 +720,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private fun getNotificationsData(conversation: Recipient): Pair<Int, String> {
         return when{
             conversation.isMuted() -> R.drawable.ic_volume_off to context.getString(R.string.notificationsMuted)
-            conversation.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS ->
+            conversation.notifyType == NotifyType.MENTIONS ->
                 R.drawable.ic_at_sign to context.getString(R.string.notificationsMentionsOnly)
             else -> R.drawable.ic_volume_2 to context.getString(R.string.notificationsAllMessages)
         }

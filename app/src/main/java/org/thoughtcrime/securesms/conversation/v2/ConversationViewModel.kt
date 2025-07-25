@@ -66,13 +66,13 @@ import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.ReactionDatabase
-import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.GroupThreadStatus
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
+import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.groups.ExpiredGroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
@@ -445,7 +445,7 @@ class ConversationViewModel @AssistedInject constructor(
             )
         }
 
-        if (conversation.isMuted() || conversation.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS) {
+        if (conversation.isMuted() || conversation.notifyType == NotifyType.MENTIONS) {
             pagerData += ConversationAppBarPagerData(
                 title = getNotificationStatusTitle(conversation),
                 action = {

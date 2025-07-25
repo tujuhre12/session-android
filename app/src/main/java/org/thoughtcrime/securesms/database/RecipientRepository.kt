@@ -33,13 +33,14 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.BasicRecipient
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.recipients.RecipientSettings
 import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRecipientAvatar
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.database.model.NotifyType
+import org.thoughtcrime.securesms.database.model.RecipientSettings
 import java.lang.ref.WeakReference
 import java.time.Instant
 import java.time.ZoneId
@@ -50,9 +51,9 @@ import javax.inject.Singleton
 /**
  * This repository is responsible for observing and retrieving recipient data from different sources.
  *
- * Not to be confused with [RecipientDatabase], where it manages the actual database storage of
+ * Not to be confused with [RecipientSettingsDatabase], where it manages the actual database storage of
  * some recipient data. Note that not all recipient data is stored in the database, as we've moved
- * them to the config system. Details in the [RecipientDatabase].
+ * them to the config system. Details in the [RecipientSettingsDatabase].
  *
  * This class will source the correct recipient data from different sources based on their types.
  */
@@ -60,7 +61,7 @@ import javax.inject.Singleton
 class RecipientRepository @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val groupDatabase: GroupDatabase,
-    private val recipientDatabase: RecipientDatabase,
+    private val recipientSettingsDatabase: RecipientSettingsDatabase,
     private val preferences: TextSecurePreferences,
     private val lokiThreadDatabase: LokiThreadDatabase,
     private val storage: Lazy<StorageProtocol>,
@@ -89,7 +90,7 @@ class RecipientRepository @Inject constructor(
                 val (value, changeSource) = fetchRecipient(
                     address = address,
                     settingsFetcher = {
-                        withContext(Dispatchers.Default) { recipientDatabase.getRecipientSettings(it) }
+                        withContext(Dispatchers.Default) { recipientSettingsDatabase.getSettings(it) }
                     },
                     openGroupFetcher = {
                         withContext(Dispatchers.Default) { storage.get().getOpenGroup(it) }
@@ -143,7 +144,7 @@ class RecipientRepository @Inject constructor(
 
                 changeSource = merge(
                     configFactory.userConfigsChanged(),
-                    recipientDatabase.updateNotifications.filter { it == address }
+                    recipientSettingsDatabase.changeNotification.filter { it == address }
                 )
             }
 
@@ -159,7 +160,7 @@ class RecipientRepository @Inject constructor(
                     configFactory.configUpdateNotifications
                         .filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
                         .filter { it.groupId.hexString == address.address },
-                    recipientDatabase.updateNotifications.filter { it == address }
+                    recipientSettingsDatabase.changeNotification.filter { it == address }
                 )
             }
 
@@ -180,7 +181,7 @@ class RecipientRepository @Inject constructor(
                     address.isLegacyGroup -> {
                         changeSource = merge(
                             groupDatabase.updateNotification,
-                            recipientDatabase.updateNotifications.filter { it == address },
+                            recipientSettingsDatabase.changeNotification.filter { it == address },
                             configFactory.userConfigsChanged(),
                         )
 
@@ -211,7 +212,7 @@ class RecipientRepository @Inject constructor(
 
                         changeSource = merge(
                             lokiThreadDatabase.changeNotification,
-                            recipientDatabase.updateNotifications.filter { it == address },
+                            recipientSettingsDatabase.changeNotification.filter { it == address },
                             configFactory.userConfigsChanged(),
                         )
                     }
@@ -224,7 +225,7 @@ class RecipientRepository @Inject constructor(
 
                         val monitoringAddress = address.toBlindedId()?.toAddress() ?: address
                         changeSource =
-                            recipientDatabase.updateNotifications.filter { it == monitoringAddress }
+                            recipientSettingsDatabase.changeNotification.filter { it == monitoringAddress }
                     }
 
                     IdPrefix.fromValue(address.address) == IdPrefix.STANDARD -> {
@@ -246,7 +247,7 @@ class RecipientRepository @Inject constructor(
                             configFactory.configUpdateNotifications.filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
                                 .filter { it.groupId.hexString == address.address },
                             configFactory.userConfigsChanged(),
-                            recipientDatabase.updateNotifications.filter { it == address }
+                            recipientSettingsDatabase.changeNotification.filter { it == address }
                         )
                     }
 
@@ -282,7 +283,7 @@ class RecipientRepository @Inject constructor(
         // Otherwise, we might have to go to the database to get the recipient..
         return fetchRecipient(
             address = address,
-            settingsFetcher = recipientDatabase::getRecipientSettings,
+            settingsFetcher = recipientSettingsDatabase::getSettings,
             openGroupFetcher = storage.get()::getOpenGroup
         )?.first
     }
@@ -369,7 +370,7 @@ class RecipientRepository @Inject constructor(
                 basic = basic,
                 mutedUntil = null,
                 autoDownloadAttachments = true,
-                notifyType = RecipientDatabase.NOTIFY_TYPE_ALL,
+                notifyType = NotifyType.ALL,
                 acceptsCommunityMessageRequests = basic.acceptsCommunityMessageRequests,
             )
         }
@@ -399,7 +400,7 @@ class RecipientRepository @Inject constructor(
                 address = address,
                 basic = basic,
                 mutedUntil = settings?.muteUntilDate,
-                notifyType = settings?.notifyType ?: RecipientDatabase.NOTIFY_TYPE_ALL,
+                notifyType = settings?.notifyType ?: NotifyType.ALL,
                 autoDownloadAttachments = settings?.autoDownloadAttachments,
                 acceptsCommunityMessageRequests = false,
             )
@@ -419,7 +420,7 @@ class RecipientRepository @Inject constructor(
                 basic = basic,
                 mutedUntil = fallbackSettings?.muteUntilDate,
                 autoDownloadAttachments = fallbackSettings?.autoDownloadAttachments,
-                notifyType = fallbackSettings?.notifyType ?: RecipientDatabase.NOTIFY_TYPE_ALL,
+                notifyType = fallbackSettings?.notifyType ?: NotifyType.ALL,
                 acceptsCommunityMessageRequests = fallbackSettings?.blocksCommunityMessagesRequests == false,
             )
         }
@@ -445,7 +446,7 @@ class RecipientRepository @Inject constructor(
                 ),
                 mutedUntil = settings?.muteUntilDate,
                 autoDownloadAttachments = settings?.autoDownloadAttachments,
-                notifyType = settings?.notifyType ?: RecipientDatabase.NOTIFY_TYPE_ALL,
+                notifyType = settings?.notifyType ?: NotifyType.ALL,
                 acceptsCommunityMessageRequests = false,
                 notificationChannel = null,
             )
@@ -474,7 +475,7 @@ class RecipientRepository @Inject constructor(
                 ),
                 mutedUntil = settings?.muteUntilDate,
                 autoDownloadAttachments = settings?.autoDownloadAttachments,
-                notifyType = settings?.notifyType ?: RecipientDatabase.NOTIFY_TYPE_ALL,
+                notifyType = settings?.notifyType ?: NotifyType.ALL,
                 acceptsCommunityMessageRequests = false,
             )
         }
@@ -490,16 +491,9 @@ class RecipientRepository @Inject constructor(
             return Recipient(
                 address = address,
                 basic = BasicRecipient.Generic(
-                    displayName = settings.systemDisplayName?.takeIf { it.isNotBlank() }
-                        ?: settings.profileName.orEmpty(),
-                    avatar = settings.profileAvatar?.let {
-                        RemoteFile.from(
-                            it,
-                            settings.profileKey
-                        )
-                    },
+                    displayName = settings.name.orEmpty(),
+                    avatar = settings.profilePic?.toRecipientAvatar(),
                     isLocalNumber = false,
-                    blocked = settings.blocked
                 ),
                 mutedUntil = settings.muteUntil.takeIf { it > 0 }
                     ?.let { ZonedDateTime.from(Instant.ofEpochMilli(it)) },
@@ -521,7 +515,7 @@ class RecipientRepository @Inject constructor(
                 ),
                 mutedUntil = null,
                 autoDownloadAttachments = null,
-                notifyType = RecipientDatabase.NOTIFY_TYPE_ALL,
+                notifyType = NotifyType.ALL,
                 acceptsCommunityMessageRequests = false,
             )
         }
@@ -532,7 +526,7 @@ class RecipientRepository @Inject constructor(
                 basic = BasicRecipient.Generic(),
                 mutedUntil = null,
                 autoDownloadAttachments = null,
-                notifyType = RecipientDatabase.NOTIFY_TYPE_ALL,
+                notifyType = NotifyType.ALL,
                 acceptsCommunityMessageRequests = false,
             )
         }

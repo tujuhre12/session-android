@@ -24,11 +24,9 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_TIME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_LARGE_KEY
 import org.session.libsession.utilities.recipients.Recipient
-import org.thoughtcrime.securesms.database.RecipientDatabase
-import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_ALL
-import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_MENTIONS
-import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_NONE
 import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
+import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OptionsCardData
@@ -42,8 +40,7 @@ import kotlin.time.Duration.Companion.milliseconds
 class NotificationSettingsViewModel @AssistedInject constructor(
     @Assisted private val address: Address,
     @ApplicationContext private val context: Context,
-    private val recipientDatabase: RecipientDatabase,
-    private val repository: ConversationRepository,
+    private val recipientDatabase: RecipientSettingsDatabase,
     private val dateUtils: DateUtils,
     private val recipientRepository: RecipientRepository,
 ) : ViewModel() {
@@ -74,7 +71,7 @@ class NotificationSettingsViewModel @AssistedInject constructor(
 
                 currentOption = when{
                     hasMutedUntil -> NotificationType.Mute
-                    it?.notifyType == NOTIFY_TYPE_MENTIONS -> NotificationType.MentionsOnly
+                    it?.notifyType == NotifyType.MENTIONS -> NotificationType.MentionsOnly
                     else -> NotificationType.All
                 }
 
@@ -251,21 +248,27 @@ class NotificationSettingsViewModel @AssistedInject constructor(
     private suspend fun unmute() {
         val conversation = thread ?: return
         withContext(Dispatchers.Default) {
-            recipientDatabase.setMuted(conversation.address, 0)
+            recipientDatabase.save(conversation.address) {
+                it.copy(muteUntil = 0)
+            }
         }
     }
 
     private suspend fun mute(until: Long) {
         val conversation = thread ?: return
         withContext(Dispatchers.Default) {
-            recipientDatabase.setMuted(conversation.address, until)
+            recipientDatabase.save(conversation.address) {
+                it.copy(muteUntil = until)
+            }
         }
     }
 
-    private suspend fun setNotifyType(notifyType: Int) {
+    private suspend fun setNotifyType(notifyType: NotifyType) {
         val conversation = thread ?: return
         withContext(Dispatchers.Default) {
-            recipientDatabase.setNotifyType(conversation.address, notifyType)
+            recipientDatabase.save(conversation.address) {
+                it.copy(notifyType = notifyType)
+            }
         }
     }
 
@@ -275,10 +278,10 @@ class NotificationSettingsViewModel @AssistedInject constructor(
         val enableButton: Boolean = false,
     )
 
-    sealed class NotificationType(val notifyType: Int) {
-        data object All: NotificationType(NOTIFY_TYPE_ALL)
-        data object MentionsOnly: NotificationType(NOTIFY_TYPE_MENTIONS)
-        data object Mute: NotificationType(NOTIFY_TYPE_NONE)
+    sealed class NotificationType(val notifyType: NotifyType) {
+        data object All: NotificationType(NotifyType.ALL)
+        data object MentionsOnly: NotificationType(NotifyType.MENTIONS)
+        data object Mute: NotificationType(NotifyType.NONE)
     }
 
     private val debugMuteDurations = listOf(

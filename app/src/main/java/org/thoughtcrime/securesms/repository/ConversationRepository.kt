@@ -49,7 +49,7 @@ import org.thoughtcrime.securesms.database.DraftDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
-import org.thoughtcrime.securesms.database.RecipientDatabase
+import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.database.SessionJobDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.Storage
@@ -61,8 +61,6 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.util.observeChanges
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.sequences.filter
-import kotlin.sequences.map
 
 interface ConversationRepository {
     fun observeConversationList(approved: Boolean? = null): Flow<List<ThreadRecord>>
@@ -146,7 +144,7 @@ class DefaultConversationRepository @Inject constructor(
     private val groupManager: GroupManagerV2,
     private val clock: SnodeClock,
     private val preferences: TextSecurePreferences,
-    private val recipientDatabase: RecipientDatabase,
+    private val recipientDatabase: RecipientSettingsDatabase,
 ) : ConversationRepository {
 
     override fun getConfigBasedConversations(
@@ -232,7 +230,7 @@ class DefaultConversationRepository @Inject constructor(
         }.flatMapLatest { allAddresses ->
             merge(
                 configFactory.configUpdateNotifications,
-                recipientDatabase.updateNotifications,
+                recipientDatabase.changeNotification,
                 threadDb.updateNotifications
             ).debounce(500)
                 .onStart { emit(Unit) }

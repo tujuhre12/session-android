@@ -31,7 +31,7 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.hexEncodedPublicKey
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities
 import org.thoughtcrime.securesms.database.AttachmentDatabase
-import org.thoughtcrime.securesms.database.RecipientDatabase
+import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
@@ -51,8 +51,7 @@ class DebugMenuViewModel @Inject constructor(
     private val storage: StorageProtocol,
     private val deprecationManager: LegacyGroupDeprecationManager,
     private val clearDataUtils: ClearDataUtils,
-    private val threadDb: ThreadDatabase,
-    private val recipientDatabase: RecipientDatabase,
+    private val recipientDatabase: RecipientSettingsDatabase,
     private val attachmentDatabase: AttachmentDatabase,
     private val conversationRepository: ConversationRepository,
 ) : ViewModel() {
@@ -304,7 +303,9 @@ class DebugMenuViewModel @Inject constructor(
             val conversations: List<ThreadRecord> = conversationRepository.observeConversationList(approved = true).first()
 
             conversations.filter { !it.recipient.isLocalNumber }.forEach {
-                recipientDatabase.setAutoDownloadAttachments(it.recipient.address, false)
+                recipientDatabase.save(it.recipient.address) {
+                    it.copy()
+                }
             }
 
             // set all attachments back to pending

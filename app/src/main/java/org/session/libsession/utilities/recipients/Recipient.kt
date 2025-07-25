@@ -9,7 +9,7 @@ import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.IdPrefix
-import org.thoughtcrime.securesms.database.RecipientDatabase
+import org.thoughtcrime.securesms.database.model.NotifyType
 import java.time.ZonedDateTime
 
 data class Recipient(
@@ -17,8 +17,7 @@ data class Recipient(
     val basic: BasicRecipient,
     val mutedUntil: ZonedDateTime?,
     val autoDownloadAttachments: Boolean?,
-    @get:NotifyType
-    val notifyType: Int,
+    val notifyType: NotifyType,
     val acceptsCommunityMessageRequests: Boolean,
     val notificationChannel: String? = null,
 ) {
@@ -62,7 +61,6 @@ data class Recipient(
     }
 
     val blocked: Boolean get() = when (basic) {
-        is BasicRecipient.Generic -> basic.blocked
         is BasicRecipient.Contact -> basic.blocked
         else -> false
     }
@@ -89,7 +87,7 @@ data class Recipient(
                 address = address,
                 mutedUntil = null,
                 autoDownloadAttachments = true,
-                notifyType = RecipientDatabase.NOTIFY_TYPE_ALL,
+                notifyType = NotifyType.ALL,
                 acceptsCommunityMessageRequests = false,
             )
         }
@@ -110,7 +108,6 @@ sealed interface BasicRecipient {
         val displayName: String = "",
         override val avatar: RemoteFile? = null,
         override val isLocalNumber: Boolean = false,
-        val blocked: Boolean = false,
         override val priority: Long = PRIORITY_VISIBLE,
     ) : BasicRecipient
 
@@ -190,36 +187,6 @@ sealed interface RemoteFile {
         }
     }
 }
-
-/**
- * Represents local database data for a recipient.
- */
-class RecipientSettings(
-    val blocked: Boolean,
-    val approved: Boolean,
-    val approvedMe: Boolean,
-    val muteUntil: Long,
-    val notifyType: Int,
-    val autoDownloadAttachments: Boolean?,
-    val expireMessages: Int,
-    val profileKey: ByteArray?,
-    val systemDisplayName: String?,
-    val profileName: String?,
-    val profileAvatar: String?,
-    val blocksCommunityMessagesRequests: Boolean
-) {
-    val profilePic: UserPic? get() =
-        if (!profileAvatar.isNullOrBlank() && profileKey != null) {
-            UserPic(profileAvatar, profileKey)
-        } else {
-            null
-        }
-}
-
-@Retention(AnnotationRetention.SOURCE)
-@IntDef(RecipientDatabase.NOTIFY_TYPE_MENTIONS, RecipientDatabase.NOTIFY_TYPE_ALL, RecipientDatabase.NOTIFY_TYPE_NONE)
-annotation class NotifyType
-
 
 fun RemoteFile.toUserPic(): UserPic? {
     return when (this) {
