@@ -93,9 +93,14 @@ fun UserProfileModal(
         title = null as AnnotatedString?,
         content = {
             // avatar / QR
-            UserProfileModalAvatarQR(
-                data = data,
-                sendCommand = sendCommand
+            AvatarQrWidget(
+                showQR = data.showQR,
+                expandedAvatar = data.expandedAvatar,
+                showBadge = !data.isBlinded,
+                avatarUIData = data.avatarUIData,
+                address = data.rawAddress,
+                toggleQR = { sendCommand(UserProfileModalCommands.ToggleQR) },
+                toggleAvatarExpand = { sendCommand(UserProfileModalCommands.ToggleAvatarExpand) }
             )
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
@@ -248,198 +253,6 @@ fun UserProfileModal(
                 sendCommand(UserProfileModalCommands.HideSessionProCTA)
             }
         )
-    }
-}
-
-@Composable
-fun UserProfileModalAvatarQR(
-    data: UserProfileModalData,
-    sendCommand: (UserProfileModalCommands) -> Unit
-){
-    val animationSpec = tween<Dp>(
-        durationMillis = 400,
-        easing = FastOutSlowInEasing
-    )
-
-    val animationSpecFast = tween<Float>(
-        durationMillis = 200,
-        easing = FastOutSlowInEasing
-    )
-
-    val targetSize = when {
-        data.showQR -> LocalDimensions.current.iconXXLargeAvatar
-        data.expandedAvatar -> LocalDimensions.current.iconXXLargeAvatar
-        else -> LocalDimensions.current.iconXXLarge
-    }
-
-    val animatedSize by animateDpAsState(
-        targetValue = targetSize,
-        animationSpec = animationSpec,
-        label = "unified_size"
-    )
-
-    val animatedCornerRadius by animateDpAsState(
-        targetValue = if (data.showQR) {
-            LocalDimensions.current.shapeSmall
-        } else {
-            animatedSize / 2 // round shape
-        },
-        animationSpec = animationSpec,
-        label = "corner_radius"
-    )
-
-    // Scale animations for content
-    val avatarScale by animateFloatAsState(
-        targetValue = if (data.showQR) 0.8f else 1f,
-        animationSpec = animationSpecFast,
-        label = "avatar_scale"
-    )
-
-    val qrScale by animateFloatAsState(
-        targetValue = if (data.showQR) 1f else 0.8f,
-        animationSpec = animationSpecFast,
-        label = "qr_scale"
-    )
-
-    val avatarAlpha by animateFloatAsState(
-        targetValue = if (data.showQR) 0f else 1f,
-        animationSpec = animationSpecFast,
-        label = "avatar_alpha"
-    )
-
-    val qrAlpha by animateFloatAsState(
-        targetValue = if (data.showQR) 1f else 0f,
-        animationSpec = animationSpecFast,
-        label = "qr_alpha"
-    )
-
-    // Badge animations
-    val badgeSize by animateDpAsState(
-        targetValue = if (data.expandedAvatar || data.showQR) {
-            30.dp
-        } else {
-            LocalDimensions.current.iconMedium
-        },
-        animationSpec = animationSpec
-    )
-
-    // animating the inner padding of the badge otherwise the icon looks too big within the background
-    val animatedBadgeInnerPadding by animateDpAsState(
-        targetValue = if (data.expandedAvatar) {
-            6.dp
-        } else {
-            5.dp
-        },
-        animationSpec = animationSpec,
-        label = "badge_inner_pd_animation"
-    )
-
-    val badgeOffset by animateOffsetAsState(
-        targetValue = if (data.showQR) {
-            val cornerOffset = LocalDimensions.current.xsSpacing
-            Offset(cornerOffset.value, -cornerOffset.value)
-        } else if(data.expandedAvatar) {
-            Offset(- LocalDimensions.current.contentSpacing.value, 0f)
-        } else {
-            Offset.Zero
-        },
-        animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
-        label = "badge_offset"
-    )
-
-    Box(
-        contentAlignment = Alignment.Center
-    ) {
-        // Main container
-        Box(
-            modifier = Modifier
-                .size(animatedSize)
-                .background(
-                    color = if (data.showQR) Color.White else Color.Transparent,
-                    shape = RoundedCornerShape(animatedCornerRadius)
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            // Avatar with scale and alpha
-            var avatarModifier: Modifier = Modifier
-            if(!data.showQR){
-                avatarModifier = avatarModifier.clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) {
-                    sendCommand(UserProfileModalCommands.ToggleAvatarExpand)
-                }
-            }
-            Avatar(
-                modifier = avatarModifier
-                    .size(animatedSize)
-                    .graphicsLayer(
-                        alpha = avatarAlpha,
-                        scaleX = avatarScale,
-                        scaleY = avatarScale
-                    )
-                    ,
-                size = animatedSize,
-                maxSizeLoad = LocalDimensions.current.iconXXLargeAvatar,
-                data = data.avatarUIData
-            )
-
-            // QR with scale and alpha
-            Box(
-                modifier = Modifier
-                    .size(animatedSize)
-                    .graphicsLayer(
-                        alpha = qrAlpha,
-                        scaleX = qrScale,
-                        scaleY = qrScale
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                QrImage(
-                    string = data.rawAddress,
-                    modifier = Modifier
-                        .size(animatedSize)
-                        .qaTag(R.string.AccessibilityId_qrCode),
-                    icon = R.drawable.session
-                )
-            }
-        }
-
-        // Badge
-        if(!data.isBlinded) {
-            Crossfade(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .offset(x = badgeOffset.x.dp, y = badgeOffset.y.dp)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) {
-                        sendCommand(UserProfileModalCommands.ToggleQR)
-                    },
-                targetState = data.showQR,
-                animationSpec = tween(durationMillis = 200),
-                label = "badge_icon"
-            ) { showQR ->
-                Image(
-                    modifier = Modifier
-                        .size(badgeSize)
-                        .background(
-                            shape = CircleShape,
-                            color = LocalColors.current.accent
-                        )
-                        .padding(animatedBadgeInnerPadding),
-                    painter = painterResource(
-                        id = when (showQR) {
-                            true -> R.drawable.ic_user_filled_custom
-                            false -> R.drawable.ic_qr_code
-                        }
-                    ),
-                    contentDescription = null,
-                    colorFilter = ColorFilter.tint(Color.Black)
-                )
-            }
-        }
     }
 }
 

@@ -78,6 +78,7 @@ import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.avatarOptions
 import org.thoughtcrime.securesms.util.observeChanges
+import kotlin.String
 import kotlin.math.min
 
 
@@ -474,8 +475,16 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
 
         // account ID
-        val accountId = when{
-            conversation.is1on1 || conversation.isLocalNumber -> conversation.address.toString()
+        val (accountId, accountIdHeader) = when{
+            conversation.is1on1 -> conversation.address.toString() to context.getString(R.string.accountId)
+            conversation.isLocalNumber -> conversation.address.toString() to context.getString(R.string.accountIdYours)
+            else -> null to null
+        }
+
+        // QR Account ID
+        val qrAddress = when {
+            conversation.is1on1 -> conversation.address.toString()
+            conversation.isCommunityRecipient -> community?.joinURL
             else -> null
         }
 
@@ -719,11 +728,14 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 editCommand = editCommand,
                 description = description,
                 descriptionQaTag = descriptionQaTag,
-                accountId = accountId,
+                displayAccountId = accountId,
                 avatarUIData = avatarData,
                 categories = optionData,
                 showProBadge = proStatusManager.shouldShowProBadge(conversation.address)
-                        && !conversation.isLocalNumber
+                        && !conversation.isLocalNumber,
+
+                displayAccountIdHeader = accountIdHeader,
+                qrAddress = qrAddress,
             )
         }
 
@@ -1322,6 +1334,18 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 // to go Pro upgrade screen
                 //todo PRO go to screen once it exists
             }
+
+            is Commands.ToggleQR -> {
+                _uiState.update {
+                    it.copy(showQR = !it.showQR)
+                }
+            }
+
+            is Commands.ToggleAvatarExpand -> {
+                _uiState.update {
+                    it.copy(expandedAvatar = !it.expandedAvatar)
+                }
+            }
         }
     }
 
@@ -1457,6 +1481,9 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         data object HidePinCTADialog: Commands
 
         data object GoToProUpgradeScreen: Commands
+
+        object ToggleAvatarExpand: Commands
+        object ToggleQR: Commands
     }
 
     @AssistedFactory
@@ -1470,10 +1497,16 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val nameQaTag: String? = null,
         val description: String? = null,
         val descriptionQaTag: String? = null,
-        val accountId: String? = null,
+        val displayAccountId: String? = null, // account id to display directly on the screen
         val showLoading: Boolean = false,
         val showProBadge: Boolean = false,
         val editCommand: Commands? = null,
+
+        val displayAccountIdHeader: String? = null,
+        val qrAddress: String? = null, // address to display as a qr code
+        val expandedAvatar: Boolean = false,
+        val showQR: Boolean = false,
+
         val categories: List<OptionsCategory> = emptyList()
     )
 
