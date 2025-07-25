@@ -369,7 +369,6 @@ class MentionViewModel(
         private val contentResolver: ContentResolver,
         private val threadDatabase: ThreadDatabase,
         private val groupDatabase: GroupDatabase,
-        private val mmsDatabase: MmsDatabase,
         private val contactDatabase: SessionContactDatabase,
         private val storage: Storage,
         private val memberDatabase: GroupMemberDatabase,

@@ -116,7 +116,7 @@ class MentionViewModelTest : BaseViewModelTest() {
             threadID = threadID,
             application = InstrumentationRegistry.getInstrumentation().context as android.app.Application,
             mmsSmsDatabase = mock {
-                on { getRecentChatMemberAddresses(threadID, any())} doAnswer {
+                on { getRecentChatMemberAddresses(threadID, 20)} doAnswer {
                     val limit = it.arguments[1] as Int
                     threadMembers.take(limit).map { m -> m.pubKey }
                 }
