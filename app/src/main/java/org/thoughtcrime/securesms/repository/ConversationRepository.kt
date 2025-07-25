@@ -49,6 +49,7 @@ import org.thoughtcrime.securesms.database.DraftDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.database.SessionJobDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
@@ -145,6 +146,7 @@ class DefaultConversationRepository @Inject constructor(
     private val clock: SnodeClock,
     private val preferences: TextSecurePreferences,
     private val recipientDatabase: RecipientSettingsDatabase,
+    private val recipientRepository: RecipientRepository,
 ) : ConversationRepository {
 
     override fun getConfigBasedConversations(
@@ -281,7 +283,7 @@ class DefaultConversationRepository @Inject constructor(
             }
             message.openGroupInvitation = openGroupInvitation
             val contactThreadId = threadDb.getOrCreateThreadIdFor(contact)
-            val expirationConfig = contactThreadId.let(storage::getExpirationConfiguration)
+            val expirationConfig = recipientRepository.getRecipientSync(contact)?.expiryMode ?: ExpiryMode.NONE
             val expireStartedAt = if (expirationConfig is ExpiryMode.AfterSend) message.sentTimestamp!! else 0
             val outgoingTextMessage = OutgoingTextMessage.fromOpenGroupInvitation(
                 openGroupInvitation,

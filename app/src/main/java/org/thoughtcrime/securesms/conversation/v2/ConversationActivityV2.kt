@@ -2037,7 +2037,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
 
         // Create the message
-        val message = VisibleMessage().applyExpiryMode(viewModel.threadId)
+        val message = VisibleMessage().applyExpiryMode(viewModel.address)
         message.sentTimestamp = sentTimestamp
         message.text = text
         val expiresInMillis = viewModel.recipient.expiryMode.expiryMillis
@@ -2077,7 +2077,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         viewModel.implicitlyApproveRecipient()?.let { conversationApprovalJob = it }
 
         // Create the message
-        val message = VisibleMessage().applyExpiryMode(viewModel.threadId)
+        val message = VisibleMessage().applyExpiryMode(viewModel.address)
         message.sentTimestamp = sentTimestamp
         message.text = body
         val quote = quotedMessage?.let {

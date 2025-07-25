@@ -36,6 +36,7 @@ import org.session.libsession.utilities.Address;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.database.MarkedMessageInfo;
 import org.thoughtcrime.securesms.database.MmsDatabase;
+import org.thoughtcrime.securesms.database.RecipientRepository;
 import org.thoughtcrime.securesms.database.SmsDatabase;
 import org.thoughtcrime.securesms.database.Storage;
 import org.thoughtcrime.securesms.database.ThreadDatabase;
@@ -73,6 +74,8 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
   MessageNotifier messageNotifier;
   @Inject
   SnodeClock clock;
+  @Inject
+  RecipientRepository recipientRepository;
 
   @SuppressLint("StaticFieldLeak")
   @Override
@@ -98,7 +101,7 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
           VisibleMessage message = new VisibleMessage();
           message.setSentTimestamp(clock.currentTimeMills());
           message.setText(responseText.toString());
-          ExpiryMode expiryMode = storage.getExpirationConfiguration(threadId);
+          ExpiryMode expiryMode = recipientRepository.getRecipientSyncOrEmpty(address).getExpiryMode();
 
           long expiresInMillis = expiryMode.getExpiryMillis();
           long expireStartedAt = expiryMode instanceof ExpiryMode.AfterSend ? message.getSentTimestamp() : 0L;

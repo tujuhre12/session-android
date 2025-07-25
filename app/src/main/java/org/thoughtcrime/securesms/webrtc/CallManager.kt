@@ -28,7 +28,6 @@ import org.session.libsession.utilities.Debouncer
 import org.session.libsession.utilities.Util
 import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.ICE_CANDIDATES
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.webrtc.CallManager.StateEvent.AudioDeviceUpdate
 import org.thoughtcrime.securesms.webrtc.CallManager.StateEvent.AudioEnabled
 import org.thoughtcrime.securesms.webrtc.CallManager.StateEvent.RecipientUpdate
@@ -326,7 +325,6 @@ class CallManager @Inject constructor(
                     currentPendings.add(pendingOutgoingIceUpdates.pop())
                 }
 
-                val thread = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(expectedRecipient)
                 CallMessage(
                     ICE_CANDIDATES,
                     sdps = currentPendings.map(IceCandidate::sdp),
@@ -334,7 +332,7 @@ class CallManager @Inject constructor(
                     sdpMids = currentPendings.map(IceCandidate::sdpMid),
                     currentCallId
                 )
-                    .applyExpiryMode(thread)
+                    .applyExpiryMode(expectedRecipient)
                     .also { MessageSender.sendNonDurably(it, currentRecipient, isSyncMessage = currentRecipient.isLocalNumber) }
 
             }
@@ -462,8 +460,6 @@ class CallManager @Inject constructor(
     fun onNewOffer(offer: String, callId: UUID, recipient: Address): Promise<Unit, Exception> {
         if (callId != this.callId) return Promise.ofFail(NullPointerException("No callId"))
         if (recipient != this.recipient) return Promise.ofFail(NullPointerException("No recipient"))
-        val thread = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(recipient)
-
         val connection = peerConnection ?: return Promise.ofFail(NullPointerException("No peer connection wrapper"))
 
         val reconnected = stateProcessor.processEvent(Event.ReceiveOffer) && stateProcessor.processEvent(Event.SendAnswer)
@@ -477,7 +473,7 @@ class CallManager @Inject constructor(
             connection.setLocalDescription(answer)
             pendingIncomingIceUpdates.toList().forEach(connection::addIceCandidate)
             pendingIncomingIceUpdates.clear()
-            val answerMessage = CallMessage.answer(answer.description, callId).applyExpiryMode(thread)
+            val answerMessage = CallMessage.answer(answer.description, callId).applyExpiryMode(recipient)
             Log.i("Loki", "Posting new answer")
             MessageSender.sendNonDurably(answerMessage, recipient, isSyncMessage = recipient.isLocalNumber)
         } else {
@@ -524,14 +520,13 @@ class CallManager @Inject constructor(
         connection.setRemoteDescription(SessionDescription(SessionDescription.Type.OFFER, offer))
         val answer = connection.createAnswer(MediaConstraints())
         connection.setLocalDescription(answer)
-        val thread = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(recipient)
-        val answerMessage = CallMessage.answer(answer.description, callId).applyExpiryMode(thread)
+        val answerMessage = CallMessage.answer(answer.description, callId).applyExpiryMode(recipient)
         val userAddress = storage.getUserPublicKey() ?: return Promise.ofFail(NullPointerException("No user public key"))
         MessageSender.sendNonDurably(answerMessage, Address.fromSerialized(userAddress), isSyncMessage = true)
         val sendAnswerMessage = MessageSender.sendNonDurably(CallMessage.answer(
                 answer.description,
                 callId
-        ).applyExpiryMode(thread), recipient, isSyncMessage = recipient.isLocalNumber)
+        ).applyExpiryMode(recipient), recipient, isSyncMessage = recipient.isLocalNumber)
 
         insertCallMessage(recipient.toString(), CallMessageType.CALL_INCOMING, false)
 
@@ -581,17 +576,16 @@ class CallManager @Inject constructor(
             connection.setLocalDescription(offer)
 
             Log.d("Loki", "Sending pre-offer")
-            val thread = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(recipient)
             return MessageSender.sendNonDurably(CallMessage.preOffer(
                 callId
-            ).applyExpiryMode(thread), recipient, isSyncMessage = recipient.isLocalNumber).bind {
+            ).applyExpiryMode(recipient), recipient, isSyncMessage = recipient.isLocalNumber).bind {
                 Log.d("Loki", "Sent pre-offer")
                 Log.d("Loki", "Sending offer")
                 postViewModelState(CallViewModel.State.CALL_OFFER_OUTGOING)
                 MessageSender.sendNonDurably(CallMessage.offer(
                     offer.description,
                     callId
-                ).applyExpiryMode(thread), recipient, isSyncMessage = recipient.isLocalNumber).success {
+                ).applyExpiryMode(recipient), recipient, isSyncMessage = recipient.isLocalNumber).success {
                     Log.d("Loki", "Sent offer")
                 }.fail {
                     Log.e("Loki", "Failed to send offer", it)
@@ -605,9 +599,8 @@ class CallManager @Inject constructor(
         val recipient = recipient ?: return
         val userAddress = storage.getUserPublicKey() ?: return
         stateProcessor.processEvent(Event.DeclineCall) {
-            val thread = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(recipient)
-            MessageSender.sendNonDurably(CallMessage.endCall(callId).applyExpiryMode(thread), Address.fromSerialized(userAddress), isSyncMessage = true)
-            MessageSender.sendNonDurably(CallMessage.endCall(callId).applyExpiryMode(thread), recipient, isSyncMessage = recipient.isLocalNumber)
+            MessageSender.sendNonDurably(CallMessage.endCall(callId).applyExpiryMode(recipient), Address.fromSerialized(userAddress), isSyncMessage = true)
+            MessageSender.sendNonDurably(CallMessage.endCall(callId).applyExpiryMode(recipient), recipient, isSyncMessage = recipient.isLocalNumber)
             insertCallMessage(recipient.toString(), CallMessageType.CALL_INCOMING)
 
         }
@@ -631,8 +624,7 @@ class CallManager @Inject constructor(
                 channel.send(buffer)
             }
 
-            val thread = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(recipient)
-            MessageSender.sendNonDurably(CallMessage.endCall(callId).applyExpiryMode(thread), recipient, isSyncMessage = recipient.isLocalNumber)
+            MessageSender.sendNonDurably(CallMessage.endCall(callId).applyExpiryMode(recipient), recipient, isSyncMessage = recipient.isLocalNumber)
         }
     }
 
@@ -863,8 +855,7 @@ class CallManager @Inject constructor(
                 mandatory.add(MediaConstraints.KeyValuePair("IceRestart", "true"))
             })
             connection.setLocalDescription(offer)
-            val thread = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(recipient)
-            MessageSender.sendNonDurably(CallMessage.offer(offer.description, callId).applyExpiryMode(thread), recipient, isSyncMessage = recipient.isLocalNumber)
+            MessageSender.sendNonDurably(CallMessage.offer(offer.description, callId).applyExpiryMode(recipient), recipient, isSyncMessage = recipient.isLocalNumber)
         }
     }
 

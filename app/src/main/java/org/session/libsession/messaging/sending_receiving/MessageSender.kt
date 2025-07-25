@@ -288,14 +288,14 @@ object MessageSender {
 
         // Otherwise the expiration configuration applies
         return message.run {
-            threadID ?: (if (isSyncMessage && this is VisibleMessage) syncTarget else recipient)
-                ?.let(Address.Companion::fromSerialized)
-                ?.let(MessagingModuleConfiguration.shared.storage::getThreadId)
+            (if (isSyncMessage && this is VisibleMessage) syncTarget else recipient)
+                ?.let(Address::fromSerialized)
+                ?.let(MessagingModuleConfiguration.shared.recipientRepository::getRecipientSync)
+                ?.expiryMode
+                ?.takeIf { it is ExpiryMode.AfterSend || isSyncMessage }
+                ?.expiryMillis
+                ?.takeIf { it > 0 }
         }
-            ?.let(MessagingModuleConfiguration.shared.storage::getExpirationConfiguration)
-            ?.takeIf { it is ExpiryMode.AfterSend || isSyncMessage }
-            ?.expiryMillis
-            ?.takeIf { it > 0 }
     }
 
     // Open Groups
@@ -536,7 +536,7 @@ object MessageSender {
     @JvmOverloads
     fun send(message: Message, address: Address, statusCallback: SendChannel<Result<Unit>>? = null) {
         val threadID = MessagingModuleConfiguration.shared.storage.getThreadId(address)
-        threadID?.let(message::applyExpiryMode)
+        message.applyExpiryMode(address)
         message.threadID = threadID
         val destination = Destination.from(address)
         val job = MessageSendJob(message, destination, statusCallback)

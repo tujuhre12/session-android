@@ -101,7 +101,7 @@ class ControlMessageView : LinearLayout {
 
                     followSetting.isVisible = ExpirationConfiguration.isNewConfigEnabled
                             && !message.isOutgoing
-                            && messageContent.expiryMode != (MessagingModuleConfiguration.shared.storage.getExpirationConfiguration(message.threadId) ?: ExpiryMode.NONE)
+                            && messageContent.expiryMode != (message.individualRecipient?.expiryMode ?: ExpiryMode.NONE)
                             && threadRecipient?.isGroupOrCommunity != true
 
                     if (followSetting.isVisible) {

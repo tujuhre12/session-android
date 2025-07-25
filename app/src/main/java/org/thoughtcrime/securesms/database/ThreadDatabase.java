@@ -28,7 +28,6 @@ import android.net.Uri;
 import com.annimon.stream.Stream;
 
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
-import net.zetetic.database.sqlcipher.SQLiteStatement;
 
 import org.json.JSONArray;
 import org.jspecify.annotations.NonNull;
@@ -44,7 +43,6 @@ import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.AccountId;
-import org.session.libsignal.utilities.IdPrefix;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.Pair;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
@@ -60,10 +58,8 @@ import org.thoughtcrime.securesms.notifications.MarkReadReceiver;
 
 import java.io.Closeable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -654,62 +650,6 @@ public class ThreadDatabase extends Database {
     }
   }
 
-  /**
-   * Synchronizes the threads with the given addresses. This will delete any threads that are not in the
-   * given addresses set, and will create threads for any addresses that do not have a thread yet.
-   *
-   * @return The deleted thread IDs.
-   */
-  @NonNull
-  public List<@NonNull Long> syncThreadWithAddresses(@NonNull Set<@NonNull Address> addresses) {
-    final SQLiteDatabase db = getWritableDatabase();
-    final List<Long> deletedThreadIds = new ArrayList<>();
-
-    db.beginTransaction();
-    try {
-      // Get all thread IDs to start with
-      Map<Address, Long> allThreads = CollectionsKt.associateTo(
-              getAllThreads(db),
-              new HashMap<>(),
-              (p) -> p
-      );
-
-      // Delete all threads that are not in the addresses set
-      for (Map.Entry<Address, Long> entry : allThreads.entrySet()) {
-        Address address = entry.getKey();
-        long threadId = entry.getValue();
-
-        if (!addresses.contains(address)) {
-          // This thread is not in the addresses set, delete it
-          db.delete(TABLE_NAME, ID_WHERE, new String[]{String.valueOf(threadId)});
-          deletedThreadIds.add(threadId);
-        }
-      }
-
-      // Create threads for any addresses that do not have a thread yet
-      for (Address address : addresses) {
-          if (!allThreads.containsKey(address)) {
-            // This address does not have a thread, create it
-            long threadId = createThreadForRecipient(address);
-            if (updateListener != null) {
-                updateListener.threadCreated(address, threadId);
-            }
-            updateNotifications.tryEmit(threadId);
-          }
-      }
-
-      db.setTransactionSuccessful();
-
-      for (Long deletedThreadId : deletedThreadIds) {
-        notifyThreadUpdated(deletedThreadId);
-      }
-      notifyConversationListListeners();
-
-      return deletedThreadIds;
-    } finally {
-      db.endTransaction();
-    }
-  }
 
   public boolean update(long threadId, boolean unarchive) {
     long count                    = mmsSmsDatabase.get().getConversationCount(threadId);

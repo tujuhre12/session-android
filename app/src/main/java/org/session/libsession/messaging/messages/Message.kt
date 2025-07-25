@@ -6,6 +6,7 @@ import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.snode.SnodeMessage
+import org.session.libsession.utilities.Address
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -86,7 +87,8 @@ fun SignalServiceProtos.Content.expiryMode(): ExpiryMode =
 /**
  * Apply ExpiryMode from the current setting.
  */
-inline fun <reified M: Message> M.applyExpiryMode(thread: Long): M = apply {
-    val storage = MessagingModuleConfiguration.shared.storage
-    expiryMode = storage.getExpirationConfiguration(thread).coerceSendToRead(coerceDisappearAfterSendToRead)
+inline fun <reified M: Message> M.applyExpiryMode(recipientAddress: Address): M = apply {
+    expiryMode = MessagingModuleConfiguration.shared.recipientRepository.getRecipientSync(recipientAddress)
+        ?.expiryMode?.coerceSendToRead(coerceDisappearAfterSendToRead)
+        ?: ExpiryMode.NONE
 }

@@ -248,7 +248,6 @@ interface StorageProtocol {
     fun deleteReactions(messageIds: List<Long>, mms: Boolean)
     fun setBlocked(recipients: Iterable<Address>, isBlocked: Boolean, fromConfigUpdate: Boolean = false)
     fun blockedContacts(): List<Recipient>
-    fun getExpirationConfiguration(threadId: Long): ExpiryMode
     fun setExpirationConfiguration(address: Address, expiryMode: ExpiryMode)
 
     // Shared configs

@@ -26,27 +26,33 @@ import android.os.Bundle;
 
 import androidx.core.app.RemoteInput;
 
-import org.session.libsession.messaging.messages.ExpirationConfiguration;
 import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage;
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage;
 import org.session.libsession.messaging.messages.visible.VisibleMessage;
 import org.session.libsession.messaging.sending_receiving.MessageSender;
+import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier;
 import org.session.libsession.snode.SnodeAPI;
 import org.session.libsession.utilities.Address;
 import org.session.libsignal.utilities.Log;
-import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.database.MarkedMessageInfo;
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
+import org.thoughtcrime.securesms.database.MmsDatabase;
+import org.thoughtcrime.securesms.database.RecipientRepository;
+import org.thoughtcrime.securesms.database.SmsDatabase;
+import org.thoughtcrime.securesms.database.ThreadDatabase;
 import org.thoughtcrime.securesms.mms.MmsException;
 
 import java.util.Collections;
 import java.util.List;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
 import network.loki.messenger.libsession_util.util.ExpiryMode;
 
 /**
  * Get the response text from the Android Auto and sends an message as a reply
  */
+@AndroidEntryPoint
 public class AndroidAutoReplyReceiver extends BroadcastReceiver {
 
   public static final String TAG             = AndroidAutoReplyReceiver.class.getSimpleName();
@@ -54,6 +60,21 @@ public class AndroidAutoReplyReceiver extends BroadcastReceiver {
   public static final String ADDRESS_EXTRA   = "car_address";
   public static final String VOICE_REPLY_KEY = "car_voice_reply_key";
   public static final String THREAD_ID_EXTRA = "car_reply_thread_id";
+
+  @Inject
+  ThreadDatabase threadDatabase;
+
+  @Inject
+  RecipientRepository recipientRepository;
+
+  @Inject
+  MmsDatabase mmsDatabase;
+
+  @Inject
+  SmsDatabase smsDatabase;
+
+  @Inject
+  MessageNotifier messageNotifier;
 
   @SuppressLint("StaticFieldLeak")
   @Override
@@ -77,7 +98,7 @@ public class AndroidAutoReplyReceiver extends BroadcastReceiver {
           long replyThreadId;
 
           if (threadId == -1) {
-            replyThreadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(address);
+            replyThreadId = threadDatabase.getOrCreateThreadIdFor(address);
           } else {
             replyThreadId = threadId;
           }
@@ -86,7 +107,7 @@ public class AndroidAutoReplyReceiver extends BroadcastReceiver {
           message.setText(responseText.toString());
           message.setSentTimestamp(SnodeAPI.getNowWithOffset());
           MessageSender.send(message, address);
-          ExpiryMode expiryMode = DatabaseComponent.get(context).storage().getExpirationConfiguration(threadId);
+          ExpiryMode expiryMode = recipientRepository.getRecipientSyncOrEmpty(address).getExpiryMode();
           long expiresInMillis = expiryMode.getExpiryMillis();
           long expireStartedAt = expiryMode instanceof ExpiryMode.AfterSend ? message.getSentTimestamp() : 0L;
 
@@ -94,19 +115,19 @@ public class AndroidAutoReplyReceiver extends BroadcastReceiver {
             Log.w("AndroidAutoReplyReceiver", "GroupRecipient, Sending media message");
             OutgoingMediaMessage reply = OutgoingMediaMessage.from(message, address, Collections.emptyList(), null, null, expiresInMillis, 0);
             try {
-              DatabaseComponent.get(context).mmsDatabase().insertMessageOutbox(reply, replyThreadId, false, true);
+              mmsDatabase.insertMessageOutbox(reply, replyThreadId, false, true);
             } catch (MmsException e) {
               Log.w(TAG, e);
             }
           } else {
             Log.w("AndroidAutoReplyReceiver", "Sending regular message ");
             OutgoingTextMessage reply = OutgoingTextMessage.from(message, address, expiresInMillis, expireStartedAt);
-            DatabaseComponent.get(context).smsDatabase().insertMessageOutbox(replyThreadId, reply, false, SnodeAPI.getNowWithOffset(), true);
+            smsDatabase.insertMessageOutbox(replyThreadId, reply, false, SnodeAPI.getNowWithOffset(), true);
           }
 
-          List<MarkedMessageInfo> messageIds = DatabaseComponent.get(context).threadDatabase().setRead(replyThreadId, true);
+          List<MarkedMessageInfo> messageIds = threadDatabase.setRead(replyThreadId, true);
 
-          ApplicationContext.getInstance(context).getMessageNotifier().updateNotification(context);
+          messageNotifier.updateNotification(context);
           MarkReadReceiver.process(context, messageIds);
 
           return null;

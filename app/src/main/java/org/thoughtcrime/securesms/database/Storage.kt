@@ -1610,12 +1610,6 @@ open class Storage @Inject constructor(
             .toList()
     }
 
-    override fun getExpirationConfiguration(threadId: Long): ExpiryMode {
-        val recipient = getRecipientForThread(threadId) ?: return ExpiryMode.NONE
-
-        return recipientRepository.getRecipientSync(recipient)?.expiryMode ?: ExpiryMode.NONE
-    }
-
     override fun setExpirationConfiguration(address: Address, expiryMode: ExpiryMode) {
         if (expiryMode == ExpiryMode.NONE) {
             // Clear the legacy recipients on updating config to be none
