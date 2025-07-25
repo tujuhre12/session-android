@@ -192,8 +192,10 @@ fun <T> OptionsCard(card: OptionsCardData<T>, onOptionSelected: (T) -> Unit) {
 
 @Composable
 fun LargeItemButtonWithDrawable(
-    @StringRes textId: Int,
+    text: GetString,
     @DrawableRes icon: Int,
+    iconTint: Color? = null,
+    iconSize: Dp? = null,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     @StringRes subtitleQaTag: Int? = null,
@@ -202,7 +204,11 @@ fun LargeItemButtonWithDrawable(
     onClick: () -> Unit
 ) {
     ItemButtonWithDrawable(
-        textId, icon, modifier,
+        text = text,
+        icon = icon,
+        iconTint = iconTint,
+        iconSize = iconSize,
+        modifier = modifier,
         subtitle = subtitle,
         subtitleQaTag = subtitleQaTag,
         textStyle = LocalType.current.h8,
@@ -214,8 +220,10 @@ fun LargeItemButtonWithDrawable(
 
 @Composable
 fun ItemButtonWithDrawable(
-    @StringRes textId: Int,
+    text: GetString,
     @DrawableRes icon: Int,
+    iconSize: Dp? = null,
+    iconTint: Color? = null,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     @StringRes subtitleQaTag: Int? = null,
@@ -227,13 +235,21 @@ fun ItemButtonWithDrawable(
     val context = LocalContext.current
 
     ItemButton(
-        annotatedStringText = AnnotatedString(stringResource(textId)),
+        annotatedStringText = AnnotatedString(text.string()),
         modifier = modifier,
         icon = {
             Image(
                 painter = rememberDrawablePainter(drawable = AppCompatResources.getDrawable(context, icon)),
                 contentDescription = null,
+                colorFilter = iconTint?.let { ColorFilter.tint(it) },
                 modifier = Modifier.align(Alignment.Center)
+                    .then(
+                        if(iconSize != null) {
+                            Modifier.size(iconSize)
+                        } else {
+                            Modifier
+                        }
+                    )
             )
         },
         textStyle = textStyle,

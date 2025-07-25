@@ -361,6 +361,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
     }
 
+    //todo badge figure out community admin logic: Do we need a separate qr button in app bar? Do we need all the admin features?
+
     fun onResume(){
         // check the mute timing in case it has changed when coming back to the screen
         val conversation = recipient ?: return

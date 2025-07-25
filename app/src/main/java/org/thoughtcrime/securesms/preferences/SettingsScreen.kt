@@ -107,8 +107,6 @@ import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
-import org.thoughtcrime.securesms.ui.getCellBottomShape
-import org.thoughtcrime.securesms.ui.getCellTopShape
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -120,6 +118,7 @@ import org.thoughtcrime.securesms.ui.theme.accentTextButtonColors
 import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
 import org.thoughtcrime.securesms.ui.theme.monospace
 import org.thoughtcrime.securesms.ui.theme.primaryBlue
+import org.thoughtcrime.securesms.ui.theme.transparentButtonColors
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
 import org.thoughtcrime.securesms.util.push
@@ -276,6 +275,7 @@ fun Settings(
             Buttons(
                 recoveryHidden = uiState.recoveryHidden,
                 hasPaths = uiState.hasPath,
+                postPro = uiState.isPostPro,
                 sendCommand = sendCommand
             )
 
@@ -414,6 +414,7 @@ fun Settings(
 fun Buttons(
     recoveryHidden: Boolean,
     hasPaths: Boolean,
+    postPro: Boolean,
     sendCommand: (SettingsViewModel.Commands) -> Unit,
 ) {
     Column(
@@ -447,7 +448,6 @@ fun Buttons(
                 LargeItemButton(
                     "Debug Menu",
                     R.drawable.ic_settings,
-                    shape = getCellTopShape()
                 ) { activity?.push<DebugActivity>() }
             }
 
@@ -456,22 +456,25 @@ fun Buttons(
 
         Cell {
             Column {
-                // Donate
-                LargeItemButton(
-                    textId = R.string.donate,
-                    icon = R.drawable.ic_heart,
-                    modifier = Modifier.qaTag(R.string.qa_settings_item_donate),
-                    colors = accentTextButtonColors()
-                ) {
-                    sendCommand(OnDonateClicked)
+                if(postPro){
+                    LargeItemButtonWithDrawable(
+                        text = GetString(NonTranslatableStringConstants.SESSION_PRO),
+                        icon = R.drawable.ic_pro_badge,
+                        iconSize = LocalDimensions.current.iconLargeAvatar,
+                        modifier = Modifier.qaTag(R.string.qa_settings_item_pro),
+                        colors = accentTextButtonColors()
+                    ) {
+                        //todo PRO implement once available
+                    }
+                    Divider()
                 }
-                Divider()
+
 
                 // Invite a friend
                 LargeItemButton(
-                    R.string.sessionInviteAFriend,
-                    R.drawable.ic_user_round_plus,
-                    Modifier.qaTag(R.string.AccessibilityId_sessionInviteAFriend)
+                    textId = R.string.sessionInviteAFriend,
+                    icon = R.drawable.ic_user_round_plus,
+                    modifier = Modifier.qaTag(R.string.AccessibilityId_sessionInviteAFriend)
                 ) { context.sendInvitationToUseSession() }
             }
         }
@@ -480,12 +483,21 @@ fun Buttons(
 
         Cell {
             Column {
+                // Donate
+                LargeItemButtonWithDrawable(
+                    text = GetString(R.string.donate),
+                    icon = R.drawable.ic_heart,
+                    iconTint = LocalColors.current.accent,
+                    modifier = Modifier.qaTag(R.string.qa_settings_item_donate),
+                ) {
+                    sendCommand(OnDonateClicked)
+                }
+                Divider()
+
                 Crossfade(if (hasPaths) R.drawable.ic_status else R.drawable.ic_path_yellow, label = "path") {
                     LargeItemButtonWithDrawable(
-                        R.string.onionRoutingPath,
+                        GetString(R.string.onionRoutingPath),
                         it,
-                        shape = if (BuildConfig.BUILD_TYPE != "release") RectangleShape
-                        else getCellTopShape()
                     ) { activity?.push<PathActivity>() }
                 }
                 Divider()
@@ -541,7 +553,6 @@ fun Buttons(
                     icon = R.drawable.ic_trash_2,
                     modifier = Modifier.qaTag(R.string.AccessibilityId_sessionClearData),
                     colors = dangerButtonColors(),
-                    shape = getCellBottomShape()
                 ) {
                     sendCommand(ShowClearDataDialog)
                 }
