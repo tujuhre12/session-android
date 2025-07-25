@@ -39,6 +39,7 @@ class RecipientSettingsDatabase @Inject constructor(
         }
 
         // Otherwise update the database and cache
+        Log.d(TAG, "Saving settings to db for ${address.debugString}")
         cache.put(address, newSettings)
         writableDatabase.insertOrUpdate(
             TABLE_NAME,
@@ -66,6 +67,7 @@ class RecipientSettingsDatabase @Inject constructor(
             return existing
         }
 
+        Log.d(TAG, "Fetching settings from db for ${address.debugString}")
         return readableDatabase.rawQuery("SELECT * FROM $TABLE_NAME WHERE $COL_ADDRESS = ?", address)
             .use { cursor ->
                 if (cursor.moveToFirst()) {
@@ -87,12 +89,13 @@ class RecipientSettingsDatabase @Inject constructor(
                 keyHex = cursor.getString(cursor.getColumnIndexOrThrow(COL_PROFILE_PIC_KEY)),
                 url = cursor.getString(cursor.getColumnIndexOrThrow(COL_PROFILE_PIC_URL))
             ),
-            blocksCommunityMessagesRequests = cursor.getInt(cursor.getColumnIndexOrThrow(COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS)) == 1
+            blocksCommunityMessagesRequests = cursor.getInt(cursor.getColumnIndexOrThrow(COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS)) == 1,
+            name = cursor.getString(cursor.getColumnIndexOrThrow(COL_NAME)),
         )
     }
 
     private fun RecipientSettings.toContentValues(): ContentValues {
-        return ContentValues().apply {
+        return ContentValues(7).apply {
             put(COL_NAME, name)
             put(COL_MUTE_UNTIL, muteUntil)
             put(COL_NOTIFY_TYPE, notifyType.name)
@@ -120,9 +123,9 @@ class RecipientSettingsDatabase @Inject constructor(
     companion object {
         private const val TAG = "RecipientSettingsDatabase"
 
-        private const val TABLE_NAME = "recipient_settings"
+        const val TABLE_NAME = "recipient_settings"
 
-        private const val COL_ADDRESS = "address"
+        const val COL_ADDRESS = "address"
         private const val COL_MUTE_UNTIL = "mute_until"
         private const val COL_NOTIFY_TYPE = "notify_type"
         private const val COL_AUTO_DOWNLOAD_ATTACHMENTS = "auto_download_attachments"
@@ -133,19 +136,19 @@ class RecipientSettingsDatabase @Inject constructor(
 
         const val MIGRATION_CREATE_TABLE = """
             CREATE TABLE recipient_settings (
-                $COL_NAME TEXT NOT NULL PRIMARY KEY COLLATE NOCASE,
+                $COL_ADDRESS TEXT NOT NULL PRIMARY KEY COLLATE NOCASE,
                 $COL_MUTE_UNTIL INTEGER NOT NULL DEFAULT 0,
                 $COL_NOTIFY_TYPE INTEGER NOT NULL DEFAULT 1,
                 $COL_AUTO_DOWNLOAD_ATTACHMENTS BOOLEAN NOT NULL DEFAULT FALSE,
                 $COL_PROFILE_PIC_KEY TEXT,
                 $COL_PROFILE_PIC_URL TEXT,
                 $COL_NAME TEXT,
-                $COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS BOOLEAN NOT NULL DEFAULT TRUE,
+                $COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS BOOLEAN NOT NULL DEFAULT TRUE
             ) WITHOUT ROWID
         """
 
         const val MIGRATE_MOVE_DATA_FROM_OLD_TABLE = """
-           INSERT INTO recipient_settings (
+           INSERT OR REPLACE INTO recipient_settings (
                 $COL_ADDRESS,
                 $COL_NAME,
                 $COL_MUTE_UNTIL,
@@ -157,14 +160,14 @@ class RecipientSettingsDatabase @Inject constructor(
             )
             SELECT
                 r.recipient_ids,
-                r.system_display_name,
+                ifnull(nullif(r.system_display_name, ''), r.signal_profile_name) AS name,
                 r.mute_until,
                 CASE(r.notify_type)
-                    WHEN ${RecipientDatabase.NOTIFY_TYPE_ALL} THEN "ALL"
-                    WHEN ${RecipientDatabase.NOTIFY_TYPE_MENTIONS} THEN "MENTIONS"
-                    ELSE "NONE"
+                    WHEN 2 THEN "NONE"
+                    WHEN 1 THEN "MENTIONS"
+                    ELSE "ALL"
                 END AS notify_type,
-                (IFNULL(r.auto_download_attachments, 0) == 1) AS auto_download_attachments,
+                (IFNULL(r.auto_download, 0) == 1) AS auto_download_attachments,
                 r.profile_key,
                 r.signal_profile_avatar,
                 r.blocks_community_message_requests

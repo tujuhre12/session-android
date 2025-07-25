@@ -249,6 +249,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
     db.execSQL(RecipientSettingsDatabase.MIGRATION_CREATE_TABLE);
     db.execSQL(RecipientSettingsDatabase.MIGRATE_DROP_OLD_TABLE);
+    executeStatements(db, ReactionDatabase.MIGRATE_REACTION_TABLE_TO_USE_RECIPIENT_SETTINGS);
   }
 
   @Override
@@ -557,6 +558,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
         db.execSQL(RecipientSettingsDatabase.MIGRATION_CREATE_TABLE);
         db.execSQL(RecipientSettingsDatabase.MIGRATE_MOVE_DATA_FROM_OLD_TABLE);
         db.execSQL(RecipientSettingsDatabase.MIGRATE_DROP_OLD_TABLE);
+        executeStatements(db, ReactionDatabase.MIGRATE_REACTION_TABLE_TO_USE_RECIPIENT_SETTINGS);
       }
 
       db.setTransactionSuccessful();

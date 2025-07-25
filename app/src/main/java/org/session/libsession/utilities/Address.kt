@@ -71,7 +71,7 @@ data class Address private constructor(val address: String) : Parcelable, Compar
     override fun compareTo(other: Address): Int = address.compareTo(other.address)
 
     val debugString: String
-        get() = "Address(address=${address.substring(0, address.length.coerceAtMost(5))}...)"
+        get() = "Address(address=${truncateIdForDisplay(address)})"
 
     companion object {
         val UNKNOWN = Address("Unknown")

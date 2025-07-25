@@ -152,9 +152,7 @@ public class ThreadDatabase extends Database {
 
   private static final List<String> COMBINED_THREAD_RECIPIENT_GROUP_PROJECTION =
           // wew
-          Stream.concat(Stream.concat(Stream.concat(
-                  Stream.of(TYPED_THREAD_PROJECTION),
-                  Stream.of(RecipientDatabase.TYPED_RECIPIENT_PROJECTION)),
+          Stream.concat(Stream.concat(Stream.of(TYPED_THREAD_PROJECTION),
                   Stream.of(GroupDatabase.TYPED_GROUP_PROJECTION)),
                   Stream.of(LokiMessageDatabase.groupInviteTable+"."+LokiMessageDatabase.invitingSessionId)
           )
@@ -460,29 +458,6 @@ public class ThreadDatabase extends Database {
    */
   public List<kotlin.Pair<Address, Long>> getAllThreads() {
     return getAllThreads(getReadableDatabase());
-  }
-
-  // Returns the count directly instead of having to use cursor
-  public long getUnapprovedUnreadConversationCount() {
-      String where =
-              "(" + MESSAGE_COUNT + " != 0 OR "
-                      + TABLE_NAME + "." + ADDRESS + " LIKE '" + IdPrefix.GROUP.getValue() + "%')" +
-                      " AND " + ARCHIVED             + " = 0" +
-                      " AND " + HAS_SENT             + " = 0" +
-                      " AND " + RecipientDatabase.APPROVED + " = 0" +
-                      " AND " + RecipientDatabase.BLOCK    + " = 0" +
-                      " AND " + GroupDatabase.GROUP_ID     + " IS NULL" +
-                      " AND (" + UNREAD_COUNT       + " > 0 OR "
-                      + UNREAD_MENTION_COUNT + " > 0)";
-
-      String baseSql = createQuery(where);
-
-      String countSql = "SELECT COUNT(*) FROM (" + baseSql + ")";
-
-      // try-with-resource to close the statement
-      try (SQLiteStatement stmt = getReadableDatabase().compileStatement(countSql)) {
-          return stmt.simpleQueryForLong();
-      }
   }
 
   private List<kotlin.Pair<Address, Long>> getAllThreads(SQLiteDatabase db) {
@@ -806,8 +781,8 @@ public class ThreadDatabase extends Database {
   private @NonNull String createQuery(@NonNull String where) {
     String projection = Util.join(COMBINED_THREAD_RECIPIENT_GROUP_PROJECTION, ",");
     return "SELECT " + projection + " FROM " + TABLE_NAME +
-            " LEFT OUTER JOIN " + RecipientDatabase.TABLE_NAME +
-            " ON " + TABLE_NAME + "." + ADDRESS + " = " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.ADDRESS +
+            " LEFT OUTER JOIN " + RecipientSettingsDatabase.TABLE_NAME +
+            " ON " + TABLE_NAME + "." + ADDRESS + " = " + RecipientSettingsDatabase.TABLE_NAME + "." + RecipientSettingsDatabase.COL_ADDRESS +
             " LEFT OUTER JOIN " + GroupDatabase.TABLE_NAME +
             " ON " + TABLE_NAME + "." + ADDRESS + " = " + GroupDatabase.TABLE_NAME + "." + GROUP_ID +
             " LEFT OUTER JOIN " + LokiMessageDatabase.groupInviteTable +
