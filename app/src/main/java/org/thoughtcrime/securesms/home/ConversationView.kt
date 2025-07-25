@@ -87,7 +87,8 @@ class ConversationView : LinearLayout {
                 ProBadgeText(
                     text = senderDisplayName,
                     textStyle = LocalType.current.h8.bold().copy(color = LocalColors.current.text),
-                    showBadge = proStatusManager.shouldShowProBadge(thread.recipient.address),
+                    showBadge = proStatusManager.shouldShowProBadge(thread.recipient.address)
+                            && !thread.recipient.isLocalNumber,
                 )
             }
         }

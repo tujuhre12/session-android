@@ -721,7 +721,9 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 descriptionQaTag = descriptionQaTag,
                 accountId = accountId,
                 avatarUIData = avatarData,
-                categories = optionData
+                categories = optionData,
+                showProBadge = proStatusManager.shouldShowProBadge(conversation.address)
+                        && !conversation.isLocalNumber
             )
         }
 
@@ -1470,6 +1472,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val descriptionQaTag: String? = null,
         val accountId: String? = null,
         val showLoading: Boolean = false,
+        val showProBadge: Boolean = false,
         val editCommand: Commands? = null,
         val categories: List<OptionsCategory> = emptyList()
     )

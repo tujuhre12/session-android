@@ -30,6 +30,8 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
@@ -56,6 +58,7 @@ import androidx.compose.ui.unit.sp
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.CopyAccountId
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.ShowGroupEditDialog
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowUsernameDialog
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.ExpandableText
@@ -127,6 +130,18 @@ fun ConversationSettings(
                             ),
                         title = stringResource(id = R.string.sessionSettings),
                         onBack = onBack,
+                        actions = {
+                            if(data.editCommand != null) {
+                                IconButton(onClick = {
+                                    sendCommand(data.editCommand)
+                                }) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_pencil),
+                                        contentDescription = stringResource(id = R.string.edit)
+                                    )
+                                }
+                            }
+                        }
                     )
                 },
                 contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
@@ -182,14 +197,14 @@ fun ConversationSettings(
                                 else Modifier
                             ),
                         text = data.name,
-                        iconRes = R.drawable.ic_pro_badge,
+                        iconRes = if(data.showProBadge ) R.drawable.ic_pro_badge else null,
                         iconSize = 58.sp to 24.sp,
                         style = LocalType.current.h4,
                     )
 
                     // description or display name
                     if (!data.description.isNullOrEmpty()) {
-                        Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
+                        Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
                         ExpandableText(
                             modifier = Modifier.fillMaxWidth()
                                 .safeContentWidth()

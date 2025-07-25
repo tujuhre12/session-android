@@ -254,39 +254,48 @@ fun SessionOutlinedTextField(
 @Composable
 fun AnnotatedTextWithIcon(
     text: String,
-    @DrawableRes iconRes: Int,
+    @DrawableRes iconRes: Int?,
     modifier: Modifier = Modifier,
     style: TextStyle = LocalType.current.base,
     color: Color = Color.Unspecified,
     iconSize: Pair<TextUnit, TextUnit> = 12.sp to 12.sp,
     iconPaddingValues: PaddingValues = PaddingValues(1.dp)
 ) {
-    val myId = "inlineContent"
-    val annotated = buildAnnotatedString {
+    var inlineContent: Map<String, InlineTextContent> = mapOf()
+
+    var annotated = buildAnnotatedString {
         append(text)
-        appendInlineContent(myId, "[icon]")
     }
 
-    val inlineContent = mapOf(
-        Pair(
-            myId,
-            InlineTextContent(
-                Placeholder(
-                    width = iconSize.first,
-                    height = iconSize.second,
-                    placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter
-                )
-            ) {
-                Icon(
-                    modifier = Modifier.fillMaxSize()
-                        .padding(iconPaddingValues),
-                    painter = painterResource(id = iconRes),
-                    contentDescription = null,
-                    tint = color
-                )
-            }
+    if(iconRes != null) {
+        val myId = "inlineContent"
+
+        annotated = buildAnnotatedString {
+            append(text)
+            appendInlineContent(myId, "[icon]")
+        }
+
+        inlineContent = mapOf(
+            Pair(
+                myId,
+                InlineTextContent(
+                    Placeholder(
+                        width = iconSize.first,
+                        height = iconSize.second,
+                        placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter
+                    )
+                ) {
+                    Icon(
+                        modifier = Modifier.fillMaxSize()
+                            .padding(iconPaddingValues),
+                        painter = painterResource(id = iconRes),
+                        contentDescription = null,
+                        tint = color
+                    )
+                }
+            )
         )
-    )
+    }
 
     Text(
         text = annotated,
