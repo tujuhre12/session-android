@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -31,6 +32,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Shape
@@ -256,7 +258,8 @@ fun AnnotatedTextWithIcon(
     modifier: Modifier = Modifier,
     style: TextStyle = LocalType.current.base,
     color: Color = Color.Unspecified,
-    iconSize: TextUnit = 12.sp
+    iconSize: Pair<TextUnit, TextUnit> = 12.sp to 12.sp,
+    iconPaddingValues: PaddingValues = PaddingValues(1.dp)
 ) {
     val myId = "inlineContent"
     val annotated = buildAnnotatedString {
@@ -269,15 +272,16 @@ fun AnnotatedTextWithIcon(
             myId,
             InlineTextContent(
                 Placeholder(
-                    width = iconSize,
-                    height = iconSize,
+                    width = iconSize.first,
+                    height = iconSize.second,
                     placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter
                 )
             ) {
                 Icon(
+                    modifier = Modifier.fillMaxSize()
+                        .padding(iconPaddingValues),
                     painter = painterResource(id = iconRes),
                     contentDescription = null,
-                    modifier = Modifier.padding(1.dp),
                     tint = color
                 )
             }

@@ -14,6 +14,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -50,6 +51,8 @@ import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.CopyAccountId
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.ShowGroupEditDialog
@@ -58,6 +61,7 @@ import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.ExpandableText
 import org.thoughtcrime.securesms.ui.LargeItemButton
 import org.thoughtcrime.securesms.ui.LoadingDialog
+import org.thoughtcrime.securesms.ui.components.AnnotatedTextWithIcon
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.getCellBottomShape
@@ -165,7 +169,7 @@ fun ConversationSettings(
                     Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
                     // name and edit icon
-                    Row(
+                    AnnotatedTextWithIcon(
                         modifier = Modifier.fillMaxWidth()
                             .safeContentWidth()
                             .then(
@@ -177,32 +181,11 @@ fun ConversationSettings(
                                 )
                                 else Modifier
                             ),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            modifier = Modifier.qaTag(data.nameQaTag)
-                                .weight(
-                                    weight = 1.0f,
-                                    fill = false,
-                                ),
-                            text = data.name,
-                            textAlign = TextAlign.Center,
-                            style = LocalType.current.h4,
-                            color = LocalColors.current.text
-                        )
-
-                        if (data.editCommand != null) {
-                            Image(
-                                modifier = Modifier.padding(start = LocalDimensions.current.xxsSpacing)
-                                    .qaTag(R.string.qa_conversation_settings_edit_name)
-                                    .size(LocalDimensions.current.iconSmall),
-                                painter = painterResource(R.drawable.ic_pencil),
-                                colorFilter = ColorFilter.tint(LocalColors.current.textSecondary),
-                                contentDescription = null,
-                            )
-                        }
-                    }
+                        text = data.name,
+                        iconRes = R.drawable.ic_pro_badge,
+                        iconSize = 58.sp to 24.sp,
+                        style = LocalType.current.h4,
+                    )
 
                     // description or display name
                     if (!data.description.isNullOrEmpty()) {

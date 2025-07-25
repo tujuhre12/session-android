@@ -58,7 +58,7 @@ fun ProBadgeText(
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
+        horizontalArrangement = Arrangement.spacedBy(textStyle.lineHeight.value.dp * 0.2f)
     ) {
         val proBadgeContent = @Composable {
             if (showBadge) {
