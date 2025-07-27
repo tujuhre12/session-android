@@ -232,26 +232,10 @@ fun UserProfileModal(
 
     // the pro CTA that comes with UPM
     if(data.showProCTA){
-        AnimatedSessionProCTA(
-            heroImageBg = R.drawable.cta_hero_generic_bg,
-            heroImageAnimatedFg = R.drawable.cta_hero_generic_fg,
-            text = Phrase.from(context,R.string.proUserProfileModalCallToAction)
-                .put(APP_NAME_KEY, context.getString(R.string.app_name))
-                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                .format()
-                .toString(),
-            features = listOf(
-                CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
-                CTAFeature.Icon(stringResource(R.string.proFeatureListLongerMessages)),
-                CTAFeature.RainbowIcon(stringResource(R.string.proFeatureListLoadsMore)),
-            ),
-            onUpgrade = {
+        GenericProCTA(
+            onDismissRequest = {
                 sendCommand(UserProfileModalCommands.HideSessionProCTA)
-                //todo PRO go to screen once it exists
             },
-            onCancel = {
-                sendCommand(UserProfileModalCommands.HideSessionProCTA)
-            }
         )
     }
 }

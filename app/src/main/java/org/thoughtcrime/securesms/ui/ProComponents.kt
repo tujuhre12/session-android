@@ -53,6 +53,7 @@ import com.bumptech.glide.integration.compose.RequestState
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.Avatar
@@ -68,7 +69,6 @@ import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
 import org.thoughtcrime.securesms.util.UserProfileModalCommands
-import org.thoughtcrime.securesms.util.UserProfileModalData
 
 @Composable
 fun ProBadgeText(
@@ -459,12 +459,12 @@ fun PinProCTA(
         heroImage = R.drawable.cta_hero_pins,
         text = if(overTheLimit)
             Phrase.from(context, R.string.proCallToActionPinnedConversations)
-                .put(APP_PRO_KEY, NonTranslatableStringConstants.SESSION_PRO)
+                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                 .format()
                 .toString()
         else
             Phrase.from(context, R.string.proCallToActionPinnedConversationsMoreThan)
-                .put(APP_PRO_KEY, NonTranslatableStringConstants.SESSION_PRO)
+                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                 .format()
                 .toString(),
         features = listOf(
@@ -544,6 +544,35 @@ fun ProCTAFeature(
             style = LocalType.current.base
         )
     }
+}
+
+// Reusable generic Pro CTA
+@Composable
+fun GenericProCTA(
+    onDismissRequest: () -> Unit,
+){
+    val context = LocalContext.current
+    AnimatedSessionProCTA(
+        heroImageBg = R.drawable.cta_hero_generic_bg,
+        heroImageAnimatedFg = R.drawable.cta_hero_generic_fg,
+        text = Phrase.from(context,R.string.proUserProfileModalCallToAction)
+            .put(APP_NAME_KEY, context.getString(R.string.app_name))
+            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+            .format()
+            .toString(),
+        features = listOf(
+            CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
+            CTAFeature.Icon(stringResource(R.string.proFeatureListLongerMessages)),
+            CTAFeature.RainbowIcon(stringResource(R.string.proFeatureListLoadsMore)),
+        ),
+        onUpgrade = {
+            onDismissRequest()
+            //todo PRO go to screen once it exists
+        },
+        onCancel = {
+           onDismissRequest()
+        }
+    )
 }
 
 @Composable
