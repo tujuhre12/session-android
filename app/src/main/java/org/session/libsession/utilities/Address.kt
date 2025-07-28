@@ -105,6 +105,16 @@ sealed class Address : Parcelable, Comparable<Address> {
         override fun toString(): String = address
     }
 
+    data class Unknown(val serialized: String) : Address() {
+        override val address: String
+            get() = serialized
+
+        override val debugString: String
+            get() = "Unknown(serialized=$serialized)"
+
+        override fun toString(): String = address
+    }
+
     override fun describeContents(): Int = 0
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
@@ -135,13 +145,15 @@ sealed class Address : Parcelable, Comparable<Address> {
             }
 
             if (serialized.startsWith(GroupUtil.LEGACY_CLOSED_GROUP_PREFIX)) {
-                val groupId = GroupUtil.getDecodedGroupID(serialized)
+                val groupId = GroupUtil.doubleDecodeGroupId(serialized)
                 return LegacyGroup(groupId)
             }
 
-            return requireNotNull(AccountId.fromStringOrNull(serialized)) {
-                "Unknown address format: $serialized"
-            }.toAddress()
+            AccountId.fromStringOrNull(serialized)?.let {
+                return it.toAddress()
+            }
+
+            return Unknown(serialized)
         }
 
         @JvmStatic
@@ -168,6 +180,7 @@ sealed class Address : Parcelable, Comparable<Address> {
         fun String.toAddress(): Address {
             return fromSerialized(this)
         }
+
         fun AccountId.toAddress(): Address {
             return when (prefix) {
                 IdPrefix.GROUP -> Group(this)
