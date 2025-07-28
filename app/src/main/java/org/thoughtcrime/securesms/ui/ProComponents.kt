@@ -702,7 +702,7 @@ fun AvatarQrWidget(
         ) {
             // Avatar with scale and alpha
             var avatarModifier: Modifier = Modifier
-            if(!showQR && avatarUIData.isSingleCustomAvatar()){
+            if(!showQR){
                 avatarModifier = avatarModifier.clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null
