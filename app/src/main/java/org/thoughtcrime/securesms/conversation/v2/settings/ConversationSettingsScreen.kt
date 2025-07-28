@@ -115,8 +115,10 @@ fun ConversationSettings(
     ) { paddings ->
 
         Column(
-            modifier = Modifier.fillMaxSize()
-                .padding(paddings).consumeWindowInsets(paddings)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddings)
+                .consumeWindowInsets(paddings)
                 .padding(
                     horizontal = LocalDimensions.current.spacing,
                 )
@@ -141,7 +143,8 @@ fun ConversationSettings(
 
             // name and edit icon
             AnnotatedTextWithIcon(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .safeContentWidth()
                     .then(
                         // make the component clickable is there is an edit action
@@ -154,16 +157,19 @@ fun ConversationSettings(
                     ),
                 text = data.name,
                 iconRes = if(data.showProBadge ) R.drawable.ic_pro_badge else null,
+                onIconClick = if(data.proBadgeClickable) {{
+                    sendCommand(ShowProBadgeCTA)
+                }} else null,
                 iconSize = 58.sp to 24.sp,
                 style = LocalType.current.h4,
             )
-            //todo badge add CTA on pro badge click
 
             // description or display name
             if (!data.description.isNullOrEmpty()) {
                 Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
                 ExpandableText(
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
                         .safeContentWidth()
                         .qaTag(data.descriptionQaTag),
                     text = data.description,
@@ -193,7 +199,8 @@ fun ConversationSettings(
                     sendCommand(CopyAccountId)
                 }
                 Text(
-                    modifier = Modifier.qaTag(R.string.qa_conversation_settings_account_id)
+                    modifier = Modifier
+                        .qaTag(R.string.qa_conversation_settings_account_id)
                         .safeContentWidth()
                         .pointerInput(Unit) {
                             detectTapGestures(

@@ -14,6 +14,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -335,10 +336,11 @@ fun CTAAnimatedImages(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SessionProActivatedCTA(
-    content: @Composable () -> Unit,
-    text: String,
+private fun SessionProActivatedCTA(
+    imageContent: @Composable () -> Unit,
     modifier: Modifier = Modifier,
+    title: String,
+    textContent: @Composable ColumnScope.() -> Unit,
     onCancel: () -> Unit,
 ){
     BasicAlertDialog(
@@ -352,7 +354,7 @@ fun SessionProActivatedCTA(
                         fadingEdgeHeight = 70.dp,
                         fadingColor = LocalColors.current.backgroundSecondary,
                         content = { _ ->
-                            content()
+                            imageContent()
                         },
                     )
 
@@ -365,7 +367,7 @@ fun SessionProActivatedCTA(
                         // title
                         ProBadgeText(
                             modifier = Modifier.align(Alignment.CenterHorizontally),
-                            text = stringResource(R.string.proActivated),
+                            text = title,
                             textStyle = LocalType.current.h5,
                             badgeAtStart = true
                         )
@@ -373,23 +375,7 @@ fun SessionProActivatedCTA(
                         Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
 
                         // already have pro
-                        ProBadgeText(
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            text = stringResource(R.string.proAlreadyPurchased),
-                            textStyle = LocalType.current.base.copy(color = LocalColors.current.textSecondary)
-                        )
-
-                        Spacer(Modifier.height(2.dp))
-
-                        // main message
-                        Text(
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            text = text,
-                            textAlign = TextAlign.Center,
-                            style = LocalType.current.base.copy(
-                                color = LocalColors.current.textSecondary
-                            )
-                        )
+                        textContent()
 
                         Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
 
@@ -409,15 +395,17 @@ fun SessionProActivatedCTA(
 @Composable
 fun SimpleSessionProActivatedCTA(
     @DrawableRes heroImage: Int,
-    text: String,
-    modifier: Modifier = Modifier,
+    title: String,
     onCancel: () -> Unit,
+    modifier: Modifier = Modifier,
+    textContent: @Composable ColumnScope.() -> Unit
 ){
     SessionProActivatedCTA(
         modifier = modifier,
-        text = text,
+        title = title,
+        textContent = textContent,
         onCancel = onCancel,
-        content = { CTAImage(heroImage = heroImage) }
+        imageContent = { CTAImage(heroImage = heroImage) }
     )
 }
 
@@ -426,15 +414,17 @@ fun SimpleSessionProActivatedCTA(
 fun AnimatedSessionProActivatedCTA(
     @DrawableRes heroImageBg: Int,
     @DrawableRes heroImageAnimatedFg: Int,
-    text: String,
-    modifier: Modifier = Modifier,
+    title: String,
     onCancel: () -> Unit,
+    modifier: Modifier = Modifier,
+    textContent: @Composable ColumnScope.() -> Unit
 ){
     SessionProActivatedCTA(
         modifier = modifier,
-        text = text,
+        title = title,
+        textContent = textContent,
         onCancel = onCancel,
-        content = {
+        imageContent = {
             CTAAnimatedImages(
                 heroImageBg = heroImageBg,
                 heroImageAnimatedFg = heroImageAnimatedFg
@@ -505,7 +495,26 @@ private fun PreviewProActivatedCTA(
     PreviewTheme(colors) {
         SimpleSessionProActivatedCTA(
             heroImage = R.drawable.cta_hero_char_limit,
-            text = "This is a description of this Pro feature",
+            title = stringResource(R.string.proActivated),
+            textContent = {
+                ProBadgeText(
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    text = stringResource(R.string.proAlreadyPurchased),
+                    textStyle = LocalType.current.base.copy(color = LocalColors.current.textSecondary)
+                )
+
+                Spacer(Modifier.height(2.dp))
+
+                // main message
+                Text(
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    text = stringResource(R.string.proAnimatedDisplayPicture),
+                    textAlign = TextAlign.Center,
+                    style = LocalType.current.base.copy(
+                        color = LocalColors.current.textSecondary
+                    )
+                )
+            },
             onCancel = {}
         )
     }

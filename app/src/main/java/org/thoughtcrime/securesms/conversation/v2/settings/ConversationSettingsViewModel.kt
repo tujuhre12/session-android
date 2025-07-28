@@ -714,6 +714,13 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             else -> emptyList()
         }
 
+        val showProBadge = proStatusManager.shouldShowProBadge(conversation.address)
+                && !conversation.isLocalNumber
+
+        // if it's a one on one convo and the user isn't pro themselves
+        val proBadgeClickable = if(conversation.is1on1 && proStatusManager.isCurrentUserPro()) false
+        else showProBadge // otherwise whenever the badge is shown
+
         val avatarData = avatarUtils.getUIDataFromRecipient(conversation)
         _uiState.update {
             _uiState.value.copy(
@@ -731,9 +738,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 displayAccountId = accountId,
                 avatarUIData = avatarData,
                 categories = optionData,
-                showProBadge = proStatusManager.shouldShowProBadge(conversation.address)
-                        && !conversation.isLocalNumber,
-
+                showProBadge = showProBadge,
+                proBadgeClickable = proBadgeClickable,
                 displayAccountIdHeader = accountIdHeader,
                 qrAddress = qrAddress,
             )
@@ -1346,6 +1352,19 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     it.copy(expandedAvatar = !it.expandedAvatar)
                 }
             }
+
+            is Commands.ShowProBadgeCTA -> {
+                _dialogState.update {
+                    it.copy(
+                        proBadgeCTA = if(recipient?.isGroupV2Recipient == true) ProBadgeCTA.Group
+                        else ProBadgeCTA.Generic
+                    )
+                }
+            }
+
+            is Commands.HideProBadgeCTA -> {
+                _dialogState.update { it.copy(proBadgeCTA = null) }
+            }
         }
     }
 
@@ -1484,6 +1503,9 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
         object ToggleAvatarExpand: Commands
         object ToggleQR: Commands
+
+        object ShowProBadgeCTA: Commands
+        object HideProBadgeCTA: Commands
     }
 
     @AssistedFactory
@@ -1500,6 +1522,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val displayAccountId: String? = null, // account id to display directly on the screen
         val showLoading: Boolean = false,
         val showProBadge: Boolean = false,
+        val proBadgeClickable: Boolean = false,
         val editCommand: Commands? = null,
 
         val displayAccountIdHeader: String? = null,
@@ -1536,11 +1559,17 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val nicknameDialog: NicknameDialogData? = null,
         val groupEditDialog: GroupEditDialog? = null,
         val groupAdminClearMessagesDialog: GroupAdminClearMessageDialog? = null,
+        val proBadgeCTA: ProBadgeCTA? = null
     )
 
     data class PinProCTA(
         val overTheLimit: Boolean
     )
+
+    sealed interface ProBadgeCTA {
+        data object Generic: ProBadgeCTA
+        data object Group: ProBadgeCTA
+    }
 
     data class NicknameDialogData(
         val name: String,

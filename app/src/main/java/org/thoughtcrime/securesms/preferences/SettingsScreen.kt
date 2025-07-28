@@ -458,7 +458,7 @@ fun Buttons(
             Column {
                 if(postPro){
                     LargeItemButtonWithDrawable(
-                        text = GetString(NonTranslatableStringConstants.SESSION_PRO),
+                        text = GetString(NonTranslatableStringConstants.APP_PRO),
                         icon = R.drawable.ic_pro_badge,
                         iconSize = LocalDimensions.current.iconLargeAvatar,
                         modifier = Modifier.qaTag(R.string.qa_settings_item_pro),
@@ -868,7 +868,26 @@ fun AnimatedProCTA(
         AnimatedSessionProActivatedCTA (
             heroImageBg = R.drawable.cta_hero_animated_bg,
             heroImageAnimatedFg = R.drawable.cta_hero_animated_fg,
-            text = stringResource(R.string.proAnimatedDisplayPicture),
+            title = stringResource(R.string.proActivated),
+            textContent = {
+                ProBadgeText(
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    text = stringResource(R.string.proAlreadyPurchased),
+                    textStyle = LocalType.current.base.copy(color = LocalColors.current.textSecondary)
+                )
+
+                Spacer(Modifier.height(2.dp))
+
+                // main message
+                Text(
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    text = stringResource(R.string.proAnimatedDisplayPicture),
+                    textAlign = TextAlign.Center,
+                    style = LocalType.current.base.copy(
+                        color = LocalColors.current.textSecondary
+                    )
+                )
+            },
             onCancel = { sendCommand(HideAnimatedProCTA) }
         )
     } else {
