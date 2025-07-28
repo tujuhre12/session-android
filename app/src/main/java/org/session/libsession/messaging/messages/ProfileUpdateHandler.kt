@@ -6,12 +6,10 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.BlindMappingRepository
-import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import java.util.EnumSet
 import javax.inject.Inject
@@ -64,28 +62,23 @@ class ProfileUpdateHandler @Inject constructor(
 
         Log.d(TAG, "Handling profile update for $sender")
 
-        // First, if the user is a contact, update the config and that's all we need to do.
-        val isExistingContact = actualSenderIdPrefix == IdPrefix.STANDARD &&
-                configFactory.withMutableUserConfigs { configs ->
-                    val existingContact = configs.contacts.get(actualSender.hexString)
-                    if (existingContact != null) {
-                        configs.contacts.set(
-                            existingContact.copy(
-                                name = updates.name ?: existingContact.name,
-                                profilePicture = updates.pic ?: existingContact.profilePicture
-                            )
+        // If the user is a contact, we update the contact's profile data int he config
+        if (actualSenderIdPrefix == IdPrefix.STANDARD) {
+            configFactory.withMutableUserConfigs { configs ->
+                configs.contacts.get(actualSender.hexString)?.let { existingContact ->
+                    configs.contacts.set(
+                        existingContact.copy(
+                            name = updates.name ?: existingContact.name,
+                            profilePicture = updates.pic ?: existingContact.profilePicture
                         )
-                        true
-                    } else {
-                        false
-                    }
+                    )
                 }
-
-        if (isExistingContact && updates.acceptsCommunityRequests == null) {
-            Log.d(TAG, "Updated existing contact profile for $sender (actualSender: $actualSender)")
-            return
+            }
         }
 
+        // We always update the recipient database, even if the user is a contact,
+        // as the contact could be deleted by the user and leaving this user no profile data (as
+        // the deleted contact can still appear in say, a group conversation).
         Log.d(TAG, "Updating recipient profile for $actualSender")
 
         recipientDatabase.save(actualSender.toAddress()) {

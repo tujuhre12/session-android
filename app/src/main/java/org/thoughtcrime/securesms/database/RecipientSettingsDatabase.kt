@@ -74,27 +74,29 @@ class RecipientSettingsDatabase @Inject constructor(
         Log.d(TAG, "Fetching settings from db for ${address.debugString}")
         return readableDatabase.rawQuery("SELECT * FROM $TABLE_NAME WHERE $COL_ADDRESS = ?", address)
             .use { cursor ->
-                if (cursor.moveToFirst()) {
-                    readRecipientSettings(cursor).also { settings ->
-                        cache.put(address, settings)
-                    }
+                // If no settings are saved in the database, return the empty settings, and cache
+                // that as well so that we don't have to query the database again.
+                val settings = if (cursor.moveToNext()) {
+                    cursor.toRecipientSettings()
                 } else {
-                    null
+                    RecipientSettings()
                 }
+
+                cache.put(address, settings)
             }
     }
 
-    private fun readRecipientSettings(cursor: Cursor): RecipientSettings {
+    private fun Cursor.toRecipientSettings(): RecipientSettings {
         return RecipientSettings(
-            muteUntil = cursor.getLong(cursor.getColumnIndexOrThrow(COL_MUTE_UNTIL)),
-            notifyType = readNotifyType(cursor.getString(cursor.getColumnIndexOrThrow(COL_NOTIFY_TYPE))),
-            autoDownloadAttachments = cursor.getInt(cursor.getColumnIndexOrThrow(COL_AUTO_DOWNLOAD_ATTACHMENTS)) == 1,
+            muteUntil = this.getLong(this.getColumnIndexOrThrow(COL_MUTE_UNTIL)),
+            notifyType = readNotifyType(this.getString(this.getColumnIndexOrThrow(COL_NOTIFY_TYPE))),
+            autoDownloadAttachments = this.getInt(this.getColumnIndexOrThrow(COL_AUTO_DOWNLOAD_ATTACHMENTS)) == 1,
             profilePic = readUserProfile(
-                keyHex = cursor.getString(cursor.getColumnIndexOrThrow(COL_PROFILE_PIC_KEY)),
-                url = cursor.getString(cursor.getColumnIndexOrThrow(COL_PROFILE_PIC_URL))
+                keyHex = this.getString(this.getColumnIndexOrThrow(COL_PROFILE_PIC_KEY)),
+                url = this.getString(this.getColumnIndexOrThrow(COL_PROFILE_PIC_URL))
             ),
-            blocksCommunityMessagesRequests = cursor.getInt(cursor.getColumnIndexOrThrow(COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS)) == 1,
-            name = cursor.getString(cursor.getColumnIndexOrThrow(COL_NAME)),
+            blocksCommunityMessagesRequests = this.getInt(this.getColumnIndexOrThrow(COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS)) == 1,
+            name = this.getString(this.getColumnIndexOrThrow(COL_NAME)),
         )
     }
 
