@@ -41,7 +41,6 @@
 
                 <androidx.compose.ui.platform.ComposeView
                     android:id="@+id/displayName"
-                    android:contentDescription="@string/AccessibilityId_conversationListItem"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     app:layout_constraintBottom_toBottomOf="parent"
