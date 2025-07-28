@@ -311,6 +311,10 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    fun shouldShowCurrentUserProBadge() : Boolean {
+        return proStatusManager.shouldShowProBadge(Address.fromSerialized(prefs.getLocalNumber()!!))
+    }
+
     data class DialogsState(
         val pinCTA: PinProCTA? = null,
         val userProfileModal: UserProfileModalData? = null
