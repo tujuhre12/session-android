@@ -38,16 +38,17 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.Address.Companion.UNKNOWN
 import org.session.libsession.utilities.Address.Companion.fromSerialized
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.Contact
 import org.session.libsession.utilities.IdentityKeyMismatch
 import org.session.libsession.utilities.IdentityKeyMismatchList
 import org.session.libsession.utilities.NetworkFailure
 import org.session.libsession.utilities.NetworkFailureList
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isReadReceiptsEnabled
+import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.toGroupString
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ThreadUtils.queue
@@ -1378,13 +1379,8 @@ class MmsDatabase @Inject constructor(
             )
         }
 
-        private fun getRecipientFor(serialized: String?): Recipient {
-            val address: Address = if (serialized.isNullOrEmpty() || "insert-address-token" == serialized) {
-                UNKNOWN
-            } else {
-                fromSerialized(serialized)
-            }
-            return recipientRepository.getRecipientSync(address) ?: Recipient.empty(address)
+        private fun getRecipientFor(serialized: String): Recipient {
+            return recipientRepository.getRecipientSyncOrEmpty(serialized.toAddress())
         }
 
         private fun getMismatchedIdentities(document: String?): List<IdentityKeyMismatch?>? {

@@ -32,6 +32,7 @@ import com.squareup.phrase.Phrase;
 import kotlin.Pair;
 import network.loki.messenger.R;
 import org.session.libsession.messaging.utilities.UpdateMessageData;
+import org.session.libsession.utilities.AddressKt;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsession.utilities.recipients.RecipientKt;
@@ -187,7 +188,7 @@ public class ThreadRecord extends DisplayRecord {
         // The logic will differ depending on the type.
         // 1-1, note to self and control messages (we shouldn't have any in here, but leaving the
         // logic to be safe) do not need author details
-        if (recipient.isLocalNumber() || recipient.getAddress().isContact() ||
+        if (recipient.isLocalNumber() || !AddressKt.isGroupOrCommunity(recipient.getAddress()) ||
                 (lastMessage != null && lastMessage.isControlMessage())
         ) {
             return getBody();

@@ -68,11 +68,8 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.scan
@@ -109,6 +106,7 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
 import org.session.libsession.utilities.concurrent.SimpleTask
 import org.session.libsession.utilities.getColorFromAttr
+import org.session.libsession.utilities.isBlinded
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.crypto.MnemonicCodec
@@ -1528,7 +1526,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     fun unblock() {
         val recipient = viewModel.recipient
 
-        if (!recipient.isContactRecipient) {
+        if (!recipient.isStandardRecipient) {
             return Log.w("Loki", "Cannot unblock a user who is not a contact recipient - aborting unblock attempt.")
         }
 
@@ -1979,7 +1977,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val recipient = viewModel.recipient
 
         // show the unblock dialog when trying to send a message to a blocked contact
-        if (recipient.isContactRecipient && recipient.blocked) {
+        if (recipient.isStandardRecipient && recipient.blocked) {
             BlockedDialog(recipient.address, recipient.displayName()).show(supportFragmentManager, "Blocked Dialog")
             return
         }
@@ -2028,7 +2026,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         viewModel.implicitlyApproveRecipient()?.let { conversationApprovalJob = it }
         val text = getMessageBody()
         val userPublicKey = textSecurePreferences.getLocalNumber()
-        val isNoteToSelf = (recipient.isContactRecipient && recipient.address.toString() == userPublicKey)
+        val isNoteToSelf = (recipient.isStandardRecipient && recipient.address.toString() == userPublicKey)
         if (seed in text && !isNoteToSelf && !hasPermissionToSendSeed) {
             showSessionDialog {
                 title(R.string.warning)

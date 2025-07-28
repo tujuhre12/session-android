@@ -33,6 +33,7 @@ import org.session.libsession.messaging.sending_receiving.data_extraction.DataEx
 import org.session.libsession.messaging.utilities.UpdateMessageBuilder;
 import org.session.libsession.messaging.utilities.UpdateMessageData;
 import org.session.libsession.utilities.Address;
+import org.session.libsession.utilities.AddressKt;
 import org.session.libsession.utilities.IdentityKeyMismatch;
 import org.session.libsession.utilities.NetworkFailure;
 import org.session.libsession.utilities.ThemeUtil;
@@ -144,7 +145,7 @@ public abstract class MessageRecord extends DisplayRecord {
 
       SpannableString text = new SpannableString(UpdateMessageBuilder.buildGroupUpdateMessage(
               context,
-              groupRecipient.isGroupV2() ? new AccountId(groupRecipient.toString()) : null, // accountId is only used for GroupsV2
+              AddressKt.isGroupV2(groupRecipient) ? new AccountId(groupRecipient.toString()) : null, // accountId is only used for GroupsV2
               updateMessageData,
               MessagingModuleConfiguration.getShared().getConfigFactory(),
               isOutgoing(),
@@ -162,7 +163,7 @@ public abstract class MessageRecord extends DisplayRecord {
     } else if (getMessageContent() instanceof DisappearingMessageUpdate) {
         Address rec = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(getThreadId());
         if(rec == null) return "";
-        boolean isGroup = rec.isGroupOrCommunity();
+        boolean isGroup = AddressKt.isGroupOrCommunity(rec);
       return UpdateMessageBuilder.INSTANCE
               .buildExpirationTimerMessage(context, ((DisappearingMessageUpdate) getMessageContent()).getExpiryMode(), isGroup, getIndividualRecipient().getAddress().toString(), isOutgoing());
     } else if (isDataExtractionNotification()) {

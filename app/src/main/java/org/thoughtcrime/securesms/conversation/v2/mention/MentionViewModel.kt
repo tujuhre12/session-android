@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.conversation.v2.mention
 
 import android.app.Application
-import android.content.ContentResolver
 import android.graphics.Typeface
 import android.text.Editable
 import android.text.SpannableStringBuilder
@@ -11,6 +10,7 @@ import androidx.core.text.getSpans
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
@@ -30,12 +30,16 @@ import network.loki.messenger.R
 import network.loki.messenger.libsession_util.allWithStatus
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.isCommunity
+import org.session.libsession.utilities.isGroupV2
+import org.session.libsession.utilities.isLegacyGroup
+import org.session.libsession.utilities.isStandard
 import org.session.libsession.utilities.recipients.displayName
+import org.session.libsession.utilities.toGroupString
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.GroupMemberDatabase
-import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.Storage
@@ -52,10 +56,8 @@ import org.thoughtcrime.securesms.database.ThreadDatabase
 class MentionViewModel @AssistedInject constructor(
     application: Application,
     @Assisted address: Address,
-    contentResolver: ContentResolver,
     threadDatabase: ThreadDatabase,
     groupDatabase: GroupDatabase,
-    mmsDatabase: MmsDatabase,
     memberDatabase: GroupMemberDatabase,
     storage: Storage,
     configFactory: ConfigFactoryProtocol,
@@ -104,8 +106,7 @@ class MentionViewModel @AssistedInject constructor(
                         threadID,
                         20
                     )
-                    address.isContact -> listOf(address.address)
-                    else -> listOf()
+                    else -> listOf(address.address)
                 }
 
                 val openGroup = if (address.isCommunity) {

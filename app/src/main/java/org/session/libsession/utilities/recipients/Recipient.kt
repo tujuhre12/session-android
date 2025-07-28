@@ -1,12 +1,19 @@
 package org.session.libsession.utilities.recipients
 
-import androidx.annotation.IntDef
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.Bytes
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.isCommunity
+import org.session.libsession.utilities.isCommunityInbox
+import org.session.libsession.utilities.isGroup
+import org.session.libsession.utilities.isGroupOrCommunity
+import org.session.libsession.utilities.isGroupV2
+import org.session.libsession.utilities.isLegacyGroup
+import org.session.libsession.utilities.isStandard
+import org.session.libsession.utilities.toBlindedId
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.database.model.NotifyType
@@ -27,8 +34,8 @@ data class Recipient(
     val isCommunityInboxRecipient: Boolean get() = address.isCommunityInbox
     val isGroupV2Recipient: Boolean get() = address.isGroupV2
     val isLegacyGroupRecipient: Boolean get() = address.isLegacyGroup
-    val isContactRecipient: Boolean get() = address.isContact
-    val is1on1: Boolean get() = !isLocalNumber && address.isContact
+    val isStandardRecipient: Boolean get() = address.isStandard
+    val is1on1: Boolean get() = !isLocalNumber && !address.isGroupOrCommunity
     val isGroupRecipient: Boolean get() = address.isGroup
 
     val avatar: RemoteFile? get() = basic.avatar

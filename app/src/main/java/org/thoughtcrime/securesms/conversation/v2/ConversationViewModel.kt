@@ -49,10 +49,16 @@ import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
+import org.session.libsession.utilities.isCommunity
+import org.session.libsession.utilities.isCommunityInbox
+import org.session.libsession.utilities.isGroupV2
+import org.session.libsession.utilities.isLegacyGroup
+import org.session.libsession.utilities.isStandard
 import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.recipients.getType
+import org.session.libsession.utilities.toGroupString
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
@@ -147,7 +153,7 @@ class ConversationViewModel @AssistedInject constructor(
 
 
     val showSendAfterApprovalText: Flow<Boolean> get() = recipientFlow.map { r ->
-        (r.acceptsCommunityMessageRequests || r.isContactRecipient) && !r.isLocalNumber && !r.approvedMe
+        (r.acceptsCommunityMessageRequests || r.isStandardRecipient) && !r.isLocalNumber && !r.approvedMe
     }
 
     val openGroupFlow: StateFlow<OpenGroup?> =
@@ -530,7 +536,7 @@ class ConversationViewModel @AssistedInject constructor(
         // send them SMS messages - but they will not get through if the recipient does not have
         // community message requests enabled. Being a "contact recipient" implies
         // `!recipient.blocksCommunityMessageRequests` in this case.
-        val allowedForBlindedCommunityRecipient = recipient.isCommunityInboxRecipient && recipient.isContactRecipient
+        val allowedForBlindedCommunityRecipient = recipient.isCommunityInboxRecipient && recipient.isStandardRecipient
 
         // If any of the above are true we allow sending multimedia files - otherwise we don't
         return allowedFor1on1 || allowedForGroup || allowedForCommunity || allowedForBlindedCommunityRecipient
@@ -625,7 +631,7 @@ class ConversationViewModel @AssistedInject constructor(
     fun block() {
         // inviting admin will be non-null if this request is a closed group message request
         val recipient = invitingAdmin ?: recipient
-        if (recipient.isContactRecipient || recipient.isGroupV2Recipient) {
+        if (recipient.isStandardRecipient || recipient.isGroupV2Recipient) {
             viewModelScope.launch {
                 repository.setBlocked(recipient.address, true)
             }
@@ -639,7 +645,7 @@ class ConversationViewModel @AssistedInject constructor(
     }
 
     fun unblock() {
-        if (address.isContact) {
+        if (address.isStandard) {
             viewModelScope.launch {
                 repository.setBlocked(address, false)
             }

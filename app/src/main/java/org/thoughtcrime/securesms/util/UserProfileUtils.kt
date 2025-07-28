@@ -20,14 +20,11 @@ import network.loki.messenger.R
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
-import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
+import org.session.libsession.utilities.isBlinded
 import org.session.libsession.utilities.recipients.BasicRecipient
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
@@ -97,8 +94,12 @@ class UserProfileUtils @AssistedInject constructor(
 
         // The conversation screen can not take a pure blinded address, it will have to be a
         // "Community inbox" address, so we encode it here..
-        val messageAddress = if (recipient.address.isBlinded && openGroup != null) {
-            GroupUtil.getEncodedOpenGroupInboxID(openGroup, AccountId(recipient.address.address))
+        val messageAddress = if (recipient.address is Address.Blinded && openGroup != null) {
+            Address.CommunityBlindedId(
+                serverUrl = openGroup.server,
+                serverPubKey = openGroup.publicKey,
+                blindedId = recipient.address.accountId
+            )
         } else {
             recipient.address
         }

@@ -1,83 +1,148 @@
 package org.session.libsession.utilities
 
+import android.os.Parcel
 import android.os.Parcelable
-import kotlinx.parcelize.Parcelize
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Util
 import java.util.LinkedList
 
-@Parcelize
-data class Address private constructor(val address: String) : Parcelable, Comparable<Address> {
-    val isLegacyGroup: Boolean
-        get() = GroupUtil.isLegacyClosedGroup(address)
-    val isGroupV2: Boolean
-        get() = address.startsWith(IdPrefix.GROUP.value)
-    val isCommunity: Boolean
-        get() = GroupUtil.isCommunity(address)
+sealed class Address : Parcelable, Comparable<Address> {
+    /**
+     * The serialized form of the address.
+     */
+    abstract val address: String
 
     /**
-     * Whether this address is an encoded blinded address. The encoded blinded address contains
-     * information of:
-     * - The community URL it belongs to
-     * - The blinded address itself
-     *
-     * This is used to uniquely identify a blinded address in a particular community. You may
-     * encounter a blinded address that is passed directly into [Address] but that blinded address
-     * technically is not unique across communities. This is because the blinded address derives
-     * only from the public key of the user, and not the server's pub key. So if two communities
-     * share the same public key, they will have the same blinded address for the same user.
-     *
-     * We encode this information here so that it's unique across the board.
+     * A debug string that is safe to log.
      */
-    val isCommunityInbox: Boolean
-        get() = GroupUtil.isCommunityInbox(address)
-    val isGroupOrCommunity: Boolean
-        get() = isGroup || isCommunity
-    val isGroup: Boolean
-        get() = isLegacyGroup || isGroupV2
-    val isContact: Boolean
-        get() = !(isGroupOrCommunity || isCommunityInbox)
+    abstract val debugString: String
 
-    val isBlinded: Boolean
-        get() = IdPrefix.fromValue(address)?.isBlinded() == true
+    override fun compareTo(other: Address) = address.compareTo(other.address)
 
-    /**
-     * Extracts the blinded ID from the address if it is somehow encoded within this address.
-     */
-    fun toBlindedId(): AccountId? {
-        return when {
-            isCommunityInbox -> AccountId.fromStringOrNull(GroupUtil.getDecodedOpenGroupInboxAccountId(address))
-            !isGroupOrCommunity -> AccountId.fromStringOrNull(address)?.takeIf { it.prefix?.isBlinded() == true }
-            else -> null
+    data class Group(val groupId: AccountId) : Address() {
+        override val address: String
+            get() = groupId.hexString
+
+        override val debugString: String
+            get() = groupId.toString()
+
+        init {
+            check(groupId.prefix == IdPrefix.GROUP) {
+                "AccountId must have a GROUP prefix, but was: ${groupId.prefix}"
+            }
         }
+
+        override fun toString(): String = address
     }
 
-    fun contactIdentifier(): String {
-        if (!isContact && !isCommunity) {
-            if (isGroupOrCommunity) throw AssertionError("Not e164, is group")
-            throw AssertionError("Not e164, unknown")
+    data class Standard(val accountId: AccountId) : Address() {
+        override val address: String
+            get() = accountId.hexString
+
+        override val debugString: String
+            get() = accountId.toString()
+
+        init {
+            check(accountId.prefix == IdPrefix.STANDARD) {
+                "AccountId must have a STANDARD prefix, but was: ${accountId.prefix}"
+            }
         }
-        return address
+
+        override fun toString(): String = address
     }
 
-    fun toGroupString(): String {
-        if (!isGroupOrCommunity) throw AssertionError("Not group")
-        return address
+    data class Blinded(val accountId: AccountId) : Address() {
+        override val address: String
+            get() = accountId.hexString
+
+        override val debugString: String
+            get() = accountId.toString()
+
+        init {
+            check(accountId.prefix?.isBlinded() == true) {
+                "AccountId must have a BLINDED prefix, but was: ${accountId.prefix}"
+            }
+        }
+
+        override fun toString(): String = address
     }
 
-    override fun toString(): String = address
+    data class LegacyGroup(val groupPublicKeyHex: String) : Address() {
+        override val address: String by lazy(LazyThreadSafetyMode.NONE) {
+            GroupUtil.doubleEncodeGroupID(groupPublicKeyHex)
+        }
 
-    override fun compareTo(other: Address): Int = address.compareTo(other.address)
+        override val debugString: String
+            get() = "LegacyGroup(groupPublicKeyHex=${groupPublicKeyHex.substring(0, 8)}...)"
 
-    val debugString: String
-        get() = "Address(address=${truncateIdForDisplay(address)})"
+        override fun toString(): String = address
+    }
+
+    data class CommunityBlindedId(val serverUrl: String, val serverPubKey: String, val blindedId: AccountId) : Address() {
+        override val address: String by lazy(LazyThreadSafetyMode.NONE) {
+            GroupUtil.getEncodedOpenGroupInboxAddress(
+                server = serverUrl,
+                pubKey = serverPubKey,
+                blindedAccountId = blindedId
+            )
+        }
+
+        override val debugString: String
+            get() = "CommunityBlindedId(serverUrl=$serverUrl, blindedId=$blindedId)"
+
+        override fun toString(): String = address
+    }
+
+    data class Community(val serverUrl: String, val room: String) : Address() {
+        override val address: String by lazy(LazyThreadSafetyMode.NONE) {
+            GroupUtil.getEncodedOpenGroupID("$serverUrl.$room".toByteArray())
+        }
+
+        override val debugString: String
+            get() = "Community(serverUrl=${serverUrl.substring(10)}, room=xxxx)"
+
+        override fun toString(): String = address
+    }
+
+    override fun describeContents(): Int = 0
+
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeString(address)
+    }
 
     companion object {
-        val UNKNOWN = Address("Unknown")
-
         @JvmStatic
-        fun fromSerialized(serialized: String): Address = Address(serialized.lowercase())
+        fun fromSerialized(serialized: String): Address {
+            if (serialized.startsWith(GroupUtil.COMMUNITY_INBOX_PREFIX)) {
+                val (url, key, id) = requireNotNull(GroupUtil.getDecodedOpenGroupInboxID(serialized)) {
+                    "Invalid serialized community inbox address: $serialized"
+                }
+
+                return CommunityBlindedId(url, key, id)
+            }
+
+            if (serialized.startsWith(GroupUtil.COMMUNITY_PREFIX)) {
+                val groupId = GroupUtil.getDecodedGroupID(serialized)
+                val lastDot = groupId.lastIndexOf('.')
+                require(lastDot >= 0) {
+                    "Invalid community address: $serialized"
+                }
+
+                val serverUrl = groupId.substring(0, lastDot)
+                val room = groupId.substring(lastDot + 1)
+                return Community(serverUrl, room)
+            }
+
+            if (serialized.startsWith(GroupUtil.LEGACY_CLOSED_GROUP_PREFIX)) {
+                val groupId = GroupUtil.getDecodedGroupID(serialized)
+                return LegacyGroup(groupId)
+            }
+
+            return requireNotNull(AccountId.fromStringOrNull(serialized)) {
+                "Unknown address format: $serialized"
+            }.toAddress()
+        }
 
         @JvmStatic
         fun fromSerializedList(serialized: String, delimiter: Char): List<Address> {
@@ -100,9 +165,64 @@ data class Address private constructor(val address: String) : Parcelable, Compar
             return Util.join(escapedAddresses, delimiter.toString() + "")
         }
 
+        fun String.toAddress(): Address {
+            return fromSerialized(this)
+        }
         fun AccountId.toAddress(): Address {
-            return fromSerialized(hexString)
+            return when (prefix) {
+                IdPrefix.GROUP -> Group(this)
+                IdPrefix.STANDARD -> Standard(this)
+                IdPrefix.BLINDED, IdPrefix.BLINDEDV2 -> Blinded(this)
+                else -> throw IllegalArgumentException("Unknown address prefix: $prefix")
+            }
+        }
+
+        @JvmField
+        val CREATOR: Parcelable.Creator<Address> = object : Parcelable.Creator<Address> {
+            override fun createFromParcel(parcel: Parcel): Address {
+                val address = requireNotNull(parcel.readString()) {
+                    "Invalid address from parcel. Must not be null."
+                }
+
+                return fromSerialized(address)
+            }
+
+            override fun newArray(size: Int): Array<Address?> = arrayOfNulls(size)
         }
     }
+}
 
+val Address.isStandard: Boolean
+    get() = this is Address.Standard
+
+val Address.isLegacyGroup: Boolean
+    get() = this is Address.LegacyGroup
+
+val Address.isGroupV2: Boolean
+    get() = this is Address.Group
+
+val Address.isCommunity: Boolean
+    get() = this is Address.Community
+
+val Address.isCommunityInbox: Boolean
+    get() = this is Address.CommunityBlindedId
+
+val Address.isGroup: Boolean
+    get() = this is Address.Group || this is Address.LegacyGroup
+
+val Address.isGroupOrCommunity: Boolean
+    get() = isGroup || isCommunity
+
+val Address.isBlinded: Boolean
+    get() = this is Address.Blinded
+
+fun Address.toBlindedId(): AccountId? {
+    return (this as? Address.Blinded)?.accountId
+}
+
+fun Address.toGroupString(): String {
+    return when (this) {
+        is Address.LegacyGroup, is Address.Community, is Address.Group -> address
+        else -> throw IllegalArgumentException("Address is not a group: $this")
+    }
 }

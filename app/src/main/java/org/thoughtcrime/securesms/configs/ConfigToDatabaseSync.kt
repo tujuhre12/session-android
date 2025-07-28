@@ -30,6 +30,7 @@ import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.getGroup
+import org.session.libsession.utilities.isGroupV2
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
@@ -52,7 +53,7 @@ private const val TAG = "ConfigToDatabaseSync"
  * @see ConfigUploader For upload config system data into swarm automagically.
  */
 class ConfigToDatabaseSync @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val configFactory: ConfigFactoryProtocol,
     private val storage: StorageProtocol,
     private val threadDatabase: ThreadDatabase,

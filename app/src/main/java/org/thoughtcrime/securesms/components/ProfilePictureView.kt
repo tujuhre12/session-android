@@ -24,6 +24,7 @@ import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
+import org.session.libsession.utilities.toGroupString
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.GroupDatabase

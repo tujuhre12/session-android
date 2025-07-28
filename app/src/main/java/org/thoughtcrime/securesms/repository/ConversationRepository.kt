@@ -38,6 +38,10 @@ import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.isCommunityInbox
+import org.session.libsession.utilities.isGroupV2
+import org.session.libsession.utilities.isLegacyGroup
+import org.session.libsession.utilities.isStandard
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.upsertContact
 import org.session.libsession.utilities.userConfigsChanged
@@ -326,7 +330,7 @@ class DefaultConversationRepository @Inject constructor(
 
     // This assumes that recipient.isContactRecipient is true
     override fun setBlocked(recipient: Address, blocked: Boolean) {
-        if (recipient.isContact) {
+        if (recipient.isStandard) {
             storage.setBlocked(listOf(recipient), blocked)
         }
     }
@@ -386,7 +390,7 @@ class DefaultConversationRepository @Inject constructor(
 
     override fun deleteAllLocalMessagesInThreadFromSenderOfMessage(messageRecord: MessageRecord) {
         val threadId = messageRecord.threadId
-        val senderId = messageRecord.recipient.address.contactIdentifier()
+        val senderId = messageRecord.recipient.address.address
         val messageRecordsToRemoveFromLocalStorage = mmsSmsDb.getAllMessageRecordsFromSenderInThread(threadId, senderId)
         for (message in messageRecordsToRemoveFromLocalStorage) {
             messageDataProvider.deleteMessage(messageId = message.messageId)
@@ -503,7 +507,7 @@ class DefaultConversationRepository @Inject constructor(
 
     private fun buildUnsendRequest(message: MessageRecord): UnsendRequest {
         return UnsendRequest(
-            author = message.takeUnless { it.isOutgoing }?.run { individualRecipient.address.contactIdentifier() } ?: textSecurePreferences.getLocalNumber(),
+            author = message.takeUnless { it.isOutgoing }?.run { individualRecipient.address.address } ?: textSecurePreferences.getLocalNumber(),
             timestamp = message.timestamp
         )
     }

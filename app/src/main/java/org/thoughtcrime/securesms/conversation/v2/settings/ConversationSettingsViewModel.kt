@@ -56,7 +56,6 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
-import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.dependencies.ConfigFactory.Companion.MAX_GROUP_DESCRIPTION_BYTES
@@ -818,7 +817,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private fun blockUser() {
         val conversation = recipient ?: return
         viewModelScope.launch {
-            if (conversation.isContactRecipient || conversation.isGroupV2Recipient) {
+            if (conversation.isStandardRecipient || conversation.isGroupV2Recipient) {
                 repository.setBlocked(conversation.address, true)
             }
 

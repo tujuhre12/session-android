@@ -1,6 +1,5 @@
 package org.session.libsession.utilities
 
-import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
@@ -20,22 +19,22 @@ object GroupUtil {
         return COMMUNITY_PREFIX + Hex.toStringCondensed(groupID)
     }
 
-    @JvmStatic
-    fun getEncodedOpenGroupInboxID(openGroup: OpenGroup, accountId: AccountId): Address {
-        return getEncodedOpenGroupInboxID(server = openGroup.server, pubKey = openGroup.publicKey, accountId = accountId)
-    }
-
-    @JvmStatic
-    fun getEncodedOpenGroupInboxID(server: String, pubKey: String, accountId: AccountId): Address {
-        val openGroupInboxId =
-            "$server!$pubKey!${accountId.hexString}".toByteArray()
-        return getEncodedOpenGroupInboxID(openGroupInboxId)
-    }
-
-    @JvmStatic
-    fun getEncodedOpenGroupInboxID(groupInboxID: ByteArray): Address {
-        return Address.fromSerialized(COMMUNITY_INBOX_PREFIX + Hex.toStringCondensed(groupInboxID))
-    }
+//    @JvmStatic
+//    fun getEncodedOpenGroupInboxID(openGroup: OpenGroup, accountId: AccountId): Address {
+//        return getEncodedOpenGroupInboxID(server = openGroup.server, pubKey = openGroup.publicKey, accountId = accountId)
+//    }
+//
+//    @JvmStatic
+//    fun getEncodedOpenGroupInboxID(server: String, pubKey: String, accountId: AccountId): Address {
+//        val openGroupInboxId =
+//            "$server!$pubKey!${accountId.hexString}".toByteArray()
+//        return getEncodedOpenGroupInboxID(openGroupInboxId)
+//    }
+//
+//    @JvmStatic
+//    fun getEncodedOpenGroupInboxID(groupInboxID: ByteArray): Address {
+//        return Address.fromSerialized(COMMUNITY_INBOX_PREFIX + Hex.toStringCondensed(groupInboxID))
+//    }
 
     @JvmStatic
     fun getEncodedClosedGroupID(groupID: ByteArray): String {
@@ -73,6 +72,14 @@ object GroupUtil {
     @JvmStatic
     fun getDecodedOpenGroupInboxAccountId(groupID: String): String {
         return getDecodedOpenGroupInboxID(groupID)!!.third.hexString
+    }
+
+    fun getEncodedOpenGroupInboxAddress(
+        server: CommunityServerUrl,
+        pubKey: CommunityPublicKey,
+        blindedAccountId: AccountId
+    ): String {
+        return COMMUNITY_INBOX_PREFIX + Hex.toStringCondensed("$server!$pubKey!${blindedAccountId.hexString}".toByteArray())
     }
 
     @JvmStatic
@@ -123,9 +130,5 @@ object GroupUtil {
     @Throws(IOException::class)
     fun doubleDecodeGroupId(groupID: String): String =
         Hex.toStringCondensed(getDecodedGroupIDAsData(getDecodedGroupID(groupID)))
-
-    @JvmStatic
-    fun addressToGroupAccountId(address: Address): String =
-        doubleDecodeGroupId(address.toGroupString())
 
 }

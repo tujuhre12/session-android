@@ -31,10 +31,17 @@ import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
+import org.session.libsession.utilities.isCommunity
+import org.session.libsession.utilities.isCommunityInbox
+import org.session.libsession.utilities.isGroupV2
+import org.session.libsession.utilities.isLegacyGroup
+import org.session.libsession.utilities.isStandard
 import org.session.libsession.utilities.recipients.BasicRecipient
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRecipientAvatar
+import org.session.libsession.utilities.toBlindedId
+import org.session.libsession.utilities.toGroupString
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
@@ -310,8 +317,7 @@ class RecipientRepository @Inject constructor(
             }
 
             // Is this in our contact?
-            !address.isGroupOrCommunity &&
-                    IdPrefix.fromValue(address.address) == IdPrefix.STANDARD -> {
+            address.isStandard -> {
                 configFactory.withUserConfigs { configs ->
                     configs.contacts.get(address.address)
                 }?.let { contact ->

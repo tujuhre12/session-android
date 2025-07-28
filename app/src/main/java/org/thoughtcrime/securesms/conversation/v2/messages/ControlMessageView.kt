@@ -26,6 +26,8 @@ import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
 import org.session.libsession.utilities.getColorFromAttr
+import org.session.libsession.utilities.isGroup
+import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.recipients.displayName
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessages
 import org.thoughtcrime.securesms.database.RecipientRepository

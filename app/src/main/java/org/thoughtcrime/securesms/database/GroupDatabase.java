@@ -16,6 +16,7 @@ import com.annimon.stream.Stream;
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
 import org.session.libsession.utilities.Address;
+import org.session.libsession.utilities.AddressKt;
 import org.session.libsession.utilities.GroupRecord;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Util;
@@ -172,7 +173,7 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
       if (!includeSelf && Util.isOwnNumber(context, member.toString()))
         continue;
 
-      if (member.isContact()) {
+      if (AddressKt.isStandard(member)) {
         filtered.add(member);
       }
     }

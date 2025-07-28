@@ -35,6 +35,7 @@ import org.jspecify.annotations.Nullable;
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier;
 import org.session.libsession.snode.SnodeAPI;
 import org.session.libsession.utilities.Address;
+import org.session.libsession.utilities.AddressKt;
 import org.session.libsession.utilities.ConfigFactoryProtocol;
 import org.session.libsession.utilities.ConfigFactoryProtocolKt;
 import org.session.libsession.utilities.DistributionTypes;
@@ -479,7 +480,7 @@ public class ThreadDatabase extends Database {
   public boolean setLastSeen(long threadId, long timestamp) {
     // edge case where we set the last seen time for a conversation before it loads messages (joining community for example)
     Address forThreadId = getRecipientForThreadId(threadId);
-    if (mmsSmsDatabase.get().getConversationCount(threadId) <= 0 && forThreadId != null && forThreadId.isCommunity()) return false;
+    if (mmsSmsDatabase.get().getConversationCount(threadId) <= 0 && forThreadId != null && AddressKt.isCommunity(forThreadId)) return false;
 
     SQLiteDatabase db = getWritableDatabase();
 

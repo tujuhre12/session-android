@@ -9,6 +9,7 @@ import kotlinx.coroutines.launch
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.isCommunity
 import javax.inject.Inject
 import javax.inject.Singleton
 

@@ -56,7 +56,14 @@ import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
+import org.session.libsession.utilities.isCommunity
+import org.session.libsession.utilities.isCommunityInbox
+import org.session.libsession.utilities.isGroupOrCommunity
+import org.session.libsession.utilities.isGroupV2
+import org.session.libsession.utilities.isLegacyGroup
+import org.session.libsession.utilities.isStandard
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.toGroupString
 import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
@@ -159,9 +166,7 @@ open class Storage @Inject constructor(
                 Log.w("Loki", "Thread created called for open group address, not adding any extra information")
             }
 
-            address.isContact -> {
-                // non-standard contact prefixes: 15, 00 etc shouldn't be stored in config
-                if (IdPrefix.fromValue(address.toString()) != IdPrefix.STANDARD) return
+            address.isStandard -> {
                 // don't update our own address into the contacts DB
                 if (getUserPublicKey() != address.toString()) {
                     configFactory.withMutableUserConfigs { configs ->
@@ -299,11 +304,10 @@ open class Storage @Inject constructor(
                         } ?: return@withMutableUserConfigs
                     }
                     // otherwise recipient is one to one
-                    recipient.isContact -> {
-                        // don't process non-standard account IDs though
-                        if (IdPrefix.fromValue(recipient.toString()) != IdPrefix.STANDARD) return@withMutableUserConfigs
+                    recipient.isStandard -> {
                         config.getOrConstructOneToOne(recipient.toString())
                     }
+
                     else -> throw NullPointerException("Weren't expecting to have a convo with address ${recipient.toString()}")
                 }
                 convo.lastRead = lastSeenTime
@@ -1170,7 +1174,7 @@ open class Storage @Inject constructor(
         configFactory.withMutableUserConfigs { configs ->
             if (isLocalNumber) {
                 configs.userProfile.setNtsPriority(if (isPinned) PRIORITY_PINNED else PRIORITY_VISIBLE)
-            } else if (address.isContact) {
+            } else if (address.isStandard) {
                 configs.contacts.upsertContact(address.toString()) {
                     priority = if (isPinned) PRIORITY_PINNED else PRIORITY_VISIBLE
                 }
@@ -1593,7 +1597,7 @@ open class Storage @Inject constructor(
         if (!fromConfigUpdate) {
             val currentUserKey = getUserPublicKey()
             configFactory.withMutableUserConfigs { configs ->
-                recipients.filter { it.isContact && (it.toString() != currentUserKey) }
+                recipients.filter { it.isStandard && (it.toString() != currentUserKey) }
                     .forEach { recipient ->
                         configs.contacts.upsertContact(recipient.toString()) {
                             this.blocked = isBlocked
@@ -1616,28 +1620,36 @@ open class Storage @Inject constructor(
             lokiAPIDatabase.setLastLegacySenderAddress(address.toString(), null)
         }
 
-        if (address.isLegacyGroup) {
-            val groupPublicKey = GroupUtil.addressToGroupAccountId(address)
-
-            configFactory.withMutableUserConfigs {
-                val groupInfo = it.userGroups.getLegacyGroupInfo(groupPublicKey)
-                    ?.copy(disappearingTimer = expiryMode.expirySeconds) ?: return@withMutableUserConfigs
-                it.userGroups.set(groupInfo)
-            }
-        } else if (address.isGroupV2) {
-            val groupSessionId = AccountId(address.toString())
-            configFactory.withMutableGroupConfigs(groupSessionId) { configs ->
-                configs.groupInfo.setExpiryTimer(expiryMode.expirySeconds)
+        when (address) {
+            is Address.LegacyGroup -> {
+                configFactory.withMutableUserConfigs {
+                    val groupInfo = it.userGroups.getLegacyGroupInfo(address.groupPublicKeyHex)
+                        ?.copy(disappearingTimer = expiryMode.expirySeconds) ?: return@withMutableUserConfigs
+                    it.userGroups.set(groupInfo)
+                }
             }
 
-        } else if (address.address == getUserPublicKey()) {
-            configFactory.withMutableUserConfigs {
-                it.userProfile.setNtsExpiry(expiryMode)
+            is Address.Group -> {
+                configFactory.withMutableGroupConfigs(address.groupId) { configs ->
+                    configs.groupInfo.setExpiryTimer(expiryMode.expirySeconds)
+                }
             }
-        } else if (address.isContact) {
-            configFactory.withMutableUserConfigs {
-                val contact = it.contacts.get(address.toString())?.copy(expiryMode = expiryMode) ?: return@withMutableUserConfigs
-                it.contacts.set(contact)
+
+            is Address.Standard -> {
+                if (address.address == getUserPublicKey()) {
+                    configFactory.withMutableUserConfigs {
+                        it.userProfile.setNtsExpiry(expiryMode)
+                    }
+                } else {
+                    configFactory.withMutableUserConfigs {
+                        val contact = it.contacts.get(address.toString())?.copy(expiryMode = expiryMode) ?: return@withMutableUserConfigs
+                        it.contacts.set(contact)
+                    }
+                }
+            }
+
+            else -> {
+                Log.w(TAG, "setExpirationConfiguration called with unsupported address: ${address.debugString}")
             }
         }
     }

@@ -21,6 +21,9 @@ import org.thoughtcrime.securesms.groups.OpenGroupManager
 import androidx.core.view.size
 import androidx.core.view.get
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
+import org.session.libsession.utilities.isCommunity
+import org.session.libsession.utilities.isGroupOrCommunity
+import org.session.libsession.utilities.isLegacyGroup
 import org.session.libsignal.utilities.Hex
 
 class ConversationActionModeCallback(
