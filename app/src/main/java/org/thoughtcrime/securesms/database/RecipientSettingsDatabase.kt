@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.database
 import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
+import android.database.sqlite.SQLiteDatabase
 import androidx.collection.LruCache
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -35,17 +36,20 @@ class RecipientSettingsDatabase @Inject constructor(
 
         // If nothing is updated, return early
         if (oldSettings == newSettings) {
+            Log.d(TAG, "No changes to settings for ${address.debugString}, old: $oldSettings, new: $newSettings")
             return
         }
 
         // Otherwise update the database and cache
         Log.d(TAG, "Saving settings to db for ${address.debugString}")
         cache.put(address, newSettings)
-        writableDatabase.insertOrUpdate(
+        writableDatabase.insertWithOnConflict(
             TABLE_NAME,
-            newSettings.toContentValues(),
-            "$COL_ADDRESS = ?",
-            arrayOf(address.toString())
+            null,
+            newSettings.toContentValues().apply {
+                put(COL_ADDRESS, address.toString())
+            },
+            SQLiteDatabase.CONFLICT_REPLACE
         )
 
         mutableChangeNotification.tryEmit(address)
@@ -95,7 +99,7 @@ class RecipientSettingsDatabase @Inject constructor(
     }
 
     private fun RecipientSettings.toContentValues(): ContentValues {
-        return ContentValues(7).apply {
+        return ContentValues().apply {
             put(COL_NAME, name)
             put(COL_MUTE_UNTIL, muteUntil)
             put(COL_NOTIFY_TYPE, notifyType.name)
