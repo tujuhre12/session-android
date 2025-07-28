@@ -344,7 +344,10 @@ class RecipientRepository @Inject constructor(
                         expiryMode = configs.groupInfo.expiryMode,
                         name = configs.groupInfo.getName() ?: groupInfo.name,
                         approved = !groupInfo.invited,
-                        priority = groupInfo.priority
+                        priority = groupInfo.priority,
+                        isAdmin = groupInfo.adminKey != null,
+                        kicked = groupInfo.kicked,
+                        destroyed = groupInfo.destroyed,
                     )
                 }
             }

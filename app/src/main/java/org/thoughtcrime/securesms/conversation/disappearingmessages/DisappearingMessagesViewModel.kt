@@ -24,6 +24,7 @@ import org.session.libsession.utilities.isGroup
 import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.isGroupV2
 import org.session.libsession.utilities.isLegacyGroup
+import org.session.libsession.utilities.recipients.BasicRecipient
 import org.session.libsession.utilities.toGroupString
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.UiState
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.toUiState
@@ -41,7 +42,6 @@ class DisappearingMessagesViewModel @AssistedInject constructor(
     private val textSecurePreferences: TextSecurePreferences,
     private val disappearingMessages: DisappearingMessages,
     private val groupDb: GroupDatabase,
-    private val storage: Storage,
     private val navigator: ConversationSettingsNavigator,
     private val recipientRepository: RecipientRepository,
 ) : ViewModel() {
@@ -60,13 +60,11 @@ class DisappearingMessagesViewModel @AssistedInject constructor(
 
     init {
         viewModelScope.launch {
-            val expiryMode = recipientRepository.getRecipientOrEmpty(address).expiryMode
+            val recipient = recipientRepository.getRecipientOrEmpty(address)
+            val expiryMode = recipient.expiryMode
 
             val isAdmin = when {
-                address.isGroupV2 -> {
-                    // Handle the new closed group functionality
-                    storage.getMembers(address.toString()).any { it.accountId() == textSecurePreferences.getLocalNumber() && it.admin }
-                }
+                recipient.basic is BasicRecipient.Group -> recipient.basic.isAdmin
 
                 address.isLegacyGroup -> {
                     val groupRecord = groupDb.getGroup(address.toGroupString()).orNull()
@@ -80,7 +78,7 @@ class DisappearingMessagesViewModel @AssistedInject constructor(
                 it.copy(
                     address = address,
                     isGroup = address.isGroup,
-                    isNoteToSelf = address.toString() == textSecurePreferences.getLocalNumber(),
+                    isNoteToSelf = recipient.isLocalNumber,
                     isSelfAdmin = isAdmin,
                     expiryMode = expiryMode,
                     persistedMode = expiryMode

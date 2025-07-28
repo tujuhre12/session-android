@@ -22,10 +22,10 @@ import java.time.ZonedDateTime
 data class Recipient(
     val address: Address,
     val basic: BasicRecipient,
-    val mutedUntil: ZonedDateTime?,
-    val autoDownloadAttachments: Boolean?,
-    val notifyType: NotifyType,
-    val acceptsCommunityMessageRequests: Boolean,
+    val mutedUntil: ZonedDateTime? = null,
+    val autoDownloadAttachments: Boolean? = null,
+    val notifyType: NotifyType = NotifyType.ALL,
+    val acceptsCommunityMessageRequests: Boolean = false,
     val notificationChannel: String? = null,
 ) {
     val isLocalNumber: Boolean get() = basic.isLocalNumber
@@ -161,6 +161,9 @@ sealed interface BasicRecipient {
         val expiryMode: ExpiryMode,
         val approved: Boolean,
         override val priority: Long,
+        val isAdmin: Boolean,
+        val kicked: Boolean,
+        val destroyed: Boolean,
     ) : ConfigBasedRecipient {
         override val isLocalNumber: Boolean
             get() = false
