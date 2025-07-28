@@ -57,6 +57,9 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -124,7 +127,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
     private var viewPagerListener: ViewPagerListener? = null
 
     private val currentSelectedRecipient = MutableStateFlow<Address?>(null)
-    
+
     @Inject
     lateinit var deprecationManager: LegacyGroupDeprecationManager
 
@@ -467,7 +470,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
 
         // If we have an attachment then we can take the filename from it, otherwise we have to take the
         // more expensive route of looking up or synthesizing a filename from the MediaItem's Uri.
-        var mediaFilename = ""
+        var mediaFilename: String? = null
         if (mediaItem.attachment != null) {
             mediaFilename = mediaItem.attachment.filename
         }
@@ -541,8 +544,10 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
         }
 
         DeleteMediaPreviewDialog.show(this){
-            AttachmentUtil.deleteAttachment(applicationContext, mediaItem.attachment)
-            finish()
+            lifecycleScope.launch(Dispatchers.Default) {
+                AttachmentUtil.deleteAttachment(applicationContext, mediaItem.attachment)
+                withContext(Dispatchers.Main){ finish() }
+            }
         }
     }
 

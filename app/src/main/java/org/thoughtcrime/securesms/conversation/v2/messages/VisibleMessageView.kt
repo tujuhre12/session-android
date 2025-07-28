@@ -204,11 +204,9 @@ class VisibleMessageView : FrameLayout {
                 binding.profilePictureView.setOnClickListener {
                     delegate?.showUserProfileModal(message.recipient)
                 }
-                binding.senderNameTextView.setOnClickListener {
-                    delegate?.showUserProfileModal(message.recipient)
-                }
+
                 if (threadRecipient.isCommunityRecipient) {
-                    val openGroup = lokiThreadDb.getOpenGroupChat(message.threadId) ?: return
+                    val openGroup = lokiThreadDb.getOpenGroupChat(threadID) ?: return
                     var standardPublicKey = ""
                     var blindedPublicKey: String? = null
                     if (IdPrefix.fromValue(sender.address.address)?.isBlinded() == true) {
@@ -238,8 +236,17 @@ class VisibleMessageView : FrameLayout {
                 }
             }
         }
-        binding.senderNameTextView.isVisible = !message.isOutgoing && (isStartOfMessageCluster && (isGroupThread || snIsSelected))
-        binding.senderNameTextView.text = sender.displayName(attachesBlindedId = true)
+        if(!message.isOutgoing && (isStartOfMessageCluster && (isGroupThread || snIsSelected))){
+            binding.senderNameTextView.setOnClickListener {
+                delegate?.showUserProfileModal(message.recipient)
+            }
+
+            binding.senderNameTextView.text = sender.displayName(attachesBlindedId = true)
+
+            binding.senderNameTextView.isVisible = true
+        } else {
+            binding.senderNameTextView.isVisible = false
+        }
 
         // Unread marker
         val shouldShowUnreadMarker = lastSeen != -1L && message.timestamp > lastSeen && (previous == null || previous.timestamp <= lastSeen) && !message.isOutgoing

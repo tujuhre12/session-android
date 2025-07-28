@@ -11,27 +11,20 @@ import androidx.core.text.getSpans
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
-import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.allWithStatus
@@ -39,16 +32,14 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
-import org.thoughtcrime.securesms.database.DatabaseContentProviders.Conversation
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.GroupMemberDatabase
 import org.thoughtcrime.securesms.database.MmsDatabase
+import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
-import org.thoughtcrime.securesms.util.observeChanges
 
 /**
  * A ViewModel that provides the mention search functionality for a text input.
@@ -69,6 +60,7 @@ class MentionViewModel @AssistedInject constructor(
     storage: Storage,
     configFactory: ConfigFactoryProtocol,
     recipientRepository: RecipientRepository,
+    mmsSmsDatabase: MmsSmsDatabase
 ) : ViewModel() {
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default
     private val editable = MentionEditable()
@@ -108,7 +100,10 @@ class MentionViewModel @AssistedInject constructor(
                         storage.getMembers(address.toString()).map { it.accountId() }
                     }
 
-                    address.isCommunity -> mmsDatabase.getRecentChatMemberIDs(threadID, 20)
+                    address.isCommunity -> mmsSmsDatabase.getRecentChatMemberAddresses(
+                        threadID,
+                        20
+                    )
                     address.isContact -> listOf(address.address)
                     else -> listOf()
                 }

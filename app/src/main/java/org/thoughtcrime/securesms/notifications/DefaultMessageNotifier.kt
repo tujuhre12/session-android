@@ -31,7 +31,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.squareup.phrase.Phrase
-import me.leolin.shortcutbadger.ShortcutBadger
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
@@ -212,7 +211,6 @@ class DefaultMessageNotifier @Inject constructor(
             telcoCursor = mmsSmsDatabase.unreadOrUnseenReactions // TODO: add a notification specific lighter query here
 
             if ((telcoCursor == null || telcoCursor.isAfterLast) || getLocalNumber(context) == null) {
-                updateBadge(context, 0)
                 cancelActiveNotifications(context)
                 clearReminder(context)
                 return
@@ -239,7 +237,6 @@ class DefaultMessageNotifier @Inject constructor(
                 }
 
                 cancelOrphanedNotifications(context, notificationState)
-                updateBadge(context, notificationState.notificationCount)
 
                 if (playNotificationAudio) {
                     scheduleReminder(context, reminderCount)
@@ -684,15 +681,6 @@ class DefaultMessageNotifier @Inject constructor(
             }
         }
         return null
-    }
-
-    private fun updateBadge(context: Context, count: Int) {
-        try {
-            if (count == 0) ShortcutBadger.removeCount(context)
-            else ShortcutBadger.applyCount(context, count)
-        } catch (t: Throwable) {
-            Log.w("MessageNotifier", t)
-        }
     }
 
     private fun scheduleReminder(context: Context, count: Int) {
