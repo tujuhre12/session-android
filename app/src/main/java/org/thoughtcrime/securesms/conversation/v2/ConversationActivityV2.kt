@@ -503,6 +503,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             // If provided, this will scroll to the message with the given timestamp and author (TODO: use message id instead)
             scrollToMessage: Pair<Long, Address>? = null
         ): Intent {
+            require(!address.isBlinded) {
+                "Cannot create a conversation for a blinded address. Use a \"Community inbox\" address instead."
+            }
+
             return Intent(context, ConversationActivityV2::class.java).apply {
                 putExtra(ADDRESS, address)
                 putExtra(EXTRA_CREATE_THREAD_IF_NOT_EXISTS, createThreadIfNotExists)

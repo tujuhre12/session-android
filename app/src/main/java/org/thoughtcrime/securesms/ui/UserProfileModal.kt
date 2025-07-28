@@ -29,7 +29,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -238,7 +237,7 @@ fun UserProfileModal(
                         // open conversation with user
                         context.startActivity(
                             ConversationActivityV2.createIntent(
-                                context, Address.fromSerialized(data.rawAddress)
+                                context, data.messageAddress
                             )
                         )
                     }
@@ -499,7 +498,8 @@ private fun PreviewUPM(
                                 color = primaryRed
                             )
                         )
-                    )
+                    ),
+                    messageAddress = Address.fromSerialized("053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144")
                 )
             )
         }
@@ -558,7 +558,8 @@ private fun PreviewUPMResolved(
                                 color = primaryRed
                             )
                         )
-                    )
+                    ),
+                    messageAddress = Address.fromSerialized("053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144")
                 )
             )
         }
@@ -618,7 +619,8 @@ private fun PreviewUPMQR(
                                 color = primaryRed
                             )
                         )
-                    )
+                    ),
+                    messageAddress = Address.fromSerialized("053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144")
                 )
             )
         }
@@ -659,7 +661,8 @@ private fun PreviewUPMCTA(
                             color = primaryRed
                         )
                     )
-                )
+                ),
+                messageAddress = Address.fromSerialized("053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144")
             ),
             onDismissRequest = {},
             sendCommand = {}

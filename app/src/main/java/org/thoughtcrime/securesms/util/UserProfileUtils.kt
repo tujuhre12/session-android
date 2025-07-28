@@ -21,6 +21,7 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.recipients.BasicRecipient
 import org.session.libsession.utilities.recipients.Recipient
@@ -60,8 +61,9 @@ class UserProfileUtils @AssistedInject constructor(
 
     private suspend fun getDefaultProfileData(): UserProfileModalData {
         // if we have a blinded address, check if it can be resolved
-        val recipient = (if (userAddress.isBlinded) storage.getOpenGroup(threadId) else null)
-            ?.let { openGroup ->
+        val openGroup = if (userAddress.isBlinded) storage.getOpenGroup(threadId) else null
+        val recipient = openGroup
+            ?.let {
                 blindedIdMappingRepository.getMapping(
                     serverUrl = openGroup.server,
                     blindedAddress = AccountId(userAddress.address)
@@ -93,6 +95,14 @@ class UserProfileUtils @AssistedInject constructor(
             }
         }
 
+        // The conversation screen can not take a pure blinded address, it will have to be a
+        // "Community inbox" address, so we encode it here..
+        val messageAddress = if (recipient.address.isBlinded && openGroup != null) {
+            GroupUtil.getEncodedOpenGroupInboxID(openGroup, AccountId(recipient.address.address))
+        } else {
+            recipient.address
+        }
+
         return UserProfileModalData(
             name = recipient.displayName(),
             subtitle = (recipient.basic as? BasicRecipient.Contact)?.nickname?.takeIf { it.isNotBlank() }?.let { "($it)" },
@@ -107,7 +117,8 @@ class UserProfileUtils @AssistedInject constructor(
             enableMessage = !recipient.address.isBlinded || recipient.acceptsCommunityMessageRequests,
             expandedAvatar = false,
             showQR = false,
-            showProCTA = false
+            showProCTA = false,
+            messageAddress = messageAddress,
         )
 
     }
@@ -167,6 +178,7 @@ data class UserProfileModalData(
     val isBlinded: Boolean,
     val tooltipText: CharSequence?,
     val enableMessage: Boolean,
+    val messageAddress: Address, // The address to send to ConversationActivity
     val expandedAvatar: Boolean,
     val showQR: Boolean,
     val avatarUIData: AvatarUIData,
