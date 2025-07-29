@@ -569,6 +569,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 binding.conversationRecyclerView.scrollToPosition(targetPosition)
             } else {
                 // First tap: smooth scroll
+                // Used LinearSmoothScroller here for better control, but we can use smoothScrollToPosition if we want to keep it simple
                 val smoothScroller = object : LinearSmoothScroller(binding.root.context) {
                     override fun getVerticalSnapPreference(): Int = SNAP_TO_END
                 }
@@ -984,7 +985,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                             .apply {
                                 // Append a space as a placeholder
                                 append(" ")
-                                
+
                                 // we need to add the inline icon
                                 val drawable = ContextCompat.getDrawable(this@ConversationActivityV2, R.drawable.ic_square_arrow_up_right)!!
                                 val imageSize = toPx(10, resources)
