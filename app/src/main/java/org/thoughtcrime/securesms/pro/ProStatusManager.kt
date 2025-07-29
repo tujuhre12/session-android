@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.pro
 
-import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -9,12 +8,14 @@ import kotlinx.coroutines.launch
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
+import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.util.AnimatedImageUtils
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class ProStatusManager @Inject constructor(
-    private val prefs: TextSecurePreferences
+    private val prefs: TextSecurePreferences,
 ){
     val MAX_CHARACTER_PRO = 10000 // max characters in a message for pro users
     private val MAX_CHARACTER_REGULAR = 2000 // max characters in a message for non pro users
@@ -96,6 +97,46 @@ class ProStatusManager @Inject constructor(
         if(!isPostPro()) return Int.MAX_VALUE // allow infinite pins while not in post Pro
 
         return if (isCurrentUserPro()) Int.MAX_VALUE else MAX_PIN_REGULAR
+    }
 
+
+    /**
+     * This will calculate the pro features of an outgoing message
+     */
+    fun calculateMessageProFeatures(message: String): List<MessageProFeature>{
+        val userAddress = prefs.getLocalNumber()
+        if(!isCurrentUserPro() || userAddress == null) return emptyList()
+
+        val features = mutableListOf<MessageProFeature>()
+
+        // check for pro badge display
+        if(shouldShowProBadge(Address.fromSerialized(userAddress))){
+            features.add(MessageProFeature.ProBadge)
+        }
+
+        // check for "long message" feature
+        if(message.length > MAX_CHARACTER_REGULAR){
+            features.add(MessageProFeature.LongMessage)
+        }
+
+        // check is the user has an animated avatar
+        //todo PRO check for animated avatar here and add appropriate feature
+
+
+        return features
+    }
+
+    /**
+     * This will get the list of Pro features from an incoming message
+     */
+    fun getMessageProFeatures(messageId: MessageId): List<MessageProFeature>{
+        //todo PRO implement once we have data
+        return listOf(MessageProFeature.ProBadge, MessageProFeature.LongMessage, MessageProFeature.AnimatedAvatar)
+    }
+
+    sealed interface MessageProFeature {
+        object ProBadge : MessageProFeature
+        object LongMessage : MessageProFeature
+        object AnimatedAvatar : MessageProFeature
     }
 }

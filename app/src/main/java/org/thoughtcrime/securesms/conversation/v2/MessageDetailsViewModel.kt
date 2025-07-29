@@ -40,13 +40,13 @@ import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.mms.ImageSlide
 import org.thoughtcrime.securesms.mms.Slide
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.TitledText
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.observeChanges
-import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.text.Typography.ellipsis
@@ -63,6 +63,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
     private val context: ApplicationContext,
     private val avatarUtils: AvatarUtils,
     private val dateUtils: DateUtils,
+    private val proStatusManager: ProStatusManager,
     messageDataProvider: MessageDataProvider,
     storage: Storage
 ) : ViewModel() {
@@ -173,8 +174,10 @@ class MessageDetailsViewModel @AssistedInject constructor(
                         )
                     },
                     senderAvatarData = avatarUtils.getUIDataFromRecipient(sender),
+                    senderShowProBadge = proStatusManager.shouldShowProBadge(sender.address),
                     thread = conversation,
-                    readOnly = isDeprecatedLegacyGroup
+                    readOnly = isDeprecatedLegacyGroup,
+                    proFeatures = proStatusManager.getMessageProFeatures(messageRecord.messageId)
                 )
             }
         }
@@ -252,8 +255,10 @@ data class MessageDetailsState(
     val status: MessageStatus? = null,
     val senderInfo: TitledText? = null,
     val senderAvatarData: AvatarUIData? = null,
+    val senderShowProBadge: Boolean = false,
     val thread: Recipient? = null,
     val readOnly: Boolean = false,
+    val proFeatures: List<ProStatusManager.MessageProFeature> = emptyList()
 ) {
     val fromTitle = GetString(R.string.from)
     val canReply: Boolean get() = !readOnly && record?.isOpenGroupInvitation != true

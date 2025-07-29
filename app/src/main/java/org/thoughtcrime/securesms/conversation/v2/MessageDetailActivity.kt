@@ -75,6 +75,7 @@ import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.HorizontalPagerIndicator
 import org.thoughtcrime.securesms.ui.LargeItemButton
+import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.TitledText
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.setComposeContent
@@ -291,7 +292,7 @@ fun CellMetadata(
                 if (received != null) { TitledText(received) }
 
                 TitledErrorText(error)
-                senderInfo?.let {
+                senderInfo?.let { sender ->
                     TitledView(state.fromTitle) {
                         Row {
                             senderAvatarData?.let {
@@ -303,7 +304,22 @@ fun CellMetadata(
                                 )
                                 Spacer(modifier = Modifier.width(LocalDimensions.current.smallSpacing))
                             }
-                            TitledMonospaceText(it)
+
+                            Column(verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)) {
+                                // author
+                                ProBadgeText(
+                                    text = sender.title.string(),
+                                    textStyle = LocalType.current.base.bold(),
+                                    showBadge = state.senderShowProBadge
+                                )
+
+                                sender.text?.let {
+                                    Text(
+                                        text = it,
+                                        style = LocalType.current.base.monospace()
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -350,7 +366,7 @@ fun CellButtons(
             onResend?.let {
                 LargeItemButton(
                     R.string.resend,
-                    R.drawable.ic_refresh_cw,
+                    R.drawable.ic_repeat_2,
                     onClick = it
                 )
                 Divider()
@@ -505,6 +521,7 @@ fun PreviewMessageDetails(
                 received = TitledText(R.string.received, "6:12 AM Tue, 09/08/2022"),
                 error = TitledText(R.string.errorUnknown, "Message failed to send"),
                 senderInfo = TitledText("Connor", "d4f1g54sdf5g1d5f4g65ds4564df65f4g65d54"),
+                senderShowProBadge = true
 
             ),
             retryFailedAttachments = {}
@@ -527,7 +544,7 @@ fun FileDetails(fileDetails: List<TitledText>) {
                     TitledText(
                         it,
                         modifier = Modifier
-                            .widthIn(min = maxWidth.div(2))
+                            .widthIn(min = this.maxWidth.div(2))
                             .padding(horizontal = LocalDimensions.current.xsSpacing)
                             .width(IntrinsicSize.Max)
                     )
@@ -543,14 +560,6 @@ fun TitledErrorText(titledText: TitledText?) {
         titledText,
         style = LocalType.current.base,
         color = LocalColors.current.danger
-    )
-}
-
-@Composable
-fun TitledMonospaceText(titledText: TitledText?) {
-    TitledText(
-        titledText,
-        style = LocalType.current.base.monospace()
     )
 }
 
