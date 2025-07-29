@@ -492,7 +492,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private var conversationApprovalJob: Job? = null
 
     private var lastTapTime = 0L
-    private val DOUBLE_TAP_TIMEOUT = 1000L // ms
+    private val DOUBLE_TAP_TIMEOUT = 600L // ms
 
     // region Settings
     companion object {
