@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -69,7 +70,6 @@ import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
-import org.thoughtcrime.securesms.util.UserProfileModalCommands
 
 @Composable
 fun ProBadgeText(
@@ -432,14 +432,92 @@ fun AnimatedSessionProActivatedCTA(
         })
 }
 
+// Reusable generic Pro CTA
+@Composable
+fun GenericProCTA(
+    onDismissRequest: () -> Unit,
+){
+    val context = LocalContext.current
+    AnimatedSessionProCTA(
+        heroImageBg = R.drawable.cta_hero_generic_bg,
+        heroImageAnimatedFg = R.drawable.cta_hero_generic_fg,
+        text = Phrase.from(context,R.string.proUserProfileModalCallToAction)
+            .put(APP_NAME_KEY, context.getString(R.string.app_name))
+            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+            .format()
+            .toString(),
+        features = listOf(
+            CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
+            CTAFeature.Icon(stringResource(R.string.proFeatureListLongerMessages)),
+            CTAFeature.RainbowIcon(stringResource(R.string.proFeatureListLoadsMore)),
+        ),
+        onUpgrade = {
+            onDismissRequest()
+            //todo PRO go to screen once it exists
+        },
+        onCancel = {
+            onDismissRequest()
+        }
+    )
+}
+
+// Reusable long message  Pro CTA
+@Composable
+fun LongMessageProCTA(
+    onDismissRequest: () -> Unit,
+){
+    SimpleSessionProCTA(
+        heroImage = R.drawable.cta_hero_char_limit,
+        text = Phrase.from(LocalContext.current, R.string.proCallToActionLongerMessages)
+            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+            .format()
+            .toString(),
+        features = listOf(
+            CTAFeature.Icon(stringResource(R.string.proFeatureListLongerMessages)),
+            CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
+            CTAFeature.RainbowIcon(stringResource(R.string.proFeatureListLoadsMore)),
+        ),
+        onUpgrade = {
+            onDismissRequest()
+            //todo PRO go to screen once it exists
+        },
+        onCancel = {
+            onDismissRequest()
+        }
+    )
+}
+
+// Reusable animated profile pic Pro CTA
+@Composable
+fun AnimatedProfilePicProCTA(
+    onDismissRequest: () -> Unit,
+){
+    AnimatedSessionProCTA(
+        heroImageBg = R.drawable.cta_hero_animated_bg,
+        heroImageAnimatedFg = R.drawable.cta_hero_animated_fg,
+        text = stringResource(R.string.proAnimatedDisplayPictureCallToActionDescription),
+        features = listOf(
+            CTAFeature.Icon(stringResource(R.string.proFeatureListAnimatedDisplayPicture)),
+            CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
+            CTAFeature.RainbowIcon(stringResource(R.string.proFeatureListLoadsMore)),
+        ),
+        onUpgrade = {
+            onDismissRequest()
+            //todo PRO go to screen once it exists
+        },
+        onCancel = {
+            onDismissRequest()
+        }
+    )
+}
+
 /**
  * Added here for reusability since multiple screens need this dialog
  */
 @Composable
 fun PinProCTA(
     overTheLimit: Boolean,
-    onUpgrade: () -> Unit,
-    onCancel: () -> Unit,
+    onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
 ){
     val context = LocalContext.current
@@ -462,8 +540,13 @@ fun PinProCTA(
             CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
             CTAFeature.RainbowIcon(stringResource(R.string.proFeatureListLoadsMore)),
         ),
-        onUpgrade = onUpgrade,
-        onCancel = onCancel
+        onUpgrade = {
+            onDismissRequest()
+            //todo PRO go to screen once it exists
+        },
+        onCancel = {
+            onDismissRequest()
+        }
     )
 }
 
@@ -523,12 +606,14 @@ private fun PreviewProActivatedCTA(
 @Composable
 fun ProCTAFeature(
     data: CTAFeature,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    textStyle: TextStyle = LocalType.current.base,
+    padding: PaddingValues = PaddingValues(horizontal = LocalDimensions.current.xxxsSpacing)
 ){
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = LocalDimensions.current.xxxsSpacing),
+            .padding(padding),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxsSpacing)
     ) {
@@ -550,38 +635,9 @@ fun ProCTAFeature(
 
         Text(
             text = data.text,
-            style = LocalType.current.base
+            style = textStyle
         )
     }
-}
-
-// Reusable generic Pro CTA
-@Composable
-fun GenericProCTA(
-    onDismissRequest: () -> Unit,
-){
-    val context = LocalContext.current
-    AnimatedSessionProCTA(
-        heroImageBg = R.drawable.cta_hero_generic_bg,
-        heroImageAnimatedFg = R.drawable.cta_hero_generic_fg,
-        text = Phrase.from(context,R.string.proUserProfileModalCallToAction)
-            .put(APP_NAME_KEY, context.getString(R.string.app_name))
-            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-            .format()
-            .toString(),
-        features = listOf(
-            CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
-            CTAFeature.Icon(stringResource(R.string.proFeatureListLongerMessages)),
-            CTAFeature.RainbowIcon(stringResource(R.string.proFeatureListLoadsMore)),
-        ),
-        onUpgrade = {
-            onDismissRequest()
-            //todo PRO go to screen once it exists
-        },
-        onCancel = {
-           onDismissRequest()
-        }
-    )
 }
 
 @Composable

@@ -131,7 +131,7 @@ class ProStatusManager @Inject constructor(
      */
     fun getMessageProFeatures(messageId: MessageId): List<MessageProFeature>{
         //todo PRO implement once we have data
-        return listOf(MessageProFeature.ProBadge, MessageProFeature.LongMessage, MessageProFeature.AnimatedAvatar)
+        return listOf(MessageProFeature.AnimatedAvatar)
     }
 
     sealed interface MessageProFeature {

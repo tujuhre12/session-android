@@ -84,6 +84,7 @@ import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
 import org.thoughtcrime.securesms.tokenpage.TokenPageActivity
 import org.thoughtcrime.securesms.ui.AccountIdHeader
 import org.thoughtcrime.securesms.ui.AlertDialog
+import org.thoughtcrime.securesms.ui.AnimatedProfilePicProCTA
 import org.thoughtcrime.securesms.ui.AnimatedSessionProActivatedCTA
 import org.thoughtcrime.securesms.ui.AnimatedSessionProCTA
 import org.thoughtcrime.securesms.ui.CTAFeature
@@ -891,17 +892,8 @@ fun AnimatedProCTA(
             onCancel = { sendCommand(HideAnimatedProCTA) }
         )
     } else {
-        AnimatedSessionProCTA(
-            heroImageBg = R.drawable.cta_hero_animated_bg,
-            heroImageAnimatedFg = R.drawable.cta_hero_animated_fg,
-            text = stringResource(R.string.proAnimatedDisplayPictureCallToActionDescription),
-            features = listOf(
-                CTAFeature.Icon(stringResource(R.string.proFeatureListAnimatedDisplayPicture)),
-                CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
-                CTAFeature.RainbowIcon(stringResource(R.string.proFeatureListLoadsMore)),
-            ),
-            onUpgrade = { sendCommand(GoToProUpgradeScreen) },
-            onCancel = { sendCommand(HideAnimatedProCTA) },
+        AnimatedProfilePicProCTA(
+            onDismissRequest = { sendCommand(HideAnimatedProCTA) },
         )
     }
 }

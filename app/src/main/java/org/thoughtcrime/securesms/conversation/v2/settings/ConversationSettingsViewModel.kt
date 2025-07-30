@@ -78,7 +78,6 @@ import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.avatarOptions
 import org.thoughtcrime.securesms.util.observeChanges
-import kotlin.String
 import kotlin.math.min
 
 
@@ -1333,14 +1332,6 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 }
             }
 
-            is Commands.GoToProUpgradeScreen -> {
-                // hide dialog
-                _dialogState.update { it.copy(pinCTA = null) }
-
-                // to go Pro upgrade screen
-                //todo PRO go to screen once it exists
-            }
-
             is Commands.ToggleQR -> {
                 _uiState.update {
                     it.copy(showQR = !it.showQR)
@@ -1498,8 +1489,6 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         data object HideGroupEditDialog : Commands
 
         data object HidePinCTADialog: Commands
-
-        data object GoToProUpgradeScreen: Commands
 
         object ToggleAvatarExpand: Commands
         object ToggleQR: Commands

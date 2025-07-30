@@ -24,7 +24,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_K
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.ClearMessagesGroupDeviceOnly
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.ClearMessagesGroupEveryone
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.GoToProUpgradeScreen
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.HideGroupAdminClearMessagesDialog
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.HideGroupEditDialog
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.HideNicknameDialog
@@ -34,7 +33,6 @@ import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsV
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.RemoveNickname
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.SetGroupText
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.SetNickname
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.ShowProBadgeCTA
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.UpdateGroupDescription
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.UpdateGroupName
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.UpdateNickname
@@ -234,11 +232,7 @@ fun ConversationSettingsDialogs(
     if(dialogsState.pinCTA != null){
         PinProCTA(
             overTheLimit = dialogsState.pinCTA.overTheLimit,
-            onUpgrade = {
-                sendCommand(GoToProUpgradeScreen)
-            },
-
-            onCancel = {
+            onDismissRequest = {
                 sendCommand(HidePinCTADialog)
             }
         )

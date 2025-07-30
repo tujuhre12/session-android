@@ -488,14 +488,6 @@ class SettingsViewModel @Inject constructor(
                hideAnimatedProCTA()
             }
 
-            is Commands.GoToProUpgradeScreen -> {
-                // hide dialog
-                hideAnimatedProCTA()
-
-                // to go Pro upgrade screen
-                //todo PRO go to screen once it exists
-            }
-
             is Commands.SaveAvatar -> {
                 saveAvatar()
             }
@@ -629,7 +621,6 @@ class SettingsViewModel @Inject constructor(
 
         data object ShowAnimatedProCTA: Commands
         data object HideAnimatedProCTA: Commands
-        data object GoToProUpgradeScreen: Commands
 
         data object OnDonateClicked: Commands
 
