@@ -85,8 +85,7 @@ import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.home.PathActivity
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.permissions.Permissions
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.TempAvatar
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.UserAvatar
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.*
 import org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActivity
 import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
 import org.thoughtcrime.securesms.reviews.InAppReviewManager
@@ -843,7 +842,9 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                             .padding(LocalDimensions.current.xxxsSpacing)
                             .align(Alignment.BottomEnd)
                         ,
-                        painter = painterResource(id = R.drawable.ic_plus),
+                        painter = painterResource(id =
+                            if(state.avatarDialogState is NoAvatar) R.drawable.ic_plus
+                        else R.drawable.ic_pencil),
                         contentDescription = null,
                         colorFilter = ColorFilter.tint(Color.Black)
                     )
