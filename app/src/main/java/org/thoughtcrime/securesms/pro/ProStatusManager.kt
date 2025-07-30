@@ -129,14 +129,18 @@ class ProStatusManager @Inject constructor(
     /**
      * This will get the list of Pro features from an incoming message
      */
-    fun getMessageProFeatures(messageId: MessageId): List<MessageProFeature>{
+    fun getMessageProFeatures(messageId: MessageId): Set<MessageProFeature>{
         //todo PRO implement once we have data
-        return listOf(MessageProFeature.AnimatedAvatar)
+
+        // use debug values if any
+        if(prefs.forceIncomingMessagesAsPro()){
+            return prefs.getDebugMessageFeatures()
+        }
+
+        return emptySet()
     }
 
-    sealed interface MessageProFeature {
-        object ProBadge : MessageProFeature
-        object LongMessage : MessageProFeature
-        object AnimatedAvatar : MessageProFeature
+    enum class MessageProFeature {
+        ProBadge, LongMessage, AnimatedAvatar
     }
 }

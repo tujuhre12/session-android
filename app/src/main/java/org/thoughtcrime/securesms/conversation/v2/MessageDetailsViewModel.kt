@@ -301,7 +301,7 @@ data class MessageDetailsState(
     val senderShowProBadge: Boolean = false,
     val thread: Recipient? = null,
     val readOnly: Boolean = false,
-    val proFeatures: List<ProStatusManager.MessageProFeature> = emptyList(),
+    val proFeatures: Set<ProStatusManager.MessageProFeature> = emptySet(),
     val proBadgeClickable: Boolean = false,
 ) {
     val fromTitle = GetString(R.string.from)

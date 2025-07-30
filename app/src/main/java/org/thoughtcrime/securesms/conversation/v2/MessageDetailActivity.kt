@@ -360,7 +360,7 @@ fun CellMetadata(
 
 @Composable
 fun MessageProFeatures(
-    features: List<ProStatusManager.MessageProFeature>,
+    features: Set<ProStatusManager.MessageProFeature>,
     badgeClickable: Boolean,
     sendCommand: (Commands) -> Unit,
     modifier: Modifier = Modifier,
@@ -407,7 +407,7 @@ fun MessageProFeatures(
 fun PreviewMessageProFeatures(){
     PreviewTheme {
         MessageProFeatures(
-            features = listOf(
+            features = setOf(
                 ProStatusManager.MessageProFeature.ProBadge,
                 ProStatusManager.MessageProFeature.LongMessage,
                 ProStatusManager.MessageProFeature.AnimatedAvatar

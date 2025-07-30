@@ -51,6 +51,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CA
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CALL_WARNING
 import org.session.libsession.utilities.TextSecurePreferences.Companion._events
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import java.io.IOException
 import java.time.ZonedDateTime
 import java.util.Arrays
@@ -165,6 +166,7 @@ interface TextSecurePreferences {
     fun setLongPreference(key: String, value: Long)
     fun removePreference(key: String)
     fun getStringSetPreference(key: String, defaultValues: Set<String>): Set<String>?
+    fun setStringSetPreference(key: String, value: Set<String>)
     fun getHasViewedSeed(): Boolean
     fun setHasViewedSeed(hasViewedSeed: Boolean)
     fun setRestorationTime(time: Long)
@@ -222,6 +224,9 @@ interface TextSecurePreferences {
     fun setHasSeenTokenPageNotification(value: Boolean)
     fun forcedShortTTL(): Boolean
     fun setForcedShortTTL(value: Boolean)
+
+    fun  getDebugMessageFeatures(): Set<ProStatusManager.MessageProFeature>
+    fun  setDebugMessageFeatures(features: Set<ProStatusManager.MessageProFeature>)
 
     var deprecationStateOverride: String?
     var deprecatedTimeOverride: ZonedDateTime?
@@ -380,6 +385,8 @@ interface TextSecurePreferences {
         const val FORCED_SHORT_TTL = "forced_short_ttl"
 
         const val IN_APP_REVIEW_STATE = "in_app_review_state"
+
+        const val DEBUG_MESSAGE_FEATURES = "debug_message_features"
 
         @JvmStatic
         fun getConfigurationMessageSynced(context: Context): Boolean {
@@ -1524,6 +1531,10 @@ class AppTextSecurePreferences @Inject constructor(
         }
     }
 
+    override fun setStringSetPreference(key: String, value: Set<String>) {
+        getDefaultSharedPreferences(context).edit { putStringSet(key, value) }
+    }
+
     override fun getHasViewedSeed(): Boolean {
         return getBooleanPreference("has_viewed_seed", false)
     }
@@ -1852,4 +1863,13 @@ class AppTextSecurePreferences @Inject constructor(
                 setStringPreference(TextSecurePreferences.DEPRECATING_START_TIME_OVERRIDE, value.toString())
             }
         }
+
+    override fun getDebugMessageFeatures(): Set<ProStatusManager.MessageProFeature> {
+        return getStringSetPreference( TextSecurePreferences.DEBUG_MESSAGE_FEATURES, emptySet())
+            ?.map { ProStatusManager.MessageProFeature.valueOf(it) }?.toSet() ?: emptySet()
+    }
+
+    override fun setDebugMessageFeatures(features: Set<ProStatusManager.MessageProFeature>) {
+        setStringSetPreference(TextSecurePreferences.DEBUG_MESSAGE_FEATURES, features.map { it.name }.toSet())
+    }
 }
