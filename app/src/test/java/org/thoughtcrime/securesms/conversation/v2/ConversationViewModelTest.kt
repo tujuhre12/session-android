@@ -23,6 +23,7 @@ import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
+import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.BaseViewModelTest
 import org.thoughtcrime.securesms.MainCoroutineRule
 import org.thoughtcrime.securesms.database.Storage
@@ -41,10 +42,6 @@ class ConversationViewModelTest: BaseViewModelTest() {
     private val repository = mock<ConversationRepository>()
     private val storage = mock<Storage>()
 
-    private val threadId = 123L
-    private val edKeyPair = mock<KeyPair>()
-    private lateinit var recipient: Recipient
-    private lateinit var messageRecord: MessageRecord
 
     private val testContentResolver = mock<ContentResolver>()
 
@@ -59,14 +56,8 @@ class ConversationViewModelTest: BaseViewModelTest() {
             .doReturn(AvatarUIData(elements = emptyList()))
     }
 
-    object NoopRecipientChangeSource : RecipientChangeSource {
-        override fun changes(): Flow<Query> = emptyFlow()
-    }
-
-    private val viewModel: ConversationViewModel by lazy {
+    private fun createViewModel(recipient: Recipient): ConversationViewModel {
         ConversationViewModel(
-            threadId = threadId,
-            edKeyPair = edKeyPair,
             repository = repository,
             storage = storage,
             messageDataProvider = mock(),
@@ -84,32 +75,33 @@ class ConversationViewModelTest: BaseViewModelTest() {
                 on { deprecatedTime } doReturn MutableStateFlow(ZonedDateTime.now())
             },
             expiredGroupManager = mock(),
-            usernameUtils = mock(),
             avatarUtils = avatarUtils,
             lokiAPIDb = mock(),
-            recipientChangeSource = NoopRecipientChangeSource,
             dateUtils = mock(),
-            openGroupManager = mock {
-                on { getCommunitiesWriteAccessFlow() } doReturn MutableStateFlow(emptyMap())
-            },
             proStatusManager = mock(),
             upmFactory = mock(),
+            lokiThreadDatabase = mock(),
+            blindMappingRepository = mock(),
+            address = recipient.address,
+            recipientRepository = mock {
+                on { getRecipientSyncOrEmpty(recipient.address) } doReturn recipient
+            },
+            createThreadIfNotExists = true,
+            openGroupManager = mock(),
         )
     }
 
     @Before
     fun setUp() {
-        recipient = mock()
-        messageRecord = mock { record ->
-            whenever(record.individualRecipient).thenReturn(recipient)
-        }
-        whenever(repository.maybeGetRecipientForThreadId(anyLong())).thenReturn(recipient)
-        whenever(repository.recipientUpdateFlow(anyLong())).thenReturn(emptyFlow())
     }
 
     @Test
     fun `should save draft message`() = runBlockingTest {
         val draft = "Hi there"
+
+        val viewModel = createViewModel(recipient = Recipient(
+            address =
+        ))
 
         viewModel.saveDraft(draft)
 
