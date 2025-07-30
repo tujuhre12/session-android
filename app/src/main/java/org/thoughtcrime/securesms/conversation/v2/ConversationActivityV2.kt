@@ -491,9 +491,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     // The coroutine job that was used to submit a message approval response to the snode
     private var conversationApprovalJob: Job? = null
 
-    private var lastTapTime = 0L
-    private val DOUBLE_TAP_TIMEOUT = 600L // ms
-
     // region Settings
     companion object {
         // Extras
@@ -560,24 +557,17 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         setUpUiStateObserver()
 
         binding.scrollToBottomButton.setOnClickListener {
-            val currentTime = System.currentTimeMillis()
             val layoutManager = binding.conversationRecyclerView.layoutManager as LinearLayoutManager
             val targetPosition = adapter.itemCount - 1
 
-            if (currentTime - lastTapTime <= DOUBLE_TAP_TIMEOUT) {
-                // Double tap detected: instantly scroll
+            if (layoutManager.isSmoothScrolling) {
+                // Tapping while smooth scrolling is in progress will instantly jump to the bottom.
                 binding.conversationRecyclerView.scrollToPosition(targetPosition)
             } else {
                 // First tap: smooth scroll
-                // Used LinearSmoothScroller here for better control, but we can use smoothScrollToPosition if we want to keep it simple
-                val smoothScroller = object : LinearSmoothScroller(binding.root.context) {
-                    override fun getVerticalSnapPreference(): Int = SNAP_TO_END
-                }
-                smoothScroller.targetPosition = targetPosition
-                layoutManager.startSmoothScroll(smoothScroller)
+                linearSmoothScroller.targetPosition = targetPosition
+                layoutManager.startSmoothScroll(linearSmoothScroller)
             }
-
-            lastTapTime = currentTime
         }
 
         // in case a phone call is in progress, this banner is visible and should bring the user back to the call
