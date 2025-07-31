@@ -57,7 +57,7 @@ sealed class Destination {
                     )
                 }
                 is Address.Group -> {
-                    ClosedGroup(address.groupId.hexString)
+                    ClosedGroup(address.id.hexString)
                 }
                 else -> {
                     throw Exception("TODO: Handle legacy closed groups.")

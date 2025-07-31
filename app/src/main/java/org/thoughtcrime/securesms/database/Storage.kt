@@ -1630,7 +1630,7 @@ open class Storage @Inject constructor(
             }
 
             is Address.Group -> {
-                configFactory.withMutableGroupConfigs(address.groupId) { configs ->
+                configFactory.withMutableGroupConfigs(address.id) { configs ->
                     configs.groupInfo.setExpiryTimer(expiryMode.expirySeconds)
                 }
             }

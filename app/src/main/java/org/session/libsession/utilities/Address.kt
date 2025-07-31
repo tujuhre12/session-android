@@ -20,48 +20,48 @@ sealed class Address : Parcelable, Comparable<Address> {
 
     override fun compareTo(other: Address) = address.compareTo(other.address)
 
-    data class Group(val groupId: AccountId) : Address() {
+    data class Group(val id: AccountId) : Address() {
         override val address: String
-            get() = groupId.hexString
+            get() = id.hexString
 
         override val debugString: String
-            get() = groupId.toString()
+            get() = id.toString()
 
         init {
-            check(groupId.prefix == IdPrefix.GROUP) {
-                "AccountId must have a GROUP prefix, but was: ${groupId.prefix}"
+            check(id.prefix == IdPrefix.GROUP) {
+                "AccountId must have a GROUP prefix, but was: ${id.prefix}"
             }
         }
 
         override fun toString(): String = address
     }
 
-    data class Standard(val accountId: AccountId) : Address() {
+    data class Standard(val id: AccountId) : Address() {
         override val address: String
-            get() = accountId.hexString
+            get() = id.hexString
 
         override val debugString: String
-            get() = accountId.toString()
+            get() = id.toString()
 
         init {
-            check(accountId.prefix == IdPrefix.STANDARD) {
-                "AccountId must have a STANDARD prefix, but was: ${accountId.prefix}"
+            check(id.prefix == IdPrefix.STANDARD) {
+                "AccountId must have a STANDARD prefix, but was: ${id.prefix}"
             }
         }
 
         override fun toString(): String = address
     }
 
-    data class Blinded(val accountId: AccountId) : Address() {
+    data class Blinded(val blindedId: AccountId) : Address() {
         override val address: String
-            get() = accountId.hexString
+            get() = blindedId.hexString
 
         override val debugString: String
-            get() = accountId.toString()
+            get() = blindedId.toString()
 
         init {
-            check(accountId.prefix?.isBlinded() == true) {
-                "AccountId must have a BLINDED prefix, but was: ${accountId.prefix}"
+            check(blindedId.prefix?.isBlinded() == true) {
+                "AccountId must have a BLINDED prefix, but was: ${blindedId.prefix}"
             }
         }
 
@@ -230,7 +230,7 @@ val Address.isBlinded: Boolean
     get() = this is Address.Blinded
 
 fun Address.toBlindedId(): AccountId? {
-    return (this as? Address.Blinded)?.accountId
+    return (this as? Address.Blinded)?.blindedId
 }
 
 fun Address.toGroupString(): String {

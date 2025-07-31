@@ -98,7 +98,7 @@ class UserProfileUtils @AssistedInject constructor(
             Address.CommunityBlindedId(
                 serverUrl = openGroup.server,
                 serverPubKey = openGroup.publicKey,
-                blindedId = recipient.address.accountId
+                blindedId = recipient.address.blindedId
             )
         } else {
             recipient.address
