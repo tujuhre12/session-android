@@ -35,7 +35,6 @@ import org.thoughtcrime.securesms.util.AvatarUtils
 import java.time.ZonedDateTime
 
 private val STANDARD_ADDRESS = "0538e63512fd78c04d45b83ec7f0f3d593f60276ce535d1160eb589a00cca7db59".toAddress()
-private val GROUP_ADDRESS = "0338e63512fd78c04d45b83ec7f0f3d593f60276ce535d1160eb589a00cca7db59".toAddress()
 
 
 class ConversationViewModelTest: BaseViewModelTest() {

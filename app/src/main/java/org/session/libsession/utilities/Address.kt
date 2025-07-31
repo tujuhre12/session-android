@@ -2,6 +2,7 @@ package org.session.libsession.utilities
 
 import android.os.Parcel
 import android.os.Parcelable
+import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Util
@@ -95,6 +96,11 @@ sealed class Address : Parcelable, Comparable<Address> {
     }
 
     data class Community(val serverUrl: String, val room: String) : Address() {
+        constructor(openGroup: OpenGroup): this(
+            serverUrl = openGroup.server,
+            room = openGroup.room
+        )
+
         override val address: String by lazy(LazyThreadSafetyMode.NONE) {
             GroupUtil.getEncodedOpenGroupID("$serverUrl.$room".toByteArray())
         }

@@ -64,7 +64,6 @@ class MentionViewModel @AssistedInject constructor(
     recipientRepository: RecipientRepository,
     mmsSmsDatabase: MmsSmsDatabase
 ) : ViewModel() {
-    private val dispatcher: CoroutineDispatcher = Dispatchers.Default
     private val editable = MentionEditable()
 
     /**
@@ -163,7 +162,7 @@ class MentionViewModel @AssistedInject constructor(
                     })
                     .toList()
             }
-            .flowOn(dispatcher)
+            .flowOn(Dispatchers.Default)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(10_000L), null)
 
     @OptIn(ExperimentalCoroutinesApi::class)
