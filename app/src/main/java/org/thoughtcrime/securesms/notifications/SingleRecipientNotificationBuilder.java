@@ -70,8 +70,7 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
   }
 
   public void setThread(@NonNull Recipient recipient) {
-    String channelId = recipient.getNotificationChannel();
-    setChannelId(channelId != null ? channelId : NotificationChannels.getMessagesChannel(context));
+    setChannelId(NotificationChannels.getMessagesChannel(context));
 
     if (privacy.isDisplayContact()) {
       setContentTitle(RecipientKt.displayName(recipient));

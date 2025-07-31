@@ -44,8 +44,6 @@ class MultipleRecipientNotificationBuilder(context: Context, privacy: Notificati
                 .format().toString()
             setContentText(txt)
         }
-
-        recipient.notificationChannel?.let(this::setChannelId)
     }
 
     fun addActions(markAsReadIntent: PendingIntent?) {

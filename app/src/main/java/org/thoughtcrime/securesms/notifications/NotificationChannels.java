@@ -76,7 +76,7 @@ public class NotificationChannels {
 
   public static synchronized @Nullable Uri getMessageRingtone(@NonNull Context context, @NonNull Recipient recipient) {
     NotificationManager notificationManager = ServiceUtil.getNotificationManager(context);
-    NotificationChannel channel             = notificationManager.getNotificationChannel(recipient.getNotificationChannel());
+    NotificationChannel channel             = notificationManager.getNotificationChannel(null);
 
     if (!channelExists(channel)) {
       Log.w(TAG, "RecipientV2 had no channel. Returning null.");

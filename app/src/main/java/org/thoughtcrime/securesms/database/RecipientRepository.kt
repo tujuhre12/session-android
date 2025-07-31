@@ -377,9 +377,7 @@ class RecipientRepository @Inject constructor(
             return Recipient(
                 address = address,
                 basic = basic,
-                mutedUntil = null,
                 autoDownloadAttachments = true,
-                notifyType = NotifyType.ALL,
                 acceptsCommunityMessageRequests = basic.acceptsCommunityMessageRequests,
             )
         }
@@ -409,9 +407,8 @@ class RecipientRepository @Inject constructor(
                 address = address,
                 basic = basic,
                 mutedUntil = settings?.muteUntilDate,
-                notifyType = settings?.notifyType ?: NotifyType.ALL,
                 autoDownloadAttachments = settings?.autoDownloadAttachments,
-                acceptsCommunityMessageRequests = false,
+                notifyType = settings?.notifyType ?: NotifyType.ALL,
             )
 
         }
@@ -442,22 +439,13 @@ class RecipientRepository @Inject constructor(
         ): Recipient {
             return Recipient(
                 address = address,
-                basic = BasicRecipient.Generic(
-                    displayName = community.name,
-                    avatar = community.imageId?.let {
-                        RemoteFile.Community(
-                            communityServerBaseUrl = community.server,
-                            roomId = community.room,
-                            fileId = it,
-                        )
-                    },
+                basic = BasicRecipient.Community(
+                    openGroup = community,
                     priority = config?.priority ?: PRIORITY_VISIBLE,
                 ),
                 mutedUntil = settings?.muteUntilDate,
                 autoDownloadAttachments = settings?.autoDownloadAttachments,
                 notifyType = settings?.notifyType ?: NotifyType.ALL,
-                acceptsCommunityMessageRequests = false,
-                notificationChannel = null,
             )
         }
 
@@ -485,7 +473,6 @@ class RecipientRepository @Inject constructor(
                 mutedUntil = settings?.muteUntilDate,
                 autoDownloadAttachments = settings?.autoDownloadAttachments,
                 notifyType = settings?.notifyType ?: NotifyType.ALL,
-                acceptsCommunityMessageRequests = false,
             )
         }
 
@@ -502,7 +489,6 @@ class RecipientRepository @Inject constructor(
                 basic = BasicRecipient.Generic(
                     displayName = settings.name.orEmpty(),
                     avatar = settings.profilePic?.toRecipientAvatar(),
-                    isLocalNumber = false,
                 ),
                 mutedUntil = settings.muteUntil.takeIf { it > 0 }
                     ?.let { ZonedDateTime.from(Instant.ofEpochMilli(it)) },
@@ -522,10 +508,6 @@ class RecipientRepository @Inject constructor(
                     displayName = groupMember.name,
                     avatar = groupMember.profilePic()?.toRecipientAvatar(),
                 ),
-                mutedUntil = null,
-                autoDownloadAttachments = null,
-                notifyType = NotifyType.ALL,
-                acceptsCommunityMessageRequests = false,
             )
         }
 
@@ -533,10 +515,6 @@ class RecipientRepository @Inject constructor(
             return Recipient(
                 address = address,
                 basic = BasicRecipient.Generic(),
-                mutedUntil = null,
-                autoDownloadAttachments = null,
-                notifyType = NotifyType.ALL,
-                acceptsCommunityMessageRequests = false,
             )
         }
     }

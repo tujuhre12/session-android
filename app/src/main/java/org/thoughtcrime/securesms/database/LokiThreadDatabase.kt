@@ -16,8 +16,10 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.takeWhile
+import kotlinx.serialization.json.Json
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsignal.utilities.JsonUtil
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import javax.inject.Inject
 import javax.inject.Provider
@@ -26,7 +28,8 @@ import javax.inject.Singleton
 @Singleton
 class LokiThreadDatabase @Inject constructor(
     @ApplicationContext context: Context,
-    helper: Provider<SQLCipherOpenHelper>
+    helper: Provider<SQLCipherOpenHelper>,
+    private val json: Json,
 ) : Database(context, helper) {
 
     companion object {
@@ -56,7 +59,9 @@ class LokiThreadDatabase @Inject constructor(
             while (cursor != null && cursor.moveToNext()) {
                 val threadID = cursor.getLong(threadID)
                 val string = cursor.getString(publicChat)
-                val openGroup = OpenGroup.fromJSON(string)
+                val openGroup = runCatching { json.decodeFromString<OpenGroup>(string) }
+                    .onFailure { Log.d("LokiThreadDatabase", "Error decoding open group json", it) }
+                    .getOrNull()
                 if (openGroup != null) result[threadID] = openGroup
             }
         } catch (e: Exception) {
@@ -85,8 +90,9 @@ class LokiThreadDatabase @Inject constructor(
 
         val database = readableDatabase
         return database.get(publicChatTable, "${Companion.threadID} = ?", arrayOf(threadID.toString())) { cursor ->
-            val json = cursor.getString(publicChat)
-            OpenGroup.fromJSON(json)
+            runCatching { json.decodeFromString<OpenGroup>(cursor.getString(publicChat)) }
+                .onFailure { Log.d("LokiThreadDatabase", "Error decoding open group json", it) }
+                .getOrNull()
         }
     }
 
@@ -106,7 +112,7 @@ class LokiThreadDatabase @Inject constructor(
         val database = writableDatabase
         val contentValues = ContentValues(2)
         contentValues.put(Companion.threadID, threadID)
-        contentValues.put(publicChat, JsonUtil.toJson(openGroup.toJson()))
+        contentValues.put(publicChat, json.encodeToString(openGroup))
         database.insertOrUpdate(publicChatTable, contentValues, "${Companion.threadID} = ?", arrayOf(threadID.toString()))
         mutableChangeNotification.tryEmit(threadID)
     }

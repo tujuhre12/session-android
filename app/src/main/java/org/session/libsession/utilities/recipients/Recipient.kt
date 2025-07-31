@@ -5,6 +5,7 @@ import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISI
 import network.loki.messenger.libsession_util.util.Bytes
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.UserPic
+import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.isCommunity
 import org.session.libsession.utilities.isCommunityInbox
@@ -15,7 +16,7 @@ import org.session.libsession.utilities.isLegacyGroup
 import org.session.libsession.utilities.isStandard
 import org.session.libsession.utilities.toBlindedId
 import org.session.libsession.utilities.truncateIdForDisplay
-import org.session.libsignal.utilities.IdPrefix
+import org.session.libsession.utilities.truncatedForDisplay
 import org.thoughtcrime.securesms.database.model.NotifyType
 import java.time.ZonedDateTime
 
@@ -26,9 +27,28 @@ data class Recipient(
     val autoDownloadAttachments: Boolean? = null,
     val notifyType: NotifyType = NotifyType.ALL,
     val acceptsCommunityMessageRequests: Boolean = false,
-    val notificationChannel: String? = null,
 ) {
-    val isLocalNumber: Boolean get() = basic.isLocalNumber
+    /**
+     * Whether this recipient is ourself. Note that this check only applies to the standard
+     * address.
+     */
+    val isLocalNumber: Boolean get() = address is Address.Standard && isSelf
+
+    /**
+     * Check if this recipient is ourself, this property will handle blinding correctly.
+     */
+    val isSelf: Boolean get() = basic is BasicRecipient.Self
+
+    /**
+     * Check if current user is an admin of this assumed-group recipient.
+     * If the recipient is not a group or community, this will always return false.
+     */
+    val isAdmin: Boolean get() = when (basic) {
+        is BasicRecipient.Group -> basic.isAdmin
+        is BasicRecipient.Community -> basic.openGroup.isAdmin || basic.openGroup.isModerator
+        else -> false
+    }
+
     val isGroupOrCommunityRecipient: Boolean get() = address.isGroupOrCommunity
     val isCommunityRecipient: Boolean get() = address.isCommunity
     val isCommunityInboxRecipient: Boolean get() = address.isCommunityInbox
@@ -64,6 +84,7 @@ data class Recipient(
                 address.toBlindedId() == null
             }
             is BasicRecipient.Contact -> basic.approvedMe
+            is BasicRecipient.Community -> true // Communities don't have approval status for users.
         }
     }
 
@@ -90,19 +111,15 @@ data class Recipient(
     companion object {
         fun empty(address: Address): Recipient {
             return Recipient(
-                basic = BasicRecipient.Generic(),
                 address = address,
-                mutedUntil = null,
+                basic = BasicRecipient.Generic(),
                 autoDownloadAttachments = true,
-                notifyType = NotifyType.ALL,
-                acceptsCommunityMessageRequests = false,
             )
         }
     }
 }
 
 sealed interface BasicRecipient {
-    val isLocalNumber: Boolean
     val avatar: RemoteFile?
     val priority: Long
 
@@ -114,9 +131,16 @@ sealed interface BasicRecipient {
     data class Generic(
         val displayName: String = "",
         override val avatar: RemoteFile? = null,
-        override val isLocalNumber: Boolean = false,
         override val priority: Long = PRIORITY_VISIBLE,
     ) : BasicRecipient
+
+    data class Community(
+        val openGroup: OpenGroup,
+        override val priority: Long
+    ) : BasicRecipient {
+        override val avatar: RemoteFile?
+            get() = openGroup.imageId?.let { RemoteFile.Community(openGroup.server, openGroup.room, it) }
+    }
 
     /**
      * Yourself.
@@ -127,10 +151,7 @@ sealed interface BasicRecipient {
         val expiryMode: ExpiryMode,
         val acceptsCommunityMessageRequests: Boolean,
         override val priority: Long,
-    ) : ConfigBasedRecipient {
-        override val isLocalNumber: Boolean
-            get() = true
-    }
+    ) : ConfigBasedRecipient
 
     /**
      * A recipient that was saved in your contact config.
@@ -147,9 +168,6 @@ sealed interface BasicRecipient {
     ) : ConfigBasedRecipient {
         val displayName: String
             get() = nickname?.takeIf { it.isNotBlank() } ?: name
-
-        override val isLocalNumber: Boolean
-            get() = false
     }
 
     /**
@@ -164,10 +182,7 @@ sealed interface BasicRecipient {
         val isAdmin: Boolean,
         val kicked: Boolean,
         val destroyed: Boolean,
-    ) : ConfigBasedRecipient {
-        override val isLocalNumber: Boolean
-            get() = false
-    }
+    ) : ConfigBasedRecipient
 }
 
 
@@ -217,15 +232,15 @@ fun Recipient.displayName(
         is BasicRecipient.Contact -> basic.displayName
         is BasicRecipient.Group -> basic.name
         is BasicRecipient.Generic -> basic.displayName
+        is BasicRecipient.Community -> basic.openGroup.name
     }
 
     if (name.isBlank()) {
         return truncateIdForDisplay(address.address)
     }
 
-    if (attachesBlindedId &&
-        IdPrefix.fromValue(address.address)?.isBlinded() == true) {
-        return "$name (${truncateIdForDisplay(address.address)})"
+    if (attachesBlindedId && address is Address.Blinded) {
+        return "$name (${address.blindedId.truncatedForDisplay()})"
     }
 
     return name

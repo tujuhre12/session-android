@@ -102,7 +102,9 @@ class OpenGroupPoller @AssistedInject constructor(
                 publicKey = publicKey,
                 imageId = (pollInfo.details?.imageId ?: existingOpenGroup?.imageId),
                 canWrite = pollInfo.write,
-                infoUpdates = infoUpdates ?: 0
+                infoUpdates = infoUpdates ?: 0,
+                isAdmin = pollInfo.admin,
+                isModerator = pollInfo.moderator,
             )
             // - Open Group changes
             storage.updateOpenGroup(openGroup)

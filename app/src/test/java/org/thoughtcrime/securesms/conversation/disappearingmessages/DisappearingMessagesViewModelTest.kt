@@ -3,7 +3,6 @@ package org.thoughtcrime.securesms.conversation.disappearingmessages
 import android.app.Application
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import network.loki.messenger.R
@@ -13,11 +12,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.junit.MockitoJUnitRunner
-import org.mockito.kotlin.any
-import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
-import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.BasicRecipient
@@ -28,8 +24,6 @@ import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.ExpiryRad
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.UiState
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsNavigator
 import org.thoughtcrime.securesms.database.GroupDatabase
-import org.thoughtcrime.securesms.database.Storage
-import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OptionsCardData
 import kotlin.time.Duration
@@ -217,7 +211,8 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                 blocked = false,
                 expiryMode = ExpiryMode.NONE,
                 priority = 1
-            ))
+            )
+        )
         )
 
         advanceUntilIdle()
@@ -268,7 +263,8 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                 blocked = false,
                 expiryMode = ExpiryMode.AfterSend(time.inWholeSeconds),
                 priority = 1
-            ))
+            )
+        )
         )
 
         advanceUntilIdle()
@@ -326,7 +322,8 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                 blocked = false,
                 expiryMode = ExpiryMode.AfterSend(time.inWholeSeconds),
                 priority = 1
-            ))
+            )
+        )
         )
 
         advanceUntilIdle()
@@ -384,7 +381,8 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                 blocked = false,
                 expiryMode = ExpiryMode.AfterRead(time.inWholeSeconds),
                 priority = 1
-            ))
+            )
+        )
         )
 
         advanceUntilIdle()
@@ -444,7 +442,8 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                 blocked = false,
                 expiryMode = ExpiryMode.AfterRead(time.inWholeSeconds),
                 priority = 1
-            ))
+            )
+        )
         )
 
         advanceUntilIdle()
