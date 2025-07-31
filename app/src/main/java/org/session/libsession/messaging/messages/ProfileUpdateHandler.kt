@@ -42,7 +42,7 @@ class ProfileUpdateHandler @Inject constructor(
 
         // Unblind the sender if it's blinded and we have information to unblind it.
         val actualSender = if (sender.prefix?.isBlinded() == true && fromCommunity != null) {
-            blindIdMappingRepository.getMapping(fromCommunity.baseUrl, sender)
+            blindIdMappingRepository.getMapping(fromCommunity.baseUrl, Address.Blinded(sender))?.id
         } else {
             sender
         } ?: sender

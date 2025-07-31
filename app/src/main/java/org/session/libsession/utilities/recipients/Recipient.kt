@@ -14,7 +14,6 @@ import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.isGroupV2
 import org.session.libsession.utilities.isLegacyGroup
 import org.session.libsession.utilities.isStandard
-import org.session.libsession.utilities.toBlindedId
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsession.utilities.truncatedForDisplay
 import org.thoughtcrime.securesms.database.model.NotifyType
@@ -219,7 +218,9 @@ fun RemoteFile.toUserPic(): UserPic? {
 }
 
 /**
- * Retrieve the
+ * Retrieve a formatted display name for a recipient.
+ *
+ * @param attachesBlindedId Whether to append the blinded ID to the display name if the address is a blinded address.
  */
 @JvmOverloads
 fun Recipient.displayName(

@@ -51,7 +51,7 @@ import org.thoughtcrime.securesms.util.AvatarUIElement
 @Composable
 fun CreateGroupScreen(
     fromLegacyGroupId: String?,
-    onNavigateToConversationScreen: (address: Address) -> Unit,
+    onNavigateToConversationScreen: (address: Address.Conversable) -> Unit,
     onBack: () -> Unit,
     onClose: () -> Unit,
 ) {

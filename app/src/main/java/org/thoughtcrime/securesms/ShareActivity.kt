@@ -195,7 +195,7 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
     }
 
     private fun createConversation(address: Address) {
-        val intent = ConversationActivityV2.createIntent(this, address)
+        val intent = ConversationActivityV2.createIntent(this, address as Address.Conversable)
 
         if (resolvedExtra != null) {
             intent.setDataAndType(resolvedExtra, mimeType)

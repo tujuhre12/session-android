@@ -129,7 +129,7 @@ class CreateGroupViewModel @AssistedInject constructor(
 
                 }
                 else -> {
-                    mutableEvents.emit(CreateGroupEvent.NavigateToConversation(recipient.address))
+                    mutableEvents.emit(CreateGroupEvent.NavigateToConversation(recipient.address as Address.Conversable))
                 }
             }
 
@@ -150,7 +150,7 @@ class CreateGroupViewModel @AssistedInject constructor(
 }
 
 sealed interface CreateGroupEvent {
-    data class NavigateToConversation(val address: Address): CreateGroupEvent
+    data class NavigateToConversation(val address: Address.Conversable): CreateGroupEvent
 
     data class Error(val message: String): CreateGroupEvent
 }

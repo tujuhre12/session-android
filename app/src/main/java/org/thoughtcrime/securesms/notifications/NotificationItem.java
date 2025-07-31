@@ -10,6 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.TaskStackBuilder;
 
+import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2;
 import org.thoughtcrime.securesms.mms.SlideDeck;
@@ -71,7 +72,7 @@ public class NotificationItem {
   public PendingIntent getPendingIntent(Context context) {
 
     Recipient notifyRecipients = threadRecipient != null ? threadRecipient : conversationRecipient;
-    final Intent intent = ConversationActivityV2.Companion.createIntent(context, notifyRecipients.getAddress());
+    final Intent intent = ConversationActivityV2.Companion.createIntent(context, (Address.Conversable) notifyRecipients.getAddress());
     intent.setData((Uri.parse("custom://"+System.currentTimeMillis())));
 
     int intentFlags = PendingIntent.FLAG_UPDATE_CURRENT;

@@ -38,7 +38,7 @@ class ShortcutLauncherActivity : AppCompatActivity() {
             val address = fromSerialized(serializedAddress)
             val intent = ConversationActivityV2.createIntent(
                 this@ShortcutLauncherActivity,
-                address = address
+                address = address as Address.Conversable
             )
 
             backStack.addNextIntent(intent)

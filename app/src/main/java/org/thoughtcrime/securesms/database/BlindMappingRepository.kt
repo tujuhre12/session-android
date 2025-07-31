@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
@@ -21,7 +22,6 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 private typealias CommunityServerUrl = String
-private typealias BlindedAddress = AccountId
 
 /**
  * A class that handles the blind mappings of addresses reactively.
@@ -38,7 +38,7 @@ class BlindMappingRepository @Inject constructor(
      * blinded addresses to 05 prefixed addresses
      */
     @Suppress("OPT_IN_USAGE")
-    val mappings: StateFlow<Map<CommunityServerUrl, Map<BlindedAddress, AccountId>>> = prefs.watchLocalNumber()
+    val mappings: StateFlow<Map<CommunityServerUrl, Map<Address.Blinded, Address.Standard>>> = prefs.watchLocalNumber()
         .filterNotNull()
         .flatMapLatest { localAddress ->
             configFactory
@@ -48,8 +48,8 @@ class BlindMappingRepository @Inject constructor(
                     configFactory.withUserConfigs { configs ->
                         Pair(
                             configs.userGroups.allCommunityInfo().map { it.community },
-                            configs.contacts.all().map { AccountId(it.id) }
-                                    + AccountId(localAddress)
+                            configs.contacts.all().map { Address.Standard(AccountId(it.id)) }
+                                    + Address.Standard(AccountId(localAddress))
                         )
                     }
                 }
@@ -61,15 +61,15 @@ class BlindMappingRepository @Inject constructor(
                     community.baseUrl to allContacts.asSequence()
                         .flatMap { contactAddress ->
                             val allBlindIDs = BlindKeyAPI.blind15Ids(
-                                sessionId = contactAddress.hexString,
+                                sessionId = contactAddress.id.hexString,
                                 serverPubKey = community.pubKeyHex
                             ).asSequence() + BlindKeyAPI.blind25Id(
-                                sessionId = contactAddress.hexString,
+                                sessionId = contactAddress.id.hexString,
                                 serverPubKey = community.pubKeyHex
                             )
 
                             allBlindIDs.map { blindId ->
-                                AccountId(blindId) to contactAddress
+                                Address.Blinded(AccountId(blindId)) to contactAddress
                             }
                         }
                         .toMap()
@@ -79,12 +79,12 @@ class BlindMappingRepository @Inject constructor(
 
     fun getMapping(
         serverUrl: CommunityServerUrl,
-        blindedAddress: BlindedAddress
-    ): AccountId? {
+        blindedAddress: Address.Blinded
+    ): Address.Standard? {
         return mappings.value[serverUrl]?.get(blindedAddress)
     }
 
-    fun findMappings(blindedAddress: BlindedAddress): Sequence<Pair<CommunityServerUrl, AccountId>> {
+    fun findMappings(blindedAddress: Address.Blinded): Sequence<Pair<CommunityServerUrl, Address.Standard>> {
         return mappings.value
             .asSequence()
             .mapNotNull { (url, mapping) ->
@@ -93,8 +93,8 @@ class BlindMappingRepository @Inject constructor(
     }
 
     fun getReverseMappings(
-        contactAddress: AccountId,
-    ): List<Pair<CommunityServerUrl, BlindedAddress>> {
+        contactAddress: Address.Standard,
+    ): List<Pair<CommunityServerUrl, Address.Blinded>> {
         return mappings.value.flatMap { (communityUrl, mapping) ->
             mapping.filter { it.value == contactAddress }
                 .map { (blindedAddress, _) -> communityUrl to blindedAddress }
@@ -103,8 +103,8 @@ class BlindMappingRepository @Inject constructor(
 
     fun observeMapping(
         communityAddress: CommunityServerUrl,
-        blindedAddress: BlindedAddress
-    ): StateFlow<AccountId?> {
+        blindedAddress: Address.Blinded
+    ): StateFlow<Address.Standard?> {
         return mappings.mapStateFlow(scope) { it[communityAddress]?.get(blindedAddress) }
     }
 }

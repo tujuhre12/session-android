@@ -32,7 +32,6 @@ import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.isCommunity
-import org.session.libsession.utilities.isCommunityInbox
 import org.session.libsession.utilities.isGroupV2
 import org.session.libsession.utilities.isLegacyGroup
 import org.session.libsession.utilities.isStandard
@@ -40,11 +39,10 @@ import org.session.libsession.utilities.recipients.BasicRecipient
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRecipientAvatar
-import org.session.libsession.utilities.toBlindedId
+import org.session.libsession.utilities.toBlinded
 import org.session.libsession.utilities.toGroupString
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.database.model.RecipientSettings
@@ -129,8 +127,8 @@ class RecipientRepository @Inject constructor(
         openGroupFetcher: (address: Address) -> OpenGroup?
     ): Pair<Recipient?, Flow<*>>? {
         val basicRecipient =
-            address.toBlindedId()?.let { blindedIdMappingRepository.findMappings(it).firstOrNull()?.second }
-                ?.let { getBasicRecipientFast(it.toAddress()) }
+            address.toBlinded()?.let { blindedIdMappingRepository.findMappings(it).firstOrNull()?.second }
+                ?.let(this::getBasicRecipientFast)
                 ?: getBasicRecipientFast(address)
 
         val changeSource: Flow<*>
@@ -230,7 +228,7 @@ class RecipientRepository @Inject constructor(
                             settings = settings
                         )
 
-                        val monitoringAddress = address.toBlindedId()?.toAddress() ?: address
+                        val monitoringAddress = address.toBlinded() ?: address
                         changeSource =
                             recipientSettingsDatabase.changeNotification.filter { it == monitoringAddress }
                     }

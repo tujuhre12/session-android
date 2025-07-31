@@ -29,6 +29,7 @@ import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDD
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.currentUserName
 import org.session.libsession.utilities.recipients.displayName

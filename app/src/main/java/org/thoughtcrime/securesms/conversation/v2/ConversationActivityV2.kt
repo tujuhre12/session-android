@@ -496,7 +496,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         @JvmOverloads
         fun createIntent(
             context: Context,
-            address: Address,
+            address: Address.Conversable,
             createThreadIfNotExists: Boolean = true,
             // If provided, this will scroll to the message with the given timestamp and author (TODO: use message id instead)
             scrollToMessage: Pair<Long, Address>? = null

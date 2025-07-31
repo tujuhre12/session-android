@@ -68,7 +68,7 @@ class QRCodeActivity : ScreenLockActionBarActivity() {
         if (!PublicKeyValidation.isValid(string)) {
             errors.tryEmit(getString(R.string.qrNotAccountId))
         } else if (!isFinishing) {
-            val address = Address.fromSerialized(string)
+            val address = Address.fromSerialized(string) as Address.Conversable
             startActivity(
                 ConversationActivityV2.createIntent(this, address = address)
                     .setDataAndType(intent.data, intent.type)

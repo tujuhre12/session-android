@@ -144,26 +144,26 @@ class HomeActivity : ScreenLockActionBarActivity(),
                     is GlobalSearchAdapter.Model.Message -> ConversationActivityV2
                         .createIntent(
                             this,
-                            address = model.messageResult.conversationRecipient.address,
+                            address = model.messageResult.conversationRecipient.address as Address.Conversable,
                             scrollToMessage = model.messageResult.sentTimestampMs to model.messageResult.messageRecipient.address
                         )
 
                     is GlobalSearchAdapter.Model.SavedMessages -> ConversationActivityV2
                         .createIntent(
                             this,
-                            address = Address.fromSerialized(model.currentUserPublicKey)
+                            address = Address.fromSerialized(model.currentUserPublicKey) as Address.Conversable
                         )
 
                     is GlobalSearchAdapter.Model.Contact -> ConversationActivityV2
                         .createIntent(
                             this,
-                            address = Address.fromSerialized(model.contact.hexString)
+                            address = Address.fromSerialized(model.contact.hexString) as Address.Conversable
                         )
 
                     is GlobalSearchAdapter.Model.GroupConversation -> ConversationActivityV2
                         .createIntent(
                             this,
-                            address = Address.fromSerialized(model.groupId)
+                            address = Address.fromSerialized(model.groupId) as Address.Conversable
                         )
 
                     else -> {
@@ -535,7 +535,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
     }
 
     override fun onConversationClick(thread: ThreadRecord) {
-        push(ConversationActivityV2.createIntent(this, address = thread.recipient.address))
+        push(ConversationActivityV2.createIntent(this, address = thread.recipient.address as Address.Conversable))
     }
 
     override fun onLongConversationClick(thread: ThreadRecord) {

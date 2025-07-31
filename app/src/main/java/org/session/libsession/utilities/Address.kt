@@ -21,7 +21,7 @@ sealed class Address : Parcelable, Comparable<Address> {
 
     override fun compareTo(other: Address) = address.compareTo(other.address)
 
-    data class Group(val id: AccountId) : Address() {
+    data class Group(val id: AccountId) : Conversable() {
         override val address: String
             get() = id.hexString
 
@@ -37,7 +37,7 @@ sealed class Address : Parcelable, Comparable<Address> {
         override fun toString(): String = address
     }
 
-    data class Standard(val id: AccountId) : Address() {
+    data class Standard(val id: AccountId) : Conversable() {
         override val address: String
             get() = id.hexString
 
@@ -69,7 +69,7 @@ sealed class Address : Parcelable, Comparable<Address> {
         override fun toString(): String = address
     }
 
-    data class LegacyGroup(val groupPublicKeyHex: String) : Address() {
+    data class LegacyGroup(val groupPublicKeyHex: String) : Conversable() {
         override val address: String by lazy(LazyThreadSafetyMode.NONE) {
             GroupUtil.doubleEncodeGroupID(groupPublicKeyHex)
         }
@@ -80,7 +80,7 @@ sealed class Address : Parcelable, Comparable<Address> {
         override fun toString(): String = address
     }
 
-    data class CommunityBlindedId(val serverUrl: String, val serverPubKey: String, val blindedId: AccountId) : Address() {
+    data class CommunityBlindedId(val serverUrl: String, val serverPubKey: String, val blindedId: AccountId) : Conversable() {
         override val address: String by lazy(LazyThreadSafetyMode.NONE) {
             GroupUtil.getEncodedOpenGroupInboxAddress(
                 server = serverUrl,
@@ -95,7 +95,7 @@ sealed class Address : Parcelable, Comparable<Address> {
         override fun toString(): String = address
     }
 
-    data class Community(val serverUrl: String, val room: String) : Address() {
+    data class Community(val serverUrl: String, val room: String) : Conversable() {
         constructor(openGroup: OpenGroup): this(
             serverUrl = openGroup.server,
             room = openGroup.room
@@ -120,6 +120,11 @@ sealed class Address : Parcelable, Comparable<Address> {
 
         override fun toString(): String = address
     }
+
+    /**
+     * A marker interface for addresses that can be used to start a conversation
+     */
+    sealed class Conversable : Address()
 
     override fun describeContents(): Int = 0
 
@@ -196,6 +201,10 @@ sealed class Address : Parcelable, Comparable<Address> {
             }
         }
 
+        fun AccountId.toConversableAddress(): Address.Conversable? {
+            return toAddress() as? Address.Conversable
+        }
+
         @JvmField
         val CREATOR: Parcelable.Creator<Address> = object : Parcelable.Creator<Address> {
             override fun createFromParcel(parcel: Parcel): Address {
@@ -235,8 +244,12 @@ val Address.isGroupOrCommunity: Boolean
 val Address.isBlinded: Boolean
     get() = this is Address.Blinded
 
-fun Address.toBlindedId(): AccountId? {
-    return (this as? Address.Blinded)?.blindedId
+/**
+ * Converts this address to a blind [AccountId] if this address contains a blinded ID.
+ */
+fun Address.toBlinded(): Address.Blinded? {
+    return (this as? Address.Blinded)
+        ?: (this as? Address.CommunityBlindedId)?.blindedId?.let(Address::Blinded)
 }
 
 fun Address.toGroupString(): String {

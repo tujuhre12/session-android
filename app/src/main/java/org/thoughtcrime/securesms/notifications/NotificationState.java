@@ -12,6 +12,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2;
@@ -161,7 +162,7 @@ public class NotificationState {
   public PendingIntent getQuickReplyIntent(Context context, Recipient recipient) {
     if (threads.size() != 1) throw new AssertionError("We only support replies to single thread notifications! " + threads.size());
 
-    final Intent intent = ConversationActivityV2.Companion.createIntent(context, recipient.getAddress());
+    final Intent intent = ConversationActivityV2.Companion.createIntent(context, (Address.Conversable) recipient.getAddress());
     intent.setData((Uri.parse("custom://"+System.currentTimeMillis())));
 
     int intentFlags = PendingIntent.FLAG_UPDATE_CURRENT;

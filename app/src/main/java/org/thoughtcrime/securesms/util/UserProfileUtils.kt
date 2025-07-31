@@ -19,12 +19,12 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.isBlinded
+import org.session.libsession.utilities.isCommunityInbox
 import org.session.libsession.utilities.recipients.BasicRecipient
 import org.session.libsession.utilities.recipients.displayName
-import org.session.libsignal.utilities.AccountId
+import org.session.libsession.utilities.toBlinded
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
@@ -57,51 +57,58 @@ class UserProfileUtils @AssistedInject constructor(
     }
 
     private suspend fun getDefaultProfileData(): UserProfileModalData {
-        // if we have a blinded address, check if it can be resolved
-        val openGroup = if (userAddress.isBlinded) storage.getOpenGroup(threadId) else null
-        val recipient = openGroup
-            ?.let {
-                blindedIdMappingRepository.getMapping(
-                    serverUrl = openGroup.server,
-                    blindedAddress = AccountId(userAddress.address)
-                )
-            }
-            ?.let { recipientRepository.getRecipient(it.toAddress()) }
-            ?: recipientRepository.getRecipientOrEmpty(userAddress)
+        // An address that would
+        val resolvedAddress = userAddress.toBlinded()
+            ?.let { blindedIdMappingRepository.findMappings(it).firstOrNull()?.second }
+            ?: userAddress
 
+        val recipient = recipientRepository.getRecipientOrEmpty(resolvedAddress)
 
         // we apply the display rules from figma (the numbers being the number of characters):
         // - if the address is blinded (with a tooltip), display as 10...10
         // - if the address is a resolved blinded id (with a tooltip) 23 / 23 / 20
         // - for the rest: non blinded address which aren't from a community, break in 33 / 33
-        val (displayAddress, tooltipText) = when {
-            recipient.address.isBlinded -> {
-                "${userAddress.address.take(10)}...${userAddress.address.takeLast(10)}" to
-                        context.getString(R.string.tooltipBlindedIdCommunities)
+        val displayAddress: String
+        val tooltipText: CharSequence?
+
+        when {
+            // Case 1: the resolved address is still blinded...
+            resolvedAddress.isBlinded -> {
+                displayAddress = "${resolvedAddress.address.take(10)}...${resolvedAddress.address.takeLast(10)}"
+                tooltipText = context.getString(R.string.tooltipBlindedIdCommunities)
             }
 
-            userAddress.isBlinded -> {
-                "${recipient.address.address.substring(0, 23)}\n${recipient.address.address.substring(23, 46)}\n${recipient.address.address.substring(46)}" to
-                        Phrase.from(context, R.string.tooltipAccountIdVisible)
-                            .put(NAME_KEY, recipient.displayName())
-                            .format()
+            // Case 2: We successfully resolved a blinded id...
+            !resolvedAddress.isBlinded && (userAddress.isBlinded || userAddress.isCommunityInbox) -> {
+                val blindedAddress = userAddress.toBlinded().toString()
+                displayAddress = "${blindedAddress.substring(0, 23)}\n${blindedAddress.substring(23, 46)}\n${blindedAddress.substring(46)}"
+                tooltipText = Phrase.from(context, R.string.tooltipAccountIdVisible)
+                    .put(NAME_KEY, recipient.displayName())
+                    .format()
             }
 
+            // Case 3: The address is not blinded at all...
             else -> {
-                "${userAddress.address.take(33)}\n${userAddress.address.takeLast(33)}" to null
+                displayAddress = "${userAddress.address.take(33)}\n${userAddress.address.takeLast(33)}"
+                tooltipText = null
             }
         }
 
         // The conversation screen can not take a pure blinded address, it will have to be a
         // "Community inbox" address, so we encode it here..
-        val messageAddress = if (recipient.address is Address.Blinded && openGroup != null) {
-            Address.CommunityBlindedId(
-                serverUrl = openGroup.server,
-                serverPubKey = openGroup.publicKey,
-                blindedId = recipient.address.blindedId
-            )
-        } else {
-            recipient.address
+        val messageAddress: Address.Conversable? = when (userAddress) {
+            is Address.Blinded -> {
+                storage.getOpenGroup(threadId)?.let { openGroup ->
+                    Address.CommunityBlindedId(
+                        serverUrl = openGroup.server,
+                        serverPubKey = openGroup.publicKey,
+                        blindedId = userAddress.blindedId
+                    )
+                }
+            }
+
+            is Address.Conversable -> userAddress
+            is Address.Unknown -> null
         }
 
         return UserProfileModalData(
@@ -179,7 +186,7 @@ data class UserProfileModalData(
     val isBlinded: Boolean,
     val tooltipText: CharSequence?,
     val enableMessage: Boolean,
-    val messageAddress: Address, // The address to send to ConversationActivity
+    val messageAddress: Address.Conversable?, // The address to send to ConversationActivity
     val expandedAvatar: Boolean,
     val showQR: Boolean,
     val avatarUIData: AvatarUIData,

@@ -289,12 +289,12 @@ class ConversationViewModel @AssistedInject constructor(
         }
 
         // If we are able to unblind a user, we will navigate to that convo instead
-        GroupUtil.getDecodedOpenGroupInboxID(address.address)?.let { (url, _, blindId) ->
+        (address as? Address.CommunityBlindedId)?.let { address ->
             viewModelScope.launch {
-                blindMappingRepository.observeMapping(url, blindId)
+                blindMappingRepository.observeMapping(address.serverUrl, Address.Blinded(address.blindedId))
                     .filterNotNull()
                     .collect { contactId ->
-                        _uiEvents.emit(ConversationUiEvent.NavigateToConversation(contactId.toAddress()))
+                        _uiEvents.emit(ConversationUiEvent.NavigateToConversation(contactId))
                     }
             }
         }
@@ -1320,7 +1320,7 @@ class ConversationViewModel @AssistedInject constructor(
         data object ConfirmRecreateGroup : Commands
         data object HideRecreateGroupConfirm : Commands
         data object HideRecreateGroup : Commands
-        data class NavigateToConversation(val address: Address) : Commands
+        data class NavigateToConversation(val address: Address.Conversable) : Commands
 
         data object HideUserProfileModal: Commands
         data class HandleUserProfileCommand(
@@ -1333,7 +1333,7 @@ data class UiMessage(val id: Long, val message: String)
 
 
 sealed interface ConversationUiEvent {
-    data class NavigateToConversation(val address: Address) : ConversationUiEvent
+    data class NavigateToConversation(val address: Address.Conversable) : ConversationUiEvent
     data class ShowDisappearingMessages(val address: Address) : ConversationUiEvent
     data class ShowNotificationSettings(val address: Address) : ConversationUiEvent
     data class ShowGroupMembers(val groupId: String) : ConversationUiEvent

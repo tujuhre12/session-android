@@ -44,7 +44,7 @@ class GroupMembersViewModel @AssistedInject constructor(
             val address = Address.fromSerialized(accountId.hexString)
 
             _navigationActions.send(ConversationActivityV2.createIntent(
-                context, address
+                context, address as Address.Conversable
             ))
         }
     }

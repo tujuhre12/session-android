@@ -48,7 +48,7 @@ class NewMessageFragment : Fragment() {
 
     private fun createPrivateChat(hexEncodedPublicKey: String) {
         val address = Address.fromSerialized(hexEncodedPublicKey)
-        ConversationActivityV2.createIntent(requireContext(), address).apply {
+        ConversationActivityV2.createIntent(requireContext(), address as Address.Conversable).apply {
             setDataAndType(requireActivity().intent.data, requireActivity().intent.type)
         }.let(requireContext()::startActivity)
         delegate.onDialogClosePressed()

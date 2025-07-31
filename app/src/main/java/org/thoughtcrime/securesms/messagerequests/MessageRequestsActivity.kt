@@ -73,7 +73,7 @@ class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClick
     }
 
     override fun onConversationClick(thread: ThreadRecord) {
-        push(ConversationActivityV2.createIntent(this, thread.recipient.address))
+        push(ConversationActivityV2.createIntent(this, thread.recipient.address as Address.Conversable))
     }
 
     override fun onBlockConversationClick(thread: ThreadRecord) {

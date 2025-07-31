@@ -151,7 +151,7 @@ class JoinCommunityFragment : Fragment() {
 
     private fun openConversationActivity(context: Context, address: Address) {
         context.startActivity(
-            ConversationActivityV2.createIntent(context, address)
+            ConversationActivityV2.createIntent(context, address as Address.Conversable)
         )
     }
 

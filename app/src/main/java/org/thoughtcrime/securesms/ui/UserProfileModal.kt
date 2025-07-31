@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.ui
 
-import android.content.Intent
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -55,9 +54,10 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.NonTranslatableStringConstants
-import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
+import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.QrImage
@@ -247,7 +247,7 @@ fun UserProfileModal(
                 SlimAccentOutlineButton(
                     modifier = buttonModifier,
                     text = stringResource(R.string.message),
-                    enabled = data.enableMessage,
+                    enabled = data.enableMessage && data.messageAddress != null,
                     onClick = {
                         // close dialog
                         onDismissRequest()
@@ -255,7 +255,7 @@ fun UserProfileModal(
                         // open conversation with user
                         context.startActivity(
                             ConversationActivityV2.createIntent(
-                                context, data.messageAddress
+                                context = context, address = data.messageAddress!!
                             )
                         )
                     }
@@ -523,7 +523,7 @@ private fun PreviewUPM(
                             )
                         )
                     ),
-                    messageAddress = Address.fromSerialized("053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144")
+                    messageAddress = Address.Standard(AccountId("053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144"))
                 )
             )
         }
@@ -583,7 +583,7 @@ private fun PreviewUPMResolved(
                             )
                         )
                     ),
-                    messageAddress = Address.fromSerialized("053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144")
+                    messageAddress = Address.Standard(AccountId("053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144"))
                 )
             )
         }
@@ -644,7 +644,7 @@ private fun PreviewUPMQR(
                             )
                         )
                     ),
-                    messageAddress = Address.fromSerialized("053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144")
+                    messageAddress = Address.Standard(AccountId("053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144"))
                 )
             )
         }
@@ -686,7 +686,7 @@ private fun PreviewUPMCTA(
                         )
                     )
                 ),
-                messageAddress = Address.fromSerialized("053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144")
+                messageAddress = Address.Standard(AccountId("053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144"))
             ),
             onDismissRequest = {},
             sendCommand = {}
