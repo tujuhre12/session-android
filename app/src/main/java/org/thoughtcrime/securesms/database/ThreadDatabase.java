@@ -91,7 +91,7 @@ public class ThreadDatabase extends Database {
   public  static final String ID                     = "_id";
   public  static final String THREAD_CREATION_DATE   = "date";
   public  static final String MESSAGE_COUNT          = "message_count";
-  public  static final String ADDRESS                = "recipient_ids";
+  public  static final String ADDRESS                = "address";
   public  static final String SNIPPET                = "snippet";
   private static final String SNIPPET_CHARSET        = "snippet_cs";
   public  static final String READ                   = "read";
@@ -164,6 +164,8 @@ public class ThreadDatabase extends Database {
     return "ALTER TABLE "+ TABLE_NAME + " " +
             "ADD COLUMN " + UNREAD_MENTION_COUNT + " INTEGER DEFAULT 0;";
   }
+
+  public static final String RENAME_ADDRESS_COLUMN = "ALTER TABLE " + TABLE_NAME + " RENAME COLUMN recipient_ids TO " + ADDRESS;
 
   private ConversationThreadUpdateListener updateListener;
   private final MutableSharedFlow<Long> updateNotifications = SharedFlowKt.MutableSharedFlow(0, 256, BufferOverflow.DROP_OLDEST);

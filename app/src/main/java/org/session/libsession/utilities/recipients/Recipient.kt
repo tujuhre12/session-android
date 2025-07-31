@@ -77,11 +77,9 @@ data class Recipient(
             is BasicRecipient.Self -> true
             is BasicRecipient.Group -> true
             is BasicRecipient.Generic -> {
-                // If the recipient is a blinded address, we will never know if they approved us. So
-                // they will be treated as if they did not approve us.
-                // Of course if we can find out their real address, we will be able to know the status
-                // of approval on that real address, just not on this blinded address.
-                address.toBlindedId() == null
+                // A generic recipient is the one we only have minimal information about,
+                // it's very unlikely they have approved us.
+                false
             }
             is BasicRecipient.Contact -> basic.approvedMe
             is BasicRecipient.Community -> true // Communities don't have approval status for users.

@@ -1,29 +1,17 @@
 package org.thoughtcrime.securesms.database.helpers;
 
-import static org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY;
-
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.content.Context;
 import android.database.Cursor;
-import androidx.annotation.NonNull;
-import androidx.core.app.NotificationCompat;
 
-import com.google.common.io.Files;
-import com.squareup.phrase.Phrase;
-import java.io.File;
-import java.io.IOException;
+import androidx.annotation.NonNull;
 
 import net.zetetic.database.sqlcipher.SQLiteConnection;
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 import net.zetetic.database.sqlcipher.SQLiteDatabaseHook;
 import net.zetetic.database.sqlcipher.SQLiteOpenHelper;
 
-import network.loki.messenger.BuildConfig;
-import network.loki.messenger.R;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsignal.utilities.Log;
-import org.session.libsignal.utilities.guava.Preconditions;
 import org.thoughtcrime.securesms.crypto.DatabaseSecret;
 import org.thoughtcrime.securesms.database.AttachmentDatabase;
 import org.thoughtcrime.securesms.database.BlindedIdMappingDatabase;
@@ -249,6 +237,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     db.execSQL(MmsDatabase.ADD_MESSAGE_CONTENT_COLUMN);
     db.execSQL(ThreadDatabase.ADD_SNIPPET_CONTENT_COLUMN);
 
+    db.execSQL(ThreadDatabase.RENAME_ADDRESS_COLUMN);
     db.execSQL(RecipientSettingsDatabase.MIGRATION_CREATE_TABLE);
     db.execSQL(RecipientSettingsDatabase.MIGRATE_DROP_OLD_TABLE);
     executeStatements(db, ReactionDatabase.MIGRATE_REACTION_TABLE_TO_USE_RECIPIENT_SETTINGS);
@@ -560,6 +549,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
       }
 
       if (oldVersion < lokiV52) {
+        db.execSQL(ThreadDatabase.RENAME_ADDRESS_COLUMN);
         db.execSQL(RecipientSettingsDatabase.MIGRATION_CREATE_TABLE);
         db.execSQL(RecipientSettingsDatabase.MIGRATE_MOVE_DATA_FROM_OLD_TABLE);
         db.execSQL(RecipientSettingsDatabase.MIGRATE_DROP_OLD_TABLE);

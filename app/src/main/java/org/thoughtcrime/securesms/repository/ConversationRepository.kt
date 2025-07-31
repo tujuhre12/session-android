@@ -79,7 +79,6 @@ interface ConversationRepository {
     ): List<Address>
 
     fun maybeGetRecipientForThreadId(threadId: Long): Address?
-    fun maybeGetBlindedRecipient(address: Address): Address?
     fun changes(threadId: Long): Flow<Query>
     fun saveDraft(threadId: Long, text: String)
     fun getDraft(threadId: Long): String?
@@ -250,11 +249,6 @@ class DefaultConversationRepository @Inject constructor(
 
     override fun maybeGetRecipientForThreadId(threadId: Long): Address? {
         return threadDb.getRecipientForThreadId(threadId)
-    }
-
-    override fun maybeGetBlindedRecipient(address: Address): Address? {
-        if (!address.isCommunityInbox) return null
-        return Address.fromSerialized(GroupUtil.getDecodedOpenGroupInboxAccountId(address.toString()))
     }
 
     override fun changes(threadId: Long): Flow<Query> =

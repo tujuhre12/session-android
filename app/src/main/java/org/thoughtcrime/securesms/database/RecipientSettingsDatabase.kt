@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.utilities.Address
+import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
@@ -72,17 +73,19 @@ class RecipientSettingsDatabase @Inject constructor(
         }
 
         Log.d(TAG, "Fetching settings from db for ${address.debugString}")
-        return readableDatabase.rawQuery("SELECT * FROM $TABLE_NAME WHERE $COL_ADDRESS = ?", address)
+        return readableDatabase.rawQuery("SELECT * FROM $TABLE_NAME WHERE $COL_ADDRESS = ?", address.address)
             .use { cursor ->
                 // If no settings are saved in the database, return the empty settings, and cache
                 // that as well so that we don't have to query the database again.
                 val settings = if (cursor.moveToNext()) {
                     cursor.toRecipientSettings()
                 } else {
+                    Log.d(TAG, "No settings found for ${address.debugString}")
                     RecipientSettings()
                 }
 
                 cache.put(address, settings)
+                settings
             }
     }
 
@@ -92,7 +95,7 @@ class RecipientSettingsDatabase @Inject constructor(
             notifyType = readNotifyType(this.getString(this.getColumnIndexOrThrow(COL_NOTIFY_TYPE))),
             autoDownloadAttachments = this.getInt(this.getColumnIndexOrThrow(COL_AUTO_DOWNLOAD_ATTACHMENTS)) == 1,
             profilePic = readUserProfile(
-                keyHex = this.getString(this.getColumnIndexOrThrow(COL_PROFILE_PIC_KEY)),
+                keyB64 = this.getString(this.getColumnIndexOrThrow(COL_PROFILE_PIC_KEY)),
                 url = this.getString(this.getColumnIndexOrThrow(COL_PROFILE_PIC_URL))
             ),
             blocksCommunityMessagesRequests = this.getInt(this.getColumnIndexOrThrow(COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS)) == 1,
@@ -106,17 +109,17 @@ class RecipientSettingsDatabase @Inject constructor(
             put(COL_MUTE_UNTIL, muteUntil)
             put(COL_NOTIFY_TYPE, notifyType.name)
             put(COL_AUTO_DOWNLOAD_ATTACHMENTS, autoDownloadAttachments)
-            put(COL_PROFILE_PIC_KEY, profilePic?.key?.data?.let(Hex::toStringCondensed))
+            put(COL_PROFILE_PIC_KEY, profilePic?.key?.data?.let(Base64::encodeBytes))
             put(COL_PROFILE_PIC_URL, profilePic?.url)
             put(COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS, blocksCommunityMessagesRequests)
         }
     }
 
-    private fun readUserProfile(keyHex: String?, url: String?): UserPic? {
-        return if (keyHex.isNullOrEmpty() || url.isNullOrEmpty()) {
+    private fun readUserProfile(keyB64: String?, url: String?): UserPic? {
+        return if (keyB64.isNullOrBlank() || url.isNullOrEmpty()) {
             null
         } else {
-            UserPic(url, Hex.fromStringCondensed(keyHex))
+            UserPic(url, Base64.decode(keyB64))
         }
     }
 
@@ -135,7 +138,7 @@ class RecipientSettingsDatabase @Inject constructor(
         private const val COL_MUTE_UNTIL = "mute_until"
         private const val COL_NOTIFY_TYPE = "notify_type"
         private const val COL_AUTO_DOWNLOAD_ATTACHMENTS = "auto_download_attachments"
-        private const val COL_PROFILE_PIC_KEY = "profile_pic_key"
+        private const val COL_PROFILE_PIC_KEY = "profile_pic_key_b64"
         private const val COL_PROFILE_PIC_URL = "profile_pic_url"
         private const val COL_NAME = "name"
         private const val COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS = "blocks_community_messages_requests"
@@ -179,6 +182,7 @@ class RecipientSettingsDatabase @Inject constructor(
                 r.blocks_community_message_requests
             FROM recipient_preferences r
         """
+
 
         const val MIGRATE_DROP_OLD_TABLE = """
             DROP TABLE recipient_preferences

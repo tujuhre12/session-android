@@ -178,8 +178,8 @@ class RecipientRepository @Inject constructor(
                 // from the db instead, this is because the "community inbox" recipient is never
                 // updated from anywhere, it's purely an address to start a conversation. The data
                 // like name and avatar were all updated to the blinded recipients.
-                val settings = if (address.isCommunityInbox) {
-                    settingsFetcher(address.toBlindedId()!!.toAddress())
+                val settings = if (address is Address.CommunityBlindedId) {
+                    settingsFetcher(address.blindedId.toAddress())
                 } else {
                     settingsFetcher(address)
                 }
@@ -235,7 +235,7 @@ class RecipientRepository @Inject constructor(
                             recipientSettingsDatabase.changeNotification.filter { it == monitoringAddress }
                     }
 
-                    IdPrefix.fromValue(address.address) == IdPrefix.STANDARD -> {
+                    address.isStandard -> {
                         // If we are a standard address, last attempt to find the
                         // recipient inside all closed groups' member list
                         // members:
