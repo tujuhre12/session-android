@@ -51,7 +51,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -63,22 +62,32 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
-import com.squareup.phrase.Phrase
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.NonTranslatableStringConstants.NETWORK_NAME
-import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.HideNicknameDialog
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.RemoveNickname
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.SetNickname
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.UpdateNickname
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.home.PathActivity
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.TempAvatar
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.UserAvatar
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.*
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ClearData
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideAnimatedProCTA
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideAvatarPickerOptions
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideClearDataDialog
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideUrlDialog
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideUsernameDialog
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.OnAvatarDialogDismissed
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.OnDonateClicked
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.RemoveAvatar
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.SaveAvatar
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.SetUsername
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowAnimatedProCTA
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowAvatarDialog
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowClearDataDialog
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowUrlDialog
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowUsernameDialog
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.UpdateUsername
 import org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActivity
 import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
 import org.thoughtcrime.securesms.tokenpage.TokenPageActivity
@@ -86,8 +95,6 @@ import org.thoughtcrime.securesms.ui.AccountIdHeader
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.AnimatedProfilePicProCTA
 import org.thoughtcrime.securesms.ui.AnimatedSessionProActivatedCTA
-import org.thoughtcrime.securesms.ui.AnimatedSessionProCTA
-import org.thoughtcrime.securesms.ui.CTAFeature
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.Divider
@@ -96,6 +103,7 @@ import org.thoughtcrime.securesms.ui.LargeItemButton
 import org.thoughtcrime.securesms.ui.LargeItemButtonWithDrawable
 import org.thoughtcrime.securesms.ui.LoadingDialog
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
+import org.thoughtcrime.securesms.ui.PathDot
 import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.components.AcccentOutlineCopyButton
@@ -119,7 +127,8 @@ import org.thoughtcrime.securesms.ui.theme.accentTextButtonColors
 import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
 import org.thoughtcrime.securesms.ui.theme.monospace
 import org.thoughtcrime.securesms.ui.theme.primaryBlue
-import org.thoughtcrime.securesms.ui.theme.transparentButtonColors
+import org.thoughtcrime.securesms.ui.theme.primaryGreen
+import org.thoughtcrime.securesms.ui.theme.primaryYellow
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
 import org.thoughtcrime.securesms.util.push
@@ -495,10 +504,16 @@ fun Buttons(
                 }
                 Divider()
 
-                Crossfade(if (hasPaths) R.drawable.ic_status else R.drawable.ic_path_yellow, label = "path") {
-                    LargeItemButtonWithDrawable(
-                        GetString(R.string.onionRoutingPath),
-                        it,
+                Crossfade(if (hasPaths) primaryGreen else primaryYellow, label = "path") {
+                    LargeItemButton(
+                        AnnotatedString(stringResource(R.string.onionRoutingPath)),
+                        icon = {
+                            PathDot(
+                                modifier = Modifier.align(Alignment.Center),
+                                dotSize = LocalDimensions.current.iconSmall,
+                                color = it
+                            )
+                        },
                     ) { activity?.push<PathActivity>() }
                 }
                 Divider()
@@ -834,7 +849,9 @@ fun AvatarDialog(
                         .padding(LocalDimensions.current.xxxsSpacing)
                         .align(Alignment.BottomEnd)
                     ,
-                    painter = painterResource(id = R.drawable.ic_plus),
+                    painter = painterResource(id =
+                        if(state is SettingsViewModel.AvatarDialogState.NoAvatar) R.drawable.ic_plus
+                        else R.drawable.ic_pencil),
                     contentDescription = null,
                     colorFilter = ColorFilter.tint(Color.Black)
                 )
