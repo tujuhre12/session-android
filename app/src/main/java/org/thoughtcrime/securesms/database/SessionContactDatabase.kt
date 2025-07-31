@@ -29,5 +29,8 @@ class SessionContactDatabase(context: Context, helper: Provider<SQLCipherOpenHel
                 "$profilePictureEncryptionKey BLOB DEFAULT NULL, " +
                 "$threadID INTEGER DEFAULT -1, " +
                 "$isTrusted INTEGER DEFAULT 0);"
+
+        @JvmStatic
+        val dropTableCommand = "DROP TABLE $sessionContactTable"
     }
 }

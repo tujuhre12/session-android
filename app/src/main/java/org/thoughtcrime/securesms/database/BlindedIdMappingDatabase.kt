@@ -26,6 +26,9 @@ class BlindedIdMappingDatabase(context: Context, helper: Provider<SQLCipherOpenH
       )
     """.trimIndent()
 
+        @JvmField
+        val DROP_TABLE_COMMAND = "DROP TABLE $TABLE_NAME"
+
     }
 
 }

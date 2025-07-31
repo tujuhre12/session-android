@@ -144,6 +144,8 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
       // incomplete migrations
       false
     );
+
+    Log.d(TAG, "SQLCipherOpenHelper created with database secret: " + databaseSecret.asString());
   }
 
   @Override
@@ -250,6 +252,9 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     db.execSQL(RecipientSettingsDatabase.MIGRATION_CREATE_TABLE);
     db.execSQL(RecipientSettingsDatabase.MIGRATE_DROP_OLD_TABLE);
     executeStatements(db, ReactionDatabase.MIGRATE_REACTION_TABLE_TO_USE_RECIPIENT_SETTINGS);
+    db.execSQL(BlindedIdMappingDatabase.DROP_TABLE_COMMAND);
+    db.execSQL(ExpirationConfigurationDatabase.DROP_TABLE_COMMAND);
+    db.execSQL(SessionContactDatabase.getDropTableCommand());
   }
 
   @Override
@@ -559,6 +564,9 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
         db.execSQL(RecipientSettingsDatabase.MIGRATE_MOVE_DATA_FROM_OLD_TABLE);
         db.execSQL(RecipientSettingsDatabase.MIGRATE_DROP_OLD_TABLE);
         executeStatements(db, ReactionDatabase.MIGRATE_REACTION_TABLE_TO_USE_RECIPIENT_SETTINGS);
+        db.execSQL(BlindedIdMappingDatabase.DROP_TABLE_COMMAND);
+        db.execSQL(ExpirationConfigurationDatabase.DROP_TABLE_COMMAND);
+        db.execSQL(SessionContactDatabase.getDropTableCommand());
       }
 
       db.setTransactionSuccessful();
