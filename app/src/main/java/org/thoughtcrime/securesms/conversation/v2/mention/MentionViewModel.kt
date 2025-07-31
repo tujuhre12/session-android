@@ -111,7 +111,7 @@ class MentionViewModel(
                     }
                     recipient.isCommunityRecipient -> mmsSmsDatabase.getRecentChatMemberAddresses(
                         threadID,
-                        20
+                        300
                     )
                     recipient.isContactRecipient -> listOf(recipient.address.toString())
                     else -> listOf()
