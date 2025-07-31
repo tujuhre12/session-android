@@ -20,8 +20,10 @@ import org.robolectric.RobolectricTestRunner
 import org.session.libsession.messaging.open_groups.GroupMemberRole
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.recipients.BasicRecipient
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.BaseViewModelTest
 import org.thoughtcrime.securesms.MainCoroutineRule
@@ -50,18 +52,17 @@ class MentionViewModelTest : BaseViewModelTest() {
 
     private val threadMembers = listOf(
         MemberInfo("You", myId.hexString, listOf(GroupMemberRole.STANDARD), isMe = true),
-        MemberInfo("Alice", "pubkey1", listOf(GroupMemberRole.ADMIN), isMe = false),
-        MemberInfo("Bob", "pubkey2", listOf(GroupMemberRole.STANDARD), isMe = false),
-        MemberInfo("Charlie", "pubkey3", listOf(GroupMemberRole.MODERATOR), isMe = false),
-        MemberInfo("David", "pubkey4", listOf(GroupMemberRole.HIDDEN_ADMIN), isMe = false),
-        MemberInfo("Eve", "pubkey5", listOf(GroupMemberRole.HIDDEN_MODERATOR), isMe = false),
-        MemberInfo("李云海", "pubkey6", listOf(GroupMemberRole.ZOOMBIE), isMe = false),
+        MemberInfo("Alice", "151234567890123456789012345678901234567890123456789012345678901235", listOf(GroupMemberRole.ADMIN), isMe = false),
+        MemberInfo("Bob", "151234567890123456789012345678901234567890123456789012345678901236", listOf(GroupMemberRole.STANDARD), isMe = false),
+        MemberInfo("Charlie", "151234567890123456789012345678901234567890123456789012345678901237", listOf(GroupMemberRole.MODERATOR), isMe = false),
+        MemberInfo("David", "151234567890123456789012345678901234567890123456789012345678901238", listOf(GroupMemberRole.HIDDEN_ADMIN), isMe = false),
+        MemberInfo("Eve", "151234567890123456789012345678901234567890123456789012345678901239", listOf(GroupMemberRole.HIDDEN_MODERATOR), isMe = false),
+        MemberInfo("李云海", "151234567890123456789012345678901234567890123456789012345678901240", listOf(GroupMemberRole.ZOOMBIE), isMe = false),
     )
 
     private val openGroup = OpenGroup(
         server = "http://url",
         room = "room",
-        id = "open_group_id_1",
         name = "Open Group",
         publicKey = "",
         imageId = null,
@@ -81,6 +82,7 @@ class MentionViewModelTest : BaseViewModelTest() {
         mentionViewModel = MentionViewModel(
             threadDatabase = mock {
                 on { getRecipientForThreadId(threadID) } doReturn communityRecipient.address
+                on { getThreadIdIfExistsFor(communityRecipient.address) } doReturn threadID
             },
             groupDatabase = mock {
             },
@@ -100,7 +102,7 @@ class MentionViewModelTest : BaseViewModelTest() {
             configFactory = mock(),
             application = InstrumentationRegistry.getInstrumentation().context as android.app.Application,
             mmsSmsDatabase = mock {
-                on { getRecentChatMemberAddresses(threadID, any())} doAnswer {
+                on { getRecentChatMemberAddresses(eq(threadID), any())} doAnswer {
                     val limit = it.arguments[1] as Int
                     threadMembers.take(limit).map { m -> m.pubKey }
                 }
@@ -108,6 +110,20 @@ class MentionViewModelTest : BaseViewModelTest() {
             address = communityRecipient.address,
             recipientRepository = mock {
                 on { getRecipientSyncOrEmpty(communityRecipient.address) } doReturn communityRecipient
+                on { getRecipientSync(any()) } doAnswer {
+                    val address = it.arguments[0] as Address
+                    if (address == communityRecipient.address) {
+                        communityRecipient
+                    } else {
+                        threadMembers.firstOrNull { m -> m.pubKey == address.address }
+                            ?.let { m ->
+                                Recipient(
+                                    address = m.pubKey.toAddress(),
+                                    basic = BasicRecipient.Generic(displayName = m.name)
+                                )
+                            }
+                    }
+                }
                 on { observeRecipient(communityRecipient.address) } doAnswer {
                     flowOf(communityRecipient)
                 }
@@ -135,8 +151,8 @@ class MentionViewModelTest : BaseViewModelTest() {
                     .isInstanceOf(MentionViewModel.AutoCompleteState.Result::class.java)
                 result as MentionViewModel.AutoCompleteState.Result
 
-                assertThat(result.members).isEqualTo(threadMembers.mapIndexed { index, m ->
-                    val name = if (m.isMe) "You" else m.name
+                assertThat(result.members).isEqualTo(threadMembers.map { m ->
+                    val name = if (m.isMe) "You" else "${m.name} (${truncateIdForDisplay(m.pubKey)})"
 
                     MentionViewModel.Candidate(
                         MentionViewModel.Member(m.pubKey, name, m.roles.any { it.isModerator }, isMe = m.isMe),
@@ -157,8 +173,8 @@ class MentionViewModelTest : BaseViewModelTest() {
                     .isInstanceOf(MentionViewModel.AutoCompleteState.Result::class.java)
                 result as MentionViewModel.AutoCompleteState.Result
 
-                assertThat(result.members[0].member.name).isEqualTo("Alice (pubkey1)")
-                assertThat(result.members[1].member.name).isEqualTo("Charlie (pubkey3)")
+                assertThat(result.members[0].member.name).isEqualTo("Alice (1512…1235)")
+                assertThat(result.members[1].member.name).isEqualTo("Charlie (1512…1237)")
             }
         }
     }
@@ -179,16 +195,17 @@ class MentionViewModelTest : BaseViewModelTest() {
             // Select a candidate now
             assertThat(awaitItem())
                 .isInstanceOf(MentionViewModel.AutoCompleteState.Result::class.java)
-            mentionViewModel.onCandidateSelected("pubkey1")
+            val key = threadMembers[0].pubKey // Select the first candidate (You)
+            mentionViewModel.onCandidateSelected(key)
 
             // Should have normalised message with selected candidate
             assertThat(mentionViewModel.normalizeMessageBody())
-                .isEqualTo("Hi @pubkey1")
+                .isEqualTo("Hi @$key")
 
             // Should have correct normalised message even with the last space deleted
             editable.delete(editable.length - 1, editable.length)
             assertThat(mentionViewModel.normalizeMessageBody())
-                .isEqualTo("Hi @pubkey1")
+                .isEqualTo("Hi @$key")
         }
     }
 }

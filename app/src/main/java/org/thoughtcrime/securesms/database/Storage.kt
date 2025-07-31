@@ -196,14 +196,8 @@ open class Storage @Inject constructor(
     override fun getUserED25519KeyPair(): KeyPair? { return KeyPairUtilities.getUserED25519KeyPair(context) }
 
     override fun getUserBlindedAccountId(serverPublicKey: String): AccountId? {
-        val userKeyPair = getUserED25519KeyPair() ?: return null
-        return AccountId(
-            IdPrefix.BLINDED,
-            BlindKeyAPI.blind15KeyPairOrNull(
-                ed25519SecretKey = userKeyPair.secretKey.data,
-                serverPubKey = Hex.fromStringCondensed(serverPublicKey),
-            )!!.pubKey.data
-        )
+        val myId = getUserPublicKey() ?: return null
+        return AccountId(BlindKeyAPI.blind15Ids(myId, serverPublicKey).first())
     }
 
     override fun getUserProfile(): Profile {
