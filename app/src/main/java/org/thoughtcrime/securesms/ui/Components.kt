@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -31,6 +32,7 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
@@ -85,7 +87,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.google.accompanist.drawablepainter.rememberDrawablePainter
+import androidx.compose.ui.unit.times
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -144,6 +146,62 @@ fun AccountIdHeader(
         )
     }
 }
+
+@Composable
+fun PathDot(
+    modifier: Modifier = Modifier,
+    dotSize: Dp = LocalDimensions.current.iconMedium,
+    glowSize: Dp = LocalDimensions.current.xxsSpacing,
+    color: Color = primaryGreen
+) {
+    val fullSize = dotSize + 2 * glowSize
+    Box(
+        modifier = modifier.size(fullSize),
+        contentAlignment = Alignment.Center
+    ) {
+        // Glow effect (outer circle with radial gradient)
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val center = Offset(this.size.width / 2, this.size.height / 2)
+            val radius = (fullSize * 0.5f).toPx()
+
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        color, // Start color (opaque)
+                        color.copy(alpha = 0f)  // End color (transparent)
+                    ),
+                    center = center,
+                    radius = radius
+                ),
+                center = center,
+                radius = radius
+            )
+        }
+
+        // Inner solid dot
+        Box(
+            modifier = Modifier
+                .size(dotSize)
+                .background(
+                    color = color,
+                    shape = CircleShape
+                )
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewPathDot(){
+    PreviewTheme {
+        Box(
+            modifier = Modifier.padding(20.dp)
+        ) {
+            PathDot()
+        }
+    }
+}
+
 
 data class RadioOption<T>(
     val value: T,
@@ -232,14 +290,12 @@ fun ItemButtonWithDrawable(
     shape: Shape = RectangleShape,
     onClick: () -> Unit
 ) {
-    val context = LocalContext.current
-
     ItemButton(
         annotatedStringText = AnnotatedString(text.string()),
         modifier = modifier,
         icon = {
             Image(
-                painter = rememberDrawablePainter(drawable = AppCompatResources.getDrawable(context, icon)),
+                painter = painterResource(id = icon),
                 contentDescription = null,
                 colorFilter = iconTint?.let { ColorFilter.tint(it) },
                 modifier = Modifier.align(Alignment.Center)
@@ -318,7 +374,7 @@ fun LargeItemButton(
 @Composable
 fun LargeItemButton(
     annotatedStringText: AnnotatedString,
-    @DrawableRes icon: Int,
+    icon: @Composable BoxScope.() -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     colors: ButtonColors = transparentButtonColors(),
