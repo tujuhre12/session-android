@@ -54,6 +54,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
@@ -99,9 +100,9 @@ import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LargeItemButton
-import org.thoughtcrime.securesms.ui.LargeItemButtonWithDrawable
 import org.thoughtcrime.securesms.ui.LoadingDialog
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
+import org.thoughtcrime.securesms.ui.PathDot
 import org.thoughtcrime.securesms.ui.components.AcccentOutlineCopyButton
 import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.Avatar
@@ -118,6 +119,8 @@ import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.accentTextButtonColors
 import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
+import org.thoughtcrime.securesms.ui.theme.primaryGreen
+import org.thoughtcrime.securesms.ui.theme.primaryYellow
 import org.thoughtcrime.securesms.util.FileProviderUtil
 import org.thoughtcrime.securesms.util.applyCommonWindowInsetsOnViews
 import org.thoughtcrime.securesms.util.push
@@ -532,10 +535,16 @@ class SettingsActivity : ScreenLockActionBarActivity() {
 
             Cell {
                 Column {
-                    Crossfade(if (hasPaths) R.drawable.ic_status else R.drawable.ic_path_yellow, label = "path") {
-                        LargeItemButtonWithDrawable(
-                            R.string.onionRoutingPath,
-                            it,
+                    Crossfade(if (hasPaths) primaryGreen else primaryYellow, label = "path") {
+                        LargeItemButton(
+                            AnnotatedString(stringResource(R.string.onionRoutingPath)),
+                            icon = {
+                                PathDot(
+                                    modifier = Modifier.align(Alignment.Center),
+                                    dotSize = LocalDimensions.current.iconSmall,
+                                    color = it
+                                )
+                            },
                             shape = if (BuildConfig.BUILD_TYPE != "release") RectangleShape
                             else getCellTopShape()
                         ) { push<PathActivity>() }

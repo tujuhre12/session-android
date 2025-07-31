@@ -3,7 +3,6 @@ androidMinSdkVersion = "26"
 androidTargetSdkVersion = "35"
 androidCompileSdkVersion = "35"
 accompanistPermissionsVersion = "0.37.3"
-accompanistThemeadapterAppcompatVersion = "0.33.1-alpha"
 activityKtxVersion = "1.10.1"
 androidImageCropperVersion = "4.5.0"
 androidVersion = "125.6422.07"
@@ -79,7 +78,6 @@ huaweiPushVersion = "6.7.0.300"
 googlePlayReviewVersion = "2.0.2"
 
 [libraries]
-accompanist-drawablepainter = { module = "com.google.accompanist:accompanist-drawablepainter", version.ref = "accompanistThemeadapterAppcompatVersion" }
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissionsVersion" }
 android = { module = "io.github.webrtc-sdk:android", version.ref = "androidVersion" }
 android-image-cropper = { module = "com.vanniktech:android-image-cropper", version.ref = "androidImageCropperVersion" }
