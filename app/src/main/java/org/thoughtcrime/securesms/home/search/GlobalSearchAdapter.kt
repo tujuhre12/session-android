@@ -176,7 +176,7 @@ class GlobalSearchAdapter(
             val legacyMembersString: String?,
             val showProBadge: Boolean
         ) : Model {
-            constructor(context: Context, groupRecord: GroupRecord, showProBadge: Boolean):
+            constructor(groupRecord: GroupRecord, showProBadge: Boolean):
                     this(
                         isLegacy = groupRecord.isLegacyGroup,
                         groupId = groupRecord.encodedId,

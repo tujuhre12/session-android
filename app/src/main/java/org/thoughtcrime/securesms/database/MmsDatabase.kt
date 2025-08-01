@@ -1428,7 +1428,7 @@ class MmsDatabase @Inject constructor(
             )
             return Quote(
                 quoteId,
-                fromSerialized(quoteAuthor),
+                recipientRepository.getRecipientSyncOrEmpty(quoteAuthor.toAddress()),
                 quoteText,
                 quoteMissing,
                 quoteDeck

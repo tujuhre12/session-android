@@ -30,27 +30,19 @@ import org.thoughtcrime.securesms.util.AvatarUtils
 
 @HiltViewModel(assistedFactory = CreateGroupViewModel.Factory::class)
 class CreateGroupViewModel @AssistedInject constructor(
-    configFactory: ConfigFactory,
     @ApplicationContext private val appContext: Context,
     private val storage: StorageProtocol,
     private val groupManagerV2: GroupManagerV2,
-    private val avatarUtils: AvatarUtils,
-    private val proStatusManager: ProStatusManager,
     groupDatabase: GroupDatabase,
     @Assisted createFromLegacyGroupId: String?,
-    recipientRepository: RecipientRepository,
+    selectContactsViewModelFactory: SelectContactsViewModel.Factory
 ): ViewModel() {
     // Child view model to handle contact selection logic
     //todo we should probably extend this VM instead of instantiating it here
-    val selectContactsViewModel = SelectContactsViewModel(
-        configFactory = configFactory,
+    val selectContactsViewModel = selectContactsViewModelFactory.create(
         excludingAccountIDs = emptySet(),
         applyDefaultFiltering = true,
         scope = viewModelScope,
-        avatarUtils = avatarUtils,
-        recipientRepository = recipientRepository,
-        appContext = appContext,
-        proStatusManager = proStatusManager
     )
 
     // Input: group name

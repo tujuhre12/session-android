@@ -39,7 +39,6 @@ open class SelectContactsViewModel @AssistedInject constructor(
     private val configFactory: ConfigFactory,
     private val avatarUtils: AvatarUtils,
     private val proStatusManager: ProStatusManager,
-    @ApplicationContext private val appContext: Context,
     @Assisted private val excludingAccountIDs: Set<AccountId>,
     @Assisted private val applyDefaultFiltering: Boolean, // true by default - If true will filter out blocked and unapproved contacts
     @Assisted private val scope: CoroutineScope,

@@ -31,13 +31,12 @@ import org.thoughtcrime.securesms.util.AvatarUtils
 @HiltViewModel(assistedFactory = EditGroupViewModel.Factory::class)
 class EditGroupViewModel @AssistedInject constructor(
     @Assisted private val groupId: AccountId,
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     storage: StorageProtocol,
     private val configFactory: ConfigFactoryProtocol,
     private val groupManager: GroupManagerV2,
-    avatarUtils: AvatarUtils,
     private val recipientRepository: RecipientRepository,
-    private val avatarUtils: AvatarUtils,
+    avatarUtils: AvatarUtils,
     proStatusManager: ProStatusManager,
 ) : BaseGroupMembersViewModel(groupId, context, storage, configFactory, avatarUtils, recipientRepository, proStatusManager) {
 

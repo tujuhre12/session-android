@@ -299,7 +299,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
             deprecationManager = legacyGroupDeprecationManager.get(),
             recipientRepository = recipientRepository.get(),
             proStatusManager = proStatusManager.get(),
-            usernameUtils = usernameUtils.get(),
             messageSendJobFactory = messageSendJobFactory,
         )
 

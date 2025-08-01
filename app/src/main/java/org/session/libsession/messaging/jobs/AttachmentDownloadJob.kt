@@ -34,7 +34,8 @@ class AttachmentDownloadJob @AssistedInject constructor(
     @Assisted val mmsMessageId: Long,
     @param:ApplicationContext private val context: Context,
     private val storage: StorageProtocol,
-    private val messageDataProvider: MessageDataProvider
+    private val messageDataProvider: MessageDataProvider,
+    private val recipientRepository: RecipientRepository,
 ) : Job {
     override var delegate: JobDelegate? = null
     override var id: String? = null
@@ -138,7 +139,7 @@ class AttachmentDownloadJob @AssistedInject constructor(
         if (!eligibleForDownload(
                 threadID = threadID,
                 storage = storage,
-                recipientRepository = MessagingModuleConfiguration.shared.recipientRepository,
+                recipientRepository = recipientRepository,
                 messageDataProvider = messageDataProvider,
                 mmsId = mmsMessageId
             )) {

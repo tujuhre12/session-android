@@ -17,8 +17,8 @@ import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.utilities.AppTextSecurePreferences
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
-import org.thoughtcrime.securesms.database.model.content.MessageContent
 import org.thoughtcrime.securesms.groups.GroupManagerV2Impl
 import org.thoughtcrime.securesms.notifications.OptimizedMessageNotifier
 import org.thoughtcrime.securesms.repository.ConversationRepository

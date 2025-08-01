@@ -44,6 +44,7 @@ import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
@@ -454,7 +455,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
             it.address.address == publicKey,
             showProBadge = proStatusManager.shouldShowProBadge(it.address)) } +
             threads.map {
-                GlobalSearchAdapter.Model.GroupConversation(it, showProBadge = proStatusManager.shouldShowProBadge(it.address))
+                GlobalSearchAdapter.Model.GroupConversation(it, showProBadge = proStatusManager.shouldShowProBadge(it.encodedId.toAddress()))
             }
 
     private val GlobalSearchResult.messageResults: List<GlobalSearchAdapter.Model> get() {

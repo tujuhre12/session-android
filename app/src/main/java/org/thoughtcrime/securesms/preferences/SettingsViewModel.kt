@@ -12,8 +12,13 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Dispatchers.Main
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -29,6 +34,7 @@ import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ProfileKeyUtil
 import org.session.libsession.utilities.ProfilePictureUtilities
 import org.session.libsession.utilities.SSKEnvironment
@@ -56,9 +62,10 @@ import java.io.File
 import java.io.IOException
 import javax.inject.Inject
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val prefs: TextSecurePreferences,
     private val configFactory: ConfigFactory,
     private val connectivity: NetworkConnectivity,
@@ -76,11 +83,11 @@ class SettingsViewModel @Inject constructor(
     val hexEncodedPublicKey: String = prefs.getLocalNumber() ?: ""
 
     private val userRecipient by lazy {
-        recipientRepository.getRecipientSync(Address.fromSerialized(hexEncodedPublicKey))
+        recipientRepository.getRecipientSyncOrEmpty(Address.fromSerialized(hexEncodedPublicKey))
     }
 
     private val _uiState = MutableStateFlow(UIState(
-        username = usernameUtils.getCurrentUsernameWithAccountIdFallback(),
+        username = "",
         accountID = hexEncodedPublicKey,
         hasPath = true,
         version = getVersionNumber(),
@@ -94,6 +101,17 @@ class SettingsViewModel @Inject constructor(
 
     init {
         updateAvatar()
+
+        // observe current user
+        viewModelScope.launch {
+            prefs.watchLocalNumber()
+                .filterNotNull()
+                .map { it.toAddress() }
+                .flatMapLatest(recipientRepository::observeRecipient)
+                .collectLatest {
+                    _uiState.update { it.copy(username = it.username) }
+                }
+        }
 
         // set default dialog ui
         viewModelScope.launch {
@@ -438,8 +456,9 @@ class SettingsViewModel @Inject constructor(
 
         // save username
         _uiState.update { it.copy(username = name) }
-        prefs.setProfileName(name)
-        usernameUtils.saveCurrentUserName(name)
+        configFactory.withMutableUserConfigs {
+            it.userProfile.setName(name)
+        }
     }
 
     fun onCommand(command: Commands) {
@@ -525,7 +544,7 @@ class SettingsViewModel @Inject constructor(
                 val trimmedName = command.name.trim()
 
                 val error: String? = when {
-                    trimmedName.textSizeInBytes() >  SSKEnvironment.ProfileManagerProtocol.NAME_PADDED_LENGTH ->
+                    trimmedName.textSizeInBytes() > 100 ->
                         context.getString(R.string.displayNameErrorDescriptionShorter)
 
                     else -> null

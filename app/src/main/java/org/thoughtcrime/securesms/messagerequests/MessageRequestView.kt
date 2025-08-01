@@ -29,6 +29,7 @@ import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.UnreadStylingHelper
 import org.thoughtcrime.securesms.util.getAccentColor
 import java.util.Locale
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MessageRequestView : LinearLayout {
@@ -36,7 +37,8 @@ class MessageRequestView : LinearLayout {
     private val screenWidth = Resources.getSystem().displayMetrics.widthPixels
     var thread: ThreadRecord? = null
 
-    @Inject lateinit var proStatusManager: ProStatusManager
+    @Inject
+    lateinit var proStatusManager: ProStatusManager
 
     // region Lifecycle
     constructor(context: Context) : super(context) { initialize() }

@@ -72,7 +72,6 @@ class RecipientSettingsDatabase @Inject constructor(
             return existing
         }
 
-        Log.d(TAG, "Fetching settings from db for ${address.debugString}")
         return readableDatabase.rawQuery("SELECT * FROM $TABLE_NAME WHERE $COL_ADDRESS = ?", address.address)
             .use { cursor ->
                 // If no settings are saved in the database, return the empty settings, and cache
@@ -80,7 +79,6 @@ class RecipientSettingsDatabase @Inject constructor(
                 val settings = if (cursor.moveToNext()) {
                     cursor.toRecipientSettings()
                 } else {
-                    Log.d(TAG, "No settings found for ${address.debugString}")
                     RecipientSettings()
                 }
 

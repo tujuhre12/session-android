@@ -16,13 +16,6 @@ import com.canhub.cropper.CropImageOptions
 import com.canhub.cropper.CropImageView
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
-import network.loki.messenger.databinding.ActivitySettingsBinding
-import org.session.libsession.messaging.messages.ProfileUpdateHandler
-import org.session.libsession.snode.OnionRequestAPI
-import org.session.libsession.utilities.NonTranslatableStringConstants
-import org.session.libsession.utilities.NonTranslatableStringConstants.NETWORK_NAME
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.VERSION_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getColorFromAttr
 import org.thoughtcrime.securesms.FullComposeScreenLockActivity

@@ -9,7 +9,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import dev.fanchao.sqliteviewer.model.SupportQueryable
+import dev.fanchao.sqliteviewer.startDatabaseViewerServer
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,7 +35,7 @@ import org.session.libsignal.utilities.hexEncodedPublicKey
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
-import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.repository.ConversationRepository
@@ -55,6 +58,7 @@ class DebugMenuViewModel @Inject constructor(
     private val recipientDatabase: RecipientSettingsDatabase,
     private val attachmentDatabase: AttachmentDatabase,
     private val conversationRepository: ConversationRepository,
+    private val openHelper: SQLCipherOpenHelper,
 ) : ViewModel() {
     private val TAG = "DebugMenu"
 
@@ -251,6 +255,15 @@ class DebugMenuViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(messageProFeature = features)
                 }
+            }
+
+            Commands.StartDatabaseInspector -> {
+                startDatabaseViewerServer(
+                    GlobalScope,
+                    context.applicationContext,
+                    3000,
+                    queryable = SupportQueryable(openHelper.writableDatabase)
+                )
             }
         }
     }

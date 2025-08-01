@@ -1,7 +1,5 @@
 package org.thoughtcrime.securesms.ui
 
-import androidx.compose.animation.Crossfade
-import android.content.Intent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -37,8 +35,8 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
+import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
-import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2.Companion.ADDRESS
 import org.thoughtcrime.securesms.ui.components.SlimAccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.SlimOutlineCopyButton
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource

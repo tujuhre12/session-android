@@ -85,9 +85,8 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
         // Author
         val authorDisplayName =
             if (authorRecipient.isLocalNumber) context.getString(R.string.you)
-            else author.displayName(attachesBlindedId = true)
+            else authorRecipient.displayName(attachesBlindedId = false)
 
-        binding.quoteViewAuthorTextView.text = authorDisplayName
         val textColor = getTextColor(isOutgoingMessage)
 
         // set up quote author
@@ -101,7 +100,7 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
             setThemedContent {
                 ProBadgeText(
                     modifier = modifier,
-                    text = authorDisplayName, //todo badge we need to rework te naming logic to get the name (no account id for blinded here...) - waiting on the Recipient refactor
+                    text = authorDisplayName,
                     textStyle = LocalType.current.small.bold().copy(color = Color(textColor)),
                     showBadge = proStatusManager.shouldShowProBadge(authorRecipient.address),
                     invertBadgeColor = isOutgoingMessage && mode == Mode.Regular

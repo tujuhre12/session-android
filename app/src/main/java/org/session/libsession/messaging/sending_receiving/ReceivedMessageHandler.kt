@@ -6,8 +6,8 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ED25519
@@ -63,9 +63,9 @@ import org.thoughtcrime.securesms.database.ConfigDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.ReactionRecord
+import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.sskenvironment.ReadReceiptManager
-import java.security.MessageDigest
 import java.security.SignatureException
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -87,10 +87,10 @@ class ReceivedMessageHandler @Inject constructor(
     private val notificationManager: MessageNotifier,
     private val groupManagerV2: GroupManagerV2,
     private val proStatusManager: ProStatusManager,
-    private val profileManager: SSKEnvironment.ProfileManagerProtocol,
     private val visibleMessageContextFactory: VisibleMessageHandlerContext.Factory,
     private val attachmentDownloadJobFactory: AttachmentDownloadJob.Factory,
     private val profileUpdateHandler: ProfileUpdateHandler,
+    @param:ManagerScope private val scope: CoroutineScope,
 ) {
     fun handle(message: Message, proto: SignalServiceProtos.Content, threadId: Long, openGroupID: String?, groupv2Id: AccountId?) {
         // Do nothing if the message was outdated
@@ -99,7 +99,7 @@ class ReceivedMessageHandler @Inject constructor(
         when (message) {
             is ReadReceipt -> handleReadReceipt(message)
             is TypingIndicator -> handleTypingIndicator(message)
-            is GroupUpdated -> MessageReceiver.handleGroupUpdated(message, groupv2Id)
+            is GroupUpdated -> handleGroupUpdated(message, groupv2Id)
             is ExpirationTimerUpdate -> {
                 // For groupsv2, there are dedicated mechanisms for handling expiration timers, and
                 // we want to avoid the 1-to-1 message format which is unauthenticated in a group settings.
@@ -241,7 +241,7 @@ class ReceivedMessageHandler @Inject constructor(
         // send a /delete rquest for 1on1 messages
         if (messageType == MessageType.ONE_ON_ONE) {
             messageDataProvider.getServerHashForMessage(messageIdToDelete)?.let { serverHash ->
-                GlobalScope.launch(Dispatchers.IO) { // using GlobalScope as we are slowly migrating to coroutines but we can't migrate everything at once
+                scope.launch(Dispatchers.IO) { // using scope as we are slowly migrating to coroutines but we can't migrate everything at once
                     try {
                         SnodeAPI.deleteMessage(author, userAuth, listOf(serverHash))
                     } catch (e: Exception) {
@@ -291,15 +291,15 @@ class ReceivedMessageHandler @Inject constructor(
         // Do nothing if the message was outdated
         if (messageIsOutdated(message, context.threadId, context.openGroupID)) { return null }
 
-        val address = senderId.toAddress()
 
         // Handle group invite response if new closed group
-        if (context.threadRecipient?.isGroupV2Recipient == true) {
-            GlobalScope.launch {
+        val threadRecipientAddress = context.threadRecipient?.address
+        if (threadRecipientAddress is Address.Group) {
+            scope.launch {
                 try {
                     groupManagerV2
                         .handleInviteResponse(
-                            AccountId(context.threadRecipient!!.address.toString()),
+                            threadRecipientAddress.id,
                             senderId,
                             approved = true
                         )
@@ -437,7 +437,7 @@ class ReceivedMessageHandler @Inject constructor(
         return null
     }
 
-    private fun MessageReceiver.handleGroupUpdated(message: GroupUpdated, closedGroup: AccountId?) {
+    private fun handleGroupUpdated(message: GroupUpdated, closedGroup: AccountId?) {
         val inner = message.inner
         if (closedGroup == null &&
             !inner.hasInviteMessage() && !inner.hasPromoteMessage()) {
@@ -484,7 +484,7 @@ class ReceivedMessageHandler @Inject constructor(
             )
         }.isSuccess
 
-        GlobalScope.launch {
+        scope.launch {
             try {
                 groupManagerV2.handleDeleteMemberContent(
                     groupId = closedGroup,
@@ -511,7 +511,7 @@ class ReceivedMessageHandler @Inject constructor(
     }
 
     private fun handleMemberLeft(message: GroupUpdated, closedGroup: AccountId) {
-        GlobalScope.launch(Dispatchers.Default) {
+        scope.launch(Dispatchers.Default) {
             try {
                 groupManagerV2.handleMemberLeftMessage(
                     AccountId(message.sender!!), closedGroup
@@ -543,7 +543,7 @@ class ReceivedMessageHandler @Inject constructor(
         val seed = promotion.groupIdentitySeed.toByteArray()
         val sender = message.sender!!
         val adminId = AccountId(sender)
-        GlobalScope.launch {
+        scope.launch {
             try {
                 groupManagerV2
                     .handlePromotion(
@@ -566,7 +566,7 @@ class ReceivedMessageHandler @Inject constructor(
         // val profile = message // maybe we do need data to be the inner so we can access profile
         val storage = storage
         val approved = message.inner.inviteResponse.isApproved
-        GlobalScope.launch {
+        scope.launch {
             try {
                 groupManagerV2.handleInviteResponse(closedGroup, AccountId(sender), approved)
             } catch (e: Exception) {
@@ -588,7 +588,7 @@ class ReceivedMessageHandler @Inject constructor(
 
         val sender = message.sender!!
         val adminId = AccountId(sender)
-        GlobalScope.launch {
+        scope.launch {
             try {
                 groupManagerV2
                     .handleInvitation(
@@ -680,10 +680,10 @@ class VisibleMessageHandlerContext @AssistedInject constructor(
     @Assisted val threadId: Long,
     @Assisted val openGroupID: String?,
     val storage: StorageProtocol,
-    val profileManager: SSKEnvironment.ProfileManagerProtocol,
     val groupManagerV2: GroupManagerV2,
     val messageExpirationManager: SSKEnvironment.MessageExpirationManagerProtocol,
     val messageDataProvider: MessageDataProvider,
+    val recipientRepository: RecipientRepository,
 ) {
     val openGroup: OpenGroup? by lazy {
         openGroupID?.let { storage.getOpenGroup(threadId) }
@@ -708,6 +708,7 @@ class VisibleMessageHandlerContext @AssistedInject constructor(
 
     val threadRecipient: Recipient? by lazy {
         storage.getRecipientForThread(threadId)
+            ?.let(recipientRepository::getRecipientSyncOrEmpty)
     }
 
 
