@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
@@ -24,16 +25,13 @@ import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
-import org.session.libsession.utilities.isCommunity
 import org.session.libsession.utilities.isGroupV2
-import org.session.libsession.utilities.isLegacyGroup
 import org.session.libsession.utilities.isStandard
 import org.session.libsession.utilities.recipients.BasicRecipient
 import org.session.libsession.utilities.recipients.Recipient
@@ -46,6 +44,7 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.database.model.RecipientSettings
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import java.lang.ref.WeakReference
 import java.time.Instant
 import java.time.ZoneId
@@ -71,10 +70,11 @@ class RecipientRepository @Inject constructor(
     private val lokiThreadDatabase: LokiThreadDatabase,
     private val storage: Lazy<StorageProtocol>,
     private val blindedIdMappingRepository: BlindMappingRepository,
+    private val proStatusManager: ProStatusManager,
 ) {
-    private val recipientCache = HashMap<Address, WeakReference<SharedFlow<Recipient?>>>()
+    private val recipientCache = HashMap<Address, WeakReference<SharedFlow<Recipient>>>()
 
-    fun observeRecipient(address: Address): Flow<Recipient?> {
+    fun observeRecipient(address: Address): Flow<Recipient> {
         synchronized(recipientCache) {
             var cached = recipientCache[address]?.get()
             if (cached == null) {
@@ -89,7 +89,7 @@ class RecipientRepository @Inject constructor(
     // This function creates a flow that emits the recipient information for the given address,
     // the function itself must be fast, not directly access db and lock free, as it is called from a locked context.
     @OptIn(FlowPreview::class)
-    private fun createRecipientFlow(address: Address): SharedFlow<Recipient?> {
+    private fun createRecipientFlow(address: Address): SharedFlow<Recipient> {
         return flow {
             while (true) {
                 val (value, changeSource) = fetchRecipient(
@@ -100,14 +100,13 @@ class RecipientRepository @Inject constructor(
                     openGroupFetcher = {
                         withContext(Dispatchers.Default) { storage.get().getOpenGroup(it) }
                     }
-                )  ?: run {
-                    // If we don't have a recipient for this address, emit null and terminate the flow.
-                    emit(null)
-                    return@flow
-                }
+                )
 
                 emit(value)
-                val evt = changeSource
+                val evt = merge(changeSource,
+                    proStatusManager.proStatus.drop(1),
+                    proStatusManager.postProLaunchStatus.drop(1)
+                )
                     .debounce(200) // Debounce to avoid too frequent updates
                     .first()
                 Log.d(TAG, "Recipient changed for ${address.debugString}, triggering event: $evt")
@@ -123,16 +122,16 @@ class RecipientRepository @Inject constructor(
 
     private inline fun fetchRecipient(
         address: Address,
-        settingsFetcher: (address: Address) -> RecipientSettings?,
-        openGroupFetcher: (address: Address) -> OpenGroup?
-    ): Pair<Recipient?, Flow<*>>? {
+        settingsFetcher: (address: Address) -> RecipientSettings,
+        openGroupFetcher: (address: Address.Community) -> OpenGroup?
+    ): Pair<Recipient, Flow<*>> {
         val basicRecipient =
             address.toBlinded()?.let { blindedIdMappingRepository.findMappings(it).firstOrNull()?.second }
                 ?.let(this::getBasicRecipientFast)
                 ?: getBasicRecipientFast(address)
 
         val changeSource: Flow<*>
-        val value: Recipient?
+        val value: Recipient
 
         when (basicRecipient) {
             is BasicRecipient.Self -> {
@@ -177,13 +176,13 @@ class RecipientRepository @Inject constructor(
                 // updated from anywhere, it's purely an address to start a conversation. The data
                 // like name and avatar were all updated to the blinded recipients.
                 val settings = if (address is Address.CommunityBlindedId) {
-                    settingsFetcher(address.blindedId.toAddress())
+                    settingsFetcher(address.blindedId)
                 } else {
                     settingsFetcher(address)
                 }
 
-                when {
-                    address.isLegacyGroup -> {
+                when (address) {
+                    is Address.LegacyGroup -> {
                         changeSource = merge(
                             groupDatabase.updateNotification,
                             recipientSettingsDatabase.changeNotification.filter { it == address },
@@ -198,9 +197,10 @@ class RecipientRepository @Inject constructor(
                         }
 
                         value = group?.let { createLegacyGroupRecipient(address, groupConfig, it, settings) }
+                            ?: createGenericRecipient(address, settings)
                     }
 
-                    address.isCommunity -> {
+                    is Address.Community -> {
                         value = openGroupFetcher(address)
                             ?.let { openGroup ->
                                 val groupConfig = configFactory.withUserConfigs {
@@ -214,6 +214,7 @@ class RecipientRepository @Inject constructor(
                                     settings
                                 )
                             }
+                            ?: createGenericRecipient(address, settings)
 
                         changeSource = merge(
                             lokiThreadDatabase.changeNotification,
@@ -222,41 +223,34 @@ class RecipientRepository @Inject constructor(
                         )
                     }
 
-                    settings != null -> {
-                        value = createGenericRecipient(
-                            address = address,
-                            settings = settings
-                        )
-
-                        val monitoringAddress = address.toBlinded() ?: address
-                        changeSource =
-                            recipientSettingsDatabase.changeNotification.filter { it == monitoringAddress }
-                    }
-
-                    address.isStandard -> {
+                    is Address.Standard -> {
                         // If we are a standard address, last attempt to find the
                         // recipient inside all closed groups' member list
                         // members:
                         val allGroups = configFactory.withUserConfigs { it.userGroups.allClosedGroupInfo() }
-                        val groupMember = allGroups
+                        value = allGroups
                             .asSequence()
                             .mapNotNull { groupInfo ->
                                 configFactory.withGroupConfigs(AccountId(groupInfo.groupAccountId)) {
                                     it.groupMembers.get(address.address)
                                 }
                             }
-                            .firstOrNull() ?: return null
+                            .firstOrNull()
+                            ?.let { groupMember -> createGroupMemberRecipient(address, groupMember) }
+                            ?: createGenericRecipient(address, settings)
 
-                        value = createGroupMemberRecipient(address, groupMember)
                         changeSource = merge(
                             configFactory.configUpdateNotifications.filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
-                                .filter { it.groupId.hexString == address.address },
+                                .filter { it.groupId == address.id },
                             configFactory.userConfigsChanged(),
                             recipientSettingsDatabase.changeNotification.filter { it == address }
                         )
                     }
 
-                    else -> return null // No recipient found for this address
+                    else -> {
+                        value = createGenericRecipient(address, settings)
+                        changeSource = recipientSettingsDatabase.changeNotification.filter { it == address }
+                    }
                 }
             }
         }
@@ -264,7 +258,7 @@ class RecipientRepository @Inject constructor(
         return value to changeSource
     }
 
-    suspend fun getRecipient(address: Address): Recipient? {
+    suspend fun getRecipient(address: Address): Recipient {
         return observeRecipient(address).first()
     }
 
@@ -274,7 +268,7 @@ class RecipientRepository @Inject constructor(
      * Note that this method might be querying database directly so use with caution.
      */
     @DelicateCoroutinesApi
-    fun getRecipientSync(address: Address): Recipient? {
+    fun getRecipientSync(address: Address): Recipient {
         val flow = observeRecipient(address)
 
         // If the flow is a SharedFlow, we might be able to access its last cached value directly.
@@ -290,7 +284,7 @@ class RecipientRepository @Inject constructor(
             address = address,
             settingsFetcher = recipientSettingsDatabase::getSettings,
             openGroupFetcher = storage.get()::getOpenGroup
-        )?.first
+        ).first
     }
 
     /**
@@ -310,6 +304,7 @@ class RecipientRepository @Inject constructor(
                         expiryMode = configs.userProfile.getNtsExpiry(),
                         acceptsCommunityMessageRequests = configs.userProfile.getCommunityMessageRequests(),
                         priority = configs.userProfile.getNtsPriority(),
+                        isPro = proStatusManager.isCurrentUserPro(),
                     )
                 }
             }
@@ -328,6 +323,7 @@ class RecipientRepository @Inject constructor(
                         blocked = contact.blocked,
                         expiryMode = contact.expiryMode,
                         priority = contact.priority,
+                        isPro = proStatusManager.isUserPro(address)
                     )
                 }
             }
@@ -346,6 +342,7 @@ class RecipientRepository @Inject constructor(
                         isAdmin = groupInfo.adminKey != null,
                         kicked = groupInfo.kicked,
                         destroyed = groupInfo.destroyed,
+                        isPro = proStatusManager.isUserPro(address)
                     )
                 }
             }
@@ -356,16 +353,26 @@ class RecipientRepository @Inject constructor(
     }
 
     /**
-     * Returns a recipient for the given address, or an empty recipient if not found.
-     * This is useful to avoid null checks in the UI.
+     * Creates a RecipientV2 instance from the provided Address and RecipientSettings.
+     * Note that this method assumes the recipient is not ourselves.
      */
-    @DelicateCoroutinesApi
-    fun getRecipientSyncOrEmpty(address: Address): Recipient {
-        return getRecipientSync(address) ?: empty(address)
-    }
-
-    suspend fun getRecipientOrEmpty(address: Address): Recipient {
-        return getRecipient(address) ?: empty(address)
+    private fun createGenericRecipient(
+        address: Address,
+        settings: RecipientSettings,
+    ): Recipient {
+        return Recipient(
+            address = address,
+            basic = BasicRecipient.Generic(
+                displayName = settings.name.orEmpty(),
+                avatar = settings.profilePic?.toRecipientAvatar(),
+                isPro = settings.isPro || proStatusManager.isUserPro(address),
+            ),
+            mutedUntil = settings.muteUntil.takeIf { it > 0 }
+                ?.let { ZonedDateTime.from(Instant.ofEpochMilli(it)) },
+            autoDownloadAttachments = settings.autoDownloadAttachments,
+            notifyType = settings.notifyType,
+            acceptsCommunityMessageRequests = !settings.blocksCommunityMessagesRequests,
+        )
     }
 
     companion object {
@@ -467,32 +474,11 @@ class RecipientRepository @Inject constructor(
                         null
                     },
                     priority = config?.priority ?: PRIORITY_VISIBLE,
+                    isPro = false,
                 ),
                 mutedUntil = settings?.muteUntilDate,
                 autoDownloadAttachments = settings?.autoDownloadAttachments,
                 notifyType = settings?.notifyType ?: NotifyType.ALL,
-            )
-        }
-
-        /**
-         * Creates a RecipientV2 instance from the provided Address and RecipientSettings.
-         * Note that this method assumes the recipient is not ourselves.
-         */
-        private fun createGenericRecipient(
-            address: Address,
-            settings: RecipientSettings,
-        ): Recipient {
-            return Recipient(
-                address = address,
-                basic = BasicRecipient.Generic(
-                    displayName = settings.name.orEmpty(),
-                    avatar = settings.profilePic?.toRecipientAvatar(),
-                ),
-                mutedUntil = settings.muteUntil.takeIf { it > 0 }
-                    ?.let { ZonedDateTime.from(Instant.ofEpochMilli(it)) },
-                autoDownloadAttachments = settings.autoDownloadAttachments,
-                notifyType = settings.notifyType,
-                acceptsCommunityMessageRequests = !settings.blocksCommunityMessagesRequests,
             )
         }
 

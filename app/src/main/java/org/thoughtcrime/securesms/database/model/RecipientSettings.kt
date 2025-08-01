@@ -12,4 +12,5 @@ data class RecipientSettings(
     val autoDownloadAttachments: Boolean = false,
     val profilePic: UserPic? = null,
     val blocksCommunityMessagesRequests: Boolean = true,
+    val isPro: Boolean = false,
 )

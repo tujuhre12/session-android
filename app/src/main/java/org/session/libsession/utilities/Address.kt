@@ -80,12 +80,12 @@ sealed class Address : Parcelable, Comparable<Address> {
         override fun toString(): String = address
     }
 
-    data class CommunityBlindedId(val serverUrl: String, val serverPubKey: String, val blindedId: AccountId) : Conversable() {
+    data class CommunityBlindedId(val serverUrl: String, val serverPubKey: String, val blindedId: Blinded) : Conversable() {
         override val address: String by lazy(LazyThreadSafetyMode.NONE) {
             GroupUtil.getEncodedOpenGroupInboxAddress(
                 server = serverUrl,
                 pubKey = serverPubKey,
-                blindedAccountId = blindedId
+                blindedAccountId = blindedId.blindedId
             )
         }
 
@@ -140,7 +140,7 @@ sealed class Address : Parcelable, Comparable<Address> {
                     "Invalid serialized community inbox address: $serialized"
                 }
 
-                return CommunityBlindedId(url, key, id)
+                return CommunityBlindedId(url, key, Blinded(id))
             }
 
             if (serialized.startsWith(GroupUtil.COMMUNITY_PREFIX)) {
@@ -249,7 +249,7 @@ val Address.isBlinded: Boolean
  */
 fun Address.toBlinded(): Address.Blinded? {
     return (this as? Address.Blinded)
-        ?: (this as? Address.CommunityBlindedId)?.blindedId?.let(Address::Blinded)
+        ?: (this as? Address.CommunityBlindedId)?.blindedId
 }
 
 fun Address.toGroupString(): String {

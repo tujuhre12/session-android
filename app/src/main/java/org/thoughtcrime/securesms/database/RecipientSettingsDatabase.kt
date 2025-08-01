@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.SharedFlow
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.Base64
-import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.NotifyType
@@ -32,7 +31,7 @@ class RecipientSettingsDatabase @Inject constructor(
         get() = mutableChangeNotification
 
     fun save(address: Address, updater: (RecipientSettings) -> RecipientSettings) {
-        val oldSettings = getSettings(address) ?: RecipientSettings()
+        val oldSettings = getSettings(address)
         val newSettings = updater.invoke(oldSettings)
 
         // If nothing is updated, return early
@@ -66,7 +65,7 @@ class RecipientSettingsDatabase @Inject constructor(
         mutableChangeNotification.tryEmit(address)
     }
 
-    fun getSettings(address: Address): RecipientSettings? {
+    fun getSettings(address: Address): RecipientSettings {
         val existing = cache[address]
         if (existing != null) {
             return existing
@@ -98,6 +97,7 @@ class RecipientSettingsDatabase @Inject constructor(
             ),
             blocksCommunityMessagesRequests = this.getInt(this.getColumnIndexOrThrow(COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS)) == 1,
             name = this.getString(this.getColumnIndexOrThrow(COL_NAME)),
+            isPro = this.getInt(this.getColumnIndexOrThrow(COL_IS_PRO)) == 1
         )
     }
 
@@ -110,6 +110,7 @@ class RecipientSettingsDatabase @Inject constructor(
             put(COL_PROFILE_PIC_KEY, profilePic?.key?.data?.let(Base64::encodeBytes))
             put(COL_PROFILE_PIC_URL, profilePic?.url)
             put(COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS, blocksCommunityMessagesRequests)
+            put(COL_IS_PRO, isPro)
         }
     }
 
@@ -140,6 +141,7 @@ class RecipientSettingsDatabase @Inject constructor(
         private const val COL_PROFILE_PIC_URL = "profile_pic_url"
         private const val COL_NAME = "name"
         private const val COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS = "blocks_community_messages_requests"
+        private const val COL_IS_PRO = "is_pro"
 
         const val MIGRATION_CREATE_TABLE = """
             CREATE TABLE recipient_settings (
@@ -150,7 +152,8 @@ class RecipientSettingsDatabase @Inject constructor(
                 $COL_PROFILE_PIC_KEY TEXT,
                 $COL_PROFILE_PIC_URL TEXT,
                 $COL_NAME TEXT,
-                $COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS BOOLEAN NOT NULL DEFAULT TRUE
+                $COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS BOOLEAN NOT NULL DEFAULT TRUE,
+                $COL_IS_PRO BOOLEAN NOT NULL DEFAULT FALSE
             ) WITHOUT ROWID
         """
 

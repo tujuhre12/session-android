@@ -71,6 +71,8 @@ data class Recipient(
         else -> true
     }
 
+    val isPro: Boolean get() = basic.isPro
+
     val approvedMe: Boolean get() {
         return when (basic) {
             is BasicRecipient.Self -> true
@@ -120,6 +122,8 @@ sealed interface BasicRecipient {
     val avatar: RemoteFile?
     val priority: Long
 
+    val isPro: Boolean
+
     /**
      * A recipient that is backed by the config system.
      */
@@ -129,14 +133,18 @@ sealed interface BasicRecipient {
         val displayName: String = "",
         override val avatar: RemoteFile? = null,
         override val priority: Long = PRIORITY_VISIBLE,
+        override val isPro: Boolean = false
     ) : BasicRecipient
 
     data class Community(
         val openGroup: OpenGroup,
-        override val priority: Long
+        override val priority: Long,
     ) : BasicRecipient {
         override val avatar: RemoteFile?
             get() = openGroup.imageId?.let { RemoteFile.Community(openGroup.server, openGroup.room, it) }
+
+        override val isPro: Boolean
+            get() = false
     }
 
     /**
@@ -148,6 +156,7 @@ sealed interface BasicRecipient {
         val expiryMode: ExpiryMode,
         val acceptsCommunityMessageRequests: Boolean,
         override val priority: Long,
+        override val isPro: Boolean
     ) : ConfigBasedRecipient
 
     /**
@@ -162,6 +171,7 @@ sealed interface BasicRecipient {
         val blocked: Boolean,
         val expiryMode: ExpiryMode,
         override val priority: Long,
+        override val isPro: Boolean
     ) : ConfigBasedRecipient {
         val displayName: String
             get() = nickname?.takeIf { it.isNotBlank() } ?: name
@@ -179,6 +189,7 @@ sealed interface BasicRecipient {
         val isAdmin: Boolean,
         val kicked: Boolean,
         val destroyed: Boolean,
+        override val isPro: Boolean
     ) : ConfigBasedRecipient
 }
 
