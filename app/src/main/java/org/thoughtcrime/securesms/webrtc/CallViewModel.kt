@@ -203,7 +203,7 @@ class CallViewModel @Inject constructor(
     fun hangUp() = rtcCallBridge.handleLocalHangup(null)
 
     fun getContactName(accountID: String) =
-        recipientRepository.getRecipientSyncOrEmpty(Address.fromSerialized(accountID))
+        recipientRepository.getRecipientSync(Address.fromSerialized(accountID))
             .displayName()
 
     fun getCurrentUsername() = configFactory.currentUserName

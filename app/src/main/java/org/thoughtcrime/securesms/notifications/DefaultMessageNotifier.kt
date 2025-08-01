@@ -628,7 +628,7 @@ class DefaultMessageNotifier @Inject constructor(
                     val latestReaction = reactionsFromOthers.maxByOrNull { it.dateSent }
 
                     if (latestReaction != null) {
-                        val reactor = recipientRepository.getRecipientSyncOrEmpty(fromSerialized(latestReaction.author))
+                        val reactor = recipientRepository.getRecipientSync(fromSerialized(latestReaction.author))
                         val emoji = Phrase.from(context, R.string.emojiReactsNotification)
                             .put(EMOJI_KEY, latestReaction.emoji).format().toString()
 

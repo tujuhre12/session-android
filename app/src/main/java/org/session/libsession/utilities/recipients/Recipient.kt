@@ -106,16 +106,6 @@ data class Recipient(
 
     val mutedUntilMills: Long?
         get() = mutedUntil?.toInstant()?.toEpochMilli()
-    
-    companion object {
-        fun empty(address: Address): Recipient {
-            return Recipient(
-                address = address,
-                basic = BasicRecipient.Generic(),
-                autoDownloadAttachments = true,
-            )
-        }
-    }
 }
 
 sealed interface BasicRecipient {

@@ -131,7 +131,7 @@ open class Storage @Inject constructor(
 
     override fun threadCreated(address: Address, threadId: Long) {
         val localUserAddress = getUserPublicKey() ?: return
-        val approved = recipientRepository.getRecipientSyncOrEmpty(address).approved
+        val approved = recipientRepository.getRecipientSync(address).approved
         if (!approved && localUserAddress != address.toString()) return // don't store unapproved / message requests
 
         when {
@@ -1599,7 +1599,7 @@ open class Storage @Inject constructor(
     override fun blockedContacts(): List<Recipient> {
         return configFactory.withUserConfigs { it.contacts.all() }.asSequence()
             .filter { it.blocked }
-            .map { recipientRepository.getRecipientSyncOrEmpty(Address.fromSerialized(it.id)) }
+            .map { recipientRepository.getRecipientSync(Address.fromSerialized(it.id)) }
             .toList()
     }
 

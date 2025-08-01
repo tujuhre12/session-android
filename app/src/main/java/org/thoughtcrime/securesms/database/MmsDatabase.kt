@@ -1380,7 +1380,7 @@ class MmsDatabase @Inject constructor(
         }
 
         private fun getRecipientFor(serialized: String): Recipient {
-            return recipientRepository.getRecipientSyncOrEmpty(serialized.toAddress())
+            return recipientRepository.getRecipientSync(serialized.toAddress())
         }
 
         private fun getMismatchedIdentities(document: String?): List<IdentityKeyMismatch?>? {
@@ -1428,7 +1428,7 @@ class MmsDatabase @Inject constructor(
             )
             return Quote(
                 quoteId,
-                recipientRepository.getRecipientSyncOrEmpty(quoteAuthor.toAddress()),
+                recipientRepository.getRecipientSync(quoteAuthor.toAddress()),
                 quoteText,
                 quoteMissing,
                 quoteDeck

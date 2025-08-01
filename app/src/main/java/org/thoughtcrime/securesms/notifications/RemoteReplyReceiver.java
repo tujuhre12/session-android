@@ -101,7 +101,7 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
           VisibleMessage message = new VisibleMessage();
           message.setSentTimestamp(clock.currentTimeMills());
           message.setText(responseText.toString());
-          ExpiryMode expiryMode = recipientRepository.getRecipientSyncOrEmpty(address).getExpiryMode();
+          ExpiryMode expiryMode = recipientRepository.getRecipientSync(address).getExpiryMode();
 
           long expiresInMillis = expiryMode.getExpiryMillis();
           long expireStartedAt = expiryMode instanceof ExpiryMode.AfterSend ? message.getSentTimestamp() : 0L;

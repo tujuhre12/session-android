@@ -104,7 +104,7 @@ abstract class BaseGroupMembersViewModel(
         val name = if (isMyself) {
             context.getString(R.string.you)
         } else {
-            recipientRepository.getRecipientOrEmpty(Address.fromSerialized(memberAccountId.hexString))
+            recipientRepository.getRecipient(Address.fromSerialized(memberAccountId.hexString))
                 .displayName()
         }
 

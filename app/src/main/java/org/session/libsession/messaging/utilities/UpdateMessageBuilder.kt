@@ -35,7 +35,7 @@ object UpdateMessageBuilder {
     val recipientRepository = MessagingModuleConfiguration.shared.recipientRepository
 
     private fun getGroupMemberName(senderAddress: String): String {
-        return recipientRepository.getRecipientSyncOrEmpty(Address.fromSerialized(senderAddress))
+        return recipientRepository.getRecipientSync(Address.fromSerialized(senderAddress))
             .displayName()
     }
 
@@ -432,7 +432,7 @@ object UpdateMessageBuilder {
     }
 
     fun buildCallMessage(context: Context, type: CallMessageType, senderId: String): String {
-        val senderName = recipientRepository.getRecipientSyncOrEmpty(Address.fromSerialized(senderId))
+        val senderName = recipientRepository.getRecipientSync(Address.fromSerialized(senderId))
             .displayName()
 
         return when (type) {

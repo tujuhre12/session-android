@@ -68,7 +68,7 @@ public class TypingStatusRepository implements SSKEnvironment.TypingIndicatorsPr
       return;
     }
 
-    if (recipientRepository.getRecipientSyncOrEmpty(author).getBlocked()) {
+    if (recipientRepository.getRecipientSync(author).getBlocked()) {
       return;
     }
 
@@ -97,7 +97,7 @@ public class TypingStatusRepository implements SSKEnvironment.TypingIndicatorsPr
       return;
     }
 
-    if (recipientRepository.getRecipientSyncOrEmpty(author).getBlocked()) {
+    if (recipientRepository.getRecipientSync(author).getBlocked()) {
       return;
     }
 

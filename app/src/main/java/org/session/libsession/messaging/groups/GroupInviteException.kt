@@ -33,7 +33,7 @@ class GroupInviteException(
 
     fun format(context: Context, recipientRepository: RecipientRepository): CharSequence {
         val getInviteeName = { accountId: String ->
-            recipientRepository.getRecipientSyncOrEmpty(Address.fromSerialized(accountId)).displayName()
+            recipientRepository.getRecipientSync(Address.fromSerialized(accountId)).displayName()
         }
 
         val first = inviteeAccountIds.first().let(getInviteeName)

@@ -62,7 +62,7 @@ class UserProfileUtils @AssistedInject constructor(
             ?.let { blindedIdMappingRepository.findMappings(it).firstOrNull()?.second }
             ?: userAddress
 
-        val recipient = recipientRepository.getRecipientOrEmpty(resolvedAddress)
+        val recipient = recipientRepository.getRecipient(resolvedAddress)
 
         // we apply the display rules from figma (the numbers being the number of characters):
         // - if the address is blinded (with a tooltip), display as 10...10
@@ -102,7 +102,7 @@ class UserProfileUtils @AssistedInject constructor(
                     Address.CommunityBlindedId(
                         serverUrl = openGroup.server,
                         serverPubKey = openGroup.publicKey,
-                        blindedId = userAddress.blindedId
+                        blindedId = userAddress
                     )
                 }
             }

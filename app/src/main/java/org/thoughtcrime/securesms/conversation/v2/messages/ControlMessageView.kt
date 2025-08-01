@@ -136,7 +136,7 @@ class ControlMessageView : LinearLayout {
                 val me = TextSecurePreferences.getLocalNumber(context)
                 binding.textView.text =  if (me == msgRecipient) { // you accepted the user's request
                     DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(message.threadId)
-                        ?.let { recipientRepository.getRecipientSyncOrEmpty(it) }
+                        ?.let { recipientRepository.getRecipientSync(it) }
                         ?.let { recipient ->  context.getSubbedCharSequence(
                             R.string.messageRequestYouHaveAccepted,
                             NAME_KEY to recipient.displayName()

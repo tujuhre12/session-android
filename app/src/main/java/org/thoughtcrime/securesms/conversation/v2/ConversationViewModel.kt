@@ -149,7 +149,7 @@ class ConversationViewModel @AssistedInject constructor(
 
     val recipientFlow: StateFlow<Recipient> = recipientRepository.observeRecipient(address)
         .filterNotNull()
-        .mapToStateFlow(viewModelScope, recipientRepository.getRecipientSync(address) ?: Recipient.empty(address)) { it }
+        .mapToStateFlow(viewModelScope, recipientRepository.getRecipientSync(address)) { it }
 
 
     val showSendAfterApprovalText: Flow<Boolean> get() = recipientFlow.map { r ->
@@ -252,8 +252,9 @@ class ConversationViewModel @AssistedInject constructor(
     private val _showLoader = MutableStateFlow(false)
     val showLoader: StateFlow<Boolean> get() = _showLoader
 
-    val shouldExit: Flow<Boolean> get() = recipientRepository.observeRecipient(address)
-        .map { it == null }
+    val shouldExit: Flow<Boolean> get() = (threadDb.updateNotifications as Flow<*>)
+        .onStart { emit(Unit) }
+        .map { threadDb.getThreadIdIfExistsFor(address) != -1L }
 
     private val _acceptingMessageRequest = MutableStateFlow<Boolean>(false)
     val messageRequestState: StateFlow<MessageRequestUiState> = combine(
@@ -291,7 +292,7 @@ class ConversationViewModel @AssistedInject constructor(
         // If we are able to unblind a user, we will navigate to that convo instead
         (address as? Address.CommunityBlindedId)?.let { address ->
             viewModelScope.launch {
-                blindMappingRepository.observeMapping(address.serverUrl, Address.Blinded(address.blindedId))
+                blindMappingRepository.observeMapping(address.serverUrl, address.blindedId)
                     .filterNotNull()
                     .collect { contactId ->
                         _uiEvents.emit(ConversationUiEvent.NavigateToConversation(contactId))
@@ -485,8 +486,7 @@ class ConversationViewModel @AssistedInject constructor(
             showSearch = showSearch,
             avatarUIData = avatarData,
             // show the pro badge when a conversation/user is pro, except for communities
-            showProBadge = proStatusManager.shouldShowProBadge(conversation?.address)
-                    && conversation?.isLocalNumber == false // do not show for note to self
+            showProBadge = proStatusManager.shouldShowProBadge(conversation.address) && !conversation.isLocalNumber // do not show for note to self
         ).also {
             // also preload the larger version of the avatar in case the user goes to the settings
             avatarData.elements.mapNotNull { it.contactPhoto }.forEach {

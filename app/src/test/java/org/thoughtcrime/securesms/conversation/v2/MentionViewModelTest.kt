@@ -109,7 +109,7 @@ class MentionViewModelTest : BaseViewModelTest() {
             },
             address = communityRecipient.address,
             recipientRepository = mock {
-                on { getRecipientSyncOrEmpty(communityRecipient.address) } doReturn communityRecipient
+                on { getRecipientSync(communityRecipient.address) } doReturn communityRecipient
                 on { getRecipientSync(any()) } doAnswer {
                     val address = it.arguments[0] as Address
                     if (address == communityRecipient.address) {

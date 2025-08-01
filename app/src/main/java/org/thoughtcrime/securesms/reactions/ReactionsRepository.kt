@@ -32,7 +32,7 @@ class ReactionsRepository @Inject constructor(
         return reactions.map { reaction ->
             val authorAddress = Address.fromSerialized(reaction.author)
             ReactionDetails(
-                sender = recipientRepository.getRecipientSync(authorAddress) ?: Recipient.empty(authorAddress),
+                sender = recipientRepository.getRecipientSync(authorAddress),
                 baseEmoji = EmojiUtil.getCanonicalRepresentation(reaction.emoji),
                 displayEmoji = reaction.emoji,
                 timestamp = reaction.dateReceived,

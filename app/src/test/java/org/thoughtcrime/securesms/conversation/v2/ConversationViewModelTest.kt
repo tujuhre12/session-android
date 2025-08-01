@@ -105,7 +105,7 @@ class ConversationViewModelTest: BaseViewModelTest() {
             blindMappingRepository = mock(),
             address = recipient.address,
             recipientRepository = mock {
-                on { getRecipientSyncOrEmpty(recipient.address) } doReturn recipient
+                on { getRecipientSync(recipient.address) } doReturn recipient
                 on { observeRecipient(recipient.address) } doAnswer {
                     flowOf(recipient)
                 }

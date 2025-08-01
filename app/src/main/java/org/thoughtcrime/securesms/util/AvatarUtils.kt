@@ -97,7 +97,7 @@ class AvatarUtils @Inject constructor(
                             // and the second should be the unknown icon with a colour based on the group id
                             elements.add(
                                 getUIElementForRecipient(
-                                    recipientRepository.getRecipientOrEmpty(Address.fromSerialized(members[0].toString()))
+                                    recipientRepository.getRecipient(Address.fromSerialized(members[0].toString()))
                                 )
                             )
 
@@ -111,7 +111,7 @@ class AvatarUtils @Inject constructor(
                         else -> {
                             members.forEach {
                                 elements.add(
-                                    getUIElementForRecipient(recipientRepository.getRecipientOrEmpty(it))
+                                    getUIElementForRecipient(recipientRepository.getRecipient(it))
                                 )
                             }
                         }

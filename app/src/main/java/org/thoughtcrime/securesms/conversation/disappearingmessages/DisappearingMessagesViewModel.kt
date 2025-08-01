@@ -60,7 +60,7 @@ class DisappearingMessagesViewModel @AssistedInject constructor(
 
     init {
         viewModelScope.launch {
-            val recipient = recipientRepository.getRecipientOrEmpty(address)
+            val recipient = recipientRepository.getRecipient(address)
             val expiryMode = recipient.expiryMode
 
             val isAdmin = when {

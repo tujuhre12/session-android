@@ -164,8 +164,8 @@ class SearchRepository @Inject constructor(
                 fromSerialized(cursor.getString(cursor.getColumnIndexOrThrow(SearchDatabase.CONVERSATION_ADDRESS)))
             val messageAddress =
                 fromSerialized(cursor.getString(cursor.getColumnIndexOrThrow(SearchDatabase.MESSAGE_ADDRESS)))
-            val conversationRecipient = recipientRepository.getRecipientSync(conversationAddress) ?: Recipient.empty(conversationAddress)
-            val messageRecipient = recipientRepository.getRecipientSync(messageAddress) ?: Recipient.empty(messageAddress)
+            val conversationRecipient = recipientRepository.getRecipientSync(conversationAddress)
+            val messageRecipient = recipientRepository.getRecipientSync(messageAddress)
             val body = cursor.getString(cursor.getColumnIndexOrThrow(SearchDatabase.SNIPPET))
             val sentMs =
                 cursor.getLong(cursor.getColumnIndexOrThrow(MmsSmsColumns.NORMALIZED_DATE_SENT))

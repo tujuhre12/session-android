@@ -105,7 +105,7 @@ class ProfilePictureView @JvmOverloads constructor(
         address: Address,
         profileViewDataType: ProfileViewDataType = ProfileViewDataType.OneOnOne
     ) {
-        fun getUserDisplayName(publicKey: String): String = recipientRepository.getRecipientSyncOrEmpty(
+        fun getUserDisplayName(publicKey: String): String = recipientRepository.getRecipientSync(
             Address.fromSerialized(publicKey)).displayName()
 
         // group avatar
@@ -194,7 +194,7 @@ class ProfilePictureView @JvmOverloads constructor(
             }
             else {
                 val address = Address.fromSerialized(publicKey)
-                this.recipient = recipientRepository.getRecipientSync(address) ?: Recipient.empty(address)
+                this.recipient = recipientRepository.getRecipientSync(address)
                 this.recipient!!
             }
 

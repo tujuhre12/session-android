@@ -83,7 +83,7 @@ class SettingsViewModel @Inject constructor(
     val hexEncodedPublicKey: String = prefs.getLocalNumber() ?: ""
 
     private val userRecipient by lazy {
-        recipientRepository.getRecipientSyncOrEmpty(Address.fromSerialized(hexEncodedPublicKey))
+        recipientRepository.getRecipientSync(Address.fromSerialized(hexEncodedPublicKey))
     }
 
     private val _uiState = MutableStateFlow(UIState(

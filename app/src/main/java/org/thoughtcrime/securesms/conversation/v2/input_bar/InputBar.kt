@@ -247,7 +247,7 @@ class InputBar @JvmOverloads constructor(
             binding.inputBarAdditionalContentContainer.addView(layout)
             val attachments = (message as? MmsMessageRecord)?.slideDeck
             val sender =
-                if (message.isOutgoing) recipientRepository.getRecipientSyncOrEmpty(Address.fromSerialized(TextSecurePreferences.getLocalNumber(context)!!))
+                if (message.isOutgoing) recipientRepository.getRecipientSync(Address.fromSerialized(TextSecurePreferences.getLocalNumber(context)!!))
                 else message.individualRecipient
             it.bind(sender, message.body, attachments, thread, true, message.isOpenGroupInvitation, message.threadId, false, glide)
         }

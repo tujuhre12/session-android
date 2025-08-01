@@ -108,7 +108,7 @@ public class AndroidAutoReplyReceiver extends BroadcastReceiver {
           message.setText(responseText.toString());
           message.setSentTimestamp(SnodeAPI.getNowWithOffset());
           MessageSender.send(message, address);
-          ExpiryMode expiryMode = recipientRepository.getRecipientSyncOrEmpty(address).getExpiryMode();
+          ExpiryMode expiryMode = recipientRepository.getRecipientSync(address).getExpiryMode();
           long expiresInMillis = expiryMode.getExpiryMillis();
           long expireStartedAt = expiryMode instanceof ExpiryMode.AfterSend ? message.getSentTimestamp() : 0L;
 

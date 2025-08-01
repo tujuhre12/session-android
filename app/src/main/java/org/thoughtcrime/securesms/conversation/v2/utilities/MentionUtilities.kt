@@ -96,7 +96,7 @@ object MentionUtilities {
                 val userDisplayName: String = if (isYou) {
                     context.getString(R.string.you)
                 } else {
-                    MessagingModuleConfiguration.shared.recipientRepository.getRecipientSyncOrEmpty(
+                    MessagingModuleConfiguration.shared.recipientRepository.getRecipientSync(
                         Address.fromSerialized(publicKey)
                     ).displayName()
                 }

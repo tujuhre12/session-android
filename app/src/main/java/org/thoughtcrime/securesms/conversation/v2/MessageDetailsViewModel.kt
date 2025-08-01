@@ -123,7 +123,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
                 val slides = mmsRecord?.slideDeck?.slides ?: emptyList()
 
                 val conversationAddress = threadDb.getRecipientForThreadId(threadId)!!
-                val conversation = recipientRepository.getRecipient(conversationAddress) ?: Recipient.empty(conversationAddress)
+                val conversation = recipientRepository.getRecipient(conversationAddress)
                 val isDeprecatedLegacyGroup = conversationAddress.isLegacyGroup && deprecationManager.isDeprecated
 
 
@@ -140,7 +140,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
                 }
 
                 val sender = if(messageRecord.isOutgoing){
-                    recipientRepository.getRecipient(Address.fromSerialized(prefs.getLocalNumber()!!))!!
+                    recipientRepository.getRecipient(Address.fromSerialized(prefs.getLocalNumber()!!))
                 } else individualRecipient
 
                 val attachments = slides.map(::Attachment)

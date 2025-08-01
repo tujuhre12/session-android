@@ -183,7 +183,7 @@ class GlobalSearchAdapter(
                         title = groupRecord.title,
                         legacyMembersString = if (groupRecord.isLegacyGroup) {
                             val recipients = groupRecord.members.map {
-                                MessagingModuleConfiguration.shared.recipientRepository.getRecipientSyncOrEmpty(it)
+                                MessagingModuleConfiguration.shared.recipientRepository.getRecipientSync(it)
                             }
                             recipients.joinToString(transform = { it.searchName })
                         } else {

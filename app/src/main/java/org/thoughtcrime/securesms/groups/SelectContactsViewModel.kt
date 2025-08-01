@@ -93,7 +93,7 @@ open class SelectContactsViewModel @AssistedInject constructor(
                         allContacts.filterNotTo(mutableSetOf()) { it in excludingAccountIDs }
                     }.map {
                         val address = Address.fromSerialized(it.hexString)
-                        recipientRepository.getRecipient(address) ?: Recipient.empty(address)
+                        recipientRepository.getRecipient(address)
                     }
 
                     if(applyDefaultFiltering){

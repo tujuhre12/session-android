@@ -516,7 +516,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
         isNewConfigEnabled = true,
         showDebugOptions = false,
         recipientRepository = mock {
-            onBlocking { getRecipientOrEmpty(recipient.address) } doReturn recipient
+            onBlocking { getRecipient(recipient.address) } doReturn recipient
         }
     )
 }

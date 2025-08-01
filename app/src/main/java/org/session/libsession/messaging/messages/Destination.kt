@@ -53,7 +53,7 @@ sealed class Destination {
                     OpenGroupInbox(
                         server = address.serverUrl,
                         serverPublicKey = address.serverPubKey,
-                        blindedPublicKey = address.blindedId.hexString,
+                        blindedPublicKey = address.blindedId.blindedId.hexString,
                     )
                 }
                 is Address.Group -> {

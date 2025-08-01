@@ -708,7 +708,7 @@ class VisibleMessageHandlerContext @AssistedInject constructor(
 
     val threadRecipient: Recipient? by lazy {
         storage.getRecipientForThread(threadId)
-            ?.let(recipientRepository::getRecipientSyncOrEmpty)
+            ?.let(recipientRepository::getRecipientSync)
     }
 
 

@@ -111,7 +111,7 @@ fun ContentView.bindModel(query: String?, model: GroupConversation) {
     binding.searchResultProfilePicture.isVisible = true
     binding.searchResultSubtitle.isVisible = model.isLegacy
     binding.searchResultTimestamp.isVisible = false
-    val threadRecipient = MessagingModuleConfiguration.shared.recipientRepository.getRecipientSyncOrEmpty(
+    val threadRecipient = MessagingModuleConfiguration.shared.recipientRepository.getRecipientSync(
         Address.fromSerialized(model.groupId)
     )
     binding.searchResultProfilePicture.update(threadRecipient)
@@ -130,7 +130,7 @@ fun ContentView.bindModel(query: String?, model: ContactModel) = binding.run {
     searchResultSubtitle.isVisible = false
     searchResultTimestamp.isVisible = false
     searchResultSubtitle.text = null
-    val recipient = MessagingModuleConfiguration.shared.recipientRepository.getRecipientSyncOrEmpty(
+    val recipient = MessagingModuleConfiguration.shared.recipientRepository.getRecipientSync(
         Address.fromSerialized(model.contact.hexString)
     )
     searchResultProfilePicture.update(recipient)

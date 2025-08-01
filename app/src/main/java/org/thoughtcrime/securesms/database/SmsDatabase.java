@@ -841,7 +841,7 @@ public class SmsDatabase extends MessagingDatabase {
       }
 
       List<IdentityKeyMismatch> mismatches = getMismatches(mismatchDocument);
-      Recipient recipient  = recipientRepository.getRecipientSyncOrEmpty(address);
+      Recipient recipient  = recipientRepository.getRecipientSync(address);
       List<ReactionRecord>      reactions  = DatabaseComponent.get(context).reactionDatabase().getReactions(cursor);
 
       return new SmsMessageRecord(messageId, body, recipient,
