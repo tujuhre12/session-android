@@ -207,6 +207,7 @@ private fun CreateGroupPreview(
     val random = "05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234"
     val previewMembers = listOf(
         ContactItem(accountID = AccountId(random), name = "Alice", selected = false,
+            showProBadge = true,
             avatarUIData = AvatarUIData(
                 listOf(
                     AvatarUIElement(
@@ -217,6 +218,7 @@ private fun CreateGroupPreview(
             ),
         ),
         ContactItem(accountID = AccountId(random), name = "Bob", selected = true,
+            showProBadge = false,
             avatarUIData = AvatarUIData(
                 listOf(
                     AvatarUIElement(

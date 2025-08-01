@@ -5,7 +5,9 @@ import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
+import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.notifications.TokenFetcher
+import org.session.libsession.messaging.sending_receiving.ReceivedMessageHandler
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.Device
@@ -28,6 +30,7 @@ class MessagingModuleConfiguration(
     val deprecationManager: LegacyGroupDeprecationManager,
     val recipientRepository: RecipientRepository,
     val proStatusManager: ProStatusManager,
+    val messageSendJobFactory: MessageSendJob.Factory,
 ) {
 
     companion object {

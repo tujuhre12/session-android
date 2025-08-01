@@ -6,6 +6,7 @@ import org.session.libsession.messaging.messages.ProfileUpdateHandler
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.thoughtcrime.securesms.database.model.MessageId
+import org.session.libsession.utilities.recipients.Recipient
 
 class SSKEnvironment(
     val typingIndicators: TypingIndicatorsProtocol,
@@ -16,13 +17,22 @@ class SSKEnvironment(
 ) {
 
     interface TypingIndicatorsProtocol {
-        fun didReceiveTypingStartedMessage(context: Context, threadId: Long, author: Address, device: Int)
-        fun didReceiveTypingStoppedMessage(context: Context, threadId: Long, author: Address, device: Int, isReplacedByIncomingMessage: Boolean)
-        fun didReceiveIncomingMessage(context: Context, threadId: Long, author: Address, device: Int)
+        fun didReceiveTypingStartedMessage(threadId: Long, author: Address, device: Int)
+        fun didReceiveTypingStoppedMessage(
+            threadId: Long,
+            author: Address,
+            device: Int,
+            isReplacedByIncomingMessage: Boolean
+        )
+        fun didReceiveIncomingMessage(threadId: Long, author: Address, device: Int)
     }
 
     interface ReadReceiptManagerProtocol {
-        fun processReadReceipts(context: Context, fromRecipientId: String, sentTimestamps: List<Long>, readTimestamp: Long)
+        fun processReadReceipts(
+            fromRecipientId: String,
+            sentTimestamps: List<Long>,
+            readTimestamp: Long
+        )
     }
 
     interface MessageExpirationManagerProtocol {

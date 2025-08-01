@@ -3,7 +3,6 @@ androidMinSdkVersion = "26"
 androidTargetSdkVersion = "35"
 androidCompileSdkVersion = "35"
 accompanistPermissionsVersion = "0.37.3"
-accompanistThemeadapterAppcompatVersion = "0.33.1-alpha"
 activityKtxVersion = "1.10.1"
 androidImageCropperVersion = "4.5.0"
 androidVersion = "125.6422.07"
@@ -34,14 +33,14 @@ kotlinxDatetimeVersion = "0.6.0"
 kryoVersion = "5.1.1"
 kspVersion = "2.2.0-2.0.2"
 legacySupportV13Version = "1.0.0"
-libsessionUtilAndroidVersion = "1.0.5-3-g76cd4a1"
+libsessionUtilAndroidVersion = "1.0.6"
 media3ExoplayerVersion = "1.7.1"
 mockitoCoreVersion = "5.18.0"
 navVersion = "2.9.0"
 appcompatVersion = "1.7.1"
 coreVersion = "1.16.0"
 coroutinesVersion = "1.10.2"
-daggerHiltVersion = "2.56.2"
+daggerHiltVersion = "2.57"
 androidxHiltVersion  = "1.2.0"
 glideVersion = "4.16.0"
 jacksonDatabindVersion = "2.9.8"
@@ -78,7 +77,6 @@ huaweiPushVersion = "6.7.0.300"
 googlePlayReviewVersion = "2.0.2"
 
 [libraries]
-accompanist-drawablepainter = { module = "com.google.accompanist:accompanist-drawablepainter", version.ref = "accompanistThemeadapterAppcompatVersion" }
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissionsVersion" }
 android = { module = "io.github.webrtc-sdk:android", version.ref = "androidVersion" }
 android-image-cropper = { module = "com.vanniktech:android-image-cropper", version.ref = "androidImageCropperVersion" }

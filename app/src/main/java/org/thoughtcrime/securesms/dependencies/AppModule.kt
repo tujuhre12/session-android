@@ -23,6 +23,7 @@ import org.thoughtcrime.securesms.groups.GroupManagerV2Impl
 import org.thoughtcrime.securesms.notifications.OptimizedMessageNotifier
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.repository.DefaultConversationRepository
+import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
 import org.thoughtcrime.securesms.tokenpage.TokenRepository
 import org.thoughtcrime.securesms.tokenpage.TokenRepositoryImpl
 import javax.inject.Singleton
@@ -69,6 +70,9 @@ abstract class AppBindings {
 
     @Binds
     abstract fun bindMessageNotifier(notifier: OptimizedMessageNotifier): MessageNotifier
+
+    @Binds
+    abstract fun bindTypingIndicators(typingIndicators: TypingStatusRepository): SSKEnvironment.TypingIndicatorsProtocol
 
 }
 

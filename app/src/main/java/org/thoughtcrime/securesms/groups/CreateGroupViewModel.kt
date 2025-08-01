@@ -24,6 +24,7 @@ import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSi
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.util.AvatarUtils
 
 
@@ -34,6 +35,7 @@ class CreateGroupViewModel @AssistedInject constructor(
     private val storage: StorageProtocol,
     private val groupManagerV2: GroupManagerV2,
     private val avatarUtils: AvatarUtils,
+    private val proStatusManager: ProStatusManager,
     groupDatabase: GroupDatabase,
     @Assisted createFromLegacyGroupId: String?,
     recipientRepository: RecipientRepository,
@@ -47,6 +49,8 @@ class CreateGroupViewModel @AssistedInject constructor(
         scope = viewModelScope,
         avatarUtils = avatarUtils,
         recipientRepository = recipientRepository,
+        appContext = appContext,
+        proStatusManager = proStatusManager
     )
 
     // Input: group name

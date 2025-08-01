@@ -36,6 +36,7 @@ import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.repository.ConversationRepository
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.tokenpage.TokenPageNotificationManager
 import org.thoughtcrime.securesms.util.ClearDataUtils
 import java.time.ZonedDateTime
@@ -75,7 +76,8 @@ class DebugMenuViewModel @Inject constructor(
             forceOtherUsersAsPro = textSecurePreferences.forceOtherUsersAsPro(),
             forceIncomingMessagesAsPro = textSecurePreferences.forceIncomingMessagesAsPro(),
             forcePostPro = textSecurePreferences.forcePostPro(),
-            forceShortTTl = textSecurePreferences.forcedShortTTL()
+            forceShortTTl = textSecurePreferences.forcedShortTTL(),
+            messageProFeature = textSecurePreferences.getDebugMessageFeatures(),
         )
     )
     val uiState: StateFlow<UIState>
@@ -241,6 +243,15 @@ class DebugMenuViewModel @Inject constructor(
                     it.copy(forceShortTTl = command.set)
                 }
             }
+
+            is Commands.SetMessageProFeature -> {
+                val features = _uiState.value.messageProFeature.toMutableSet()
+                if(command.set) features.add(command.feature) else features.remove(command.feature)
+                textSecurePreferences.setDebugMessageFeatures(features)
+                _uiState.update {
+                    it.copy(messageProFeature = features)
+                }
+            }
         }
     }
 
@@ -335,6 +346,7 @@ class DebugMenuViewModel @Inject constructor(
         val forceCurrentUserAsPro: Boolean,
         val forceOtherUsersAsPro: Boolean,
         val forceIncomingMessagesAsPro: Boolean,
+        val messageProFeature: Set<ProStatusManager.MessageProFeature>,
         val forcePostPro: Boolean,
         val forceShortTTl: Boolean,
         val forceDeprecationState: LegacyGroupDeprecationManager.DeprecationState?,
@@ -357,6 +369,7 @@ class DebugMenuViewModel @Inject constructor(
         data class ForceIncomingMessagesAsPro(val set: Boolean) : Commands()
         data class ForcePostPro(val set: Boolean) : Commands()
         data class ForceShortTTl(val set: Boolean) : Commands()
+        data class SetMessageProFeature(val feature: ProStatusManager.MessageProFeature, val set: Boolean) : Commands()
         data class ShowDeprecationChangeDialog(val state: LegacyGroupDeprecationManager.DeprecationState?) : Commands()
         object HideDeprecationChangeDialog : Commands()
         object OverrideDeprecationState : Commands()

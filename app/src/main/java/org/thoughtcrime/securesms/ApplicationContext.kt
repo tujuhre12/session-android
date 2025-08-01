@@ -47,8 +47,10 @@ import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.MessagingModuleConfiguration.Companion.configure
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
+import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.messages.ProfileUpdateHandler
 import org.session.libsession.messaging.notifications.TokenFetcher
+import org.session.libsession.messaging.sending_receiving.ReceivedMessageHandler
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPollerManager
 import org.session.libsession.messaging.sending_receiving.pollers.PollerManager
@@ -191,6 +193,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
     @Inject lateinit var pollerManager: Lazy<PollerManager>
     @Inject lateinit var proStatusManager: Lazy<ProStatusManager>
     @Inject lateinit var recipientRepository: Lazy<RecipientRepository>
+    @Inject lateinit var messageSendJobFactory: MessageSendJob.Factory
 
     @Inject
     lateinit var backgroundPollManager: Lazy<BackgroundPollManager> // Exists here only to start upon app starts
@@ -295,7 +298,9 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
             preferences = textSecurePreferences.get(),
             deprecationManager = legacyGroupDeprecationManager.get(),
             recipientRepository = recipientRepository.get(),
-            proStatusManager = proStatusManager.get()
+            proStatusManager = proStatusManager.get(),
+            usernameUtils = usernameUtils.get(),
+            messageSendJobFactory = messageSendJobFactory,
         )
 
         startKovenant()

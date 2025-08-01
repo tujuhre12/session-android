@@ -109,7 +109,6 @@ class ConversationViewModel @AssistedInject constructor(
     private val application: Application,
     private val repository: ConversationRepository,
     private val storage: StorageProtocol,
-    private val messageDataProvider: MessageDataProvider,
     private val groupDb: GroupDatabase,
     private val threadDb: ThreadDatabase,
     private val reactionDb: ReactionDatabase,
@@ -128,7 +127,8 @@ class ConversationViewModel @AssistedInject constructor(
     private val recipientRepository: RecipientRepository,
     private val lokiThreadDatabase: LokiThreadDatabase,
     private val blindMappingRepository: BlindMappingRepository,
-    private val upmFactory: UserProfileUtils.UserProfileUtilsFactory
+    private val upmFactory: UserProfileUtils.UserProfileUtilsFactory,
+    attachmentDownloadHandlerFactory: AttachmentDownloadHandler.Factory,
 ) : InputbarViewModel(
     application = application,
     proStatusManager = proStatusManager
@@ -358,12 +358,7 @@ class ConversationViewModel @AssistedInject constructor(
         expiredGroupManager.expiredGroups.map { groupId in it }
     }
 
-    private val attachmentDownloadHandler = AttachmentDownloadHandler(
-        storage = storage,
-        messageDataProvider = messageDataProvider,
-        scope = viewModelScope,
-        recipientRepository = recipientRepository,
-    )
+    private val attachmentDownloadHandler = attachmentDownloadHandlerFactory.create(viewModelScope)
 
     val callBanner: StateFlow<String?> = callManager.currentConnectionStateFlow.map {
         // a call is in progress if it isn't idle nor disconnected and the recipient is the person on the call
@@ -488,7 +483,10 @@ class ConversationViewModel @AssistedInject constructor(
             showCall = conversation.showCallMenu,
             showAvatar = showOptionsMenu,
             showSearch = showSearch,
-            avatarUIData = avatarData
+            avatarUIData = avatarData,
+            // show the pro badge when a conversation/user is pro, except for communities
+            showProBadge = proStatusManager.shouldShowProBadge(conversation?.address)
+                    && conversation?.isLocalNumber == false // do not show for note to self
         ).also {
             // also preload the larger version of the avatar in case the user goes to the settings
             avatarData.elements.mapNotNull { it.contactPhoto }.forEach {

@@ -30,6 +30,8 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import dagger.hilt.android.qualifiers.ApplicationContext;
+
 @SuppressLint("UseSparseArrays")
 @Singleton
 public class TypingStatusRepository implements SSKEnvironment.TypingIndicatorsProtocol {
@@ -44,19 +46,24 @@ public class TypingStatusRepository implements SSKEnvironment.TypingIndicatorsPr
   private final MutableLiveData<Set<Long>>              threadsNotifier;
   private final TextSecurePreferences                   preferences;
   private final RecipientRepository recipientRepository;
+  private final Context appContext;
 
   @Inject
-  public TypingStatusRepository(TextSecurePreferences preferences, RecipientRepository recipientRepository) {
+  public TypingStatusRepository(
+          @ApplicationContext Context appContext,
+          TextSecurePreferences preferences,
+          RecipientRepository recipientRepository) {
     this.recipientRepository = recipientRepository;
     this.typistMap       = new HashMap<>();
     this.timers          = new HashMap<>();
     this.notifiers       = new HashMap<>();
     this.threadsNotifier = new MutableLiveData<>();
     this.preferences     = preferences;
+    this.appContext = appContext;
   }
 
   @Override
-  public synchronized void didReceiveTypingStartedMessage(@NotNull Context context, long threadId, @NotNull Address author, int device) {
+  public synchronized void didReceiveTypingStartedMessage(long threadId, @NotNull Address author, int device) {
     if (author.toString().equals(preferences.getLocalNumber())) {
       return;
     }
@@ -79,13 +86,13 @@ public class TypingStatusRepository implements SSKEnvironment.TypingIndicatorsPr
       Util.cancelRunnableOnMain(timer);
     }
 
-    timer = () -> didReceiveTypingStoppedMessage(context, threadId, author, device, false);
+    timer = () -> didReceiveTypingStoppedMessage(threadId, author, device, false);
     Util.runOnMainDelayed(timer, RECIPIENT_TYPING_TIMEOUT);
     timers.put(typist, timer);
   }
 
   @Override
-  public synchronized void didReceiveTypingStoppedMessage(@NotNull Context context, long threadId, @NotNull Address author, int device, boolean isReplacedByIncomingMessage) {
+  public synchronized void didReceiveTypingStoppedMessage(long threadId, @NotNull Address author, int device, boolean isReplacedByIncomingMessage) {
     if (author.toString().equals(preferences.getLocalNumber())) {
       return;
     }
@@ -114,8 +121,8 @@ public class TypingStatusRepository implements SSKEnvironment.TypingIndicatorsPr
   }
 
   @Override
-  public synchronized void didReceiveIncomingMessage(@NotNull Context context, long threadId, @NotNull Address author, int device) {
-    didReceiveTypingStoppedMessage(context, threadId, author, device, true);
+  public synchronized void didReceiveIncomingMessage(long threadId, @NotNull Address author, int device) {
+    didReceiveTypingStoppedMessage(threadId, author, device, true);
   }
 
   public synchronized LiveData<TypingState> getTypists(long threadId) {

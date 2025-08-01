@@ -19,6 +19,8 @@ import android.widget.FrameLayout
 import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
@@ -41,6 +43,8 @@ import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.toGroupString
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
+import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
+import org.thoughtcrime.securesms.conversation.v2.messages.QuoteView.Mode
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
@@ -53,6 +57,12 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.groups.OpenGroupManager
+import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.ui.ProBadgeText
+import org.thoughtcrime.securesms.ui.setThemedContent
+import org.thoughtcrime.securesms.ui.theme.LocalColors
+import org.thoughtcrime.securesms.ui.theme.LocalType
+import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.disableClipping
 import org.thoughtcrime.securesms.util.toDp
@@ -80,6 +90,7 @@ class VisibleMessageView : FrameLayout {
     @Inject lateinit var configFactory: ConfigFactoryProtocol
     @Inject lateinit var openGroupManager: OpenGroupManager
     @Inject lateinit var recipientRepository: RecipientRepository
+    @Inject lateinit var proStatusManager: ProStatusManager
 
     private val binding = ViewVisibleMessageBinding.inflate(LayoutInflater.from(context), this, true)
 
@@ -238,15 +249,25 @@ class VisibleMessageView : FrameLayout {
             }
         }
         if(!message.isOutgoing && (isStartOfMessageCluster && (isGroupThread || snIsSelected))){
-            binding.senderNameTextView.setOnClickListener {
+            binding.senderName.setOnClickListener {
                 delegate?.showUserProfileModal(message.recipient)
             }
 
-            binding.senderNameTextView.text = sender.displayName(attachesBlindedId = true)
+            // set up message author
+            binding.senderName.apply {
+                setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+                setThemedContent {
+                    ProBadgeText(
+                        text = sender.displayName(attachesBlindedId = false),
+                        textStyle = LocalType.current.base.bold().copy(color = LocalColors.current.text),
+                        showBadge = proStatusManager.shouldShowProBadge(message.recipient.address),
+                    )
+                }
+            }
 
-            binding.senderNameTextView.isVisible = true
+            binding.senderName.isVisible = true
         } else {
-            binding.senderNameTextView.isVisible = false
+            binding.senderName.isVisible = false
         }
 
         // Unread marker

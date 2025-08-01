@@ -18,6 +18,7 @@ import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.util.AvatarUtils
 
 
@@ -27,9 +28,10 @@ class GroupMembersViewModel @AssistedInject constructor(
     @param:ApplicationContext private val context: Context,
     storage: StorageProtocol,
     configFactory: ConfigFactoryProtocol,
+    proStatusManager: ProStatusManager,
     avatarUtils: AvatarUtils,
     recipientRepository: RecipientRepository,
-) : BaseGroupMembersViewModel(groupId, context, storage, configFactory, avatarUtils, recipientRepository) {
+) : BaseGroupMembersViewModel(groupId, context, storage, configFactory, avatarUtils, recipientRepository, proStatusManager) {
 
     private val _navigationActions = Channel<Intent>()
     val navigationActions get() = _navigationActions.receiveAsFlow()

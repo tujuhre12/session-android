@@ -539,7 +539,7 @@ object MessageSender {
         message.applyExpiryMode(address)
         message.threadID = threadID
         val destination = Destination.from(address)
-        val job = MessageSendJob(message, destination, statusCallback)
+        val job = MessagingModuleConfiguration.shared.messageSendJobFactory.create(message, destination, statusCallback)
         JobQueue.shared.add(job)
 
         // if we are sending a 'Note to Self' make sure it is not hidden

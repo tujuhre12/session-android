@@ -20,7 +20,6 @@ import org.session.libsession.messaging.jobs.AttachmentUploadJob
 import org.session.libsession.messaging.jobs.GroupAvatarDownloadJob
 import org.session.libsession.messaging.jobs.Job
 import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.jobs.MessageReceiveJob
 import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.ProfileUpdateHandler
@@ -470,10 +469,6 @@ open class Storage @Inject constructor(
 
     override fun getMessageSendJob(messageSendJobID: String): MessageSendJob? {
         return jobDatabase.getMessageSendJob(messageSendJobID)
-    }
-
-    override fun getMessageReceiveJob(messageReceiveJobID: String): MessageReceiveJob? {
-        return jobDatabase.getMessageReceiveJob(messageReceiveJobID)
     }
 
     override fun getGroupAvatarDownloadJob(server: String, room: String, imageId: String?): GroupAvatarDownloadJob? {

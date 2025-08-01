@@ -79,7 +79,6 @@ class ConversationViewModelTest: BaseViewModelTest() {
         return ConversationViewModel(
             repository = repository,
             storage = storage,
-            messageDataProvider = mock(),
             groupDb = mock(),
             threadDb = mock {
                 on { getOrCreateThreadIdFor(recipient.address) } doReturn threadId
@@ -113,6 +112,7 @@ class ConversationViewModelTest: BaseViewModelTest() {
             },
             createThreadIfNotExists = true,
             openGroupManager = mock(),
+            attachmentDownloadHandlerFactory = mock(),
         )
     }
 

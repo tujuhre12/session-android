@@ -29,6 +29,7 @@ import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.home.search.searchName
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 
@@ -37,6 +38,8 @@ import org.thoughtcrime.securesms.util.AvatarUtils
 open class SelectContactsViewModel @AssistedInject constructor(
     private val configFactory: ConfigFactory,
     private val avatarUtils: AvatarUtils,
+    private val proStatusManager: ProStatusManager,
+    @ApplicationContext private val appContext: Context,
     @Assisted private val excludingAccountIDs: Set<AccountId>,
     @Assisted private val applyDefaultFiltering: Boolean, // true by default - If true will filter out blocked and unapproved contacts
     @Assisted private val scope: CoroutineScope,
@@ -117,7 +120,8 @@ open class SelectContactsViewModel @AssistedInject constructor(
                         name = contact.searchName,
                         accountID = accountId,
                         avatarUIData = avatarData,
-                        selected = selectedAccountIDs.contains(accountId)
+                        selected = selectedAccountIDs.contains(accountId),
+                        showProBadge = proStatusManager.shouldShowProBadge(contact.address)
                     )
                 )
             }
@@ -164,4 +168,5 @@ data class ContactItem(
     val name: String,
     val avatarUIData: AvatarUIData,
     val selected: Boolean,
+    val showProBadge: Boolean
 )

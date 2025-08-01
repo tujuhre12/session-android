@@ -23,6 +23,7 @@ import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.util.AvatarUtils
 
 
@@ -36,7 +37,9 @@ class EditGroupViewModel @AssistedInject constructor(
     private val groupManager: GroupManagerV2,
     avatarUtils: AvatarUtils,
     private val recipientRepository: RecipientRepository,
-) : BaseGroupMembersViewModel(groupId, context, storage, configFactory, avatarUtils, recipientRepository) {
+    private val avatarUtils: AvatarUtils,
+    proStatusManager: ProStatusManager,
+) : BaseGroupMembersViewModel(groupId, context, storage, configFactory, avatarUtils, recipientRepository, proStatusManager) {
 
     // Output: The name of the group. This is the current name of the group, not the name being edited.
     val groupName: StateFlow<String> = groupInfo

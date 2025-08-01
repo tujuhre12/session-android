@@ -115,7 +115,7 @@ class UserProfileUtils @AssistedInject constructor(
             name = recipient.displayName(),
             subtitle = (recipient.basic as? BasicRecipient.Contact)?.nickname?.takeIf { it.isNotBlank() }?.let { "($it)" },
             avatarUIData = avatarUtils.getUIDataFromAccountId(accountId = recipient.address.address),
-            isPro = proStatusManager.isUserPro(recipient.address),
+            showProBadge = proStatusManager.shouldShowProBadge(recipient.address),
             currentUserPro = proStatusManager.isCurrentUserPro(),
             rawAddress = recipient.address.address,
             displayAddress = displayAddress,
@@ -178,7 +178,7 @@ class UserProfileUtils @AssistedInject constructor(
 data class UserProfileModalData(
     val name: String,
     val subtitle: String?,
-    val isPro: Boolean,
+    val showProBadge: Boolean,
     val currentUserPro: Boolean,
     val rawAddress: String,
     val displayAddress: String,

@@ -72,9 +72,9 @@ class GlobalSearchAdapter(
             )
             else -> ContentView(
                 LayoutInflater.from(parent.context).inflate(R.layout.view_global_search_result, parent, false),
-                dateUtils,
-                onContactClicked,
-                onContactLongPressed
+                dateUtils = dateUtils,
+                onContactClicked = onContactClicked,
+                onContactLongPressed = onContactLongPressed
             )
         }
 
@@ -165,17 +165,18 @@ class GlobalSearchAdapter(
         }
 
         data class SavedMessages(val currentUserPublicKey: String): Model // Note: "Note to Self" counts as SavedMessages rather than a Contact where `isSelf` is true.
-        data class Contact(val contact: AccountId, val name: String, val isSelf: Boolean) : Model {
-            constructor(contact: Recipient, isSelf: Boolean):
-                    this(AccountId(contact.address.address), contact.searchName, isSelf)
+        data class Contact(val contact: AccountId, val name: String, val isSelf: Boolean, val showProBadge: Boolean) : Model {
+            constructor(contact: Recipient, isSelf: Boolean, showProBadge: Boolean):
+                    this(AccountId(contact.address.address), contact.searchName, isSelf, showProBadge)
         }
         data class GroupConversation(
             val isLegacy: Boolean,
             val groupId: String,
             val title: String,
             val legacyMembersString: String?,
+            val showProBadge: Boolean
         ) : Model {
-            constructor(groupRecord: GroupRecord):
+            constructor(context: Context, groupRecord: GroupRecord, showProBadge: Boolean):
                     this(
                         isLegacy = groupRecord.isLegacyGroup,
                         groupId = groupRecord.encodedId,
@@ -187,9 +188,10 @@ class GlobalSearchAdapter(
                             recipients.joinToString(transform = { it.searchName })
                         } else {
                             null
-                        }
+                        },
+                        showProBadge = showProBadge
                     )
         }
-        data class Message(val messageResult: MessageResult, val unread: Int, val isSelf: Boolean) : Model
+        data class Message(val messageResult: MessageResult, val unread: Int, val isSelf: Boolean, val showProBadge: Boolean) : Model
     }
 }
