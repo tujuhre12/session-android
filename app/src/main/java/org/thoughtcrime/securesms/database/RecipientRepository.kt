@@ -139,6 +139,15 @@ class RecipientRepository @Inject constructor(
                 changeSource = configFactory.userConfigsChanged()
             }
 
+            is BasicRecipient.BlindedContact -> {
+                value = Recipient(
+                    address = address,
+                    basic = basicRecipient,
+                )
+
+                changeSource = configFactory.userConfigsChanged()
+            }
+
             is BasicRecipient.Contact -> {
                 value = createContactRecipient(
                     address = address,
@@ -310,9 +319,9 @@ class RecipientRepository @Inject constructor(
             }
 
             // Is this in our contact?
-            address.isStandard -> {
+            address is Address.Standard -> {
                 configFactory.withUserConfigs { configs ->
-                    configs.contacts.get(address.address)
+                    configs.contacts.get(address.id.hexString)
                 }?.let { contact ->
                     BasicRecipient.Contact(
                         name = contact.name,
@@ -329,10 +338,9 @@ class RecipientRepository @Inject constructor(
             }
 
             // Is this a group?
-            address.isGroupV2 -> {
-                val groupId = AccountId(address.address)
-                val groupInfo = configFactory.getGroup(groupId) ?: return null
-                configFactory.withGroupConfigs(groupId) { configs ->
+            address is Address.Group -> {
+                val groupInfo = configFactory.getGroup(address.id) ?: return null
+                configFactory.withGroupConfigs(address.id) { configs ->
                     BasicRecipient.Group(
                         avatar = configs.groupInfo.getProfilePic().toRecipientAvatar(),
                         expiryMode = configs.groupInfo.expiryMode,
@@ -345,6 +353,19 @@ class RecipientRepository @Inject constructor(
                         isPro = proStatusManager.isUserPro(address)
                     )
                 }
+            }
+
+            // Is this a blinded contact?
+            address is Address.Blinded || address is Address.CommunityBlindedId -> {
+                val blinded = address.toBlinded() ?: return null
+                val contact = configFactory.withUserConfigs { it.contacts.getBlinded(blinded.blindedId.hexString) } ?: return null
+
+                BasicRecipient.BlindedContact(
+                    displayName = contact.name,
+                    avatar = contact.profilePic.toRecipientAvatar(),
+                    priority = PRIORITY_VISIBLE,
+                    isPro = proStatusManager.isUserPro(address),
+                )
             }
 
             // Otherwise, there's no fast way to get a basic recipient
@@ -367,8 +388,7 @@ class RecipientRepository @Inject constructor(
                 avatar = settings.profilePic?.toRecipientAvatar(),
                 isPro = settings.isPro || proStatusManager.isUserPro(address),
             ),
-            mutedUntil = settings.muteUntil.takeIf { it > 0 }
-                ?.let { ZonedDateTime.from(Instant.ofEpochMilli(it)) },
+            mutedUntil = settings.muteUntil,
             autoDownloadAttachments = settings.autoDownloadAttachments,
             notifyType = settings.notifyType,
             acceptsCommunityMessageRequests = !settings.blocksCommunityMessagesRequests,
@@ -387,13 +407,6 @@ class RecipientRepository @Inject constructor(
             )
         }
 
-        private val RecipientSettings.muteUntilDate: ZonedDateTime?
-            get() = if (muteUntil > 0) {
-                Instant.ofEpochMilli(muteUntil).atZone(ZoneId.of("UTC"))
-            } else {
-                null
-            }
-
         private val ReadableGroupInfoConfig.expiryMode: ExpiryMode
             get() {
                 val timer = getExpiryTimer()
@@ -411,7 +424,7 @@ class RecipientRepository @Inject constructor(
             return Recipient(
                 address = address,
                 basic = basic,
-                mutedUntil = settings?.muteUntilDate,
+                mutedUntil = settings?.muteUntil,
                 autoDownloadAttachments = settings?.autoDownloadAttachments,
                 notifyType = settings?.notifyType ?: NotifyType.ALL,
             )
@@ -429,7 +442,7 @@ class RecipientRepository @Inject constructor(
             return Recipient(
                 address = address,
                 basic = basic,
-                mutedUntil = fallbackSettings?.muteUntilDate,
+                mutedUntil = fallbackSettings?.muteUntil,
                 autoDownloadAttachments = fallbackSettings?.autoDownloadAttachments,
                 notifyType = fallbackSettings?.notifyType ?: NotifyType.ALL,
                 acceptsCommunityMessageRequests = fallbackSettings?.blocksCommunityMessagesRequests == false,
@@ -448,7 +461,7 @@ class RecipientRepository @Inject constructor(
                     openGroup = community,
                     priority = config?.priority ?: PRIORITY_VISIBLE,
                 ),
-                mutedUntil = settings?.muteUntilDate,
+                mutedUntil = settings?.muteUntil,
                 autoDownloadAttachments = settings?.autoDownloadAttachments,
                 notifyType = settings?.notifyType ?: NotifyType.ALL,
             )
@@ -476,7 +489,7 @@ class RecipientRepository @Inject constructor(
                     priority = config?.priority ?: PRIORITY_VISIBLE,
                     isPro = false,
                 ),
-                mutedUntil = settings?.muteUntilDate,
+                mutedUntil = settings?.muteUntil,
                 autoDownloadAttachments = settings?.autoDownloadAttachments,
                 notifyType = settings?.notifyType ?: NotifyType.ALL,
             )

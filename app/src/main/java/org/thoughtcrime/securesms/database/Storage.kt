@@ -1348,15 +1348,22 @@ open class Storage @Inject constructor(
             val threadId = getOrCreateThreadIdFor(sender)
             val profile = response.profile
             if (profile != null) {
-                profileUpdateHandler.handleProfileUpdate(
-                    AccountId(senderPublicKey),
-                    ProfileUpdateHandler.Updates(
-                        name = profile.displayName,
-                        picUrl = profile.profilePictureURL,
-                        picKey = profile.profileKey,
-                        acceptsCommunityRequests = null
-                    ),
-                    fromCommunity = null)
+                val updates = ProfileUpdateHandler.Updates.create(
+                    name = profile.displayName,
+                    picUrl = profile.profilePictureURL,
+                    picKey = profile.profileKey,
+                    blocksCommunityMessageRequests = null,
+                    proStatus = null,
+                    profileUpdateTime = null
+                )
+
+                if (updates != null) {
+                    profileUpdateHandler.handleProfileUpdate(
+                        senderId = AccountId(senderPublicKey),
+                        updates = updates,
+                        fromCommunity = null
+                    )
+                }
             }
 
 //            blindedIdMappingRepository.getReverseMappings(sender)

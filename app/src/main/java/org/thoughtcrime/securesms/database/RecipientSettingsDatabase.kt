@@ -15,6 +15,7 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.database.model.RecipientSettings
+import org.thoughtcrime.securesms.util.DateUtils.Companion.asEpochSeconds
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
@@ -86,48 +87,6 @@ class RecipientSettingsDatabase @Inject constructor(
             }
     }
 
-    private fun Cursor.toRecipientSettings(): RecipientSettings {
-        return RecipientSettings(
-            muteUntil = this.getLong(this.getColumnIndexOrThrow(COL_MUTE_UNTIL)),
-            notifyType = readNotifyType(this.getString(this.getColumnIndexOrThrow(COL_NOTIFY_TYPE))),
-            autoDownloadAttachments = this.getInt(this.getColumnIndexOrThrow(COL_AUTO_DOWNLOAD_ATTACHMENTS)) == 1,
-            profilePic = readUserProfile(
-                keyB64 = this.getString(this.getColumnIndexOrThrow(COL_PROFILE_PIC_KEY)),
-                url = this.getString(this.getColumnIndexOrThrow(COL_PROFILE_PIC_URL))
-            ),
-            blocksCommunityMessagesRequests = this.getInt(this.getColumnIndexOrThrow(COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS)) == 1,
-            name = this.getString(this.getColumnIndexOrThrow(COL_NAME)),
-            isPro = this.getInt(this.getColumnIndexOrThrow(COL_IS_PRO)) == 1
-        )
-    }
-
-    private fun RecipientSettings.toContentValues(): ContentValues {
-        return ContentValues().apply {
-            put(COL_NAME, name)
-            put(COL_MUTE_UNTIL, muteUntil)
-            put(COL_NOTIFY_TYPE, notifyType.name)
-            put(COL_AUTO_DOWNLOAD_ATTACHMENTS, autoDownloadAttachments)
-            put(COL_PROFILE_PIC_KEY, profilePic?.key?.data?.let(Base64::encodeBytes))
-            put(COL_PROFILE_PIC_URL, profilePic?.url)
-            put(COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS, blocksCommunityMessagesRequests)
-            put(COL_IS_PRO, isPro)
-        }
-    }
-
-    private fun readUserProfile(keyB64: String?, url: String?): UserPic? {
-        return if (keyB64.isNullOrBlank() || url.isNullOrEmpty()) {
-            null
-        } else {
-            UserPic(url, Base64.decode(keyB64))
-        }
-    }
-
-    private fun readNotifyType(t: String): NotifyType {
-        return runCatching { NotifyType.valueOf(t) }
-            .onFailure { Log.e(TAG, "Error reading notify type of $t", it) }
-            .getOrDefault(NotifyType.ALL)
-    }
-
     companion object {
         private const val TAG = "RecipientSettingsDatabase"
 
@@ -143,6 +102,9 @@ class RecipientSettingsDatabase @Inject constructor(
         private const val COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS = "blocks_community_messages_requests"
         private const val COL_IS_PRO = "is_pro"
 
+        // The time when the profile pic/name/is_pro was last updated, in epoch seconds.
+        private const val COL_PROFILE_UPDATE_TIME = "profile_update_time"
+
         const val MIGRATION_CREATE_TABLE = """
             CREATE TABLE recipient_settings (
                 $COL_ADDRESS TEXT NOT NULL PRIMARY KEY COLLATE NOCASE,
@@ -153,7 +115,8 @@ class RecipientSettingsDatabase @Inject constructor(
                 $COL_PROFILE_PIC_URL TEXT,
                 $COL_NAME TEXT,
                 $COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS BOOLEAN NOT NULL DEFAULT TRUE,
-                $COL_IS_PRO BOOLEAN NOT NULL DEFAULT FALSE
+                $COL_IS_PRO BOOLEAN NOT NULL DEFAULT FALSE,
+                $COL_PROFILE_UPDATE_TIME INTEGER NOT NULL DEFAULT 0
             ) WITHOUT ROWID
         """
 
@@ -188,5 +151,48 @@ class RecipientSettingsDatabase @Inject constructor(
         const val MIGRATE_DROP_OLD_TABLE = """
             DROP TABLE recipient_preferences
         """
+
+        private fun readUserProfile(keyB64: String?, url: String?): UserPic? {
+            return if (keyB64.isNullOrBlank() || url.isNullOrEmpty()) {
+                null
+            } else {
+                UserPic(url, Base64.decode(keyB64))
+            }
+        }
+
+        private fun readNotifyType(t: String): NotifyType {
+            return runCatching { NotifyType.valueOf(t) }
+                .onFailure { Log.e(TAG, "Error reading notify type of $t", it) }
+                .getOrDefault(NotifyType.ALL)
+        }
+
+        private fun Cursor.toRecipientSettings(): RecipientSettings {
+            return RecipientSettings(
+                muteUntil = getLong(getColumnIndexOrThrow(COL_MUTE_UNTIL)).asEpochSeconds(),
+                notifyType = readNotifyType(getString(getColumnIndexOrThrow(COL_NOTIFY_TYPE))),
+                autoDownloadAttachments = getInt(getColumnIndexOrThrow(COL_AUTO_DOWNLOAD_ATTACHMENTS)) == 1,
+                profilePic = readUserProfile(
+                    keyB64 = getString(getColumnIndexOrThrow(COL_PROFILE_PIC_KEY)),
+                    url = getString(getColumnIndexOrThrow(COL_PROFILE_PIC_URL))
+                ),
+                blocksCommunityMessagesRequests = getInt(getColumnIndexOrThrow(COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS)) == 1,
+                name = getString(getColumnIndexOrThrow(COL_NAME)),
+                isPro = getInt(getColumnIndexOrThrow(COL_IS_PRO)) == 1,
+                profileUpdated = getLong(getColumnIndexOrThrow(COL_PROFILE_UPDATE_TIME)).asEpochSeconds(),
+            )
+        }
+
+        private fun RecipientSettings.toContentValues(): ContentValues {
+            return ContentValues().apply {
+                put(COL_NAME, name)
+                put(COL_MUTE_UNTIL, muteUntil?.toEpochSecond() ?: 0L)
+                put(COL_NOTIFY_TYPE, notifyType.name)
+                put(COL_AUTO_DOWNLOAD_ATTACHMENTS, autoDownloadAttachments)
+                put(COL_PROFILE_PIC_KEY, profilePic?.key?.data?.let(Base64::encodeBytes))
+                put(COL_PROFILE_PIC_URL, profilePic?.url)
+                put(COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS, blocksCommunityMessagesRequests)
+                put(COL_IS_PRO, isPro)
+            }
+        }
     }
 }

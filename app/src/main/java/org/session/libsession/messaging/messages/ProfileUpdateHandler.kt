@@ -5,13 +5,14 @@ import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.recipients.BasicRecipient
 import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.BlindMappingRepository
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
-import java.util.EnumSet
+import org.thoughtcrime.securesms.util.DateUtils.Companion.asEpochSeconds
+import java.time.ZonedDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -27,87 +28,132 @@ import javax.inject.Singleton
 class ProfileUpdateHandler @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val recipientDatabase: RecipientSettingsDatabase,
-    private val prefs: TextSecurePreferences,
     private val blindIdMappingRepository: BlindMappingRepository,
+    private val recipientRepository: RecipientRepository,
 ) {
 
-    fun handleProfileUpdate(sender: AccountId, updates: Updates, fromCommunity: BaseCommunityInfo?) {
-        if (updates.name.isNullOrBlank() &&
-            updates.pic == null &&
-            updates.acceptsCommunityRequests == null
-        ) {
-            Log.i(TAG, "No valid profile updated data provided for $sender")
-            return
-        }
-
-        // Unblind the sender if it's blinded and we have information to unblind it.
-        val actualSender = if (sender.prefix?.isBlinded() == true && fromCommunity != null) {
-            blindIdMappingRepository.getMapping(fromCommunity.baseUrl, Address.Blinded(sender))?.id
+    fun handleProfileUpdate(senderId: AccountId, updates: Updates, fromCommunity: BaseCommunityInfo?) {
+        val unblinded = if (senderId.prefix?.isBlinded() == true && fromCommunity != null) {
+            blindIdMappingRepository.getMapping(fromCommunity.baseUrl, Address.Blinded(senderId))
         } else {
-            sender
-        } ?: sender
+            null
+        }
 
-        if (actualSender.hexString == prefs.getLocalNumber()) {
-            Log.w(TAG, "Ignoring profile update for local number")
+        val senderAddress = senderId.toAddress()
+
+        if (recipientRepository.getBasicRecipientFast(senderAddress) is BasicRecipient.Self) {
+            Log.d(TAG, "Ignoring profile update for ourselves")
             return
         }
 
-        val actualSenderIdPrefix = actualSender.prefix
+        Log.d(TAG, "Handling profile update for $senderId")
 
-        if (actualSenderIdPrefix == null ||
-            actualSenderIdPrefix !in EnumSet.of(IdPrefix.STANDARD, IdPrefix.BLINDED, IdPrefix.BLINDEDV2)) {
-            Log.w(TAG, "Unsupported profile update for sender: $sender (actualSender: $actualSender)")
-            return
-        }
-
-        Log.d(TAG, "Handling profile update for $sender")
-
-        // If the user is a contact, we update the contact's profile data int he config
-        if (actualSenderIdPrefix == IdPrefix.STANDARD) {
+        // If the sender has standard address (either as unblinded, or as is), we will check if
+        // they are a contact and update their contact information accordingly.
+        val standardSender = unblinded ?: (senderAddress as? Address.Standard)
+        if (standardSender != null && (updates.name != null || updates.pic != null || updates.profileUpdateTime != null)) {
             configFactory.withMutableUserConfigs { configs ->
-                configs.contacts.get(actualSender.hexString)?.let { existingContact ->
-                    configs.contacts.set(
-                        existingContact.copy(
-                            name = updates.name ?: existingContact.name,
-                            profilePicture = updates.pic ?: existingContact.profilePicture
+                configs.contacts.get(standardSender.id.hexString)?.let { existingContact ->
+                    if (shouldUpdateProfile(
+                        lastUpdated = existingContact.profileUpdatedEpochSeconds.asEpochSeconds(),
+                        newUpdateTime = updates.profileUpdateTime
+                    )) {
+                        configs.contacts.set(
+                            existingContact.copy(
+                                name = updates.name ?: existingContact.name,
+                                profilePicture = updates.pic ?: existingContact.profilePicture,
+                                profileUpdatedEpochSeconds = updates.profileUpdateTime?.toEpochSecond() ?: 0L,
+                            )
                         )
-                    )
+                    } else {
+                        Log.d(TAG, "Ignoring profile update for ${standardSender.debugString}, no changes detected")
+                    }
+                } ?: Log.w(TAG, "Got a unblinded address for a contact but it does not exist: ${standardSender.debugString}")
+            }
+        }
+
+        // If we have a blinded address, we need to look at if we have a blinded contact to update
+        if (senderAddress is Address.Blinded && (updates.pic != null || !updates.name.isNullOrBlank())) {
+            configFactory.withMutableUserConfigs { configs ->
+                configs.contacts.getBlinded(senderAddress.blindedId.hexString)?.let { c ->
+                    if (updates.pic != null) {
+                        c.profilePic = updates.pic
+                    }
+
+                    if (!updates.name.isNullOrBlank()) {
+                        c.name = updates.name
+                    }
+
+                    configs.contacts.setBlinded(c)
                 }
             }
         }
 
-        // We always update the recipient database, even if the user is a contact,
-        // as the contact could be deleted by the user and leaving this user no profile data (as
-        // the deleted contact can still appear in say, a group conversation).
-        Log.d(TAG, "Updating recipient profile for $actualSender")
 
-        recipientDatabase.save(actualSender.toAddress()) {
-            it.copy(
-                name = updates.name ?: it.name,
-                profilePic = updates.pic ?: it.profilePic,
-                blocksCommunityMessagesRequests = updates.acceptsCommunityRequests?.let { accept -> !accept } ?: it.blocksCommunityMessagesRequests
-            )
-        }
+        // We'll always update both blinded/unblinded addresses in the recipient settings db,
+        // as the user could delete the config and leave us no way to find the profile pic of
+        // the sender.
+        sequenceOf(senderAddress, unblinded)
+            .filterNotNull()
+            .forEach { address ->
+                recipientDatabase.save(address) { r ->
+                    if (shouldUpdateProfile(
+                            lastUpdated = r.profileUpdated,
+                            newUpdateTime = updates.profileUpdateTime
+                        )) {
+                        r.copy(
+                            name = updates.name?.takeIf { it.isNotBlank() } ?: r.name,
+                            profilePic = updates.pic ?: r.profilePic,
+                            blocksCommunityMessagesRequests = updates.blocksCommunityMessageRequests ?: r.blocksCommunityMessagesRequests
+                        )
+                    } else {
+                        r
+                    }
+                }
+            }
     }
 
-    data class Updates(
+    /**
+     * Determines if the profile should be updated based on the last updated time and the new update time.
+     *
+     * This function takes optional times because we need to deal with older versions of the app
+     * where the updated time is not set.
+     */
+    private fun shouldUpdateProfile(
+        lastUpdated: ZonedDateTime?,
+        newUpdateTime: ZonedDateTime?
+    ): Boolean {
+        return (lastUpdated == null && newUpdateTime == null) ||
+                (lastUpdated == null) ||
+                (newUpdateTime != null && newUpdateTime > lastUpdated)
+    }
+
+    class Updates private constructor(
         val name: String? = null,
         val pic: UserPic? = null,
-        val acceptsCommunityRequests: Boolean? = null,
+        val blocksCommunityMessageRequests: Boolean? = null,
+        val profileUpdateTime: ZonedDateTime?,
     ) {
-        constructor(
-            name: String?,
-            picUrl: String?,
-            picKey: ByteArray?,
-            acceptsCommunityRequests: Boolean?
-        ) : this(
-            name = name,
-            pic = if (!picUrl.isNullOrBlank() && picKey != null && picKey.size in VALID_PROFILE_KEY_LENGTH) {
-                UserPic(picUrl, picKey)
-            } else {
-                null
-            }, acceptsCommunityRequests = acceptsCommunityRequests
-        )
+        companion object {
+            fun create(
+                name: String? = null,
+                picUrl: String?,
+                picKey: ByteArray?,
+                blocksCommunityMessageRequests: Boolean? = null,
+                proStatus: Boolean? = null,
+                profileUpdateTime: ZonedDateTime?
+            ): Updates? {
+                val hasNameUpdate = !name.isNullOrBlank()
+                val pic = if (!picUrl.isNullOrBlank() && picKey != null &&
+                        VALID_PROFILE_KEY_LENGTH.contains(picKey.size)) UserPic(picUrl, picKey) else null
+
+                if (!hasNameUpdate && pic == null && blocksCommunityMessageRequests == null && proStatus == null) {
+                    return null
+                }
+
+                return Updates(name, pic, blocksCommunityMessageRequests, profileUpdateTime)
+            }
+        }
     }
 
     companion object {

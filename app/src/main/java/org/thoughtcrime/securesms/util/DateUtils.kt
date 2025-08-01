@@ -19,6 +19,7 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.DATE_FORMAT_PREF
 import org.session.libsession.utilities.TextSecurePreferences.Companion.TIME_FORMAT_PREF
 import org.session.libsignal.utilities.Log
+import java.time.ZonedDateTime
 
 enum class RelativeDay { TODAY, YESTERDAY, TOMORROW }
 
@@ -220,4 +221,12 @@ class DateUtils @Inject constructor(
 
     private fun getLocalizedPattern(template: String, locale: Locale): String =
         DateFormat.getBestDateTimePattern(locale, template)
+
+    companion object {
+        fun Long.asEpochSeconds(): ZonedDateTime? {
+            if (this <= 0) return null
+
+            return Instant.ofEpochSecond(this).atZone(ZoneId.of("UTC"))
+        }
+    }
 }

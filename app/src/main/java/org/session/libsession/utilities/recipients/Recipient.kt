@@ -84,6 +84,7 @@ data class Recipient(
             }
             is BasicRecipient.Contact -> basic.approvedMe
             is BasicRecipient.Community -> true // Communities don't have approval status for users.
+            is BasicRecipient.BlindedContact -> false
         }
     }
 
@@ -125,6 +126,13 @@ sealed interface BasicRecipient {
         override val priority: Long = PRIORITY_VISIBLE,
         override val isPro: Boolean = false
     ) : BasicRecipient
+
+    data class BlindedContact(
+        val displayName: String,
+        override val avatar: RemoteFile.Encrypted?,
+        override val priority: Long,
+        override val isPro: Boolean
+    ) : ConfigBasedRecipient
 
     data class Community(
         val openGroup: OpenGroup,
@@ -233,6 +241,7 @@ fun Recipient.displayName(
         is BasicRecipient.Group -> basic.name
         is BasicRecipient.Generic -> basic.displayName
         is BasicRecipient.Community -> basic.openGroup.name
+        is BasicRecipient.BlindedContact -> basic.displayName
     }
 
     if (name.isBlank()) {

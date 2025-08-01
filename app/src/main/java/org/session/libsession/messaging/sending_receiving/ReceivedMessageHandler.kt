@@ -381,8 +381,7 @@ class ReceivedMessageHandler @Inject constructor(
             val maxChars = proStatusManager.getIncomingMessageMaxLength(message)
             val messageText = message.text?.take(maxChars) // truncate to max char limit for this message
             message.text = messageText
-            message.hasMention = listOf(userPublicKey, context.userBlindedKey)
-                .filterNotNull()
+            message.hasMention = listOfNotNull(userPublicKey, context.userBlindedKey)
                 .any { key ->
                     messageText?.contains("@$key") == true || key == (quoteModel?.author?.toString() ?: "")
                 }
@@ -399,16 +398,22 @@ class ReceivedMessageHandler @Inject constructor(
 
             // Update profile if needed (must be done after the message is persisted)
             if (runProfileUpdate) {
-                profileUpdateHandler.handleProfileUpdate(
-                    sender = senderId,
-                    updates = ProfileUpdateHandler.Updates(
-                        name = message.profile?.displayName,
-                        picUrl = message.profile?.profilePictureURL,
-                        picKey = message.profile?.profileKey,
-                        acceptsCommunityRequests = !message.blocksMessageRequests
-                    ),
-                    fromCommunity = context.openGroup?.toCommunityInfo(),
+                val updates = ProfileUpdateHandler.Updates.create(
+                    name = message.profile?.displayName,
+                    picUrl = message.profile?.profilePictureURL,
+                    picKey = message.profile?.profileKey,
+                    blocksCommunityMessageRequests = message.blocksMessageRequests,
+                    proStatus = null,
+                    profileUpdateTime = null,
                 )
+
+                if (updates != null) {
+                    profileUpdateHandler.handleProfileUpdate(
+                        senderId = senderId,
+                        updates = updates,
+                        fromCommunity = context.openGroup?.toCommunityInfo(),
+                    )
+                }
             }
 
             // Parse & persist attachments
@@ -445,16 +450,20 @@ class ReceivedMessageHandler @Inject constructor(
         }
 
         // Update profile if needed
-        profileUpdateHandler.handleProfileUpdate(
-            sender = AccountId(message.sender!!),
-            updates = ProfileUpdateHandler.Updates(
-                name = message.profile?.displayName,
-                picUrl = message.profile?.profilePictureURL,
-                picKey = message.profile?.profileKey,
-                acceptsCommunityRequests = null,
-            ),
-            fromCommunity = null // Groupv2 is not a community
-        )
+        ProfileUpdateHandler.Updates.create(
+            name = message.profile?.displayName,
+            picUrl = message.profile?.profilePictureURL,
+            picKey = message.profile?.profileKey,
+            blocksCommunityMessageRequests = null,
+            proStatus = null,
+            profileUpdateTime = null
+        )?.let { updates ->
+            profileUpdateHandler.handleProfileUpdate(
+                senderId = AccountId(message.sender!!),
+                updates = updates,
+                fromCommunity = null // Groupv2 is not a community
+            )
+        }
 
         when {
             inner.hasInviteMessage() -> handleNewLibSessionClosedGroupMessage(message)
@@ -564,7 +573,6 @@ class ReceivedMessageHandler @Inject constructor(
     private fun handleInviteResponse(message: GroupUpdated, closedGroup: AccountId) {
         val sender = message.sender!!
         // val profile = message // maybe we do need data to be the inner so we can access profile
-        val storage = storage
         val approved = message.inner.inviteResponse.isApproved
         scope.launch {
             try {
