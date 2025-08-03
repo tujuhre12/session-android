@@ -330,6 +330,22 @@ open class Storage @Inject constructor(
         }
     }
 
+    override fun markConversationAsUnread(threadId: Long) {
+        getRecipientForThread(threadId)?.let { recipient ->
+
+            // don't process configs for inbox recipients
+            if (recipient.isCommunityInboxRecipient) return
+
+            configFactory.withMutableUserConfigs { configs ->
+                val config = configs.convoInfoVolatile
+                val convo = getConvo(threadId, recipient, config)  ?: return@withMutableUserConfigs
+                convo.unread = true
+                notifyConversationListListeners()
+                config.set(convo)
+            }
+        }
+    }
+
     private fun getConvo(threadId: Long, recipient : Recipient, config : MutableConversationVolatileConfig) : Conversation? {
         return when {
             // recipient closed group

@@ -45,6 +45,7 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
     var onUnblockTapped: (() -> Unit)? = null
     var onDeleteTapped: (() -> Unit)? = null
     var onMarkAllAsReadTapped: (() -> Unit)? = null
+    var onMarkAsUnreadTapped : (() -> Unit)? = null
     var onNotificationTapped: (() -> Unit)? = null
     var onDeleteContactTapped: (() -> Unit)? = null
 
@@ -64,6 +65,7 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
             binding.unblockTextView -> onUnblockTapped?.invoke()
             binding.deleteTextView -> onDeleteTapped?.invoke()
             binding.markAllAsReadTextView -> onMarkAllAsReadTapped?.invoke()
+            binding.markAsUnreadTextView -> onMarkAsUnreadTapped?.invoke()
             binding.notificationsTextView -> onNotificationTapped?.invoke()
             binding.deleteContactTextView -> onDeleteContactTapped?.invoke()
         }
@@ -162,10 +164,14 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
             TextViewCompat.setCompoundDrawablesRelativeWithIntrinsicBounds(this, drawableStartRes, 0, 0, 0)
         }
 
-        binding.markAllAsReadTextView.isVisible = (thread.unreadCount > 0 ||
+        val isRead = (thread.unreadCount > 0 ||
                 configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(thread) })
                 && !isDeprecatedLegacyGroup
+
+        binding.markAllAsReadTextView.isVisible = isRead
         binding.markAllAsReadTextView.setOnClickListener(this)
+        binding.markAsUnreadTextView.isVisible = !isRead
+        binding.markAsUnreadTextView.setOnClickListener(this)
         binding.pinTextView.isVisible = !thread.isPinned && !isDeprecatedLegacyGroup
         binding.unpinTextView.isVisible = thread.isPinned
         binding.pinTextView.setOnClickListener(this)
