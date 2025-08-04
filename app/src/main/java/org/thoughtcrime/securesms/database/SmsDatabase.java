@@ -40,7 +40,8 @@ import org.session.libsession.utilities.IdentityKeyMismatch;
 import org.session.libsession.utilities.IdentityKeyMismatchList;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Util;
-import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsession.utilities.recipients.BasicRecipient;
+import org.session.libsession.utilities.recipients.CommonRecipient;
 import org.session.libsignal.utilities.JsonUtil;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.guava.Optional;
@@ -841,7 +842,7 @@ public class SmsDatabase extends MessagingDatabase {
       }
 
       List<IdentityKeyMismatch> mismatches = getMismatches(mismatchDocument);
-      Recipient recipient  = recipientRepository.getRecipientSync(address);
+      CommonRecipient<Address, BasicRecipient> recipient  = recipientRepository.getRecipientSync(address);
       List<ReactionRecord>      reactions  = DatabaseComponent.get(context).reactionDatabase().getReactions(cursor);
 
       return new SmsMessageRecord(messageId, body, recipient,

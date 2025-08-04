@@ -6,7 +6,8 @@ import androidx.annotation.Nullable;
 
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel;
 import org.session.libsession.utilities.Address;
-import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsession.utilities.recipients.BasicRecipient;
+import org.session.libsession.utilities.recipients.CommonRecipient;
 import org.thoughtcrime.securesms.mms.SlideDeck;
 
 import java.util.Objects;
@@ -14,12 +15,12 @@ import java.util.Objects;
 public class Quote {
 
   private final long      id;
-  private final Recipient author;
+  private final CommonRecipient<Address, BasicRecipient> author;
   private final String    text;
   private final boolean   missing;
   private final SlideDeck attachment;
 
-  public Quote(long id, @NonNull Recipient author, @Nullable String text, boolean missing, @NonNull SlideDeck attachment) {
+  public Quote(long id, @NonNull CommonRecipient<Address, BasicRecipient> author, @Nullable String text, boolean missing, @NonNull SlideDeck attachment) {
     this.id         = id;
     this.author     = author;
     this.text       = text;
@@ -31,7 +32,7 @@ public class Quote {
     return id;
   }
 
-  public @NonNull Recipient getAuthor() {
+  public @NonNull CommonRecipient<Address, BasicRecipient> getAuthor() {
     return author;
   }
 

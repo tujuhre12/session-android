@@ -13,7 +13,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.session.libsession.utilities.Address;
-import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsession.utilities.recipients.BasicRecipient;
+import org.session.libsession.utilities.recipients.CommonRecipient;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2;
 
@@ -52,8 +53,7 @@ public class NotificationState {
 
   public @Nullable Uri getRingtone(@NonNull Context context) {
     if (!notifications.isEmpty()) {
-      Recipient recipient = notifications.getFirst().getRecipient();
-      return NotificationChannels.getMessageRingtone(context, recipient);
+      return NotificationChannels.getMessageRingtone(context);
     }
 
     return RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
@@ -98,7 +98,7 @@ public class NotificationState {
     return PendingIntent.getBroadcast(context, 0, intent, intentFlags);
   }
 
-  public PendingIntent getRemoteReplyIntent(Context context, Recipient recipient, ReplyMethod replyMethod) {
+  public PendingIntent getRemoteReplyIntent(Context context, CommonRecipient<Address, BasicRecipient> recipient, ReplyMethod replyMethod) {
     if (threads.size() != 1) throw new AssertionError("We only support replies to single thread notifications!");
 
     Intent intent = new Intent(RemoteReplyReceiver.REPLY_ACTION);
@@ -116,7 +116,7 @@ public class NotificationState {
     return PendingIntent.getBroadcast(context, 0, intent, intentFlags);
   }
 
-  public PendingIntent getAndroidAutoReplyIntent(Context context, Recipient recipient) {
+  public PendingIntent getAndroidAutoReplyIntent(Context context, CommonRecipient<Address, BasicRecipient> recipient) {
     if (threads.size() != 1) throw new AssertionError("We only support replies to single thread notifications!");
 
     Intent intent = new Intent(AndroidAutoReplyReceiver.REPLY_ACTION);
@@ -159,7 +159,7 @@ public class NotificationState {
     return PendingIntent.getBroadcast(context, 0, intent, intentFlags);
   }
 
-  public PendingIntent getQuickReplyIntent(Context context, Recipient recipient) {
+  public PendingIntent getQuickReplyIntent(Context context, CommonRecipient<Address, BasicRecipient> recipient) {
     if (threads.size() != 1) throw new AssertionError("We only support replies to single thread notifications! " + threads.size());
 
     final Intent intent = ConversationActivityV2.Companion.createIntent(context, (Address.Conversable) recipient.getAddress());

@@ -12,7 +12,6 @@ import org.session.libsession.utilities.Contact;
 import org.session.libsession.utilities.DistributionTypes;
 import org.session.libsession.utilities.IdentityKeyMismatch;
 import org.session.libsession.utilities.NetworkFailure;
-import org.session.libsession.utilities.recipients.Recipient;
 import org.thoughtcrime.securesms.database.model.content.MessageContent;
 
 import java.util.Collections;

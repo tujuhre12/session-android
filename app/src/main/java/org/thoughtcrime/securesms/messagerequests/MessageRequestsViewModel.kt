@@ -52,7 +52,7 @@ class MessageRequestsViewModel @Inject constructor(
     }
 
     companion object {
-        private val COMPARATOR get() = compareByDescending<ThreadRecord> { it.lastMessage?.timestamp ?: 0 }
+        private val COMPARATOR get() = compareByDescending<ThreadRecord> { it.lastMessage?.timestamp ?: 0L }
             .thenByDescending { it.date }
             .thenBy { it.recipient.displayName() }
     }

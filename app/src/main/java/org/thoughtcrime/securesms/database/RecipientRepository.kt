@@ -1,18 +1,22 @@
 package org.thoughtcrime.securesms.database
 
+import androidx.collection.LruCache
 import dagger.Lazy
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.shareIn
@@ -25,14 +29,13 @@ import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
-import org.session.libsession.utilities.isGroupV2
-import org.session.libsession.utilities.isStandard
 import org.session.libsession.utilities.recipients.BasicRecipient
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RemoteFile
@@ -44,11 +47,9 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.database.model.RecipientSettings
+import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import java.lang.ref.WeakReference
-import java.time.Instant
-import java.time.ZoneId
-import java.time.ZonedDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -71,19 +72,31 @@ class RecipientRepository @Inject constructor(
     private val storage: Lazy<StorageProtocol>,
     private val blindedIdMappingRepository: BlindMappingRepository,
     private val proStatusManager: ProStatusManager,
+    @param:ManagerScope private val managerScope: CoroutineScope,
 ) {
-    private val recipientCache = HashMap<Address, WeakReference<SharedFlow<Recipient>>>()
+    private val recipientCache = LruCache<Address, WeakReference<SharedFlow<Recipient>>>(512)
 
     fun observeRecipient(address: Address): Flow<Recipient> {
         synchronized(recipientCache) {
             var cached = recipientCache[address]?.get()
             if (cached == null) {
                 cached = createRecipientFlow(address)
-                recipientCache[address] = WeakReference(cached)
+                recipientCache.put(address, WeakReference(cached))
             }
 
             return cached
         }
+    }
+
+    fun observeSelf(): Flow<Recipient> {
+        return preferences.watchLocalNumber()
+            .filterNotNull()
+            .distinctUntilChanged()
+            .flatMapLatest { observeRecipient(it.toAddress()) }
+    }
+
+    fun getSelf(): Recipient {
+        return getRecipientSync(preferences.getLocalNumber()!!.toAddress())
     }
 
     // This function creates a flow that emits the recipient information for the given address,
@@ -113,7 +126,7 @@ class RecipientRepository @Inject constructor(
             }
 
         }.shareIn(
-            GlobalScope,
+            managerScope,
             // replay must be cleared one when no one is subscribed, so that if no one is subscribed,
             // we will always fetch the latest data. The cache is only valid while there is at least one subscriber.
             SharingStarted.WhileSubscribed(replayExpirationMillis = 0L), replay = 1

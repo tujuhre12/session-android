@@ -14,7 +14,6 @@ import androidx.annotation.Nullable;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.ServiceUtil;
 import org.session.libsession.utilities.TextSecurePreferences;
-import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.Log;
 
 import java.util.Arrays;
@@ -72,18 +71,6 @@ public class NotificationChannels {
   public static synchronized @NonNull Uri getMessageRingtone(@NonNull Context context) {
     Uri sound = ServiceUtil.getNotificationManager(context).getNotificationChannel(getMessagesChannel(context)).getSound();
     return sound == null ? Uri.EMPTY : sound;
-  }
-
-  public static synchronized @Nullable Uri getMessageRingtone(@NonNull Context context, @NonNull Recipient recipient) {
-    NotificationManager notificationManager = ServiceUtil.getNotificationManager(context);
-    NotificationChannel channel             = notificationManager.getNotificationChannel(null);
-
-    if (!channelExists(channel)) {
-      Log.w(TAG, "RecipientV2 had no channel. Returning null.");
-      return null;
-    }
-
-    return channel.getSound();
   }
 
   /**

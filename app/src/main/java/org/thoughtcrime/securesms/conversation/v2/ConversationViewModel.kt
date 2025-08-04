@@ -33,7 +33,6 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.ExpiryMode
-import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
@@ -42,9 +41,7 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
-import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ExpirationUtil
-import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
@@ -91,10 +88,10 @@ import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
-import org.thoughtcrime.securesms.util.avatarOptions
 import org.thoughtcrime.securesms.util.UserProfileModalCommands
 import org.thoughtcrime.securesms.util.UserProfileModalData
 import org.thoughtcrime.securesms.util.UserProfileUtils
+import org.thoughtcrime.securesms.util.avatarOptions
 import org.thoughtcrime.securesms.util.mapStateFlow
 import org.thoughtcrime.securesms.util.mapToStateFlow
 import org.thoughtcrime.securesms.webrtc.CallManager
@@ -254,7 +251,7 @@ class ConversationViewModel @AssistedInject constructor(
 
     val shouldExit: Flow<Boolean> get() = (threadDb.updateNotifications as Flow<*>)
         .onStart { emit(Unit) }
-        .map { threadDb.getThreadIdIfExistsFor(address) != -1L }
+        .map { threadDb.getThreadIdIfExistsFor(address) == -1L }
 
     private val _acceptingMessageRequest = MutableStateFlow<Boolean>(false)
     val messageRequestState: StateFlow<MessageRequestUiState> = combine(

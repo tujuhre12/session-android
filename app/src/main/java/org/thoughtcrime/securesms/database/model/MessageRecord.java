@@ -37,7 +37,8 @@ import org.session.libsession.utilities.AddressKt;
 import org.session.libsession.utilities.IdentityKeyMismatch;
 import org.session.libsession.utilities.NetworkFailure;
 import org.session.libsession.utilities.ThemeUtil;
-import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsession.utilities.recipients.BasicRecipient;
+import org.session.libsession.utilities.recipients.CommonRecipient;
 import org.session.libsignal.utilities.AccountId;
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate;
 import org.thoughtcrime.securesms.database.model.content.MessageContent;
@@ -54,7 +55,7 @@ import network.loki.messenger.R;
  *
  */
 public abstract class MessageRecord extends DisplayRecord {
-  private final Recipient individualRecipient;
+  private final CommonRecipient<Address, BasicRecipient> individualRecipient;
   private final List<IdentityKeyMismatch> mismatches;
   private final List<NetworkFailure>      networkFailures;
   private final long                      expiresIn;
@@ -73,8 +74,8 @@ public abstract class MessageRecord extends DisplayRecord {
     return new MessageId(getId(), isMms());
   }
 
-  MessageRecord(long id, String body, Recipient conversationRecipient,
-                Recipient individualRecipient,
+  MessageRecord(long id, String body, CommonRecipient<Address, BasicRecipient> conversationRecipient,
+                CommonRecipient<Address, BasicRecipient> individualRecipient,
                 long dateSent, long dateReceived, long threadId,
                 int deliveryStatus, int deliveryReceiptCount, long type,
                 List<IdentityKeyMismatch> mismatches,
@@ -101,7 +102,7 @@ public abstract class MessageRecord extends DisplayRecord {
   public long getTimestamp() {
     return getDateSent();
   }
-  public Recipient getIndividualRecipient() {
+  public CommonRecipient<Address, BasicRecipient> getIndividualRecipient() {
     return individualRecipient;
   }
   public long getType() {

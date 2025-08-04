@@ -2,28 +2,30 @@ package org.thoughtcrime.securesms.mediasend;
 
 import static org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY;
 
-import androidx.appcompat.app.ActionBar;
-import androidx.lifecycle.ViewModelProvider;
-
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Point;
 import android.os.Bundle;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.appcompat.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.bumptech.glide.Glide;
 import com.squareup.phrase.Phrase;
 
-import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsession.utilities.Address;
+import org.session.libsession.utilities.recipients.BasicRecipient;
+import org.session.libsession.utilities.recipients.CommonRecipient;
 import org.session.libsession.utilities.recipients.RecipientKt;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.util.ViewUtilitiesKt;
@@ -44,7 +46,7 @@ public class MediaPickerFolderFragment extends Fragment implements MediaPickerFo
   private Controller         controller;
   private GridLayoutManager  layoutManager;
 
-  public static @NonNull MediaPickerFolderFragment newInstance(@NonNull Recipient recipient) {
+  public static @NonNull MediaPickerFolderFragment newInstance(@NonNull CommonRecipient<Address, BasicRecipient> recipient) {
     Bundle args = new Bundle();
     args.putString(KEY_RECIPIENT_NAME, RecipientKt.displayName(recipient));
 

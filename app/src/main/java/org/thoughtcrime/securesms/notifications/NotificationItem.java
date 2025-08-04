@@ -11,7 +11,8 @@ import androidx.annotation.Nullable;
 import androidx.core.app.TaskStackBuilder;
 
 import org.session.libsession.utilities.Address;
-import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsession.utilities.recipients.BasicRecipient;
+import org.session.libsession.utilities.recipients.CommonRecipient;
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2;
 import org.thoughtcrime.securesms.mms.SlideDeck;
 
@@ -19,18 +20,18 @@ public class NotificationItem {
 
   private final long                        id;
   private final boolean                     mms;
-  private final @NonNull Recipient conversationRecipient;
-  private final @NonNull Recipient individualRecipient;
-  private final @Nullable Recipient threadRecipient;
+  private final @NonNull CommonRecipient<Address, BasicRecipient> conversationRecipient;
+  private final @NonNull CommonRecipient<Address, BasicRecipient> individualRecipient;
+  private final @Nullable CommonRecipient<Address, BasicRecipient> threadRecipient;
   private final long                        threadId;
   private final @Nullable CharSequence      text;
   private final long                        timestamp;
   private final @Nullable SlideDeck         slideDeck;
 
   public NotificationItem(long id, boolean mms,
-                          @NonNull Recipient individualRecipient,
-                          @NonNull Recipient conversationRecipient,
-                          @Nullable Recipient threadRecipient,
+                          @NonNull CommonRecipient<Address, BasicRecipient> individualRecipient,
+                          @NonNull CommonRecipient<Address, BasicRecipient> conversationRecipient,
+                          @Nullable CommonRecipient<Address, BasicRecipient> threadRecipient,
                           long threadId, @Nullable CharSequence text, long timestamp,
                           @Nullable SlideDeck slideDeck)
   {
@@ -45,11 +46,11 @@ public class NotificationItem {
     this.slideDeck             = slideDeck;
   }
 
-  public @NonNull Recipient getRecipient() {
+  public @NonNull CommonRecipient<Address, BasicRecipient> getRecipient() {
     return threadRecipient == null ? conversationRecipient : threadRecipient;
   }
 
-  public @NonNull Recipient getIndividualRecipient() {
+  public @NonNull CommonRecipient<Address, BasicRecipient> getIndividualRecipient() {
     return individualRecipient;
   }
 
@@ -71,7 +72,7 @@ public class NotificationItem {
 
   public PendingIntent getPendingIntent(Context context) {
 
-    Recipient notifyRecipients = threadRecipient != null ? threadRecipient : conversationRecipient;
+    CommonRecipient<Address, BasicRecipient> notifyRecipients = threadRecipient != null ? threadRecipient : conversationRecipient;
     final Intent intent = ConversationActivityV2.Companion.createIntent(context, (Address.Conversable) notifyRecipients.getAddress());
     intent.setData((Uri.parse("custom://"+System.currentTimeMillis())));
 

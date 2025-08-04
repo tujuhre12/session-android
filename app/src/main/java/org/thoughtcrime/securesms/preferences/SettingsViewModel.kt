@@ -41,6 +41,7 @@ import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.StringSubstitutionConstants.VERSION_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.currentUserName
+import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.ExternalStorageUtil.getImageDir
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.NoExternalStorageException
@@ -104,12 +105,9 @@ class SettingsViewModel @Inject constructor(
 
         // observe current user
         viewModelScope.launch {
-            prefs.watchLocalNumber()
-                .filterNotNull()
-                .map { it.toAddress() }
-                .flatMapLatest(recipientRepository::observeRecipient)
-                .collectLatest {
-                    _uiState.update { it.copy(username = it.username) }
+            recipientRepository.observeSelf()
+                .collectLatest { recipient ->
+                    _uiState.update { it.copy(username = recipient.displayName(attachesBlindedId = false)) }
                 }
         }
 

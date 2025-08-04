@@ -18,7 +18,9 @@ import com.bumptech.glide.Glide;
 import org.jetbrains.annotations.NotNull;
 import org.session.libsession.database.StorageProtocol;
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager;
-import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsession.utilities.Address;
+import org.session.libsession.utilities.recipients.BasicRecipient;
+import org.session.libsession.utilities.recipients.CommonRecipient;
 import org.session.libsession.utilities.recipients.RecipientKt;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.ShareActivity;
@@ -60,9 +62,9 @@ public class DirectShareService extends ChooserTargetService {
     List<ChooserTarget> results        = new ArrayList<>();
     ComponentName       componentName  = new ComponentName(this, ShareActivity.class);
 
-    List<@NotNull Recipient> items = new ShareContactListLoader(this, null, legacyGroupDeprecationManager, storage, conversationRepository).loadInBackground();
+    List<@NotNull CommonRecipient<Address, BasicRecipient>> items = new ShareContactListLoader(this, null, legacyGroupDeprecationManager, storage, conversationRepository).loadInBackground();
 
-    for (final Recipient recipient : items) {
+    for (final CommonRecipient<Address, BasicRecipient> recipient : items) {
         Bitmap avatar;
 
         if (recipient.getAvatar() != null) {
@@ -92,7 +94,7 @@ public class DirectShareService extends ChooserTargetService {
     return results;
   }
 
-  private Bitmap getFallbackDrawable(@NonNull Recipient recipient) {
+  private Bitmap getFallbackDrawable(@NonNull CommonRecipient<Address, BasicRecipient> recipient) {
       //TODO: Use proper color
     return BitmapUtil.createFromDrawable(new ColorDrawable(Color.RED),
                                          getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_width),
