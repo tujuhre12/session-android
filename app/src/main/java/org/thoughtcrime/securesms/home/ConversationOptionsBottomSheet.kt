@@ -14,9 +14,6 @@ import network.loki.messenger.databinding.FragmentConversationBottomSheetBinding
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.getGroup
-import org.session.libsession.utilities.isGroupDestroyed
-import org.session.libsession.utilities.wasKickedFromGroupV2
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.RecipientDatabase
@@ -124,12 +121,8 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
                 recipient.isLegacyGroupRecipient -> {
                     val group = groupDatabase.getGroup(recipient.address.toString()).orNull()
 
-                    val isGroupAdmin = if (deprecationManager.isDeprecated) {
-                        false
-                    } else {
-                        group.admins.map { it.toString() }
-                            .contains(textSecurePreferences.getLocalNumber())
-                    }
+                    val isGroupAdmin = group.admins.map { it.toString() }
+                        .contains(textSecurePreferences.getLocalNumber())
 
                     if (isGroupAdmin) {
                         text = context.getString(R.string.delete)
