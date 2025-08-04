@@ -4,12 +4,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview;
-import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.Contact;
 import org.session.libsession.utilities.IdentityKeyMismatch;
 import org.session.libsession.utilities.NetworkFailure;
-import org.session.libsession.utilities.recipients.BasicRecipient;
-import org.session.libsession.utilities.recipients.CommonRecipient;
+import org.session.libsession.utilities.recipients.Recipient;
 import org.thoughtcrime.securesms.database.model.content.MessageContent;
 import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.SlideDeck;
@@ -23,8 +21,8 @@ public abstract class MmsMessageRecord extends MessageRecord {
   private final @NonNull  List<Contact>     contacts     = new LinkedList<>();
   private final @NonNull  List<LinkPreview> linkPreviews = new LinkedList<>();
 
-  MmsMessageRecord(long id, String body, CommonRecipient<Address, BasicRecipient> conversationRecipient,
-                   CommonRecipient<Address, BasicRecipient> individualRecipient, long dateSent,
+  MmsMessageRecord(long id, String body, Recipient conversationRecipient,
+                   Recipient individualRecipient, long dateSent,
                    long dateReceived, long threadId, int deliveryStatus, int deliveryReceiptCount,
                    long type, List<IdentityKeyMismatch> mismatches,
                    List<NetworkFailure> networkFailures, long expiresIn,

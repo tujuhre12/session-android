@@ -22,12 +22,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview;
-import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.Contact;
 import org.session.libsession.utilities.IdentityKeyMismatch;
 import org.session.libsession.utilities.NetworkFailure;
-import org.session.libsession.utilities.recipients.BasicRecipient;
-import org.session.libsession.utilities.recipients.CommonRecipient;
+import org.session.libsession.utilities.recipients.Recipient;
 import org.thoughtcrime.securesms.database.SmsDatabase.Status;
 import org.thoughtcrime.securesms.database.model.content.MessageContent;
 import org.thoughtcrime.securesms.mms.SlideDeck;
@@ -45,8 +43,8 @@ import java.util.List;
 public class MediaMmsMessageRecord extends MmsMessageRecord {
   private final int partCount;
 
-  public MediaMmsMessageRecord(long id, CommonRecipient<Address, BasicRecipient> conversationRecipient,
-                               CommonRecipient<Address, BasicRecipient> individualRecipient, int recipientDeviceId,
+  public MediaMmsMessageRecord(long id, Recipient conversationRecipient,
+                               Recipient individualRecipient, int recipientDeviceId,
                                long dateSent, long dateReceived, int deliveryReceiptCount,
                                long threadId, String body,
                                @NonNull SlideDeck slideDeck,

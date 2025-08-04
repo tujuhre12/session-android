@@ -4,7 +4,7 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 
-import org.session.libsession.utilities.recipients.CommonRecipient;
+import org.session.libsession.utilities.recipients.Recipient;
 
 
 public enum ReplyMethod {
@@ -12,7 +12,7 @@ public enum ReplyMethod {
   GroupMessage,
   SecureMessage;
 
-  public static @NonNull ReplyMethod forRecipient(Context context, CommonRecipient recipient) {
+  public static @NonNull ReplyMethod forRecipient(Context context, Recipient recipient) {
     if (recipient.isGroupOrCommunityRecipient()) {
       return ReplyMethod.GroupMessage;
     }

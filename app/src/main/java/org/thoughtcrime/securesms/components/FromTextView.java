@@ -2,7 +2,6 @@ package org.thoughtcrime.securesms.components;
 
 import android.content.Context;
 import android.graphics.Typeface;
-import androidx.core.view.ViewCompat;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
@@ -13,15 +12,15 @@ import android.text.style.StyleSpan;
 import android.text.style.TypefaceSpan;
 import android.util.AttributeSet;
 
-import network.loki.messenger.R;
+import androidx.core.view.ViewCompat;
 
-import org.session.libsession.utilities.Address;
-import org.session.libsession.utilities.recipients.BasicRecipient;
-import org.session.libsession.utilities.recipients.CommonRecipient;
+import org.session.libsession.utilities.CenterAlignedRelativeSizeSpan;
+import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsession.utilities.recipients.RecipientKt;
 import org.thoughtcrime.securesms.components.emoji.EmojiTextView;
 import org.thoughtcrime.securesms.util.ResUtil;
-import org.session.libsession.utilities.CenterAlignedRelativeSizeSpan;
+
+import network.loki.messenger.R;
 
 public class FromTextView extends EmojiTextView {
 
@@ -35,11 +34,11 @@ public class FromTextView extends EmojiTextView {
     super(context, attrs);
   }
 
-  public void setText(CommonRecipient<Address, BasicRecipient> recipient) {
+  public void setText(Recipient recipient) {
     setText(recipient, true);
   }
 
-  public void setText(CommonRecipient<Address, BasicRecipient> recipient, boolean read) {
+  public void setText(Recipient recipient, boolean read) {
     final String fromString = RecipientKt.displayName(recipient);
 
     int typeface;

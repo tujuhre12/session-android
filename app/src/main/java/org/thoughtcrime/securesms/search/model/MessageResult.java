@@ -2,9 +2,7 @@ package org.thoughtcrime.securesms.search.model;
 
 import androidx.annotation.NonNull;
 
-import org.session.libsession.utilities.Address;
-import org.session.libsession.utilities.recipients.BasicRecipient;
-import org.session.libsession.utilities.recipients.CommonRecipient;
+import org.session.libsession.utilities.recipients.Recipient;
 
 import java.util.Objects;
 
@@ -13,14 +11,14 @@ import java.util.Objects;
  */
 public class MessageResult {
 
-  public final CommonRecipient<Address, BasicRecipient> conversationRecipient;
-  public final CommonRecipient<Address, BasicRecipient> messageRecipient;
+  public final Recipient conversationRecipient;
+  public final Recipient messageRecipient;
   public final String    bodySnippet;
   public final long      threadId;
   public final long      sentTimestampMs;
 
-  public MessageResult(@NonNull CommonRecipient<Address, BasicRecipient> conversationRecipient,
-                       @NonNull CommonRecipient<Address, BasicRecipient> messageRecipient,
+  public MessageResult(@NonNull Recipient conversationRecipient,
+                       @NonNull Recipient messageRecipient,
                        @NonNull String bodySnippet,
                        long threadId,
                        long sentTimestampMs)

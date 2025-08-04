@@ -42,8 +42,7 @@ import org.session.libsession.utilities.DistributionTypes;
 import org.session.libsession.utilities.GroupUtil;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Util;
-import org.session.libsession.utilities.recipients.BasicRecipient;
-import org.session.libsession.utilities.recipients.CommonRecipient;
+import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.AccountId;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.Pair;
@@ -760,7 +759,7 @@ public class ThreadDatabase extends Database {
       long    threadId         = cursor.getLong(cursor.getColumnIndexOrThrow(ThreadDatabase.ID));
       Address address          = Address.fromSerialized(cursor.getString(cursor.getColumnIndexOrThrow(ThreadDatabase.ADDRESS)));
 
-      CommonRecipient<Address, BasicRecipient> recipient            = recipientRepository.get().getRecipientSync(address);
+      Recipient recipient            = recipientRepository.get().getRecipientSync(address);
       String             body                 = cursor.getString(cursor.getColumnIndexOrThrow(ThreadDatabase.SNIPPET));
       long               date                 = cursor.getLong(cursor.getColumnIndexOrThrow(ThreadDatabase.THREAD_CREATION_DATE));
       long               count                = cursor.getLong(cursor.getColumnIndexOrThrow(ThreadDatabase.MESSAGE_COUNT));

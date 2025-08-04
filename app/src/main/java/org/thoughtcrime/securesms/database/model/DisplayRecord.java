@@ -21,9 +21,7 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import org.session.libsession.utilities.Address;
-import org.session.libsession.utilities.recipients.BasicRecipient;
-import org.session.libsession.utilities.recipients.CommonRecipient;
+import org.session.libsession.utilities.recipients.Recipient;
 import org.thoughtcrime.securesms.database.MmsSmsColumns;
 import org.thoughtcrime.securesms.database.SmsDatabase;
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate;
@@ -39,7 +37,7 @@ import org.thoughtcrime.securesms.database.model.content.MessageContent;
 
 public abstract class DisplayRecord {
   protected final long type;
-  private final CommonRecipient<Address, BasicRecipient> recipient;
+  private final Recipient recipient;
   private final long       dateSent;
   private final long       dateReceived;
   private final long       threadId;
@@ -51,7 +49,7 @@ public abstract class DisplayRecord {
   @Nullable
   private final MessageContent messageContent;
 
-  DisplayRecord(String body, CommonRecipient<Address, BasicRecipient> recipient, long dateSent,
+  DisplayRecord(String body, Recipient recipient, long dateSent,
                 long dateReceived, long threadId, int deliveryStatus, int deliveryReceiptCount,
                 long type, int readReceiptCount, @Nullable MessageContent messageContent)
   {
@@ -71,7 +69,7 @@ public abstract class DisplayRecord {
     return body == null ? "" : body;
   }
   public abstract CharSequence getDisplayBody(@NonNull Context context);
-  public CommonRecipient<Address, BasicRecipient> getRecipient() { return recipient; }
+  public Recipient getRecipient() { return recipient; }
   public long getDateSent() { return dateSent; }
   public long getDateReceived() { return dateReceived; }
   public long getThreadId() { return threadId; }

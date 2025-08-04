@@ -26,9 +26,12 @@ import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
 import com.annimon.stream.Stream;
+
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 import net.zetetic.database.sqlcipher.SQLiteStatement;
+
 import org.apache.commons.lang3.StringUtils;
 import org.session.libsession.messaging.calls.CallMessageType;
 import org.session.libsession.messaging.messages.signal.IncomingGroupMessage;
@@ -40,8 +43,7 @@ import org.session.libsession.utilities.IdentityKeyMismatch;
 import org.session.libsession.utilities.IdentityKeyMismatchList;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Util;
-import org.session.libsession.utilities.recipients.BasicRecipient;
-import org.session.libsession.utilities.recipients.CommonRecipient;
+import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.JsonUtil;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.guava.Optional;
@@ -51,6 +53,7 @@ import org.thoughtcrime.securesms.database.model.MessageRecord;
 import org.thoughtcrime.securesms.database.model.ReactionRecord;
 import org.thoughtcrime.securesms.database.model.SmsMessageRecord;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -842,7 +845,7 @@ public class SmsDatabase extends MessagingDatabase {
       }
 
       List<IdentityKeyMismatch> mismatches = getMismatches(mismatchDocument);
-      CommonRecipient<Address, BasicRecipient> recipient  = recipientRepository.getRecipientSync(address);
+      Recipient recipient  = recipientRepository.getRecipientSync(address);
       List<ReactionRecord>      reactions  = DatabaseComponent.get(context).reactionDatabase().getReactions(cursor);
 
       return new SmsMessageRecord(messageId, body, recipient,

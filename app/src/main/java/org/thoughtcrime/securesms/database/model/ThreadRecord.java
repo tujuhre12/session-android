@@ -26,23 +26,25 @@ import static org.session.libsession.utilities.StringSubstitutionConstants.NAME_
 import android.content.Context;
 import android.text.SpannableString;
 import android.text.TextUtils;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
 import com.squareup.phrase.Phrase;
-import kotlin.Pair;
-import network.loki.messenger.R;
+
 import org.session.libsession.messaging.utilities.UpdateMessageData;
-import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.AddressKt;
 import org.session.libsession.utilities.TextSecurePreferences;
-import org.session.libsession.utilities.recipients.BasicRecipient;
-import org.session.libsession.utilities.recipients.CommonRecipient;
+import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsession.utilities.recipients.RecipientKt;
 import org.thoughtcrime.securesms.database.MmsSmsColumns;
 import org.thoughtcrime.securesms.database.SmsDatabase;
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate;
 import org.thoughtcrime.securesms.database.model.content.MessageContent;
 import org.thoughtcrime.securesms.ui.UtilKt;
+
+import kotlin.Pair;
+import network.loki.messenger.R;
 
 /**
  * The message record model which represents thread heading messages.
@@ -63,7 +65,7 @@ public class ThreadRecord extends DisplayRecord {
   private           final GroupThreadStatus groupThreadStatus;
 
   public ThreadRecord(@NonNull String body,
-                      @Nullable MessageRecord lastMessage, @NonNull CommonRecipient<Address, BasicRecipient> recipient, long date, long count, int unreadCount,
+                      @Nullable MessageRecord lastMessage, @NonNull Recipient recipient, long date, long count, int unreadCount,
                       int unreadMentionCount, long threadId, int deliveryReceiptCount, int status,
                       long snippetType,
                       long lastSeen, int readReceiptCount, String invitingAdminId,
@@ -186,7 +188,7 @@ public class ThreadRecord extends DisplayRecord {
      * Logic to get the body for non control messages
      */
     public CharSequence getNonControlMessageDisplayBody(@NonNull Context context) {
-        CommonRecipient<Address, BasicRecipient> recipient = getRecipient();
+        Recipient recipient = getRecipient();
         // The logic will differ depending on the type.
         // 1-1, note to self and control messages (we shouldn't have any in here, but leaving the
         // logic to be safe) do not need author details

@@ -19,12 +19,10 @@ import org.session.libsession.utilities.truncatedForDisplay
 import org.thoughtcrime.securesms.database.model.NotifyType
 import java.time.ZonedDateTime
 
-typealias Recipient = CommonRecipient<Address, BasicRecipient>
-typealias SelfRecipient = CommonRecipient<Address.Standard, BasicRecipient.Self>
 
-data class CommonRecipient<out AddressType: Address, out RecipientType: BasicRecipient>(
-    val address: AddressType,
-    val basic: RecipientType,
+data class Recipient(
+    val address: Address,
+    val basic: BasicRecipient,
     val mutedUntil: ZonedDateTime? = null,
     val autoDownloadAttachments: Boolean? = null,
     val notifyType: NotifyType = NotifyType.ALL,
@@ -235,7 +233,7 @@ fun RemoteFile.toUserPic(): UserPic? {
  * @param attachesBlindedId Whether to append the blinded ID to the display name if the address is a blinded address.
  */
 @JvmOverloads
-fun <A: Address, B: BasicRecipient> CommonRecipient<A, B>.displayName(
+fun Recipient.displayName(
     attachesBlindedId: Boolean = false,
 ): String {
     val name = when (basic) {
