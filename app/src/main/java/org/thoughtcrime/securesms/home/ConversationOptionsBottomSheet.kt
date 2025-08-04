@@ -136,7 +136,7 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
                 }
 
                 // groups and communities
-                recipient.isGroupRecipient -> {
+                recipient.isGroupV2Recipient -> {
                     val accountId = AccountId(recipient.address.toString())
                     val group = configFactory.withUserConfigs { it.userGroups.getClosedGroup(accountId.hexString) } ?: return
                     // if you are in a group V2 and have been kicked of that group, or the group was destroyed,
