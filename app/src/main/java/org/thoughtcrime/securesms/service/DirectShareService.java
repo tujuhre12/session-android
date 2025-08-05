@@ -74,10 +74,10 @@ public class DirectShareService extends ChooserTargetService {
                         .get();
             } catch (InterruptedException | ExecutionException e) {
                 Log.w(TAG, e);
-                avatar = getFallbackDrawable(recipient);
+                avatar = getFallbackDrawable();
             }
         } else {
-            avatar = getFallbackDrawable(recipient);
+            avatar = getFallbackDrawable();
         }
 
         Bundle bundle = new Bundle(1);
@@ -90,9 +90,8 @@ public class DirectShareService extends ChooserTargetService {
     return results;
   }
 
-  private Bitmap getFallbackDrawable(@NonNull Recipient recipient) {
-      //TODO: Use proper color
-    return BitmapUtil.createFromDrawable(new ColorDrawable(Color.RED),
+  private Bitmap getFallbackDrawable() {
+    return BitmapUtil.createFromDrawable(new ColorDrawable(Color.TRANSPARENT),
                                          getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_width),
                                          getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_height));
   }
