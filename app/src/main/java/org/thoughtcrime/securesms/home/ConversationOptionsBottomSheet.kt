@@ -13,7 +13,9 @@ import network.loki.messenger.R
 import network.loki.messenger.databinding.FragmentConversationBottomSheetBinding
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.GroupRecord
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.database.model.ThreadRecord
@@ -34,6 +36,9 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
 
     @Inject lateinit var configFactory: ConfigFactory
     @Inject lateinit var deprecationManager: LegacyGroupDeprecationManager
+
+    @Inject lateinit var groupDatabase: GroupDatabase
+    @Inject lateinit var textSecurePreferences: TextSecurePreferences
 
     var onViewDetailsTapped: (() -> Unit?)? = null
     var onCopyConversationId: (() -> Unit?)? = null
@@ -114,8 +119,25 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
 
             // the text, content description and icon will change depending on the type
             when {
+                recipient.isLegacyGroupRecipient -> {
+                    val group = groupDatabase.getGroup(recipient.address.toString()).orNull()
+
+                    val isGroupAdmin = group.admins.map { it.toString() }
+                        .contains(textSecurePreferences.getLocalNumber())
+
+                    if (isGroupAdmin) {
+                        text = context.getString(R.string.delete)
+                        contentDescription = context.getString(R.string.AccessibilityId_delete)
+                        drawableStartRes = R.drawable.ic_trash_2
+                    } else {
+                        text = context.getString(R.string.leave)
+                        contentDescription = context.getString(R.string.AccessibilityId_leave)
+                        drawableStartRes = R.drawable.ic_log_out
+                    }
+                }
+
                 // groups and communities
-                recipient.isGroupRecipient -> {
+                recipient.isGroupV2Recipient -> {
                     val accountId = AccountId(recipient.address.toString())
                     val group = configFactory.withUserConfigs { it.userGroups.getClosedGroup(accountId.hexString) } ?: return
                     // if you are in a group V2 and have been kicked of that group, or the group was destroyed,
