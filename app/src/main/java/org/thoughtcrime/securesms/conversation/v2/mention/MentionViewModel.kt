@@ -183,12 +183,14 @@ class MentionViewModel(
                                 )  // returns contact name or blank
                                 .takeIf { it.isNotBlank() } ?: id // fallback to id
                             buildMember(id, name, id in moderatorIDs, false)
-                        }
+                        }.sortedBy { it.name }
                 } else {
                     // Fallback to only local contacts
-                    contactDatabase.getContacts(memberIDs)
-                        .asSequence()
-                        .filter { it.accountID != myId }
+                    val contacts = contactDatabase.getContacts(memberIDs)
+                    val contactMap = contacts.associateBy { it.accountID }
+                    memberIDs.asSequence()
+                        .filter { it != myId }
+                        .mapNotNull { contactMap[it] }
                         .map { contact ->
                             val id = contact.accountID
                             val name = contact.displayName(contactContext)
@@ -348,7 +350,6 @@ class MentionViewModel(
         companion object {
             val MENTION_LIST_COMPARATOR = compareBy<Candidate> { !it.member.isMe }
                 .thenBy { it.matchScore }
-                .then(compareBy { it.member.name })
         }
     }
 
