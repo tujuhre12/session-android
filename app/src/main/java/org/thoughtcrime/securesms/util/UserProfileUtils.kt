@@ -80,8 +80,7 @@ class UserProfileUtils @AssistedInject constructor(
 
             // Case 2: We successfully resolved a blinded id...
             !resolvedAddress.isBlinded && (userAddress.isBlinded || userAddress.isCommunityInbox) -> {
-                val blindedAddress = userAddress.toBlinded().toString()
-                displayAddress = "${blindedAddress.substring(0, 23)}\n${blindedAddress.substring(23, 46)}\n${blindedAddress.substring(46)}"
+                displayAddress = "${resolvedAddress.address.substring(0, 23)}\n${resolvedAddress.address.substring(23, 46)}\n${resolvedAddress.address.substring(46)}"
                 tooltipText = Phrase.from(context, R.string.tooltipAccountIdVisible)
                     .put(NAME_KEY, recipient.displayName())
                     .format()
@@ -96,18 +95,18 @@ class UserProfileUtils @AssistedInject constructor(
 
         // The conversation screen can not take a pure blinded address, it will have to be a
         // "Community inbox" address, so we encode it here..
-        val messageAddress: Address.Conversable? = when (userAddress) {
+        val messageAddress: Address.Conversable? = when (resolvedAddress) {
             is Address.Blinded -> {
                 storage.getOpenGroup(threadId)?.let { openGroup ->
                     Address.CommunityBlindedId(
                         serverUrl = openGroup.server,
                         serverPubKey = openGroup.publicKey,
-                        blindedId = userAddress
+                        blindedId = resolvedAddress
                     )
                 }
             }
 
-            is Address.Conversable -> userAddress
+            is Address.Conversable -> resolvedAddress
             is Address.Unknown -> null
         }
 
