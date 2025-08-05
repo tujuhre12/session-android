@@ -188,6 +188,8 @@ class MentionViewModel(
                     // For communities and one-on-one conversations
                     val contacts = contactDatabase.getContacts(memberIDs) // Get members from contacts based on memberIDs
                     val contactMap = contacts.associateBy { it.accountID }
+
+                    // Map using memberIDs to preserve the order of members
                     memberIDs.asSequence()
                         .filter { it != myId }
                         .mapNotNull { contactMap[it] }
@@ -230,7 +232,6 @@ class MentionViewModel(
                         }
                     }
 
-                    filtered.sortWith(Candidate.MENTION_LIST_COMPARATOR)
                     AutoCompleteState.Result(filtered, query.query)
                 }
             }
@@ -346,12 +347,7 @@ class MentionViewModel(
         val nameHighlighted: CharSequence,
         // The score of matching the query keyword. Lower is better.
         val matchScore: Int,
-    ) {
-        companion object {
-            val MENTION_LIST_COMPARATOR = compareBy<Candidate> { !it.member.isMe }
-                .thenBy { it.matchScore }
-        }
-    }
+    )
 
     sealed interface AutoCompleteState {
         object Idle : AutoCompleteState
