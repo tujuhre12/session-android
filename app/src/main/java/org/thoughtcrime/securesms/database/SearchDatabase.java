@@ -167,7 +167,6 @@ public class SearchDatabase extends Database {
     args.add(String.valueOf(queryLimit));
 
     Cursor cursor = db.rawQuery(messagesQuery, args.toArray(new String[0]));
-    setNotifyConversationListListeners(cursor);
     return cursor;
   }
 
@@ -204,7 +203,6 @@ public class SearchDatabase extends Database {
     }
 
     Cursor cursor = db.rawQuery(messagesForThreadQuery, args.toArray(new String[0]));
-    setNotifyConversationListListeners(cursor);
     return cursor;
   }
 

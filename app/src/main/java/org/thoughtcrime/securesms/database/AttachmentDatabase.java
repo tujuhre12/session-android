@@ -429,9 +429,6 @@ public class AttachmentDatabase extends Database {
     if (database.update(TABLE_NAME, values, PART_ID_WHERE, attachmentId.toStrings()) == 0) {
       //noinspection ResultOfMethodCallIgnored
       dataInfo.file.delete();
-    } else {
-      notifyConversationListeners(DatabaseComponent.get(context).mmsDatabase().getThreadIdForMessage(mmsId));
-      notifyConversationListListeners();
     }
 
     thumbnailExecutor.submit(new ThumbnailFetchCallable(attachmentId));

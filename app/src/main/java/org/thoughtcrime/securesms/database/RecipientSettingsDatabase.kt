@@ -59,12 +59,13 @@ class RecipientSettingsDatabase @Inject constructor(
 
     fun delete(address: Address) {
         cache.remove(address)
-        writableDatabase.delete(
+        if (writableDatabase.delete(
             TABLE_NAME,
             "$COL_ADDRESS = ?",
             arrayOf(address.toString())
-        )
-        mutableChangeNotification.tryEmit(address)
+        ) > 0) {
+            mutableChangeNotification.tryEmit(address)
+        }
     }
 
     fun getSettings(address: Address): RecipientSettings {

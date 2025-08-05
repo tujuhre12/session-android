@@ -195,7 +195,7 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
     return members;
   }
 
-  public long create(@NonNull String groupId, @Nullable String title, @NonNull List<Address> members,
+  public void create(@NonNull String groupId, @Nullable String title, @NonNull List<Address> members,
                      @Nullable SignalServiceAttachmentPointer avatar, @Nullable String relay, @Nullable List<Address> admins, @NonNull Long formationTimestamp)
   {
     Collections.sort(members);
@@ -222,21 +222,15 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
       contentValues.put(ADMINS, Address.toSerializedList(admins, ','));
     }
 
-    long threadId = getWritableDatabase().insert(TABLE_NAME, null, contentValues);
-
-    notifyConversationListeners(threadId);
-    notifyConversationListListeners();
+    getWritableDatabase().insert(TABLE_NAME, null, contentValues);
 
     updateNotification.tryEmit(groupId);
-
-    return threadId;
   }
 
   public boolean delete(@NonNull String groupId) {
     int result = getWritableDatabase().delete(TABLE_NAME, GROUP_ID + " = ?", new String[]{groupId});
 
     if (result > 0) {
-      notifyConversationListListeners();
       updateNotification.tryEmit(groupId);
       return true;
     } else {
@@ -261,7 +255,6 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
                                                 new String[] {groupId});
 
     updateNotification.tryEmit(groupId);
-    notifyConversationListListeners();
   }
 
   @Override
@@ -274,7 +267,6 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
     if (getWritableDatabase().update(TABLE_NAME, contentValues, GROUP_ID +  " = ? AND " + TITLE + " != ?",
                                                 new String[] {groupID, newValue}) > 0) {
       updateNotification.tryEmit(groupID);
-      notifyConversationListListeners();
     }
   }
 
@@ -297,7 +289,6 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
     getWritableDatabase().update(TABLE_NAME, contentValues, GROUP_ID +  " = ?",
                                                 new String[] {groupID});
 
-    notifyConversationListListeners();
     updateNotification.tryEmit(groupID);
   }
 
@@ -316,7 +307,6 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
                     GROUP_ID + " = ?",
             new String[] {groupID});
 
-    notifyConversationListListeners();
     updateNotification.tryEmit(groupID);
   }
 

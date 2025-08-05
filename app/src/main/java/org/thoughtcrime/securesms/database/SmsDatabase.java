@@ -183,7 +183,6 @@ public class SmsDatabase extends MessagingDatabase {
     long threadId = getThreadIdForMessage(id);
 
     DatabaseComponent.get(context).threadDatabase().update(threadId, false);
-    notifyConversationListeners(threadId);
   }
 
   public long getThreadIdForMessage(long id) {
@@ -369,7 +368,6 @@ public class SmsDatabase extends MessagingDatabase {
                              new String[] {String.valueOf(cursor.getLong(cursor.getColumnIndexOrThrow(ID)))});
 
             DatabaseComponent.get(context).threadDatabase().update(threadId, false);
-            notifyConversationListeners(threadId);
             foundMessage = true;
           }
         }
@@ -430,14 +428,8 @@ public class SmsDatabase extends MessagingDatabase {
 
   public void updateSentTimestamp(long messageId, long newTimestamp) {
     SQLiteDatabase db = getWritableDatabase();
-    try(final Cursor cursor = db.rawQuery("UPDATE " + TABLE_NAME + " SET " + DATE_SENT + " = ? " +
-                    "WHERE " + ID + " = ? RETURNING " + THREAD_ID, newTimestamp, messageId)) {
-      if (cursor.moveToNext()) {
-        notifyConversationListeners(cursor.getLong(0));
-      }
-    }
-
-    notifyConversationListListeners();
+    db.rawQuery("UPDATE " + TABLE_NAME + " SET " + DATE_SENT + " = ? " +
+            "WHERE " + ID + " = ?", newTimestamp, messageId);
   }
 
   protected Optional<InsertResult> insertMessageInbox(IncomingTextMessage message, long type, long serverTimestamp, boolean runThreadUpdate) {
@@ -509,8 +501,6 @@ public class SmsDatabase extends MessagingDatabase {
       if (runThreadUpdate) {
         DatabaseComponent.get(context).threadDatabase().update(threadId, true);
       }
-
-      notifyConversationListeners(threadId);
 
       return Optional.of(new InsertResult(messageId, threadId));
     }
@@ -601,9 +591,6 @@ public class SmsDatabase extends MessagingDatabase {
 
     DatabaseComponent.get(context).threadDatabase().setHasSent(threadId, true);
 
-    notifyConversationListeners(threadId);
-
-
     return messageId;
   }
 
@@ -670,7 +657,6 @@ public class SmsDatabase extends MessagingDatabase {
     SQLiteDatabase db = getWritableDatabase();
     long threadId = getThreadIdForMessage(messageId);
     db.delete(TABLE_NAME, ID_WHERE, new String[] {messageId+""});
-    notifyConversationListeners(threadId);
     boolean threadDeleted = DatabaseComponent.get(context).threadDatabase().update(threadId, false);
     return threadDeleted;
   }
@@ -692,7 +678,6 @@ public class SmsDatabase extends MessagingDatabase {
       argValues
     );
     boolean threadDeleted = DatabaseComponent.get(context).threadDatabase().update(threadId, false);
-    notifyConversationListeners(threadId);
     return threadDeleted;
   }
 
@@ -703,8 +688,6 @@ public class SmsDatabase extends MessagingDatabase {
 
     SQLiteDatabase db = getWritableDatabase();
     db.update(TABLE_NAME, contentValues, THREAD_ID + " = ?", new String[] {fromId + ""});
-    notifyConversationListeners(toId);
-    notifyConversationListListeners();
   }
 
   @Override

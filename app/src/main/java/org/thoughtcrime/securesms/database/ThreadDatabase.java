@@ -272,14 +272,12 @@ public class ThreadDatabase extends Database {
 
     SQLiteDatabase db = getWritableDatabase();
     db.update(TABLE_NAME, contentValues, ID + " = ?", new String[] {threadId + ""});
-    notifyConversationListListeners();
     notifyThreadUpdated(threadId);
   }
 
   public void deleteThread(long threadId) {
     SQLiteDatabase db = getWritableDatabase();
     if (db.delete(TABLE_NAME, ID_WHERE, new String[] {threadId + ""}) > 0) {
-      notifyConversationListListeners();
       notifyThreadUpdated(threadId);
     }
   }
@@ -290,7 +288,6 @@ public class ThreadDatabase extends Database {
     mmsDatabase.get().deleteMessagesInThreadBeforeDate(threadId, timestamp, false);
     update(threadId, false);
     notifyThreadUpdated(threadId);
-    notifyConversationListeners(threadId);
   }
 
   public List<MarkedMessageInfo> setRead(long threadId, long lastReadTime) {
@@ -306,7 +303,6 @@ public class ThreadDatabase extends Database {
     db.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {threadId+""});
 
     notifyThreadUpdated(threadId);
-    notifyConversationListListeners();
 
     return CollectionsKt.plus(smsRecords, mmsRecords);
   }
@@ -328,7 +324,6 @@ public class ThreadDatabase extends Database {
     final List<MarkedMessageInfo> mmsRecords = mmsDatabase.get().setMessagesRead(threadId);
 
     notifyThreadUpdated(threadId);
-    notifyConversationListListeners();
 
     return new LinkedList<MarkedMessageInfo>() {{
       addAll(smsRecords);
@@ -336,21 +331,12 @@ public class ThreadDatabase extends Database {
     }};
   }
 
-  public void setDistributionType(long threadId, int distributionType) {
-    ContentValues contentValues = new ContentValues(1);
-    contentValues.put(DISTRIBUTION_TYPE, distributionType);
-
-    SQLiteDatabase db = getWritableDatabase();
-    db.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {threadId + ""});
-    notifyConversationListListeners();
-  }
-
   public void setCreationDate(long threadId, long date) {
     ContentValues contentValues = new ContentValues(1);
     contentValues.put(THREAD_CREATION_DATE, date);
     SQLiteDatabase db = getWritableDatabase();
     int updated = db.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {threadId+""});
-    if (updated > 0) notifyConversationListListeners();
+    if (updated > 0) notifyThreadUpdated(threadId);
   }
 
   public int getDistributionType(long threadId) {
@@ -505,7 +491,6 @@ public class ThreadDatabase extends Database {
     db.setTransactionSuccessful();
     db.endTransaction();
     notifyThreadUpdated(threadId);
-    notifyConversationListListeners();
     return true;
   }
 
@@ -647,7 +632,6 @@ public class ThreadDatabase extends Database {
     if (getWritableDatabase().update(TABLE_NAME, contentValues, ID + " = ? AND " + HAS_SENT + " != ?",
                                                 new String[] {String.valueOf(threadId), String.valueOf(hasSentValue)}) > 0) {
       notifyThreadUpdated(threadId);
-      notifyConversationListListeners();
     }
   }
 
@@ -675,7 +659,6 @@ public class ThreadDatabase extends Database {
       }
     } finally {
       notifyThreadUpdated(threadId);
-      notifyConversationListListeners();
     }
   }
 
@@ -732,7 +715,6 @@ public class ThreadDatabase extends Database {
   }
 
   public void notifyThreadUpdated(long threadId) {
-    notifyConversationListeners(threadId);
     updateNotifications.tryEmit(threadId);
   }
 

@@ -61,7 +61,6 @@ import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.isGroupV2
 import org.session.libsession.utilities.isLegacyGroup
 import org.session.libsession.utilities.isStandard
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.toGroupString
 import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
@@ -81,7 +80,6 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
 import org.thoughtcrime.securesms.groups.GroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.PartAuthority
@@ -105,19 +103,18 @@ open class Storage @Inject constructor(
     private val threadDatabase: ThreadDatabase,
     private val recipientDatabase: RecipientSettingsDatabase,
     private val attachmentDatabase: AttachmentDatabase,
+    private val draftDatabase: DraftDatabase,
     private val lokiAPIDatabase: LokiAPIDatabase,
     private val groupDatabase: GroupDatabase,
     private val lokiMessageDatabase: LokiMessageDatabase,
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val mmsDatabase: MmsDatabase,
     private val smsDatabase: SmsDatabase,
-    private val blindedIdMappingRepository: BlindMappingRepository,
     private val groupMemberDatabase: GroupMemberDatabase,
     private val reactionDatabase: ReactionDatabase,
     private val lokiThreadDatabase: LokiThreadDatabase,
     private val notificationManager: MessageNotifier,
     private val messageDataProvider: MessageDataProvider,
-    private val messageExpirationManager: SSKEnvironment.MessageExpirationManagerProtocol,
     private val clock: SnodeClock,
     private val preferences: TextSecurePreferences,
     private val openGroupManager: Lazy<OpenGroupManager>,
@@ -306,7 +303,6 @@ open class Storage @Inject constructor(
                 convo.lastRead = lastSeenTime
                 if (convo.unread) {
                     convo.unread = lastSeenTime <= currentLastRead
-                    notifyConversationListListeners()
                 }
                 config.set(convo)
             }
@@ -1067,11 +1063,8 @@ open class Storage @Inject constructor(
 
     private fun deleteContact(accountId: String){
         recipientDatabase.delete(Address.fromSerialized(accountId))
-
         val threadId: Long = threadDatabase.getThreadIdIfExistsFor(accountId)
         deleteConversation(threadId)
-
-        notifyRecipientListeners()
     }
 
     override fun getRecipientForThread(threadId: Long): Address? {
@@ -1221,11 +1214,9 @@ open class Storage @Inject constructor(
         // Delete the conversation and its messages
         smsDatabase.deleteThread(threadID)
         mmsDatabase.deleteThread(threadID)
-        get(context).draftDatabase().clearDrafts(threadID)
+        draftDatabase.clearDrafts(threadID)
         lokiMessageDatabase.deleteThread(threadID)
         threadDB.deleteThread(threadID)
-        notifyConversationListeners(threadID)
-        notifyConversationListListeners()
         clearReceivedMessages()
 
         if (recipientAddress == null) return
@@ -1299,10 +1290,10 @@ open class Storage @Inject constructor(
         val address = fromSerialized(senderPublicKey)
         val recipient = recipientRepository.getRecipientSync(address)
 
-        if (recipient?.blocked == true) return
+        if (recipient.blocked == true) return
         val threadId = getThreadId(address) ?: return
-        val expiresInMillis = recipient?.expiryMode?.expiryMillis ?: 0
-        val expireStartedAt = if (recipient?.expiryMode is ExpiryMode.AfterSend) sentTimestamp else 0
+        val expiresInMillis = recipient.expiryMode?.expiryMillis ?: 0
+        val expireStartedAt = if (recipient.expiryMode is ExpiryMode.AfterSend) sentTimestamp else 0
         val mediaMessage = IncomingMediaMessage(
             address,
             sentTimestamp,
@@ -1462,7 +1453,7 @@ open class Storage @Inject constructor(
     override fun insertCallMessage(senderPublicKey: String, callMessageType: CallMessageType, sentTimestamp: Long) {
         val address = fromSerialized(senderPublicKey)
         val recipient = recipientRepository.getRecipientSync(address)
-        val expiryMode = recipient?.expiryMode?.coerceSendToRead() ?: ExpiryMode.NONE
+        val expiryMode = recipient.expiryMode?.coerceSendToRead() ?: ExpiryMode.NONE
         val expiresInMillis = expiryMode.expiryMillis
         val expireStartedAt = if (expiryMode != ExpiryMode.NONE) clock.currentTimeMills() else 0
         val callMessage = IncomingTextMessage.fromCallInfo(callMessageType, address, Optional.absent(), sentTimestamp, expiresInMillis, expireStartedAt)

@@ -20,6 +20,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
 import com.annimon.stream.Stream
+import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -61,7 +62,6 @@ import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.model.Quote
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
 import org.thoughtcrime.securesms.database.model.content.MessageContent
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
 import org.thoughtcrime.securesms.mms.MmsException
 import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.util.asSequence
@@ -78,6 +78,12 @@ class MmsDatabase @Inject constructor(
     databaseHelper: Provider<SQLCipherOpenHelper>,
     private val recipientRepository: RecipientRepository,
     private val json: Json,
+    private val threadDatabase: ThreadDatabase,
+    private val groupReceiptDatabase: GroupReceiptDatabase,
+    private val attachmentDatabase: AttachmentDatabase,
+    private val reactionDatabase: ReactionDatabase,
+    private val mmsSmsDatabase: Lazy<MmsSmsDatabase>,
+    private val groupDatabase: GroupDatabase,
 ) : MessagingDatabase(context, databaseHelper) {
     private val earlyDeliveryReceiptCache = EarlyReceiptCache()
     private val earlyReadReceiptCache = EarlyReceiptCache()
@@ -183,10 +189,9 @@ class MmsDatabase @Inject constructor(
                                     columnName + " = " + columnName + " + 1 WHERE " + ID + " = ?",
                             arrayOf(id.toString())
                         )
-                        get(context).groupReceiptDatabase()
+                        groupReceiptDatabase
                             .update(ourAddress, id, status, timestamp)
-                        get(context).threadDatabase().update(threadId, false)
-                        notifyConversationListeners(threadId)
+                        threadDatabase.update(threadId, false)
                     }
                 }
             }
@@ -212,7 +217,7 @@ class MmsDatabase @Inject constructor(
             "UPDATE $TABLE_NAME SET $BODY = ? WHERE $ID = ?",
             arrayOf(body, messageId.toString())
         )
-        with (get(context).threadDatabase()) {
+        with (threadDatabase) {
             setLastSeen(threadId, SnodeAPI.nowWithOffset)
             setHasSent(threadId, true)
             if (runThreadUpdate) {
@@ -231,8 +236,6 @@ class MmsDatabase @Inject constructor(
             if (it.moveToFirst()) it.getLong(0) else null
         }
 
-        threadId?.let(::notifyConversationListeners)
-        notifyConversationListListeners()
     }
 
     fun getThreadIdForMessage(id: Long): Long {
@@ -260,7 +263,6 @@ class MmsDatabase @Inject constructor(
 
     fun getMessage(messageId: Long): Cursor {
         val cursor = rawQuery(RAW_ID_WHERE, arrayOf(messageId.toString()))
-        setNotifyConversationListeners(cursor, getThreadIdForMessage(messageId))
         return cursor
     }
 
@@ -305,7 +307,7 @@ class MmsDatabase @Inject constructor(
                     " WHERE " + ID + " = ?", arrayOf(id.toString() + "")
         )
         if (threadId.isPresent) {
-            get(context).threadDatabase().update(threadId.get(), false)
+            threadDatabase.update(threadId.get(), false)
         }
     }
 
@@ -320,7 +322,6 @@ class MmsDatabase @Inject constructor(
             baseType,
             Optional.of(threadId)
         )
-        notifyConversationListeners(threadId)
     }
 
     override fun markAsSyncing(messageId: Long) {
@@ -353,7 +354,6 @@ class MmsDatabase @Inject constructor(
         contentValues.put(HAS_MENTION, 0)
 
         database.update(TABLE_NAME, contentValues, ID_WHERE, arrayOf(messageId.toString()))
-        val attachmentDatabase = get(context).attachmentDatabase()
         queue { attachmentDatabase.deleteAttachmentsForMessage(messageId) }
         val threadId = getThreadIdForMessage(messageId)
 
@@ -368,8 +368,6 @@ class MmsDatabase @Inject constructor(
         contentValues.put(EXPIRE_STARTED, startedTimestamp)
         val db = writableDatabase
         db.update(TABLE_NAME, contentValues, ID_WHERE, arrayOf(messageId.toString()))
-        val threadId = getThreadIdForMessage(messageId)
-        notifyConversationListeners(threadId)
     }
 
     fun markAsNotified(id: Long) {
@@ -435,7 +433,6 @@ class MmsDatabase @Inject constructor(
 
     @Throws(MmsException::class, NoSuchMessageException::class)
     fun getOutgoingMessage(messageId: Long): OutgoingMediaMessage {
-        val attachmentDatabase = get(context).attachmentDatabase()
         var cursor: Cursor? = null
         try {
             cursor = rawQuery(RAW_ID_WHERE, arrayOf(messageId.toString()))
@@ -449,7 +446,7 @@ class MmsDatabase @Inject constructor(
                 val expireStartedAt = cursor.getLong(cursor.getColumnIndexOrThrow(EXPIRE_STARTED))
                 val address = cursor.getString(cursor.getColumnIndexOrThrow(ADDRESS))
                 val threadId = cursor.getLong(cursor.getColumnIndexOrThrow(THREAD_ID))
-                val distributionType = get(context).threadDatabase().getDistributionType(threadId)
+                val distributionType = threadDatabase.getDistributionType(threadId)
                 val mismatchDocument = cursor.getString(
                     cursor.getColumnIndexOrThrow(
                         MISMATCHED_IDENTITIES
@@ -677,10 +674,9 @@ class MmsDatabase @Inject constructor(
         )
         if (retrieved.messageContent !is DisappearingMessageUpdate) {
             if (runThreadUpdate) {
-                get(context).threadDatabase().update(threadId, true)
+                threadDatabase.update(threadId, true)
             }
         }
-        notifyConversationListeners(threadId)
         return Optional.of(InsertResult(messageId, threadId))
     }
 
@@ -793,26 +789,25 @@ class MmsDatabase @Inject constructor(
             contentValues = contentValues,
         )
         if (message.recipient.isGroupOrCommunity) {
-            val members = get(context).groupDatabase()
+            val members = groupDatabase
                 .getGroupMembers(message.recipient.toGroupString(), false)
-            val receiptDatabase = get(context).groupReceiptDatabase()
-            receiptDatabase.insert(members,
+            groupReceiptDatabase.insert(members,
                 messageId, GroupReceiptDatabase.STATUS_UNDELIVERED, message.sentTimeMillis
             )
-            for (address in earlyDeliveryReceipts.keys) receiptDatabase.update(
+            for (address in earlyDeliveryReceipts.keys) groupReceiptDatabase.update(
                 address,
                 messageId,
                 GroupReceiptDatabase.STATUS_DELIVERED,
                 -1
             )
-            for (address in earlyReadReceipts.keys) receiptDatabase.update(
+            for (address in earlyReadReceipts.keys) groupReceiptDatabase.update(
                 address,
                 messageId,
                 GroupReceiptDatabase.STATUS_READ,
                 -1
             )
         }
-        with (get(context).threadDatabase()) {
+        with (threadDatabase) {
             val lastSeen = getLastSeenAndHasSent(threadId).first()
             if (lastSeen < message.sentTimeMillis) {
                 setLastSeen(threadId, message.sentTimeMillis)
@@ -836,7 +831,7 @@ class MmsDatabase @Inject constructor(
         contentValues: ContentValues,
     ): Long {
         val db = writableDatabase
-        val partsDatabase = get(context).attachmentDatabase()
+        val partsDatabase = attachmentDatabase
         val allAttachments: MutableList<Attachment?> = LinkedList()
         val thumbnailJobs: MutableList<AttachmentId> = ArrayList()  // Collector for thumbnail jobs
 
@@ -909,15 +904,12 @@ class MmsDatabase @Inject constructor(
             db.endTransaction()
 
             // Process thumbnail jobs AFTER transaction commits
-            val attachmentDatabase = get(context).attachmentDatabase()
             thumbnailJobs.forEach { attachmentId ->
                 Log.i(TAG, "Submitting thumbnail generation job for attachment: $attachmentId")
                 attachmentDatabase.thumbnailExecutor.submit(
                     attachmentDatabase.ThumbnailFetchCallable(attachmentId)
                 )
             }
-
-            notifyConversationListeners(contentValues.getAsLong(THREAD_ID))
         }
     }
 
@@ -942,13 +934,11 @@ class MmsDatabase @Inject constructor(
             }
         }
         val idsAsString = queryBuilder.toString()
-        val attachmentDatabase = get(context).attachmentDatabase()
         queue { attachmentDatabase.deleteAttachmentsForMessages(messageIds) }
-        val groupReceiptDatabase = get(context).groupReceiptDatabase()
+        val groupReceiptDatabase = groupReceiptDatabase
         groupReceiptDatabase.deleteRowsForMessages(messageIds)
         val database = writableDatabase
         database.delete(TABLE_NAME, idsAsString, null)
-        notifyConversationListListeners()
         notifyStickerListeners()
         notifyStickerPackListeners()
     }
@@ -959,14 +949,12 @@ class MmsDatabase @Inject constructor(
     // - it is "Was the thread deleted because removing that message resulted in an empty thread"!
     override fun deleteMessage(messageId: Long): Boolean {
         val threadId = getThreadIdForMessage(messageId)
-        val attachmentDatabase = get(context).attachmentDatabase()
         queue { attachmentDatabase.deleteAttachmentsForMessage(messageId) }
-        val groupReceiptDatabase = get(context).groupReceiptDatabase()
+        val groupReceiptDatabase = groupReceiptDatabase
         groupReceiptDatabase.deleteRowsForMessage(messageId)
         val database = writableDatabase
         database!!.delete(TABLE_NAME, ID_WHERE, arrayOf(messageId.toString()))
-        val threadDeleted = get(context).threadDatabase().update(threadId, false)
-        notifyConversationListeners(threadId)
+        val threadDeleted = threadDatabase.update(threadId, false)
         notifyStickerListeners()
         notifyStickerPackListeners()
         return threadDeleted
@@ -975,9 +963,6 @@ class MmsDatabase @Inject constructor(
     override fun deleteMessages(messageIds: LongArray, threadId: Long): Boolean {
         val argsArray = messageIds.map { "?" }
         val argValues = messageIds.map { it.toString() }.toTypedArray()
-
-        val attachmentDatabase = get(context).attachmentDatabase()
-        val groupReceiptDatabase = get(context).groupReceiptDatabase()
 
         queue { attachmentDatabase.deleteAttachmentsForMessages(messageIds) }
         groupReceiptDatabase.deleteRowsForMessages(messageIds)
@@ -989,8 +974,7 @@ class MmsDatabase @Inject constructor(
             argValues
         )
 
-        val threadDeleted = get(context).threadDatabase().update(threadId, false)
-        notifyConversationListeners(threadId)
+        val threadDeleted = threadDatabase.update(threadId, false)
         notifyStickerListeners()
         notifyStickerPackListeners()
         return threadDeleted
@@ -1002,8 +986,6 @@ class MmsDatabase @Inject constructor(
 
         val db = writableDatabase
         db.update(SmsDatabase.TABLE_NAME, contentValues, "$THREAD_ID = ?", arrayOf("$fromId"))
-        notifyConversationListeners(toId)
-        notifyConversationListListeners()
     }
 
     @Throws(NoSuchMessageException::class)
@@ -1039,9 +1021,8 @@ class MmsDatabase @Inject constructor(
         } finally {
             cursor?.close()
         }
-        val threadDb = get(context).threadDatabase()
+        val threadDb = threadDatabase
         threadDb.update(threadId, false)
-        notifyConversationListeners(threadId)
         notifyStickerListeners()
         notifyStickerPackListeners()
     }
@@ -1066,9 +1047,8 @@ class MmsDatabase @Inject constructor(
         } finally {
             cursor?.close()
         }
-        val threadDb = get(context).threadDatabase()
+        val threadDb = threadDatabase
         threadDb.update(threadId, false)
-        notifyConversationListeners(threadId)
         notifyStickerListeners()
         notifyStickerPackListeners()
     }
@@ -1239,10 +1219,9 @@ class MmsDatabase @Inject constructor(
         } finally {
             cursor?.close()
         }
-        val threadDb = get(context).threadDatabase()
+        val threadDb = threadDatabase
         for (threadId in threadIds) {
-            val threadDeleted = threadDb.update(threadId, false)
-            notifyConversationListeners(threadId)
+            threadDb.update(threadId, false)
         }
         notifyStickerListeners()
         notifyStickerPackListeners()
@@ -1303,7 +1282,6 @@ class MmsDatabase @Inject constructor(
 
         val where = "$THREAD_ID = ? AND $MESSAGE_CONTENT->>'$.${MessageContent.DISCRIMINATOR}' == '${DisappearingMessageUpdate.TYPE_NAME}' " + outgoingClause
         writableDatabase.delete(TABLE_NAME, where, arrayOf("$threadId"))
-        notifyConversationListeners(threadId)
     }
 
     object Status {
@@ -1346,7 +1324,7 @@ class MmsDatabase @Inject constructor(
             val recipient = getRecipientFor(address)
             val mismatches = getMismatchedIdentities(mismatchDocument)
             val networkFailures = getFailures(networkDocument)
-            val attachments = get(context).attachmentDatabase().getAttachment(
+            val attachments = attachmentDatabase.getAttachment(
                 cursor
             )
             val contacts: List<Contact?> = getSharedContacts(cursor, attachments)
@@ -1361,7 +1339,7 @@ class MmsDatabase @Inject constructor(
                     .filterNot { o: DatabaseAttachment? -> o in previewAttachments }
             )
             val quote = if (getQuote) getQuote(cursor) else null
-            val reactions = get(context).reactionDatabase().getReactions(cursor)
+            val reactions = reactionDatabase.getReactions(cursor)
             val messageContent = runCatching {
                 messageContentJson?.takeIf { it.isNotBlank() }
                     ?.let { json.decodeFromString<MessageContent>(it) }
@@ -1416,12 +1394,12 @@ class MmsDatabase @Inject constructor(
             val quoteId = cursor.getLong(cursor.getColumnIndexOrThrow(QUOTE_ID))
             val quoteAuthor = cursor.getString(cursor.getColumnIndexOrThrow(QUOTE_AUTHOR))
             if (quoteId == 0L || quoteAuthor.isNullOrBlank()) return null
-            val retrievedQuote = get(context).mmsSmsDatabase().getMessageFor(quoteId, quoteAuthor, false)
+            val retrievedQuote = mmsSmsDatabase.get().getMessageFor(quoteId, quoteAuthor, false)
             val quoteText = retrievedQuote?.body
             val quoteMissing = retrievedQuote == null
             val quoteDeck = (
                 (retrievedQuote as? MmsMessageRecord)?.slideDeck ?:
-                Stream.of(get(context).attachmentDatabase().getAttachment(cursor))
+                Stream.of(attachmentDatabase.getAttachment(cursor))
                     .filter { obj: DatabaseAttachment? -> obj!!.isQuote }
                     .toList()
                     .let { SlideDeck(context, it) }
