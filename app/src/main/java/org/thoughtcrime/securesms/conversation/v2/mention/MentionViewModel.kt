@@ -163,11 +163,11 @@ class MentionViewModel(
                     true
                 )
 
-                // Other members from this groupv2
+                // Get other members
                 val otherMembers = if (recipient.isGroupV2Recipient) {
                     val groupId = AccountId(recipient.address.toString())
 
-                    // Get members of the group
+                    // Get members of the group from the config
                     val rawMembers = configFactory.withGroupConfigs(groupId) {
                         it.groupMembers.allWithStatus()
                     }
@@ -185,8 +185,8 @@ class MentionViewModel(
                             buildMember(id, name, id in moderatorIDs, false)
                         }.sortedBy { it.name }
                 } else {
-                    // Fallback to only local contacts
-                    val contacts = contactDatabase.getContacts(memberIDs)
+                    // For communities and one-on-one conversations
+                    val contacts = contactDatabase.getContacts(memberIDs) // Get members from contacts based on memberIDs
                     val contactMap = contacts.associateBy { it.accountID }
                     memberIDs.asSequence()
                         .filter { it != myId }
