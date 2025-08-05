@@ -10,6 +10,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
+import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.ExpiryMode
@@ -47,6 +49,7 @@ import org.session.libsession.messaging.utilities.MessageAuthentication.buildMem
 import org.session.libsession.messaging.utilities.WebRtcUtils
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.GroupUtil.doubleEncodeGroupID
 import org.session.libsession.utilities.SSKEnvironment
@@ -91,6 +94,7 @@ class ReceivedMessageHandler @Inject constructor(
     private val attachmentDownloadJobFactory: AttachmentDownloadJob.Factory,
     private val profileUpdateHandler: ProfileUpdateHandler,
     @param:ManagerScope private val scope: CoroutineScope,
+    private val configFactory: ConfigFactoryProtocol,
 ) {
     fun handle(message: Message, proto: SignalServiceProtos.Content, threadId: Long, openGroupID: String?, groupv2Id: AccountId?) {
         // Do nothing if the message was outdated
@@ -413,6 +417,20 @@ class ReceivedMessageHandler @Inject constructor(
                         updates = updates,
                         fromCommunity = context.openGroup?.toCommunityInfo(),
                     )
+                }
+            }
+
+            // If we have previously "hidden" the sender, we should flip the flag back to visible
+            if (senderId.prefix == IdPrefix.STANDARD) {
+                val existingContact =
+                    configFactory.withUserConfigs { it.contacts.get(senderId.hexString) }
+                if (existingContact != null && existingContact.priority == PRIORITY_HIDDEN) {
+                    configFactory.withMutableUserConfigs { configs ->
+                        configs.contacts.get(senderId.hexString)?.let { contact ->
+                            contact.priority = PRIORITY_VISIBLE
+                            configs.contacts.set(contact)
+                        }
+                    }
                 }
             }
 

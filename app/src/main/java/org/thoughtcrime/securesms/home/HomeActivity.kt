@@ -14,7 +14,6 @@ import androidx.activity.viewModels
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ViewCompositionStrategy
-import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
@@ -48,7 +47,6 @@ import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log

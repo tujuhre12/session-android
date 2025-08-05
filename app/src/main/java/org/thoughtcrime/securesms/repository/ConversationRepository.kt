@@ -38,7 +38,6 @@ import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.isCommunityInbox
 import org.session.libsession.utilities.isGroupV2
 import org.session.libsession.utilities.isLegacyGroup
 import org.session.libsession.utilities.isStandard

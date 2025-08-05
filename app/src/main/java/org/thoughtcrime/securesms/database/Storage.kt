@@ -1589,25 +1589,16 @@ open class Storage @Inject constructor(
         )
     }
 
-    override fun setBlocked(recipients: Iterable<Address>, isBlocked: Boolean, fromConfigUpdate: Boolean) {
-        if (!fromConfigUpdate) {
-            val currentUserKey = getUserPublicKey()
-            configFactory.withMutableUserConfigs { configs ->
-                recipients.filter { it.isStandard && (it.toString() != currentUserKey) }
-                    .forEach { recipient ->
-                        configs.contacts.upsertContact(recipient.toString()) {
-                            this.blocked = isBlocked
-                        }
+    override fun setBlocked(recipients: Iterable<Address>, isBlocked: Boolean) {
+        configFactory.withMutableUserConfigs { configs ->
+            recipients.filterIsInstance<Address.Standard>()
+                .forEach { standard ->
+                    configs.contacts.upsertContact(standard.id.hexString) {
+                        this.blocked = isBlocked
+                        Log.d(TAG, "Setting contact ${standard.debugString} blocked state to $isBlocked")
                     }
-            }
+                }
         }
-    }
-
-    override fun blockedContacts(): List<Recipient> {
-        return configFactory.withUserConfigs { it.contacts.all() }.asSequence()
-            .filter { it.blocked }
-            .map { recipientRepository.getRecipientSync(Address.fromSerialized(it.id)) }
-            .toList()
     }
 
     override fun setExpirationConfiguration(address: Address, expiryMode: ExpiryMode) {
