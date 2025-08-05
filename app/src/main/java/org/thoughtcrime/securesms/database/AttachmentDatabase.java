@@ -53,7 +53,6 @@ import org.thoughtcrime.securesms.crypto.ModernDecryptingPartInputStream;
 import org.thoughtcrime.securesms.crypto.ModernEncryptingPartOutputStream;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 import org.thoughtcrime.securesms.database.model.MmsAttachmentInfo;
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.mms.MediaStream;
 import org.thoughtcrime.securesms.mms.MmsException;
 import org.thoughtcrime.securesms.mms.PartAuthority;
@@ -540,24 +539,12 @@ public class AttachmentDatabase extends Database {
                                   databaseAttachment.getAudioDurationMs());
   }
 
-  public void markAttachmentUploaded(long messageId, Attachment attachment) {
-    ContentValues  values   = new ContentValues(1);
-    SQLiteDatabase database = getWritableDatabase();
-
-    values.put(TRANSFER_STATE, AttachmentState.DONE.getValue());
-    database.update(TABLE_NAME, values, PART_ID_WHERE, ((DatabaseAttachment)attachment).getAttachmentId().toStrings());
-
-    notifyConversationListeners(DatabaseComponent.get(context).mmsDatabase().getThreadIdForMessage(messageId));
-    ((DatabaseAttachment) attachment).setUploaded(true);
-  }
-
-  public void setTransferState(long messageId, @NonNull AttachmentId attachmentId, int transferState) {
+  public void setTransferState(@NonNull AttachmentId attachmentId, int transferState) {
     final ContentValues  values   = new ContentValues(1);
     final SQLiteDatabase database = getWritableDatabase();
 
     values.put(TRANSFER_STATE, transferState);
     database.update(TABLE_NAME, values, PART_ID_WHERE, attachmentId.toStrings());
-    notifyConversationListeners(DatabaseComponent.get(context).mmsDatabase().getThreadIdForMessage(messageId));
   }
 
   @SuppressWarnings("WeakerAccess")
@@ -830,16 +817,6 @@ public class AttachmentDatabase extends Database {
     values.put(THUMBNAIL_RANDOM, thumbnailFile.random);
 
     database.update(TABLE_NAME, values, PART_ID_WHERE, attachmentId.toStrings());
-
-    Cursor cursor = database.query(TABLE_NAME, new String[] {MMS_ID}, PART_ID_WHERE, attachmentId.toStrings(), null, null, null);
-
-    try {
-      if (cursor != null && cursor.moveToFirst()) {
-        notifyConversationListeners(DatabaseComponent.get(context).mmsDatabase().getThreadIdForMessage(cursor.getLong(cursor.getColumnIndexOrThrow(MMS_ID))));
-      }
-    } finally {
-      if (cursor != null) cursor.close();
-    }
   }
 
   /**
@@ -873,7 +850,7 @@ public class AttachmentDatabase extends Database {
    * @return true if the update operation was successful.
    */
   @Synchronized
-  public boolean setAttachmentAudioExtras(@NonNull DatabaseAttachmentAudioExtras extras, long threadId) {
+  public boolean setAttachmentAudioExtras(@NonNull DatabaseAttachmentAudioExtras extras) {
     ContentValues values = new ContentValues();
     values.put(AUDIO_VISUAL_SAMPLES, extras.getVisualSamples());
     values.put(AUDIO_DURATION, extras.getDurationMs());
@@ -882,10 +859,6 @@ public class AttachmentDatabase extends Database {
       values,
       PART_ID_WHERE + " AND " + PART_AUDIO_ONLY_WHERE,
       extras.getAttachmentId().toStrings());
-
-    if (threadId >= 0) {
-      notifyConversationListeners(threadId);
-    }
 
     return alteredRows > 0;
   }

@@ -334,7 +334,7 @@ class DebugMenuViewModel @Inject constructor(
 
             // set all attachments back to pending
             attachmentDatabase.allAttachments.forEach {
-                attachmentDatabase.setTransferState(it.mmsId, it.attachmentId, AttachmentState.PENDING.value)
+                attachmentDatabase.setTransferState(it.attachmentId, AttachmentState.PENDING.value)
             }
 
             Toast.makeText(context, "Cleared!", Toast.LENGTH_LONG).show()

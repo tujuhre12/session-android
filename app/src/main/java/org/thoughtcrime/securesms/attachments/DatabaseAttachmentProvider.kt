@@ -71,7 +71,7 @@ class DatabaseAttachmentProvider(context: Context, helper: Provider<SQLCipherOpe
 
     override fun setAttachmentState(attachmentState: AttachmentState, attachmentId: AttachmentId, messageID: Long) {
         val attachmentDatabase = DatabaseComponent.get(context).attachmentDatabase()
-        attachmentDatabase.setTransferState(messageID, attachmentId, attachmentState.value)
+        attachmentDatabase.setTransferState(attachmentId, attachmentState.value)
     }
 
     override fun getMessageForQuote(timestamp: Long, author: Address): Triple<Long, Boolean, String>? {
@@ -114,11 +114,13 @@ class DatabaseAttachmentProvider(context: Context, helper: Provider<SQLCipherOpe
         threadId: Long
     ) {
         val attachmentDb = DatabaseComponent.get(context).attachmentDatabase()
-        attachmentDb.setAttachmentAudioExtras(DatabaseAttachmentAudioExtras(
-            attachmentId = attachmentId,
-            visualSamples = byteArrayOf(),
-            durationMs = durationMs
-        ), threadId)
+        attachmentDb.setAttachmentAudioExtras(
+            DatabaseAttachmentAudioExtras(
+                attachmentId = attachmentId,
+                visualSamples = byteArrayOf(),
+                durationMs = durationMs
+            )
+        )
     }
 
     override fun isOutgoingMessage(id: MessageId): Boolean {
