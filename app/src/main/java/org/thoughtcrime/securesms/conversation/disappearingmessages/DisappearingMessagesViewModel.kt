@@ -22,16 +22,14 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.isGroup
 import org.session.libsession.utilities.isGroupOrCommunity
-import org.session.libsession.utilities.isGroupV2
 import org.session.libsession.utilities.isLegacyGroup
-import org.session.libsession.utilities.recipients.BasicRecipient
+import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.toGroupString
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.UiState
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.toUiState
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsNavigator
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
-import org.thoughtcrime.securesms.database.Storage
 
 @HiltViewModel(assistedFactory = DisappearingMessagesViewModel.Factory::class)
 class DisappearingMessagesViewModel @AssistedInject constructor(
@@ -64,7 +62,7 @@ class DisappearingMessagesViewModel @AssistedInject constructor(
             val expiryMode = recipient.expiryMode
 
             val isAdmin = when {
-                recipient.basic is BasicRecipient.Group -> recipient.basic.isAdmin
+                recipient.data is RecipientData.Group -> recipient.data.isAdmin
 
                 address.isLegacyGroup -> {
                     val groupRecord = groupDb.getGroup(address.toGroupString()).orNull()

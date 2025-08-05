@@ -21,7 +21,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.Address.Companion.toAddress
-import org.session.libsession.utilities.recipients.BasicRecipient
+import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.BaseViewModelTest
 import org.thoughtcrime.securesms.MainCoroutineRule
@@ -61,7 +61,7 @@ class ConversationViewModelTest: BaseViewModelTest() {
 
     private val standardRecipient = Recipient(
         address = STANDARD_ADDRESS,
-        basic = BasicRecipient.Contact(
+        data = RecipientData.Contact(
             name = "Test User",
             nickname = "Test User",
             avatar = null,

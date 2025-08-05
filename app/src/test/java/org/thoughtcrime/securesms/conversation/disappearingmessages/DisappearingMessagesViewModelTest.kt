@@ -16,7 +16,7 @@ import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.recipients.BasicRecipient
+import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.BaseViewModelTest
 import org.thoughtcrime.securesms.MainCoroutineRule
@@ -51,7 +51,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
     fun `note to self, off, new config`() = runTest {
         val viewModel = createViewModel(Recipient(
             address = STANDARD_ADDRESS,
-            basic = BasicRecipient.Self(name = "Myself", avatar = null, expiryMode = ExpiryMode.NONE, acceptsCommunityMessageRequests = false, priority = 1),
+            data = RecipientData.Self(name = "Myself", avatar = null, expiryMode = ExpiryMode.NONE, acceptsCommunityMessageRequests = false, priority = 1),
         ))
 
         advanceUntilIdle()
@@ -93,7 +93,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
     fun `group, off, admin, new config`() = runTest {
         val recipient = Recipient(
             address = GROUP_ADDRESS,
-            basic = BasicRecipient.Group(
+            data = RecipientData.Group(
                 name = "Group Name",
                 avatar = null,
                 expiryMode = ExpiryMode.NONE,
@@ -147,7 +147,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
     fun `group, off, not admin, new config`() = runTest {
         val recipient = Recipient(
             address = GROUP_ADDRESS,
-            basic = BasicRecipient.Group(
+            data = RecipientData.Group(
                 name = "Group Name",
                 avatar = null,
                 expiryMode = ExpiryMode.NONE,
@@ -202,7 +202,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
     fun `1-1 conversation, off, new config`() = runTest {
         val viewModel = createViewModel(Recipient(
             address = STANDARD_ADDRESS,
-            basic = BasicRecipient.Contact(
+            data = RecipientData.Contact(
                 name = "Contact",
                 nickname = null,
                 avatar = null,
@@ -254,7 +254,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
 
         val viewModel = createViewModel(Recipient(
             address = STANDARD_ADDRESS,
-            basic = BasicRecipient.Contact(
+            data = RecipientData.Contact(
                 name = "Contact",
                 nickname = null,
                 avatar = null,
@@ -313,7 +313,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
 
         val viewModel = createViewModel(Recipient(
             address = STANDARD_ADDRESS,
-            basic = BasicRecipient.Contact(
+            data = RecipientData.Contact(
                 name = "Contact",
                 nickname = null,
                 avatar = null,
@@ -372,7 +372,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
 
         val viewModel = createViewModel(Recipient(
             address = STANDARD_ADDRESS,
-            basic = BasicRecipient.Contact(
+            data = RecipientData.Contact(
                 name = "Contact",
                 nickname = null,
                 avatar = null,
@@ -433,7 +433,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
 
         val viewModel = createViewModel(Recipient(
             address = STANDARD_ADDRESS,
-            basic = BasicRecipient.Contact(
+            data = RecipientData.Contact(
                 name = "Contact",
                 nickname = null,
                 avatar = null,

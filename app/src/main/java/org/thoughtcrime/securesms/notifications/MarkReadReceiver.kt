@@ -19,7 +19,7 @@ import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isReadReceiptsEnabled
 import org.session.libsession.utilities.associateByNotNull
 import org.session.libsession.utilities.isGroupOrCommunity
-import org.session.libsession.utilities.recipients.BasicRecipient
+import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ExpiryType
@@ -131,9 +131,9 @@ class MarkReadReceiver : BroadcastReceiver() {
         }
 
         private val Recipient.shouldSendReadReceipt: Boolean
-            get() = when (basic) {
-                is BasicRecipient.Contact -> approved && !blocked
-                is BasicRecipient.Generic -> !isGroupOrCommunityRecipient && !blocked
+            get() = when (data) {
+                is RecipientData.Contact -> approved && !blocked
+                is RecipientData.Generic -> !isGroupOrCommunityRecipient && !blocked
                 else -> false
             }
 

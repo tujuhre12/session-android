@@ -5,7 +5,7 @@ import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.recipients.BasicRecipient
+import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.BlindMappingRepository
@@ -41,7 +41,7 @@ class ProfileUpdateHandler @Inject constructor(
 
         val senderAddress = senderId.toAddress()
 
-        if (recipientRepository.getBasicRecipientFast(senderAddress) is BasicRecipient.Self) {
+        if (recipientRepository.getConfigBasedData(senderAddress) is RecipientData.Self) {
             Log.d(TAG, "Ignoring profile update for ourselves")
             return
         }

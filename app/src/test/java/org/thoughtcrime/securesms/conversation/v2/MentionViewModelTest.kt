@@ -21,7 +21,7 @@ import org.session.libsession.messaging.open_groups.GroupMemberRole
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
-import org.session.libsession.utilities.recipients.BasicRecipient
+import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.AccountId
@@ -73,7 +73,7 @@ class MentionViewModelTest : BaseViewModelTest() {
 
     private val communityRecipient = Recipient(
         address = Address.Community(openGroup),
-        basic = BasicRecipient.Generic()
+        data = RecipientData.Generic()
     )
 
     @Before
@@ -119,7 +119,7 @@ class MentionViewModelTest : BaseViewModelTest() {
                             ?.let { m ->
                                 Recipient(
                                     address = m.pubKey.toAddress(),
-                                    basic = BasicRecipient.Generic(displayName = m.name)
+                                    data = RecipientData.Generic(displayName = m.name)
                                 )
                             }
                     }

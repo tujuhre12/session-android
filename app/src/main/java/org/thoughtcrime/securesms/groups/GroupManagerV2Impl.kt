@@ -46,7 +46,7 @@ import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.getGroup
-import org.session.libsession.utilities.recipients.BasicRecipient
+import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.toUserPic
 import org.session.libsession.utilities.waitUntilGroupConfigsPushed
@@ -150,7 +150,7 @@ class GroupManagerV2Impl @Inject constructor(
                     newGroupConfigs.groupMembers.getOrConstruct(member.address.toString()).apply {
                         // Must use the contact's original name because we are setting this info
                         // for other gorup members to see.
-                        setName((member.basic as? BasicRecipient.Contact)?.name.orEmpty())
+                        setName((member.data as? RecipientData.Contact)?.name.orEmpty())
                         setProfilePic(member.avatar?.toUserPic() ?: UserPic.DEFAULT)
                     }
                 )
@@ -790,9 +790,9 @@ class GroupManagerV2Impl @Inject constructor(
         inviteMessageHash: String,
     ) {
         val address = Address.fromSerialized(groupId.hexString)
-        val inviterRecipient = recipientRepository.getBasicRecipientFast(Address.fromSerialized(inviter.hexString))
+        val inviterRecipient = recipientRepository.getConfigBasedData(Address.fromSerialized(inviter.hexString))
 
-        val shouldAutoApprove = (inviterRecipient as? BasicRecipient.Contact)?.approved == true
+        val shouldAutoApprove = (inviterRecipient as? RecipientData.Contact)?.approved == true
         val closedGroupInfo = GroupInfo.ClosedGroupInfo(
             groupAccountId = groupId.hexString,
             adminKey = authDataOrAdminSeed.takeIf { fromPromotion }?.let { GroupInfo.ClosedGroupInfo.adminKeyFromSeed(it) }?.toBytes(),

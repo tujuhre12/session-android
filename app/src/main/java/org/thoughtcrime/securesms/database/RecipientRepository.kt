@@ -36,7 +36,8 @@ import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
-import org.session.libsession.utilities.recipients.BasicRecipient
+import org.session.libsession.utilities.recipients.ProStatus
+import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRecipientAvatar
@@ -140,28 +141,28 @@ class RecipientRepository @Inject constructor(
     ): Pair<Recipient, Flow<*>> {
         val basicRecipient =
             address.toBlinded()?.let { blindedIdMappingRepository.findMappings(it).firstOrNull()?.second }
-                ?.let(this::getBasicRecipientFast)
-                ?: getBasicRecipientFast(address)
+                ?.let(this::getConfigBasedData)
+                ?: getConfigBasedData(address)
 
         val changeSource: Flow<*>
         val value: Recipient
 
         when (basicRecipient) {
-            is BasicRecipient.Self -> {
+            is RecipientData.Self -> {
                 value = createLocalRecipient(address, basicRecipient)
                 changeSource = configFactory.userConfigsChanged()
             }
 
-            is BasicRecipient.BlindedContact -> {
+            is RecipientData.BlindedContact -> {
                 value = Recipient(
                     address = address,
-                    basic = basicRecipient,
+                    data = basicRecipient,
                 )
 
                 changeSource = configFactory.userConfigsChanged()
             }
 
-            is BasicRecipient.Contact -> {
+            is RecipientData.Contact -> {
                 value = createContactRecipient(
                     address = address,
                     basic = basicRecipient,
@@ -174,7 +175,7 @@ class RecipientRepository @Inject constructor(
                 )
             }
 
-            is BasicRecipient.Group -> {
+            is RecipientData.Group -> {
                 value = createGroupV2Recipient(
                     address = address,
                     basic = basicRecipient,
@@ -310,23 +311,22 @@ class RecipientRepository @Inject constructor(
     }
 
     /**
-     * Returns a [BasicRecipient] for the given address, without going into the database.
-     * If it's impossible, this will return null. When it does, it doesn't mean the recipient
-     * doesn't exist, it just means we don't have a fast way to get it. You will need to call
-     * [RecipientRepository.getRecipient] to get the full recipient data.
+     * Returns a [RecipientData.ConfigBased] for the given address, by only looking
+     * at the config data. This method is useful when you know what you are looking for and it's
+     * all in memory operation (almost) without any database access.
      */
-    fun getBasicRecipientFast(address: Address): BasicRecipient.ConfigBasedRecipient? {
+    fun getConfigBasedData(address: Address): RecipientData.ConfigBased? {
         return when {
             // Is this our own address?
             address.address.equals(preferences.getLocalNumber(), ignoreCase = true) -> {
                 configFactory.withUserConfigs { configs ->
-                    BasicRecipient.Self(
+                    RecipientData.Self(
                         name = configs.userProfile.getName().orEmpty(),
                         avatar = configs.userProfile.getPic().toRecipientAvatar(),
                         expiryMode = configs.userProfile.getNtsExpiry(),
                         acceptsCommunityMessageRequests = configs.userProfile.getCommunityMessageRequests(),
                         priority = configs.userProfile.getNtsPriority(),
-                        isPro = proStatusManager.isCurrentUserPro(),
+                        proStatus = if (proStatusManager.isCurrentUserPro()) ProStatus.ProVisible else ProStatus.Unknown,
                     )
                 }
             }
@@ -336,7 +336,7 @@ class RecipientRepository @Inject constructor(
                 configFactory.withUserConfigs { configs ->
                     configs.contacts.get(address.id.hexString)
                 }?.let { contact ->
-                    BasicRecipient.Contact(
+                    RecipientData.Contact(
                         name = contact.name,
                         nickname = contact.nickname.takeIf { it.isNotBlank() },
                         avatar = contact.profilePicture.toRecipientAvatar(),
@@ -345,7 +345,7 @@ class RecipientRepository @Inject constructor(
                         blocked = contact.blocked,
                         expiryMode = contact.expiryMode,
                         priority = contact.priority,
-                        isPro = proStatusManager.isUserPro(address)
+                        proStatus = if (proStatusManager.isUserPro(address)) ProStatus.ProVisible else ProStatus.Unknown
                     )
                 }
             }
@@ -354,7 +354,7 @@ class RecipientRepository @Inject constructor(
             address is Address.Group -> {
                 val groupInfo = configFactory.getGroup(address.id) ?: return null
                 configFactory.withGroupConfigs(address.id) { configs ->
-                    BasicRecipient.Group(
+                    RecipientData.Group(
                         avatar = configs.groupInfo.getProfilePic().toRecipientAvatar(),
                         expiryMode = configs.groupInfo.expiryMode,
                         name = configs.groupInfo.getName() ?: groupInfo.name,
@@ -363,7 +363,7 @@ class RecipientRepository @Inject constructor(
                         isAdmin = groupInfo.adminKey != null,
                         kicked = groupInfo.kicked,
                         destroyed = groupInfo.destroyed,
-                        isPro = proStatusManager.isUserPro(address)
+                        proStatus = if (proStatusManager.isUserPro(address)) ProStatus.ProVisible else ProStatus.Unknown
                     )
                 }
             }
@@ -373,11 +373,11 @@ class RecipientRepository @Inject constructor(
                 val blinded = address.toBlinded() ?: return null
                 val contact = configFactory.withUserConfigs { it.contacts.getBlinded(blinded.blindedId.hexString) } ?: return null
 
-                BasicRecipient.BlindedContact(
+                RecipientData.BlindedContact(
                     displayName = contact.name,
                     avatar = contact.profilePic.toRecipientAvatar(),
                     priority = PRIORITY_VISIBLE,
-                    isPro = proStatusManager.isUserPro(address),
+                    proStatus = if (proStatusManager.isUserPro(address)) ProStatus.ProVisible else ProStatus.Unknown,
                 )
             }
 
@@ -396,10 +396,10 @@ class RecipientRepository @Inject constructor(
     ): Recipient {
         return Recipient(
             address = address,
-            basic = BasicRecipient.Generic(
+            data = RecipientData.Generic(
                 displayName = settings.name.orEmpty(),
                 avatar = settings.profilePic?.toRecipientAvatar(),
-                isPro = settings.isPro || proStatusManager.isUserPro(address),
+                proStatus = settings.proStatus,
             ),
             mutedUntil = settings.muteUntil,
             autoDownloadAttachments = settings.autoDownloadAttachments,
@@ -411,10 +411,10 @@ class RecipientRepository @Inject constructor(
     companion object {
         private const val TAG = "RecipientRepository"
 
-        private fun createLocalRecipient(address: Address, basic: BasicRecipient.Self): Recipient {
+        private fun createLocalRecipient(address: Address, basic: RecipientData.Self): Recipient {
             return Recipient(
                 address = address,
-                basic = basic,
+                data = basic,
                 autoDownloadAttachments = true,
                 acceptsCommunityMessageRequests = basic.acceptsCommunityMessageRequests,
             )
@@ -431,12 +431,12 @@ class RecipientRepository @Inject constructor(
 
         private fun createGroupV2Recipient(
             address: Address,
-            basic: BasicRecipient.Group,
+            basic: RecipientData.Group,
             settings: RecipientSettings?
         ): Recipient {
             return Recipient(
                 address = address,
-                basic = basic,
+                data = basic,
                 mutedUntil = settings?.muteUntil,
                 autoDownloadAttachments = settings?.autoDownloadAttachments,
                 notifyType = settings?.notifyType ?: NotifyType.ALL,
@@ -449,12 +449,12 @@ class RecipientRepository @Inject constructor(
          */
         private fun createContactRecipient(
             address: Address,
-            basic: BasicRecipient.Contact,
+            basic: RecipientData.Contact,
             fallbackSettings: RecipientSettings?, // Local db data
         ): Recipient {
             return Recipient(
                 address = address,
-                basic = basic,
+                data = basic,
                 mutedUntil = fallbackSettings?.muteUntil,
                 autoDownloadAttachments = fallbackSettings?.autoDownloadAttachments,
                 notifyType = fallbackSettings?.notifyType ?: NotifyType.ALL,
@@ -470,7 +470,7 @@ class RecipientRepository @Inject constructor(
         ): Recipient {
             return Recipient(
                 address = address,
-                basic = BasicRecipient.Community(
+                data = RecipientData.Community(
                     openGroup = community,
                     priority = config?.priority ?: PRIORITY_VISIBLE,
                 ),
@@ -488,7 +488,7 @@ class RecipientRepository @Inject constructor(
         ): Recipient {
             return Recipient(
                 address = address,
-                basic = BasicRecipient.Generic(
+                data = RecipientData.Generic(
                     displayName = group.title,
                     avatar = if (group.url != null && group.avatarId != null) {
                         RemoteFile.Community(
@@ -500,7 +500,7 @@ class RecipientRepository @Inject constructor(
                         null
                     },
                     priority = config?.priority ?: PRIORITY_VISIBLE,
-                    isPro = false,
+                    proStatus = ProStatus.Unknown,
                 ),
                 mutedUntil = settings?.muteUntil,
                 autoDownloadAttachments = settings?.autoDownloadAttachments,
@@ -514,7 +514,7 @@ class RecipientRepository @Inject constructor(
         ): Recipient {
             return Recipient(
                 address = address,
-                basic = BasicRecipient.Generic(
+                data = RecipientData.Generic(
                     displayName = groupMember.name,
                     avatar = groupMember.profilePic()?.toRecipientAvatar(),
                 ),
@@ -524,7 +524,7 @@ class RecipientRepository @Inject constructor(
         fun empty(address: Address): Recipient {
             return Recipient(
                 address = address,
-                basic = BasicRecipient.Generic(),
+                data = RecipientData.Generic(),
             )
         }
     }

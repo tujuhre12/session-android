@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.database.model
 
 import network.loki.messenger.libsession_util.util.UserPic
+import org.session.libsession.utilities.recipients.ProStatus
 import java.time.ZonedDateTime
 
 /**
@@ -13,6 +14,6 @@ data class RecipientSettings(
     val autoDownloadAttachments: Boolean = false,
     val profilePic: UserPic? = null,
     val blocksCommunityMessagesRequests: Boolean = true,
-    val isPro: Boolean = false,
+    val proStatus: ProStatus = ProStatus.Unknown,
     val profileUpdated: ZonedDateTime? = null,
 )

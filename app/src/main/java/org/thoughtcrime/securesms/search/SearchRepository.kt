@@ -6,7 +6,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.concurrent.SignalExecutors
-import org.session.libsession.utilities.recipients.BasicRecipient
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.toGroupString
 import org.thoughtcrime.securesms.contacts.ContactAccessor

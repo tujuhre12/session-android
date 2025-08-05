@@ -12,7 +12,6 @@ import network.loki.messenger.databinding.ViewGlobalSearchResultBinding
 import network.loki.messenger.databinding.ViewGlobalSearchSubheaderBinding
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.GroupRecord
-import org.session.libsession.utilities.recipients.BasicRecipient
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.search.model.MessageResult

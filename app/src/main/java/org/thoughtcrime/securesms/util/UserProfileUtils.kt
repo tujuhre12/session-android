@@ -22,7 +22,7 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.isBlinded
 import org.session.libsession.utilities.isCommunityInbox
-import org.session.libsession.utilities.recipients.BasicRecipient
+import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.toBlinded
 import org.session.libsignal.utilities.Log
@@ -113,7 +113,7 @@ class UserProfileUtils @AssistedInject constructor(
 
         return UserProfileModalData(
             name = recipient.displayName(),
-            subtitle = (recipient.basic as? BasicRecipient.Contact)?.nickname?.takeIf { it.isNotBlank() }?.let { "($it)" },
+            subtitle = (recipient.data as? RecipientData.Contact)?.nickname?.takeIf { it.isNotBlank() }?.let { "($it)" },
             avatarUIData = avatarUtils.getUIDataFromAccountId(accountId = recipient.address.address),
             showProBadge = proStatusManager.shouldShowProBadge(recipient.address),
             currentUserPro = proStatusManager.isCurrentUserPro(),

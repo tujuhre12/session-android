@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.recipients.ProStatus
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
@@ -100,7 +101,7 @@ class RecipientSettingsDatabase @Inject constructor(
         private const val COL_PROFILE_PIC_URL = "profile_pic_url"
         private const val COL_NAME = "name"
         private const val COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS = "blocks_community_messages_requests"
-        private const val COL_IS_PRO = "is_pro"
+        private const val COL_PRO_STATUS = "pro_status"
 
         // The time when the profile pic/name/is_pro was last updated, in epoch seconds.
         private const val COL_PROFILE_UPDATE_TIME = "profile_update_time"
@@ -115,7 +116,7 @@ class RecipientSettingsDatabase @Inject constructor(
                 $COL_PROFILE_PIC_URL TEXT,
                 $COL_NAME TEXT,
                 $COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS BOOLEAN NOT NULL DEFAULT TRUE,
-                $COL_IS_PRO BOOLEAN NOT NULL DEFAULT FALSE,
+                $COL_PRO_STATUS TEXT DEFAULT NULL,
                 $COL_PROFILE_UPDATE_TIME INTEGER NOT NULL DEFAULT 0
             ) WITHOUT ROWID
         """
@@ -177,7 +178,9 @@ class RecipientSettingsDatabase @Inject constructor(
                 ),
                 blocksCommunityMessagesRequests = getInt(getColumnIndexOrThrow(COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS)) == 1,
                 name = getString(getColumnIndexOrThrow(COL_NAME)),
-                isPro = getInt(getColumnIndexOrThrow(COL_IS_PRO)) == 1,
+                proStatus = getString(getColumnIndexOrThrow(COL_PRO_STATUS))
+                    ?.let(ProStatus::valueOf)
+                    ?: ProStatus.Unknown,
                 profileUpdated = getLong(getColumnIndexOrThrow(COL_PROFILE_UPDATE_TIME)).asEpochSeconds(),
             )
         }
@@ -191,7 +194,7 @@ class RecipientSettingsDatabase @Inject constructor(
                 put(COL_PROFILE_PIC_KEY, profilePic?.key?.data?.let(Base64::encodeBytes))
                 put(COL_PROFILE_PIC_URL, profilePic?.url)
                 put(COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS, blocksCommunityMessagesRequests)
-                put(COL_IS_PRO, isPro)
+                put(COL_PRO_STATUS, proStatus.name)
             }
         }
     }
