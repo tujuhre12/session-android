@@ -402,27 +402,6 @@ public class ThreadDatabase extends Database {
   }
 
   /**
-   * @return All blinded conversation addresses in the database
-   */
-  @NonNull
-  public List<Address> getBlindedConversations() {
-    final String query = "SELECT " + TABLE_NAME + "." + ADDRESS + " FROM " + TABLE_NAME +
-            " WHERE " + TABLE_NAME + "." + ADDRESS + " LIKE '" + GroupUtil.COMMUNITY_INBOX_PREFIX + "%'";
-
-    try(final Cursor cursor = getReadableDatabase().rawQuery(query)) {
-      final ArrayList<Address> addresses = new ArrayList<>(cursor.getCount());
-      while (cursor.moveToNext()) {
-        String address = cursor.getString(cursor.getColumnIndexOrThrow(ADDRESS));
-        if (address != null && !address.isEmpty()) {
-          addresses.add(Address.fromSerialized(address));
-        }
-      }
-
-      return addresses;
-    }
-  }
-
-  /**
    * @return All threads in the database, with their thread ID and Address. Note that
    *   threads don't necessarily mean conversations, as whether you have a conversation
    *   or not depend on the config data. This method returns all threads that exist

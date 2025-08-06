@@ -4,7 +4,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -16,6 +15,7 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.ReadableUserProfile
+import network.loki.messenger.libsession_util.util.BlindedContact
 import network.loki.messenger.libsession_util.util.Contact
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
@@ -34,7 +34,6 @@ import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.isGroupV2
 import org.session.libsession.utilities.isLegacyGroup
@@ -64,13 +63,14 @@ import javax.inject.Singleton
 interface ConversationRepository {
     fun observeConversationList(approved: Boolean? = null): Flow<List<ThreadRecord>>
 
-    fun getConfigBasedConversations(
+    fun getConversationListAddresses(
         nts: (ReadableUserProfile) -> Boolean = { false },
         contactFilter: (Contact) -> Boolean = { false },
+        blindedContactFilter: (BlindedContact) -> Boolean = { false },
         groupFilter: (GroupInfo.ClosedGroupInfo) -> Boolean = { false },
         legacyFilter: (GroupInfo.LegacyGroupInfo) -> Boolean = { false },
         communityFilter: (GroupInfo.CommunityGroupInfo) -> Boolean = { false }
-    ): List<Address>
+    ): List<Address.Conversable>
 
     fun maybeGetRecipientForThreadId(threadId: Long): Address?
     fun saveDraft(threadId: Long, text: String)
@@ -144,65 +144,87 @@ class DefaultConversationRepository @Inject constructor(
     private val recipientRepository: RecipientRepository,
 ) : ConversationRepository {
 
-    override fun getConfigBasedConversations(
+    override fun getConversationListAddresses(
         nts: (ReadableUserProfile) -> Boolean,
         contactFilter: (Contact) -> Boolean,
+        blindedContactFilter: (BlindedContact) -> Boolean,
         groupFilter: (GroupInfo.ClosedGroupInfo) -> Boolean,
         legacyFilter: (GroupInfo.LegacyGroupInfo) -> Boolean,
-        communityFilter: (GroupInfo.CommunityGroupInfo) -> Boolean
-    ): List<Address> {
-        val (shouldHaveNts, contacts, groups) = configFactory.withUserConfigs { configs ->
-            Triple(
-                configs.userProfile.getNtsPriority() >= 0 && nts(configs.userProfile),
-                configs.contacts.all(),
-                configs.userGroups.all(),
-            )
+        communityFilter: (GroupInfo.CommunityGroupInfo) -> Boolean,
+    ): List<Address.Conversable> {
+
+        val (shouldHaveNts, dataSeq) = configFactory.withUserConfigs { configs ->
+            (configs.userProfile.getNtsPriority() >= 0 && nts(configs.userProfile)) to
+                    (configs.contacts.all().asSequence() +
+                            configs.contacts.allBlinded().asSequence() +
+                            configs.userGroups.all().asSequence())
         }
 
         val localNumber = preferences.getLocalNumber()
 
-        val ntsSequence = sequenceOf(
+        val ntsSequence: Sequence<Address.Conversable> = sequenceOf(
             localNumber
                 ?.takeIf { shouldHaveNts }
-                ?.let(Address::fromSerialized))
+                ?.let(::AccountId)
+                ?.let(Address::Standard))
             .filterNotNull()
 
-        val contactsSequence = contacts.asSequence()
-            .filter { it.priority >= 0 && contactFilter(it) }
-            // Exclude self in the contact if exists
-            .filterNot { it.id.equals(localNumber, ignoreCase = true) }
-            .map { Address.fromSerialized(it.id) }
+        return (ntsSequence + dataSeq
+            .mapNotNull { data ->
+                when (data) {
+                    is Contact -> if (data.priority >= 0 && contactFilter(data)) {
+                        Address.Standard(AccountId(data.id))
+                    } else {
+                        null
+                    }
 
-        val groupsSequence = groups.asSequence()
-            .filterIsInstance<GroupInfo.ClosedGroupInfo>()
-            .filter { it.priority >= 0 && groupFilter(it) }
-            .map { Address.fromSerialized(it.groupAccountId) }
+                    is BlindedContact -> if (blindedContactFilter(data)) {
+                        Address.CommunityBlindedId(
+                            serverUrl = data.communityServer,
+                            serverPubKey = data.communityServerPubKeyHex,
+                            blindedId = Address.Blinded(AccountId(data.id))
+                        )
+                    } else {
+                        null
+                    }
 
-        val legacyGroupsSequence = groups.asSequence()
-            .filterIsInstance<GroupInfo.LegacyGroupInfo>()
-            .filter { it.priority >= 0 && legacyFilter(it) }
-            .map { Address.fromSerialized(GroupUtil.doubleEncodeGroupID(it.accountId)) }
+                    is GroupInfo.ClosedGroupInfo -> if (data.priority >= 0 && groupFilter(data)) {
+                        Address.Group(AccountId(data.groupAccountId))
+                    } else {
+                        null
+                    }
 
-        val communityGroupsSequence = groups.asSequence()
-            .filterIsInstance<GroupInfo.CommunityGroupInfo>()
-            .filter(communityFilter)
-            .map { Address.fromSerialized(GroupUtil.getEncodedOpenGroupID(it.groupId.toByteArray())) }
+                    is GroupInfo.LegacyGroupInfo -> if (data.priority >= 0 && legacyFilter(data)) {
+                        Address.LegacyGroup(data.accountId)
+                    } else {
+                        null
+                    }
 
-        return (ntsSequence + contactsSequence + groupsSequence + legacyGroupsSequence + communityGroupsSequence).toList()
+                    is GroupInfo.CommunityGroupInfo -> if (communityFilter(data)) {
+                        Address.Community(
+                            serverUrl = data.community.baseUrl,
+                            room = data.community.room
+                        )
+                    } else {
+                        null
+                    }
+
+                    else -> error("Unknown data type: $data")
+                }
+            })
+            .toList()
     }
-
-    private val GroupInfo.CommunityGroupInfo.groupId: String
-        get() = "${community.baseUrl}.${community.room}"
 
     private val GroupInfo.ClosedGroupInfo.approved: Boolean
         get() = !invited
 
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     override fun observeConversationList(approved: Boolean?): Flow<List<ThreadRecord>> {
-        val configBasedFlow = configFactory.userConfigsChanged(200)
+        return configFactory.userConfigsChanged(200)
             .onStart { emit(Unit) }
             .map {
-                getConfigBasedConversations(
+                getConversationListAddresses(
+                    blindedContactFilter = { true },
                     nts = { approved == null || approved },
                     contactFilter = {
                         !it.blocked && (approved == null || it.approved == approved)
@@ -215,33 +237,24 @@ class DefaultConversationRepository @Inject constructor(
                 )
             }
             .distinctUntilChanged()
-
-        val blindConvoFlow = (threadDb.updateNotifications
-            .debounce(500) as Flow<*>)
-            .onStart { emit(Unit) }
-            .map { threadDb.getBlindedConversations() }
-            .distinctUntilChanged()
-
-        return combine(configBasedFlow, blindConvoFlow) { configBased, blinded ->
-            configBased + blinded
-        }.flatMapLatest { allAddresses ->
-            merge(
-                configFactory.configUpdateNotifications,
-                recipientDatabase.changeNotification,
-                threadDb.updateNotifications
-            ).debounce(500)
-                .onStart { emit(Unit) }
-                .mapLatest {
-                    withContext(Dispatchers.Default) {
-                        threadDb.getThreads(allAddresses)
-                            // We don't actually want to show unapproved threads without any
-                            // messages.
-                            .filter { record ->
-                                record.recipient.approved || record.lastMessage != null
-                            }
+            .flatMapLatest { allAddresses ->
+                merge(
+                    configFactory.configUpdateNotifications,
+                    recipientDatabase.changeNotification,
+                    threadDb.updateNotifications
+                ).debounce(500)
+                    .onStart { emit(Unit) }
+                    .mapLatest {
+                        withContext(Dispatchers.Default) {
+                            threadDb.getThreads(allAddresses)
+                                // We don't actually want to show unapproved threads without any
+                                // messages.
+                                .filter { record ->
+                                    record.recipient.approved || record.lastMessage != null
+                                }
+                        }
                     }
-                }
-        }
+            }
     }
 
     override fun maybeGetRecipientForThreadId(threadId: Long): Address? {

@@ -1131,48 +1131,48 @@ open class Storage @Inject constructor(
     }
 
     override fun deleteConversation(threadID: Long) {
-        val threadDB = threadDatabase
-        val groupDB = groupDatabase
-
-        val recipientAddress = getRecipientForThread(threadID)
 
         // Delete the conversation and its messages
         smsDatabase.deleteThread(threadID)
         mmsDatabase.deleteThread(threadID)
         draftDatabase.clearDrafts(threadID)
         lokiMessageDatabase.deleteThread(threadID)
-        threadDB.deleteThread(threadID)
+        threadDatabase.deleteThread(threadID)
         clearReceivedMessages()
 
+        val recipientAddress = getRecipientForThread(threadID) as? Address.Conversable
         if (recipientAddress == null) return
 
         configFactory.withMutableUserConfigs { configs ->
-            if (recipientAddress.isGroupOrCommunity) {
-                if (recipientAddress.isLegacyGroup) {
+            when (recipientAddress) {
+                is Address.LegacyGroup -> {
                     val accountId = GroupUtil.doubleDecodeGroupId(recipientAddress.toString())
-                    groupDB.delete(recipientAddress.toString())
+                    groupDatabase.delete(recipientAddress.toString())
                     configs.convoInfoVolatile.eraseLegacyClosedGroup(accountId)
                     configs.userGroups.eraseLegacyGroup(accountId)
-                } else if (recipientAddress.isCommunity) {
+                }
+
+                is Address.Community -> {
                     // these should be removed in the group leave / handling new configs
                     Log.w("Loki", "Thread delete called for open group address, expecting to be handled elsewhere")
-                } else if (recipientAddress.isGroupV2) {
+                }
+
+                is Address.Group -> {
                     Log.w("Loki", "Thread delete called for closed group address, expecting to be handled elsewhere")
                 }
-            } else {
-                // non-standard contact prefixes: 15, 00 etc shouldn't be stored in config
-                if(!recipientAddress.toString().startsWith(IdPrefix.STANDARD.value)) return@withMutableUserConfigs
-                configs.convoInfoVolatile.eraseOneToOne(recipientAddress.toString())
 
-                if (getUserPublicKey() != recipientAddress.toString()) {
-                    // only update the priority if the contact exists in our config
-                    // (this helps for example when deleting a contact and we do not want to recreate one here only to mark it hidden)
-                    configs.contacts.get(recipientAddress.toString())?.let{
-                        it.priority = PRIORITY_HIDDEN
-                        configs.contacts.set(it)
-                    }
-                } else {
-                    configs.userProfile.setNtsPriority(PRIORITY_HIDDEN)
+                is Address.CommunityBlindedId -> {
+                    configs.contacts.eraseBlinded(
+                        communityServerUrl = recipientAddress.serverUrl,
+                        blindedId = recipientAddress.blindedId.accountId.hexString,
+                    )
+
+                    configs.convoInfoVolatile.eraseBlindedOneToOne(recipientAddress.blindedId.accountId.hexString)
+                }
+
+                is Address.Standard -> {
+                    configs.convoInfoVolatile.eraseOneToOne(recipientAddress.accountId.hexString)
+                    configs.contacts.erase(recipientAddress.accountId.hexString)
                 }
             }
 
@@ -1215,9 +1215,9 @@ open class Storage @Inject constructor(
         val address = fromSerialized(senderPublicKey)
         val recipient = recipientRepository.getRecipientSync(address)
 
-        if (recipient.blocked == true) return
+        if (recipient.blocked) return
         val threadId = getThreadId(address) ?: return
-        val expiresInMillis = recipient.expiryMode.expiryMillis ?: 0
+        val expiresInMillis = recipient.expiryMode.expiryMillis
         val expireStartedAt = if (recipient.expiryMode is ExpiryMode.AfterSend) sentTimestamp else 0
         val mediaMessage = IncomingMediaMessage(
             address,
@@ -1269,7 +1269,7 @@ open class Storage @Inject constructor(
     override fun insertCallMessage(senderPublicKey: String, callMessageType: CallMessageType, sentTimestamp: Long) {
         val address = fromSerialized(senderPublicKey)
         val recipient = recipientRepository.getRecipientSync(address)
-        val expiryMode = recipient.expiryMode?.coerceSendToRead() ?: ExpiryMode.NONE
+        val expiryMode = recipient.expiryMode.coerceSendToRead() ?: ExpiryMode.NONE
         val expiresInMillis = expiryMode.expiryMillis
         val expireStartedAt = if (expiryMode != ExpiryMode.NONE) clock.currentTimeMills() else 0
         val callMessage = IncomingTextMessage.fromCallInfo(callMessageType, address, Optional.absent(), sentTimestamp, expiresInMillis, expireStartedAt)

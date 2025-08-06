@@ -23,7 +23,6 @@ data class Recipient(
     val mutedUntil: ZonedDateTime? = null,
     val autoDownloadAttachments: Boolean? = null,
     val notifyType: NotifyType = NotifyType.ALL,
-    val acceptsCommunityMessageRequests: Boolean = false,
 ) {
     /**
      * Whether this recipient is ourself. Note that this check only applies to the standard
@@ -106,6 +105,16 @@ data class Recipient(
 
     val mutedUntilMills: Long?
         get() = mutedUntil?.toInstant()?.toEpochMilli()
+
+    val acceptsCommunityMessageRequests: Boolean
+        get() = when (data) {
+            is RecipientData.BlindedContact -> data.acceptsCommunityMessageRequests
+            is RecipientData.Generic -> data.acceptsCommunityMessageRequests
+            is RecipientData.Community,
+            is RecipientData.Contact,
+            is RecipientData.Self,
+            is RecipientData.Group -> false
+        }
 }
 
 sealed interface RecipientData {
@@ -124,13 +133,15 @@ sealed interface RecipientData {
         override val avatar: RemoteFile? = null,
         override val priority: Long = PRIORITY_VISIBLE,
         override val proStatus: ProStatus = ProStatus.Unknown,
+        val acceptsCommunityMessageRequests: Boolean = false,
     ) : RecipientData
 
     data class BlindedContact(
         val displayName: String,
         override val avatar: RemoteFile.Encrypted?,
         override val priority: Long,
-        override val proStatus: ProStatus
+        override val proStatus: ProStatus,
+        val acceptsCommunityMessageRequests: Boolean
     ) : ConfigBased
 
     data class Community(
@@ -151,7 +162,6 @@ sealed interface RecipientData {
         val name: String,
         override val avatar: RemoteFile.Encrypted?,
         val expiryMode: ExpiryMode,
-        val acceptsCommunityMessageRequests: Boolean,
         override val priority: Long,
         override val proStatus: ProStatus
     ) : ConfigBased
@@ -210,7 +220,12 @@ fun Recipient.displayName(
     }
 
     if (name.isBlank()) {
-        return truncateIdForDisplay(address.address)
+        val addressToTruncate = when (address) {
+            is Address.WithAccountId -> address.accountId.hexString
+            is Address.Community -> return address.room // This is last resort - to show the room token
+            else -> address.address
+        }
+        return truncateIdForDisplay(addressToTruncate)
     }
 
     if (attachesBlindedId && address is Address.Blinded) {

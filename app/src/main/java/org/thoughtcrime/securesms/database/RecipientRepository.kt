@@ -324,7 +324,6 @@ class RecipientRepository @Inject constructor(
                         name = configs.userProfile.getName().orEmpty(),
                         avatar = configs.userProfile.getPic().toRecipientAvatar(),
                         expiryMode = configs.userProfile.getNtsExpiry(),
-                        acceptsCommunityMessageRequests = configs.userProfile.getCommunityMessageRequests(),
                         priority = configs.userProfile.getNtsPriority(),
                         proStatus = if (proStatusManager.isCurrentUserPro()) ProStatus.ProVisible else ProStatus.Unknown,
                     )
@@ -378,6 +377,11 @@ class RecipientRepository @Inject constructor(
                     avatar = contact.profilePic.toRecipientAvatar(),
                     priority = PRIORITY_VISIBLE,
                     proStatus = if (proStatusManager.isUserPro(address)) ProStatus.ProVisible else ProStatus.Unknown,
+
+                    // This information is not available in the config but we infer that
+                    // if you already have this person as blinded contact, you would have been
+                    // able to send them a message before.
+                    acceptsCommunityMessageRequests = true,
                 )
             }
 
@@ -400,11 +404,11 @@ class RecipientRepository @Inject constructor(
                 displayName = settings.name.orEmpty(),
                 avatar = settings.profilePic?.toRecipientAvatar(),
                 proStatus = settings.proStatus,
+                acceptsCommunityMessageRequests = !settings.blocksCommunityMessagesRequests,
             ),
             mutedUntil = settings.muteUntil,
             autoDownloadAttachments = settings.autoDownloadAttachments,
             notifyType = settings.notifyType,
-            acceptsCommunityMessageRequests = !settings.blocksCommunityMessagesRequests,
         )
     }
 
@@ -416,7 +420,6 @@ class RecipientRepository @Inject constructor(
                 address = address,
                 data = basic,
                 autoDownloadAttachments = true,
-                acceptsCommunityMessageRequests = basic.acceptsCommunityMessageRequests,
             )
         }
 
@@ -458,7 +461,6 @@ class RecipientRepository @Inject constructor(
                 mutedUntil = fallbackSettings?.muteUntil,
                 autoDownloadAttachments = fallbackSettings?.autoDownloadAttachments,
                 notifyType = fallbackSettings?.notifyType ?: NotifyType.ALL,
-                acceptsCommunityMessageRequests = fallbackSettings?.blocksCommunityMessagesRequests == false,
             )
         }
 
@@ -501,6 +503,7 @@ class RecipientRepository @Inject constructor(
                     },
                     priority = config?.priority ?: PRIORITY_VISIBLE,
                     proStatus = ProStatus.Unknown,
+                    acceptsCommunityMessageRequests = false,
                 ),
                 mutedUntil = settings?.muteUntil,
                 autoDownloadAttachments = settings?.autoDownloadAttachments,
@@ -517,6 +520,7 @@ class RecipientRepository @Inject constructor(
                 data = RecipientData.Generic(
                     displayName = groupMember.name,
                     avatar = groupMember.profilePic()?.toRecipientAvatar(),
+                    acceptsCommunityMessageRequests = false,
                 ),
             )
         }

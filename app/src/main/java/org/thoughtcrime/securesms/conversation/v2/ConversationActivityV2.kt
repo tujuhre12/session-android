@@ -1994,6 +1994,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // validate message length before sending
         if(!viewModel.validateMessageLength()) return
 
+        viewModel.beforeSendMessage()
+
         val sentMessageInfo = if (binding.inputBar.linkPreview != null || binding.inputBar.quote != null) {
             sendAttachments(listOf(), getMessageBody(), binding.inputBar.quote, binding.inputBar.linkPreview)
         } else {

@@ -82,7 +82,7 @@ class SearchRepository @Inject constructor(
     }
 
     private fun getBlockedContacts(): Set<String> {
-        return conversationRepository.getConfigBasedConversations(
+        return conversationRepository.getConversationListAddresses(
             nts = { false },
             contactFilter = { it.blocked },
             groupFilter = { false },
@@ -92,7 +92,7 @@ class SearchRepository @Inject constructor(
     }
 
     fun queryContacts(searchName: String? = null): List<Recipient> {
-        return conversationRepository.getConfigBasedConversations(
+        return conversationRepository.getConversationListAddresses(
             nts = { false },
             contactFilter = {
                 !it.blocked &&
@@ -104,7 +104,7 @@ class SearchRepository @Inject constructor(
             groupFilter = { false },
             communityFilter = { false },
             legacyFilter = { false },
-        ).mapNotNull(recipientRepository::getRecipientSync)
+        ).map(recipientRepository::getRecipientSync)
     }
 
     private fun queryConversations(

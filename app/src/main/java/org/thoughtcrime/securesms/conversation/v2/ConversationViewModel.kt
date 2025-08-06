@@ -34,7 +34,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
+import network.loki.messenger.libsession_util.util.BlindedContact
 import network.loki.messenger.libsession_util.util.ExpiryMode
+import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
@@ -57,7 +59,9 @@ import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.recipients.getType
+import org.session.libsession.utilities.recipients.toUserPic
 import org.session.libsession.utilities.toGroupString
+import org.session.libsession.utilities.upsertContact
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
@@ -99,6 +103,7 @@ import org.thoughtcrime.securesms.util.mapToStateFlow
 import org.thoughtcrime.securesms.webrtc.CallManager
 import org.thoughtcrime.securesms.webrtc.data.State
 import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.util.UUID
 
 @HiltViewModel(assistedFactory = ConversationViewModel.Factory::class)
@@ -1095,13 +1100,8 @@ class ConversationViewModel @AssistedInject constructor(
      * of message sending through this method.
      */
     fun implicitlyApproveRecipient(): Job? {
-        val recipient = recipient
-
         if (messageRequestState.value is MessageRequestUiState.Visible) {
             return acceptMessageRequest()
-        } else if (!recipient.approved && address is Address.Standard) {
-            // edge case for new outgoing thread on new recipient without sending approval messages
-            repository.setApproved(address, true)
         }
 
         return null
@@ -1253,6 +1253,44 @@ class ConversationViewModel @AssistedInject constructor(
             userProfileModalUtils?.userProfileModalData?.collect { upmData ->
                 _dialogsState.update { it.copy(userProfileModal = upmData) }
             }
+        }
+    }
+
+    fun beforeSendMessage() {
+        when (address) {
+            is Address.Standard -> {
+                if (recipient.isSelf) {
+                    // Do nothing
+                    return
+                }
+
+                if (configFactory.withUserConfigs { it.contacts.get(address.address)?.approved } != true) {
+                    configFactory.withMutableUserConfigs { configs ->
+                        configs.contacts.upsertContact(address) {
+                            approved = true
+                        }
+                    }
+                }
+            }
+
+            is Address.CommunityBlindedId -> {
+                if (configFactory.withUserConfigs { it.contacts.getBlinded(address.blindedId.address) } == null) {
+                    configFactory.withMutableUserConfigs { configs ->
+                        configs.contacts.setBlinded(
+                            BlindedContact(
+                                id = address.blindedId.blindedId.hexString,
+                                communityServer = address.serverUrl,
+                                communityServerPubKeyHex = address.serverPubKey,
+                                name = recipient.displayName(attachesBlindedId = false),
+                                createdEpochSeconds = ZonedDateTime.now().toEpochSecond(),
+                                profilePic = recipient.data.avatar?.toUserPic() ?: UserPic.DEFAULT,
+                            )
+                        )
+                    }
+                }
+            }
+
+            else -> {}
         }
     }
 

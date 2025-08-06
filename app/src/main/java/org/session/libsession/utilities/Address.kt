@@ -209,11 +209,6 @@ sealed class Address : Parcelable, Comparable<Address> {
                 else -> throw IllegalArgumentException("Unknown address prefix: $prefix")
             }
         }
-
-        fun AccountId.toConversableAddress(): Address.Conversable? {
-            return toAddress() as? Address.Conversable
-        }
-
         @JvmField
         val CREATOR: Parcelable.Creator<Address> = object : Parcelable.Creator<Address> {
             override fun createFromParcel(parcel: Parcel): Address {
