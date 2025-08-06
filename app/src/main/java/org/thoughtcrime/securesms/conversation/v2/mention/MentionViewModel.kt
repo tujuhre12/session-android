@@ -232,6 +232,7 @@ class MentionViewModel(
                         }
                     }
 
+                    filtered.sortWith(Candidate.MENTION_LIST_COMPARATOR)
                     AutoCompleteState.Result(filtered, query.query)
                 }
             }
@@ -347,7 +348,12 @@ class MentionViewModel(
         val nameHighlighted: CharSequence,
         // The score of matching the query keyword. Lower is better.
         val matchScore: Int,
-    )
+    ) {
+        companion object {
+            val MENTION_LIST_COMPARATOR = compareBy<Candidate> { !it.member.isMe }
+                .thenBy { it.matchScore }
+        }
+    }
 
     sealed interface AutoCompleteState {
         object Idle : AutoCompleteState
