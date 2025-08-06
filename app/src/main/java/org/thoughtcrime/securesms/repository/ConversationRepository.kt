@@ -1,8 +1,5 @@
 package org.thoughtcrime.securesms.repository
 
-import android.content.ContentResolver
-import app.cash.copper.Query
-import app.cash.copper.flow.observeQuery
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -47,7 +44,6 @@ import org.session.libsession.utilities.upsertContact
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.DraftDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
@@ -62,7 +58,6 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.util.observeChanges
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -142,7 +137,6 @@ class DefaultConversationRepository @Inject constructor(
     private val lokiMessageDb: LokiMessageDatabase,
     private val sessionJobDb: SessionJobDatabase,
     private val configFactory: ConfigFactory,
-    private val contentResolver: ContentResolver,
     private val groupManager: GroupManagerV2,
     private val clock: SnodeClock,
     private val preferences: TextSecurePreferences,
