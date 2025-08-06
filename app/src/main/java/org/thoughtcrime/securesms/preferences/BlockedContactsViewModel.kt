@@ -7,12 +7,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.cash.copper.flow.observeQuery
 import com.squareup.phrase.Phrase
+import dagger.assisted.Assisted
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
@@ -22,61 +25,43 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.COUNT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.database.StorageProtocol
+import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
+import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.Storage
+import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.groups.SelectContactsViewModel
+import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.adapter.SelectableItem
 import javax.inject.Inject
 
 @HiltViewModel
-class BlockedContactsViewModel @Inject constructor(private val storage: StorageProtocol): ViewModel() {
-
-    private val executor = viewModelScope + SupervisorJob()
-
-    private val listUpdateChannel = Channel<Unit>(capacity = Channel.CONFLATED)
-
-    private val _state = MutableLiveData(BlockedContactsViewState())
-
-    val state get() = _state.value!!
-
-    fun subscribe(context: Context): LiveData<BlockedContactsViewState> {
-        executor.launch(IO) {
-            context.contentResolver
-                .observeQuery(DatabaseContentProviders.Recipient.CONTENT_URI)
-                .onStart {
-                    listUpdateChannel.trySend(Unit)
-                }
-                .onEach {
-                    listUpdateChannel.trySend(Unit)
-                }
-                .collect()
-        }
-        executor.launch(IO) {
-            for (update in listUpdateChannel) {
-                val blockedContactState = state.copy(
-                    blockedContacts = storage.blockedContacts().sortedBy { it.name }
-                )
-                withContext(Main) {
-                    _state.value = blockedContactState
-                }
-            }
-        }
-        return _state
-    }
+class BlockedContactsViewModel @Inject constructor(
+    configFactory: ConfigFactory,
+    @ApplicationContext private val appContext: Context,
+    private val storage: StorageProtocol,
+    avatarUtils: AvatarUtils,
+    proStatusManager: ProStatusManager,
+): SelectContactsViewModel(
+    configFactory = configFactory,
+    excludingAccountIDs = emptySet(),
+    contactFiltering = { it.isBlocked },
+    appContext = appContext,
+    avatarUtils = avatarUtils,
+    proStatusManager = proStatusManager
+) {
 
     fun unblock() {
-        storage.setBlocked(state.selectedItems, false)
-        _state.value = state.copy(selectedItems = emptySet())
+//        storage.setBlocked(state.selectedItems, false)
+//        _state.value = state.copy(selectedItems = emptySet())
     }
 
-    fun select(selectedItem: Recipient, isSelected: Boolean) {
-        _state.value = state.run {
-            if (isSelected) copy(selectedItems = selectedItems + selectedItem)
-            else copy(selectedItems = selectedItems - selectedItem)
-        }
+    fun onUnblockClicked(){
+
     }
 
-    fun getTitle(context: Context): String = context.getString(R.string.blockUnblock)
 
     // Method to get the appropriate text to display when unblocking 1, 2, or several contacts
     fun getText(context: Context, contactsToUnblock: Set<Recipient>): CharSequence {
@@ -96,25 +81,5 @@ class BlockedContactsViewModel @Inject constructor(private val storage: StorageP
                     .format()
             }
         }
-    }
-
-    fun getMessage(context: Context): String = context.getString(R.string.blockUnblock)
-
-    fun toggle(selectable: SelectableItem<Recipient>) {
-        _state.value = state.run {
-            if (selectable.item in selectedItems) copy(selectedItems = selectedItems - selectable.item)
-            else copy(selectedItems = selectedItems + selectable.item)
-        }
-    }
-
-    data class BlockedContactsViewState(
-        val blockedContacts: List<Recipient> = emptyList(),
-        val selectedItems: Set<Recipient> = emptySet()
-    ) {
-        val items = blockedContacts.map { SelectableItem(it, it in selectedItems) }
-
-        val unblockButtonEnabled get() = selectedItems.isNotEmpty()
-        val emptyStateMessageTextViewVisible get() = blockedContacts.isEmpty()
-        val nonEmptyStateGroupVisible get() = blockedContacts.isNotEmpty()
     }
 }

@@ -42,8 +42,7 @@ open class SelectContactsViewModel @AssistedInject constructor(
     private val proStatusManager: ProStatusManager,
     @ApplicationContext private val appContext: Context,
     @Assisted private val excludingAccountIDs: Set<AccountId>,
-    @Assisted private val applyDefaultFiltering: Boolean, // true by default - If true will filter out blocked and unapproved contacts
-    @Assisted private val scope: CoroutineScope,
+    @Assisted private val contactFiltering: (Recipient) -> Boolean, //  default will filter out blocked and unapproved contacts
 ) : ViewModel() {
     // Input: The search query
     private val mutableSearchQuery = MutableStateFlow("")
@@ -70,12 +69,6 @@ open class SelectContactsViewModel @AssistedInject constructor(
     val currentSelected: Set<AccountId>
         get() = mutableSelectedContactAccountIDs.value
 
-    override fun onCleared() {
-        super.onCleared()
-
-        scope.cancel()
-    }
-
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun observeContacts() = (configFactory.configUpdateNotifications as Flow<Any>)
         .debounce(100L)
@@ -100,9 +93,7 @@ open class SelectContactsViewModel @AssistedInject constructor(
                         )
                     }
 
-                    if(applyDefaultFiltering){
-                        recipientContacts.filter { !it.isBlocked && it.isApproved } // filter out blocked contacts and unapproved contacts
-                    } else recipientContacts
+                    recipientContacts.filter(contactFiltering)
                 }
             }
         }
@@ -160,9 +151,12 @@ open class SelectContactsViewModel @AssistedInject constructor(
     interface Factory {
         fun create(
             excludingAccountIDs: Set<AccountId> = emptySet(),
-            applyDefaultFiltering: Boolean = true,
-            scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate),
+            contactFiltering: (Recipient) -> Boolean = defaultFiltering,
         ): SelectContactsViewModel
+
+        companion object {
+            val defaultFiltering: (Recipient) -> Boolean = { !it.isBlocked && it.isApproved }
+        }
     }
 }
 
