@@ -3,6 +3,7 @@
     <string name="about">关于</string>
     <string name="accept">接受</string>
     <string name="accountIDCopy">复制帐户ID</string>
+    <string name="accountId">账户 ID</string>
     <string name="accountIdCopied">账户ID已复制</string>
     <string name="accountIdCopyDescription">复制您的账户ID并分享给您的朋友，以便他们能够响您发送消息。</string>
     <string name="accountIdEnter">输入账户ID</string>
@@ -48,6 +49,8 @@
     <string name="andMore">+{count}</string>
     <string name="anonymous">匿名用戶</string>
     <string name="appIcon">应用图标</string>
+    <string name="appIconAndNameChange">更改应用图标和名称</string>
+    <string name="appIconAndNameChangeConfirmation">更改应用图标和名称需要关闭 {app_name}。通知仍将使用默认的 {app_name} 图标和名称。</string>
     <string name="appIconAndNameDescription">替代的应用图标与应用名会显示在主页和应用抽屉中。</string>
     <string name="appIconAndNameSelectionTitle">图标与应用名</string>
     <string name="appIconDescription">替代的应用图标会显示在主页和应用列表中。应用名仍会显示为“{app_name}”。</string>
@@ -205,15 +208,24 @@
     <string name="clearDeviceAndNetworkConfirm">您确定要从网络中删除您的数据吗？如果继续，您将无法恢复您的消息或联系人。</string>
     <string name="clearDeviceDescription">您确定要清除该设备上的数据吗？</string>
     <string name="clearDeviceOnly">仅清除设备</string>
+    <string name="clearDeviceRestart">清除设备并重新启动应用</string>
+    <string name="clearDeviceRestore">清除设备并恢复</string>
     <string name="clearMessages">清除所有消息</string>
     <string name="clearMessagesChatDescription">您确定要清除您与<b>{name}</b>的对话中所有消息吗？</string>
+    <string name="clearMessagesChatDescriptionUpdated">您确定要清除设备上与<b> {name} </b>的所有对话消息吗？</string>
     <string name="clearMessagesCommunity">您确定要清除设备上所有来自<b>{community_name}</b>的消息吗？</string>
+    <string name="clearMessagesCommunityUpdated">您确定要清除设备上 <b>{community_name}</b>的所有消息吗？</string>
     <string name="clearMessagesForEveryone">为所有人删除</string>
     <string name="clearMessagesForMe">为我删除</string>
     <string name="clearMessagesGroupAdminDescription">您确定要清除所有来自<b>{group_name}</b>的消息吗？</string>
+    <string name="clearMessagesGroupAdminDescriptionUpdated">您确定要清除设备上 <b>{group_name} </b>的所有消息吗？</string>
     <string name="clearMessagesGroupDescription">您确定要清除设备上所有来自<b>{group_name}</b>的消息吗？</string>
+    <string name="clearMessagesGroupDescriptionUpdated">您确定要清除设备上 <b>{group_name}</b> 的所有消息吗？</string>
     <string name="clearMessagesNoteToSelfDescription">您确定要清除设备上所有备忘录信息吗？</string>
+    <string name="clearMessagesNoteToSelfDescriptionUpdated">您确定要清除设备上所有 <b>Note to Self</b> 消息吗？</string>
+    <string name="clearOnThisDevice">在此设备上清除</string>
     <string name="close">关闭</string>
+    <string name="closeApp">关闭应用程序</string>
     <string name="closeWindow">关闭窗口</string>
     <string name="commitHashDesktop">提交哈希值: {hash}</string>
     <string name="communityBanDeleteDescription">该操作会将选定的用户从此社群中封禁并删除他们的消息。您确定要继续吗？</string>
@@ -280,7 +292,9 @@
     <string name="create">创建</string>
     <string name="creatingCall">正在创建通话</string>
     <string name="cut">剪切</string>
+    <string name="databaseErrorClearDataWarning">您确定要删除此设备上的所有消息、附件和帐户数据，并创建新帐户吗？</string>
     <string name="databaseErrorGeneric">发生数据库错误。\n\n请导出您的应用日志以进行故障排除。如果不成功，请重新安装{app_name}并恢复您的帐户。</string>
+    <string name="databaseErrorRestoreDataWarning">您确定要删除此设备上的所有消息、附件和帐户数据，并从网络中恢复你的帐户吗？</string>
     <string name="databaseErrorTimeout">我们注意到{app_name}启动时间过长。\n\n您可以选择继续等待，导出设备日志以分享故障排除，或尝试重新启动{app_name}。</string>
     <string name="databaseErrorUpdate">您的应用数据库与此版本的{app_name}不兼容。请重新安装应用并恢复您的账户以生成新的数据库并继续使用{app_name}。\n\n警告：该操作将导致两周前的所有消息和附件丢失。</string>
     <string name="databaseOptimizing">正在优化数据库</string>
@@ -334,7 +348,7 @@
     <string name="deleteMessagesDescriptionEveryone">您确定要为所有人删除这些消息吗？</string>
     <string name="deleting">正在删除</string>
     <string name="developerToolsToggle">开发者工具</string>
-    <string name="dictationStart">开始听写...</string>
+    <string name="dictationStart">开始语音输入...</string>
     <string name="disappearingMessages">阅后即焚消息</string>
     <string name="disappearingMessagesCountdownBig">消息将在{time_large}后自动焚毁</string>
     <string name="disappearingMessagesCountdownBigMobile">将在 {time_large} 后自动焚毁</string>
@@ -506,6 +520,7 @@
     <string name="groupSetDisplayPicture">设置群组头像</string>
     <string name="groupUnknown">未知群组</string>
     <string name="groupUpdated">群组已更新</string>
+    <string name="handlingConnectionCandidates">处理连接候选人</string>
     <string name="helpFAQ">常见问题</string>
     <string name="helpHelpUsTranslateSession">帮助我们本地化{app_name}</string>
     <string name="helpReportABug">Bug反馈</string>
@@ -518,6 +533,7 @@
     <string name="helpWedLoveYourFeedback">感谢您的反馈</string>
     <string name="hide">隐藏</string>
     <string name="hideMenuBarDescription">切换系统菜单栏可见性</string>
+    <string name="hideNoteToSelfDescription">你确定要从对话列表中隐藏<b>Note to Self</b>吗？</string>
     <string name="hideOthers">隐藏其它</string>
     <string name="image">图片</string>
     <string name="images">图片</string>
@@ -607,6 +623,8 @@
         <item quantity="other">您在%1$s中收到了%2$d条新消息。</item>
     </plurals>
     <string name="messageReplyingTo">回复</string>
+    <string name="messageRequestDisabledToastAttachments">在您的消息请求被接受之前，你无法发送附件</string>
+    <string name="messageRequestDisabledToastVoiceMessages">在您的消息请求被接受之前，您无法发送语音消息</string>
     <string name="messageRequestGroupInvite"><b>{name}</b>邀请您加入<b>{group_name}</b>。</string>
     <string name="messageRequestGroupInviteDescription">向此群组发送消息将会自动接受群组邀请。</string>
     <string name="messageRequestPending">您的消息请求正在等待回复。</string>
@@ -634,6 +652,9 @@
     <string name="messageVoiceSnippetGroup">{author}: {emoji} 语音消息</string>
     <string name="messages">消息</string>
     <string name="minimize">最小化</string>
+    <plurals name="modalMessageCharacterDisplayDescription">
+        <item quantity="other">消息的字符限制为 %1$s 个字符。您还剩 %2$d 个字符。</item>
+    </plurals>
     <string name="next">下一步</string>
     <string name="nicknameDescription">为 <b>{name}</b>选择一个昵称。该昵称将在您的一对一和群组对话中显示。</string>
     <string name="nicknameEnter">输入昵称</string>
@@ -652,7 +673,7 @@
     <string name="notificationsContent">通知内容</string>
     <string name="notificationsContentDescription">在通知中显示的信息。</string>
     <string name="notificationsContentShowNameAndContent">发送者和信息内容</string>
-    <string name="notificationsContentShowNameOnly">仅显示发送者</string>
+    <string name="notificationsContentShowNameOnly">仅显示发送者名称</string>
     <string name="notificationsContentShowNoNameOrContent">不显示发送者和信息内容</string>
     <string name="notificationsFastMode">高速模式</string>
     <string name="notificationsFastModeDescription">您将会收到由Google的通知服务器发出的即时可靠的新消息通知。</string>
@@ -673,6 +694,7 @@
     <string name="notificationsMuteUnmute">关闭免打扰</string>
     <string name="notificationsMuted">免打扰</string>
     <string name="notificationsMutedFor">已设置免打扰{time_large}</string>
+    <string name="notificationsMutedForTime">已禁言至 {date_time}</string>
     <string name="notificationsSlowMode">慢速模式</string>
     <string name="notificationsSlowModeDescription">{app_name}将不时在后台获取新消息。</string>
     <string name="notificationsSound">提示音</string>
@@ -729,7 +751,7 @@
     <string name="passwordRemovedDescription">您的密码已被移除。</string>
     <string name="passwordSet">设置密码</string>
     <string name="passwordSetDescription">您的密码已设定。请妥善保管。</string>
-    <string name="paste">粘帖</string>
+    <string name="paste">粘贴</string>
     <string name="permissionChange">授权变更</string>
     <string name="permissionMusicAudioDenied">{app_name}需要音乐和音频权限才能发送文件、音乐和音频，但该权限已被永久拒绝。请进入应用程序设置→权限，打开“音乐和音频”权限。</string>
     <string name="permissionsAppleMusic">{app_name}需要使用Apple Music来播放媒体附件。</string>
@@ -795,6 +817,7 @@
     <string name="received">已接收:</string>
     <string name="receivedAnswer">已收到应答</string>
     <string name="receivingCallOffer">正在接收通话邀请</string>
+    <string name="receivingPreOffer">正在接收通话邀请</string>
     <string name="recommended">推荐选项</string>
     <string name="recoveryPasswordBannerDescription">保存您的恢复密码以确保您不会失去对账户的访问权限。</string>
     <string name="recoveryPasswordBannerTitle">保存您的恢复密码</string>
@@ -849,6 +872,7 @@
     <string name="send">发送</string>
     <string name="sending">发送中</string>
     <string name="sendingCallOffer">正在发送通话邀请</string>
+    <string name="sendingConnectionCandidates">发送连接候选人</string>
     <string name="sent">发送:</string>
     <string name="sessionAppearance">外观</string>
     <string name="sessionClearData">清除数据</string>
@@ -873,6 +897,8 @@
     <string name="show">显示</string>
     <string name="showAll">全部显示</string>
     <string name="showLess">收起</string>
+    <string name="showNoteToSelf">显示备忘录</string>
+    <string name="showNoteToSelfDescription">你确定要在对话列表中显示 <b>Note to Self</b>吗？</string>
     <string name="stickers">贴图</string>
     <string name="supportGoTo">跳转到支持页面</string>
     <string name="systemInformationDesktop">系统信息：{information}</string>
