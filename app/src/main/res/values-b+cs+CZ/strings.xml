@@ -89,7 +89,7 @@
     <string name="attachmentsAdd">Přidat přílohu</string>
     <string name="attachmentsAlbumUnnamed">Nepojmenované album</string>
     <string name="attachmentsAutoDownload">Automatické stahování příloh</string>
-    <string name="attachmentsAutoDownloadDescription">Automaticky stahovat média a soubory z tohoto chatu.</string>
+    <string name="attachmentsAutoDownloadDescription">Automaticky stahovat média a soubory této konverzace.</string>
     <string name="attachmentsAutoDownloadModalDescription">Chcete automaticky stahovat všechny soubory z <b>{conversation_name}</b>?</string>
     <string name="attachmentsAutoDownloadModalTitle">Automatické stahování</string>
     <string name="attachmentsClearAll">Smazat všechny přílohy</string>
@@ -152,6 +152,7 @@
     <string name="banUser">Zablokovat uživatele</string>
     <string name="banUserBanned">Uživatel zablokován</string>
     <string name="banUserDescription">Zadejte ID účtu uživatele, kterého chcete blokovat</string>
+    <string name="blindedId">Maskované ID</string>
     <string name="block">Blokovat</string>
     <string name="blockBlockedDescription">Pro odeslání zprávy tento kontakt odblokujte.</string>
     <string name="blockBlockedNone">Žádné blokované kontakty</string>
@@ -453,6 +454,10 @@
     <string name="emojiReactsHoverYouNameTwoDesktop">Vy a {name} reagovali {emoji_name}</string>
     <string name="emojiReactsNotification">Reagoval(a) na vaši zprávu {emoji}</string>
     <string name="enable">Povolit</string>
+    <string name="enjoyingSession">Líbí se vám {app_name}?</string>
+    <string name="enjoyingSessionButtonNegative">Potřebuje vylepšit {emoji}</string>
+    <string name="enjoyingSessionButtonPositive">Skvělé {emoji}</string>
+    <string name="enjoyingSessionDescription">Používáte {app_name} \na rádi bychom znali váš názor.</string>
     <string name="errorConnection">Zkontrolujte prosím připojení k internetu a zkuste to znovu.</string>
     <string name="errorCopyAndQuit">Zkopírovat chybu a ukončit</string>
     <string name="errorDatabase">Chyba databáze</string>
@@ -469,6 +474,8 @@
     <string name="gif">GIF</string>
     <string name="giphyWarning">Giphy</string>
     <string name="giphyWarningDescription">{app_name} se připojí k Giphy, aby poskytla výsledky vyhledávání. Při odesílání GIFů nebudete mít plnou ochranu metadat.</string>
+    <string name="giveFeedback">Poskytnout zpětnou vazbu?</string>
+    <string name="giveFeedbackDescription">Je nám líto, že vaše zkušenost se {app_name} nebyla ideální. Ocenili bychom, kdybyste věnovali chvíli vyplnění krátkého dotazníku</string>
     <string name="groupAddMemberMaximum">Skupiny mají maximálně 100 členů</string>
     <string name="groupCreate">Vytvořit skupinu</string>
     <string name="groupCreateErrorNoMembers">Prosím vyberte alespoň jednoho dalšího člena skupiny.</string>
@@ -735,6 +742,7 @@
     <string name="modalMessageTooLongDescription">Zkraťte prosím svou zprávu na {limit} znaků nebo méně.</string>
     <string name="modalMessageTooLongTitle">Zpráva je příliš dlouhá</string>
     <string name="next">Další</string>
+    <string name="nicknameDescription">Vyberte přezdívku pro <b>{name}</b>. Zobrazí se vám v konverzacích jeden na jednoho a ve skupinách.</string>
     <string name="nicknameEnter">Zadejte přezdívku</string>
     <string name="nicknameErrorShorter">Zadejte prosím kratší přezdívku</string>
     <string name="nicknameRemove">Odstranit přezdívku</string>
@@ -809,6 +817,7 @@
     <string name="onsErrorNotRecognized">Nepodařilo se rozpoznat tento ONS. Zkontrolujte ho a zkuste to znovu.</string>
     <string name="onsErrorUnableToSearch">Nepodařilo se vyhledat tento ONS. Zkuste to prosím později.</string>
     <string name="open">Otevřít</string>
+    <string name="openSurvey">Otevřít dotazník</string>
     <string name="other">Ostatní</string>
     <string name="passwordChange">Změnit heslo</string>
     <string name="passwordChangeDescription">Změňte heslo pro odemykání {app_name}.</string>
@@ -872,14 +881,26 @@
     <string name="proActivated">Aktivováno</string>
     <string name="proAlreadyPurchased">Už máte</string>
     <string name="proAnimatedDisplayPicture">Jako váš zobrazovaný profilový obrázek nastavte animovaný GIF nebo WebP!</string>
+    <string name="proAnimatedDisplayPictureCallToActionDescription">Získejte možnost nahrát animovaný zobrazovaný obrázek profilu a další prémiové funkce se Session Pro</string>
+    <string name="proAnimatedDisplayPictureFeature">Animovaný zobrazovaný obrázek</string>
     <string name="proAnimatedDisplayPictureModalDescription">uživatelé mohou nahrávat GIFy</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Nahrajte GIFy se</string>
+    <string name="proBadge">Odznak {app_pro}</string>
+    <string name="proCallToActionLongerMessages">Chcete posílat delší zprávy? Posílejte více textu odemknutím prémiových funkcí Session Pro</string>
+    <string name="proCallToActionPinnedConversations">Chcete více připnutí? Organizujte své chaty a odemkněte prémiové funkce pomocí Session Pro</string>
+    <string name="proCallToActionPinnedConversationsMoreThan">Chcete více než 5 připnutí? Organizujte své chaty a odemkněte prémiové funkce pomocí Session Pro</string>
     <string name="proFeatureListAnimatedDisplayPicture">Nahrajte GIF a WebP jako zobrazovaný obrázek</string>
     <string name="proFeatureListLargerGroups">Větší soukromé skupiny až 300 členů</string>
     <string name="proFeatureListLoadsMore">A další exkluzivních funkce</string>
     <string name="proFeatureListLongerMessages">Zprávy až do 10000 znaků</string>
     <string name="proFeatureListPinnedConversations">Připněte neomezený počet konverzací</string>
+    <string name="proGroupActivated">Skupina aktivována</string>
+    <string name="proGroupActivatedDescription">Tato skupina má navýšenou kapacitu! Může podporovat až 300 členů, protože správce skupiny má</string>
+    <string name="proIncreasedAttachmentSizeFeature">Navýšená velikost přílohy</string>
+    <string name="proIncreasedMessageLengthFeature">Navýšená délka zprávy</string>
+    <string name="proMessageInfoFeatures">V této zprávě byly použity následující funkce {app_pro}:</string>
     <string name="proSendMore">Posílejte více se</string>
+    <string name="proUserProfileModalCallToAction">Chcete z {app_name} získat více? Navyštee na {app_pro} pro výkonnější posílání zpráv.</string>
     <string name="profile">Profil</string>
     <string name="profileDisplayPicture">Zobrazovaný obrázek</string>
     <string name="profileDisplayPictureRemoveError">Chyba při odstraňování zobrazovaného obrázku.</string>
@@ -907,6 +928,9 @@
     <string name="qrYoursDescription">Přátelé vám mohou poslat zprávu naskenováním vašeho QR kódu.</string>
     <string name="quit">Ukončit {app_name}</string>
     <string name="quitButton">Ukončit</string>
+    <string name="rateSession">Ohodnotit {app_name}?</string>
+    <string name="rateSessionApp">Ohodnotit aplikaci</string>
+    <string name="rateSessionModalDescription">Jsme rádi, že se vám {app_name} líbí. Pokud máte chvíli času, ohodnoťte nás na {storevariant} abyste ostatním pomohli objevit soukromou a bezpečnou komunikaci!</string>
     <string name="read">Přečteno</string>
     <string name="readReceipts">Potvrzení o přečtení</string>
     <string name="readReceiptsDescription">Zobrazit potvrzení o přečtení pro všechny zprávy, které posíláte a přijímáte.</string>
@@ -950,6 +974,8 @@
     <string name="restart">Restartovat</string>
     <string name="resync">Znovu synchronizovat</string>
     <string name="retry">Opakovat</string>
+    <string name="reviewLimit">Omezení hodnocení</string>
+    <string name="reviewLimitDescription">Zdá se, že jste nedávno hodnotili {app_name}. Děkujeme vám za vaši zpětnou vazbu!</string>
     <string name="save">Uložit</string>
     <string name="saved">Uloženo</string>
     <string name="savedMessages">Uložené zprávy</string>
@@ -957,7 +983,7 @@
     <string name="scan">Skenovat</string>
     <string name="screenSecurity">Zabezpečení obrazovky</string>
     <string name="screenshotNotifications">Upozornění na snímek obrazovky</string>
-    <string name="screenshotNotificationsDescription">Požadovat upozornění, když kontakt pořídí snímek obrazovky v individuálním chatu.</string>
+    <string name="screenshotNotificationsDescription">Požadovat upozornění, když kontakt pořídí snímek obrazovky chatu jeden na jednoho.</string>
     <string name="screenshotTaken"><b>{name}</b> pořídil(a) snímek obrazovky.</string>
     <string name="search">Hledat</string>
     <string name="searchContacts">Prohledat kontakty</string>
@@ -1023,6 +1049,8 @@
     <string name="theContinue">Pokračovat</string>
     <string name="theDefault">Výchozí</string>
     <string name="theError">Chyba</string>
+    <string name="tooltipAccountIdVisible">ID účtu <b>{name}</b> je viditelné\nv závislosti na vašich předchozích interakcích</string>
+    <string name="tooltipBlindedIdCommunities">Maskovaná ID jsou používána v komunitách\nke snížení spamu a zvýšení soukromí</string>
     <string name="tryAgain">Zkusit znovu</string>
     <string name="typingIndicators">Indikátory psaní</string>
     <string name="typingIndicatorsDescription">Zobrazit a sdílet indikátor probíhajícího psaní.</string>
