@@ -235,6 +235,7 @@
     <string name="commitHashDesktop">Commit Hash: {hash}</string>
     <string name="communityBanDeleteDescription">This will ban the selected user from this Community and delete all their messages. Are you sure you want to continue?</string>
     <string name="communityBanDescription">This will ban the selected user from this Community. Are you sure you want to continue?</string>
+    <string name="communityDescriptionEnter">Enter a community description</string>
     <string name="communityEnterUrl">Enter Community URL</string>
     <string name="communityEnterUrlErrorInvalid">Invalid URL</string>
     <string name="communityEnterUrlErrorInvalidDescription">Please check the Community URL and try again.</string>
@@ -249,6 +250,8 @@
     <string name="communityJoinedAlready">You are already a member of this community.</string>
     <string name="communityLeave">Leave Community</string>
     <string name="communityLeaveError">Failed to leave {community_name}</string>
+    <string name="communityNameEnter">Enter a community name</string>
+    <string name="communityNameEnterPlease">Please enter a community name</string>
     <string name="communityUnknown">Unknown Community</string>
     <string name="communityUrl">Community URL</string>
     <string name="communityUrlCopy">Copy Community URL</string>
@@ -856,7 +859,7 @@
     <string name="proGroupActivatedDescription">This group has expanded capacity! It can support up to 300 members because a group admin has</string>
     <string name="proIncreasedAttachmentSizeFeature">Increased Attachment Size</string>
     <string name="proIncreasedMessageLengthFeature">Increased Message Length</string>
-    <string name="proMessageInfoFeatures">This message used the following Session Pro features:</string>
+    <string name="proMessageInfoFeatures">This message used the following {app_pro} features:</string>
     <string name="proSendMore">Send more with</string>
     <string name="proUserProfileModalCallToAction">Want to get more out of {app_name}? Upgrade to {app_pro} for a more powerful messaging experience.</string>
     <string name="profile">Profile</string>
@@ -1008,6 +1011,10 @@
     <string name="undo">Undo</string>
     <string name="unknown">Unknown</string>
     <string name="updateApp">App updates</string>
+    <string name="updateCommunityInformation">Update Community Information</string>
+    <string name="updateCommunityInformationDescription">Community name and description are visible to all community members</string>
+    <string name="updateCommunityInformationEnterShorterDescription">Please enter a shorter community description</string>
+    <string name="updateCommunityInformationEnterShorterName">Please enter a shorter community name</string>
     <string name="updateDownloaded">Update installed, click to restart</string>
     <string name="updateDownloading">Downloading update: {percent_loader}%</string>
     <string name="updateError">Cannot Update</string>

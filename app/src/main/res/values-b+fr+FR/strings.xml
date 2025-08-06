@@ -151,6 +151,7 @@
     <string name="banUserBanned">Utilisateur banni</string>
     <string name="banUserDescription">Entrez l\'identifiant du compte de l\'utilisateur que vous souhaitez débannir</string>
     <string name="block">Bloquer</string>
+    <string name="blockBlockedDescription">Débloquez ce contact pour envoyer un message</string>
     <string name="blockBlockedNone">Aucun contact n’est bloqué</string>
     <string name="blockBlockedUser">Bloqué {name}</string>
     <string name="blockDescription">Êtes-vous sûr·e de vouloir bloquer <b>{name}?</b> Les utilisateurs bloqués ne peuvent pas vous envoyer de demandes de message, d\'invitations de groupe ou vous appeler.</string>
@@ -626,6 +627,7 @@
     <string name="membersInviteShareNewMessagesOnly">Partager seulement les nouveaux messages</string>
     <string name="membersInviteTitle">Inviter</string>
     <string name="message">Message</string>
+    <string name="messageBubbleReadMore">Lire plus</string>
     <string name="messageEmpty">Ce message est vide.</string>
     <string name="messageErrorDelivery">La transmission du message a échoué</string>
     <string name="messageErrorLimit">La taille maximale de message est atteinte</string>
@@ -661,6 +663,7 @@
     <string name="messageRequestsClearAllExplanation">Êtes-vous certain de vouloir effacer toutes les demandes de message et d\'invitation au groupe?</string>
     <string name="messageRequestsCommunities">Demandes de message de communauté</string>
     <string name="messageRequestsCommunitiesDescription">Autoriser les demandes de message des conversations de communautés.</string>
+    <string name="messageRequestsContactDelete">Êtes-vous sûr de vouloir supprimer cette demande de message ainsi que le contact associé ?</string>
     <string name="messageRequestsDelete">Êtes-vous sûr de vouloir supprimer cette demande de message ?</string>
     <string name="messageRequestsNew">Vous avez une nouvelle demande de message</string>
     <string name="messageRequestsNonePending">Aucune demande de message en attente</string>
@@ -678,6 +681,11 @@
     <string name="messageVoiceSnippetGroup">{author}: {emoji} Message Vocal</string>
     <string name="messages">Messages</string>
     <string name="minimize">Réduire</string>
+    <string name="modalMessageCharacterDisplayTitle">Longueur du message</string>
+    <string name="modalMessageCharacterTooLongDescription">Vous avez dépassé la limite pour ce message. Merci de raccourcir votre message à {limit} caractères ou moins.</string>
+    <string name="modalMessageCharacterTooLongTitle">Le message est trop long</string>
+    <string name="modalMessageTooLongDescription">Veuillez raccourcir votre message a {limit} caractères ou moins.</string>
+    <string name="modalMessageTooLongTitle">Le message est trop long</string>
     <string name="next">Suivant</string>
     <string name="nicknameDescription">Choisissez un pseudo pour <b>{name}</b>. Il apparaîtra dans vos conversations individuelles et de groupe.</string>
     <string name="nicknameEnter">Saisissez un surnom</string>
@@ -808,11 +816,22 @@
     <string name="permissionsStorageSave">{app_name} doit accéder au stockage pour enregistrer les pièces jointes et les médias.</string>
     <string name="permissionsStorageSaveDenied">{app_name} a besoin d\'un accès au stockage pour enregistrer des photos et des vidéos, mais il a été refusé de façon permanente. Veuillez accéder aux paramètres de l\'application, sélectionner \"Autorisations\" et autoriser \"Stockage\".</string>
     <string name="permissionsStorageSend">{app_name} a besoin d\'un accès au stockage pour envoyer des photos et des vidéos.</string>
+    <string name="permissionsWriteCommunity">Vous n\'avez pas la permission d\'écrire dans cette communauté</string>
     <string name="pin">Épingler</string>
     <string name="pinConversation">Épingler la conversation</string>
     <string name="pinUnpin">Désépingler</string>
     <string name="pinUnpinConversation">Désépingler la conversation</string>
     <string name="preview">Aperçu</string>
+    <string name="proActivated">Activé</string>
+    <string name="proAlreadyPurchased">Vous avez déjà</string>
+    <string name="proAnimatedDisplayPictureModalDescription">les utilisateurs peuvent télécharger des GIFs</string>
+    <string name="proCallToActionLongerMessages">Vous voulez envoyer des messages plus longs ? Envoyez plus de messages et débloqué les fonctionnalités premium avec {app_pro}</string>
+    <string name="proCallToActionPinnedConversations">Vous voulez plus de messages épinglés ? Organisez vos chats et débloquez les fonctionnalités premium avec {app_pro}</string>
+    <string name="proCallToActionPinnedConversationsMoreThan">Vous voulez plus que 5 messages épinglés ? Organisez vos chats et débloquez les fonctionnalités premium avec {app_pro}</string>
+    <string name="proFeatureListLargerGroups">Groupes de discussions plus larges, jusqu\'à 300 participants</string>
+    <string name="proFeatureListLoadsMore">Plus offre des fonctions exclusives additionnelles</string>
+    <string name="proFeatureListLongerMessages">Messages jusqu\'à 10,000 caractères</string>
+    <string name="proSendMore">Envoyez plus avec</string>
     <string name="profile">Profil</string>
     <string name="profileDisplayPicture">Définir une photo de profil</string>
     <string name="profileDisplayPictureRemoveError">Échec de suppression de la photo de profil.</string>
@@ -864,6 +883,11 @@
     <string name="recoveryPasswordWarningSendDescription">Voici votre mot de passe de récupération. Si vous l\'envoyez à quelqu\'un, il aura un accès complet à votre compte.</string>
     <string name="recreateGroup">Recréer le groupe</string>
     <string name="redo">Rétablir</string>
+    <string name="remainingCharactersOverTooltip">Réduis la longueur du message de {count}</string>
+    <plurals name="remainingCharactersTooltip">
+        <item quantity="one">%1$d caractères restants</item>
+        <item quantity="other">%1$d caractères restants</item>
+    </plurals>
     <string name="remove">Supprimer</string>
     <string name="removePasswordFail">Échec de supprimer le mot de passe</string>
     <string name="reply">Répondre</string>
@@ -963,6 +987,7 @@
     <string name="updateSession">Mise à jour de {app_name}</string>
     <string name="updateVersion">Version {version}</string>
     <string name="updated">Dernière mise à jour il y a {relative_time}</string>
+    <string name="upgradeTo">Mettre à niveau à</string>
     <string name="uploading">Téléversement</string>
     <string name="urlCopy">Copier l\'adresse URL</string>
     <string name="urlOpen">Ouvrir l\'URL</string>

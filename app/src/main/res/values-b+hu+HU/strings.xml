@@ -151,6 +151,7 @@
     <string name="banUserBanned">Felhasználó kitiltva</string>
     <string name="banUserDescription">Adja meg annak a felhasználónak a fiókazonosítóját, amelyiket ki akarja tiltani</string>
     <string name="block">Letiltás</string>
+    <string name="blockBlockedDescription">Üzenet küldéséhez oldd fel a kontakt letiltását.</string>
     <string name="blockBlockedNone">Nincsenek blokkolt kontaktok</string>
     <string name="blockBlockedUser">{name} letiltva</string>
     <string name="blockDescription">Biztos, hogy blokkolni szeretnéd <b>{name}</b>-t? A blokkolt felhasználók nem küldhetnek üzenetkérelmeket, csoportmeghívókat, és nem hívhatnak fel.</string>
@@ -292,8 +293,10 @@
     <string name="copied">Másolva</string>
     <string name="copy">Másolás</string>
     <string name="create">Létrehozás</string>
+    <string name="creatingCall">Hívás készítése</string>
     <string name="cut">Kivágás</string>
     <string name="databaseErrorClearDataWarning">Biztosan törli az összes üzenetet, mellékletet és fiókadatot erről az eszközről, és új fiókot hoz létre?</string>
+    <string name="databaseErrorGeneric">Adatbázishiba történt.\n\nExportálja az alkalmazás naplóit, hogy megoszhassa azokat a hibaelhárításhoz. Ha ez nem sikerül, telepítse újra a(z) {app_name} alkalmazást és állítsa vissza a fiókját.</string>
     <string name="databaseErrorRestoreDataWarning">Biztosan törli az összes üzenetet, mellékletet és fiókadatot erről az eszközről, és vissza állítja a fiókját a hálózatról?</string>
     <string name="databaseErrorTimeout">Észrevettük, hogy {app_name} indítása sokáig tart.\n\nTovábbra is várhatsz, exportálhatod az eszköz naplóit a hibaelhárításhoz, vagy megpróbálhatod újraindítani {app_name}-t.</string>
     <string name="databaseErrorUpdate">Az alkalmazás adatbázisa nem kompatibilis a {app_name} jelenlegi verziójával. Telepítsd újra az alkalmazást, és állítsd vissza fiókját egy új adatbázis létrehozásához és a {app_name} további használathoz.\n\nFigyelmeztetés: Ez minden két hétnél régebbi üzenet és melléklet elvesztését eredményezi.</string>
@@ -450,6 +453,7 @@
     <string name="groupCreate">Csoport létrehozása</string>
     <string name="groupCreateErrorNoMembers">Válassz legalább 1 csoporttagot.</string>
     <string name="groupDelete">Csoport törlése</string>
+    <string name="groupDeleteDescription">Biztosan ki akar lépni a(z) <b>{group_name}</b> csoportból?\n\nEz az összes tag eltávolításával és a csoport teljes tartalmának törlésével jár.</string>
     <string name="groupDeleteDescriptionMember">Biztosan törölni szeretné a(z) <b>{group_name}</b> nevű csoportot?</string>
     <string name="groupDeletedMemberDescription">A(z) {group_name} nevű csoportot egy csoport-adminisztrátor törölte. További üzeneteket már nem küldhet.</string>
     <string name="groupDescriptionEnter">Adj meg egy csoportleírást</string>
@@ -532,6 +536,7 @@
     <string name="groupSetDisplayPicture">Csoportprofilkép beállítása</string>
     <string name="groupUnknown">Ismeretlen csoport</string>
     <string name="groupUpdated">Csoport frissítve</string>
+    <string name="handlingConnectionCandidates">Kapcsolat jelöltek kezelése</string>
     <string name="helpFAQ">GYIK</string>
     <string name="helpHelpUsTranslateSession">Segíts lefordítani {app_name}-t</string>
     <string name="helpReportABug">Hiba jelentése</string>
@@ -612,7 +617,7 @@
     <string name="membersAddAccountIdOrOns">Felhasználó ID vagy ONS hozzáadása</string>
     <string name="membersInvite">Kontaktok meghívása</string>
     <plurals name="membersInviteSend">
-        <item quantity="one">Meghívás küldése</item>
+        <item quantity="one">Meghívó küldése</item>
         <item quantity="other">Meghívók küldése</item>
     </plurals>
     <string name="membersInviteShareDescription">Meg szeretnéd osztani a csoport korábbi üzeneteit vele: <b>{name}</b>?</string>
@@ -788,6 +793,7 @@
     <string name="permissionsAutoUpdate">Automatikus frissítés</string>
     <string name="permissionsAutoUpdateDescription">Indításkor automatikusan ellenőrzi a frissítéseket.</string>
     <string name="permissionsCameraAccessRequiredCallsIos">A videohívások indításához kamerához való hozzáférés szükséges. Kapcsolja be a „Kamera” engedélyt a Beállításokban a folytatáshoz.</string>
+    <string name="permissionsCameraChangeDescriptionIos">A kamerához való hozzáférés jelenleg engedélyezve van. A letiltáshoz kapcsolja ki a „Kamera” engedélyt a beállításokban.</string>
     <string name="permissionsCameraDenied">{app_name} alkalmazásnak kamera-hozzáférésre van szüksége képek és videók felvételéhez, de ez nem lett megadva. Kérlek, lépj tovább az alkalmazás beállításokhoz, válaszd az \"Engedélyek\" lehetőséget, majd engedélyezd a \"Kamera\" hozzáférést.</string>
     <string name="permissionsCameraDescriptionIos">Engedélyezze a kamerához való hozzáférést videohívásokhoz.</string>
     <string name="permissionsFaceId">A {app_name} képernyőzár funkciója Face ID-t használ.</string>
@@ -796,6 +802,7 @@
     <string name="permissionsLibrary">{app_name} alkalmazásnak fotótár-hozzáférésre van szüksége a folytatáshoz. A hozzáférést az iOS beállításokban engedélyezheted.</string>
     <string name="permissionsLocalNetworkAccessRequiredCallsIos">A hívások lehetővé tételéhez szükséges a helyi hálózathoz való hozzáférés. Kapcsolja be a „Helyi hálózat” engedélyt a Beállításokban a folytatáshoz.</string>
     <string name="permissionsLocalNetworkAccessRequiredIos">A(z) {app_name} alkalmazásnak hozzáférésre van szüksége a helyi hálózathoz a hang- és videohívások indításához.</string>
+    <string name="permissionsLocalNetworkChangeDescriptionIos">A helyi hálózati hozzáférés jelenleg engedélyezve van. A letiltáshoz kapcsolja ki a „Helyi hálózat” engedélyt a beállításokban.</string>
     <string name="permissionsLocalNetworkDescriptionIos">Engedélyezze a helyi hálózathoz való hozzáférést a hang- és videohívások lehetővé tételéhez.</string>
     <string name="permissionsLocalNetworkIos">Helyi hálózat</string>
     <string name="permissionsMicrophone">Mikrofon</string>
@@ -803,6 +810,7 @@
     <string name="permissionsMicrophoneAccessRequiredCallsIos">A hívások indításához és hangüzenetek rögzítéséhez mikrofonhoz való hozzáférés szükséges. Kapcsolja be a „Mikrofon” engedélyt a Beállításokban a folytatáshoz.</string>
     <string name="permissionsMicrophoneAccessRequiredDesktop">A mikrofon engedélyeinek beállításait a {app_name} adatvédelmi beállításaiban engedélyezheted</string>
     <string name="permissionsMicrophoneAccessRequiredIos">{app_name} alkalmazásnak mikrofon-hozzáférésre van szüksége hívások bonyolítására és hangüzeneteket rögzítésére.</string>
+    <string name="permissionsMicrophoneChangeDescriptionIos">A mikrofonhoz való hozzáférés jelenleg engedélyezve van. A letiltáshoz kapcsolja ki a „Mikrofon” engedélyt a beállításokban.</string>
     <string name="permissionsMicrophoneDescription">Mikrofon hozzáférés engedélyezése.</string>
     <string name="permissionsMicrophoneDescriptionIos">Engedélyezze a mikrofonhoz való hozzáférést hanghívások és hangüzenetek küldéséhez.</string>
     <string name="permissionsMusicAudio">{app_name} alkalmazásnak zene és hang-hozzáférésre van szüksége a fájlok és zenék küldéséhez.</string>
@@ -818,6 +826,7 @@
     <string name="pinUnpin">Kitűzés eltávolítása</string>
     <string name="pinUnpinConversation">Beszélgetés kitűzésének eltávolítása</string>
     <string name="preview">Előnézet</string>
+    <string name="proCallToActionLongerMessages">Szeretne hosszabb üzeneteket küldeni? Küldjön több szöveget és oldja fel a prémium funkciókat a {app_pro} szolgáltatással</string>
     <string name="proFeatureListLargerGroups">Nagyobb csoportos beszélgetések akár 300 taggal</string>
     <string name="proFeatureListLoadsMore">Plusz még több exkluzív funkció</string>
     <string name="proFeatureListLongerMessages">Legfeljebb 10 000 karakteres üzenetek</string>
@@ -849,6 +858,9 @@
     <string name="readReceipts">Olvasási visszaigazolás</string>
     <string name="readReceiptsDescription">Olvasottsági visszajelzések megjelenítése az összes elküldött és fogadott üzenethez.</string>
     <string name="received">Érkezett:</string>
+    <string name="receivedAnswer">Fogadott válasz</string>
+    <string name="receivingCallOffer">Hívás ajánlat fogadása</string>
+    <string name="receivingPreOffer">Előajánlás beérkeztetése</string>
     <string name="recommended">Ajánlott</string>
     <string name="recoveryPasswordBannerDescription">Mentsd el a visszaállítási jelszavad, hogy biztosan ne veszítsd el a hozzáférést a fiókodhoz.</string>
     <string name="recoveryPasswordBannerTitle">Visszaállítási jelszó elmentése</string>
@@ -909,6 +921,8 @@
     <string name="selectAppIcon">Alkalmazásikon kiválasztása</string>
     <string name="send">Küldés</string>
     <string name="sending">Küldés</string>
+    <string name="sendingCallOffer">Hívás ajánlás küldése</string>
+    <string name="sendingConnectionCandidates">Kapcsolat jelöltek küldése</string>
     <string name="sent">Elküldve:</string>
     <string name="sessionAppearance">Megjelenés</string>
     <string name="sessionClearData">Adataid törlése</string>
@@ -967,6 +981,7 @@
     <string name="updateGroupInformationDescription">A csoport neve és leírása minden csoporttag számára látható.</string>
     <string name="updateGroupInformationEnterShorterDescription">Adjon meg egy rövidebb csoportleírást</string>
     <string name="updateNewVersion">A(z) {app_name} új verziója elérhető, koppints a frissítéshez</string>
+    <string name="updateNewVersionDescription">Elérhető a(z) {app_name} új, {version} verziója.</string>
     <string name="updateReleaseNotes">Verzióinformáció megnyitása</string>
     <string name="updateSession">{app_name} Frissítés</string>
     <string name="updateVersion">Verzió {version}</string>
@@ -981,6 +996,8 @@
     <string name="video">Videó</string>
     <string name="videoErrorPlay">Videó lejátszása sikertelen.</string>
     <string name="view">Megtekintés</string>
+    <string name="viewLess">Kevesebb</string>
+    <string name="viewMore">Több</string>
     <string name="waitFewMinutes">Ez néhány percig eltarthat.</string>
     <string name="waitOneMoment">Egy pillanat...</string>
     <string name="warning">Figyelmeztetés</string>
