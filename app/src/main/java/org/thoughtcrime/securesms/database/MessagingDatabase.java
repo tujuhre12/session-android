@@ -51,8 +51,8 @@ public abstract class MessagingDatabase extends Database implements MmsSmsColumn
 
   public abstract long getNextExpiringTimestamp();
 
-  public abstract boolean deleteMessage(long messageId);
-  public abstract boolean deleteMessages(long[] messageId, long threadId);
+  public abstract void deleteMessage(long messageId);
+  public abstract void deleteMessages(long[] messageId, long threadId);
 
   public abstract void updateThreadId(long fromId, long toId);
 

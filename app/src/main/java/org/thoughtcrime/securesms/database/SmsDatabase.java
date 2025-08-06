@@ -24,8 +24,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.text.TextUtils;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import com.annimon.stream.Stream;
 
@@ -33,6 +31,8 @@ import net.zetetic.database.sqlcipher.SQLiteDatabase;
 import net.zetetic.database.sqlcipher.SQLiteStatement;
 
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.session.libsession.messaging.calls.CallMessageType;
 import org.session.libsession.messaging.messages.signal.IncomingGroupMessage;
 import org.session.libsession.messaging.messages.signal.IncomingTextMessage;
@@ -52,7 +52,6 @@ import org.thoughtcrime.securesms.database.model.MessageId;
 import org.thoughtcrime.securesms.database.model.MessageRecord;
 import org.thoughtcrime.securesms.database.model.ReactionRecord;
 import org.thoughtcrime.securesms.database.model.SmsMessageRecord;
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -67,6 +66,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import dagger.Lazy;
 import dagger.hilt.android.qualifiers.ApplicationContext;
 
 /**
@@ -159,13 +159,19 @@ public class SmsDatabase extends MessagingDatabase {
   private static final EarlyReceiptCache earlyReadReceiptCache     = new EarlyReceiptCache();
 
   private final RecipientRepository recipientRepository;
+  private final Lazy<@NonNull ThreadDatabase> threadDatabase;
+  private final Lazy<@NonNull ReactionDatabase> reactionDatabase;
 
   @Inject
   public SmsDatabase(@ApplicationContext Context context,
                      Provider<SQLCipherOpenHelper> databaseHelper,
-                     RecipientRepository recipientRepository) {
+                     RecipientRepository recipientRepository,
+                     Lazy<@NonNull ThreadDatabase> threadDatabase,
+                     Lazy<@NonNull ReactionDatabase> reactionDatabase) {
     super(context, databaseHelper);
     this.recipientRepository = recipientRepository;
+    this.threadDatabase = threadDatabase;
+    this.reactionDatabase = reactionDatabase;
   }
 
   protected String getTableName() {
@@ -182,7 +188,7 @@ public class SmsDatabase extends MessagingDatabase {
 
     long threadId = getThreadIdForMessage(id);
 
-    DatabaseComponent.get(context).threadDatabase().update(threadId, false);
+    threadDatabase.get().update(threadId, false);
   }
 
   public long getThreadIdForMessage(long id) {
@@ -276,7 +282,7 @@ public class SmsDatabase extends MessagingDatabase {
                     "WHERE " + ID + " = ? RETURNING " + THREAD_ID, startedAtTimestamp, id)) {
       if (cursor.moveToNext()) {
         long threadId = cursor.getLong(0);
-        DatabaseComponent.get(context).threadDatabase().update(threadId, false);
+        threadDatabase.get().update(threadId, false);
       }
     }
   }
@@ -367,7 +373,7 @@ public class SmsDatabase extends MessagingDatabase {
                              ID + " = ?",
                              new String[] {String.valueOf(cursor.getLong(cursor.getColumnIndexOrThrow(ID)))});
 
-            DatabaseComponent.get(context).threadDatabase().update(threadId, false);
+            threadDatabase.get().update(threadId, false);
             foundMessage = true;
           }
         }
@@ -447,8 +453,8 @@ public class SmsDatabase extends MessagingDatabase {
 
     long       threadId;
 
-    if (groupRecipient == null) threadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(recipient);
-    else                        threadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(groupRecipient);
+    if (groupRecipient == null) threadId = threadDatabase.get().getOrCreateThreadIdFor(recipient);
+    else                        threadId = threadDatabase.get().getOrCreateThreadIdFor(groupRecipient);
 
     if (message.isSecureMessage()) {
       type |= Types.SECURE_MESSAGE_BIT;
@@ -499,7 +505,7 @@ public class SmsDatabase extends MessagingDatabase {
       long           messageId = db.insert(TABLE_NAME, null, values);
 
       if (runThreadUpdate) {
-        DatabaseComponent.get(context).threadDatabase().update(threadId, true);
+        threadDatabase.get().update(threadId, true);
       }
 
       return Optional.of(new InsertResult(messageId, threadId));
@@ -535,7 +541,7 @@ public class SmsDatabase extends MessagingDatabase {
 
   public Optional<InsertResult> insertMessageOutbox(long threadId, OutgoingTextMessage message, long serverTimestamp, boolean runThreadUpdate) {
     if (threadId == -1) {
-      threadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(message.getRecipient());
+      threadId = threadDatabase.get().getOrCreateThreadIdFor(message.getRecipient());
     }
     long messageId = insertMessageOutbox(threadId, message, false, serverTimestamp, runThreadUpdate);
     if (messageId == -1) {
@@ -582,14 +588,14 @@ public class SmsDatabase extends MessagingDatabase {
     long           messageId = db.insert(TABLE_NAME, ADDRESS, contentValues);
 
     if (runThreadUpdate) {
-      DatabaseComponent.get(context).threadDatabase().update(threadId, true);
+      threadDatabase.get().update(threadId, true);
     }
-    long lastSeen = DatabaseComponent.get(context).threadDatabase().getLastSeenAndHasSent(threadId).first();
+    long lastSeen = threadDatabase.get().getLastSeenAndHasSent(threadId).first();
     if (lastSeen < message.getSentTimestampMillis()) {
-      DatabaseComponent.get(context).threadDatabase().setLastSeen(threadId, message.getSentTimestampMillis());
+      threadDatabase.get().setLastSeen(threadId, message.getSentTimestampMillis());
     }
 
-    DatabaseComponent.get(context).threadDatabase().setHasSent(threadId, true);
+    threadDatabase.get().setHasSent(threadId, true);
 
     return messageId;
   }
@@ -649,20 +655,17 @@ public class SmsDatabase extends MessagingDatabase {
     }
   }
 
-  // Caution: The bool returned from `deleteMessage` is NOT "Was the message successfully deleted?"
-  // - it is "Was the thread deleted because removing that message resulted in an empty thread"!
   @Override
-  public boolean deleteMessage(long messageId) {
+  public void deleteMessage(long messageId) {
     Log.i("MessageDatabase", "Deleting: " + messageId);
     SQLiteDatabase db = getWritableDatabase();
     long threadId = getThreadIdForMessage(messageId);
     db.delete(TABLE_NAME, ID_WHERE, new String[] {messageId+""});
-    boolean threadDeleted = DatabaseComponent.get(context).threadDatabase().update(threadId, false);
-    return threadDeleted;
+    threadDatabase.get().update(threadId, false);
   }
 
   @Override
-  public boolean deleteMessages(long[] messageIds, long threadId) {
+  public void deleteMessages(long[] messageIds, long threadId) {
     String[] argsArray = new String[messageIds.length];
     String[] argValues = new String[messageIds.length];
     Arrays.fill(argsArray, "?");
@@ -677,8 +680,7 @@ public class SmsDatabase extends MessagingDatabase {
       ID + " IN (" + StringUtils.join(argsArray, ',') + ")",
       argValues
     );
-    boolean threadDeleted = DatabaseComponent.get(context).threadDatabase().update(threadId, false);
-    return threadDeleted;
+    threadDatabase.get().update(threadId, false);
   }
 
   @Override
@@ -829,7 +831,7 @@ public class SmsDatabase extends MessagingDatabase {
 
       List<IdentityKeyMismatch> mismatches = getMismatches(mismatchDocument);
       Recipient recipient  = recipientRepository.getRecipientSync(address);
-      List<ReactionRecord>      reactions  = DatabaseComponent.get(context).reactionDatabase().getReactions(cursor);
+      List<ReactionRecord>      reactions  = reactionDatabase.get().getReactions(cursor);
 
       return new SmsMessageRecord(messageId, body, recipient,
                                   recipient,

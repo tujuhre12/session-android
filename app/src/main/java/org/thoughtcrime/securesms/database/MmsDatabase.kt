@@ -22,7 +22,6 @@ import android.database.Cursor
 import com.annimon.stream.Stream
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.apache.commons.lang3.StringUtils
 import org.json.JSONArray
@@ -947,20 +946,19 @@ class MmsDatabase @Inject constructor(
 
     // Caution: The bool returned from `deleteMessage` is NOT "Was the message successfully deleted?"
     // - it is "Was the thread deleted because removing that message resulted in an empty thread"!
-    override fun deleteMessage(messageId: Long): Boolean {
+    override fun deleteMessage(messageId: Long) {
         val threadId = getThreadIdForMessage(messageId)
         queue { attachmentDatabase.deleteAttachmentsForMessage(messageId) }
         val groupReceiptDatabase = groupReceiptDatabase
         groupReceiptDatabase.deleteRowsForMessage(messageId)
         val database = writableDatabase
         database!!.delete(TABLE_NAME, ID_WHERE, arrayOf(messageId.toString()))
-        val threadDeleted = threadDatabase.update(threadId, false)
+        threadDatabase.update(threadId, false)
         notifyStickerListeners()
         notifyStickerPackListeners()
-        return threadDeleted
     }
 
-    override fun deleteMessages(messageIds: LongArray, threadId: Long): Boolean {
+    override fun deleteMessages(messageIds: LongArray, threadId: Long) {
         val argsArray = messageIds.map { "?" }
         val argValues = messageIds.map { it.toString() }.toTypedArray()
 
@@ -974,10 +972,9 @@ class MmsDatabase @Inject constructor(
             argValues
         )
 
-        val threadDeleted = threadDatabase.update(threadId, false)
+        threadDatabase.update(threadId, false)
         notifyStickerListeners()
         notifyStickerPackListeners()
-        return threadDeleted
     }
 
     override fun updateThreadId(fromId: Long, toId: Long) {

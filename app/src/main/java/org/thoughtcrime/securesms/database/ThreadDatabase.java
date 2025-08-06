@@ -631,6 +631,7 @@ public class ThreadDatabase extends Database {
           record = reader.getNext();
         }
       }
+
       if (record != null && !record.isDeleted()) {
         updateThread(threadId, count, getFormattedBodyFor(record), getAttachmentUriFor(record), record.getMessageContent(),
                      record.getTimestamp(), record.getDeliveryStatus(), record.getDeliveryReceiptCount(),
