@@ -9,6 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import org.session.libsession.utilities.Address
 import org.thoughtcrime.securesms.conversation.start.StartConversationDelegate
@@ -16,6 +17,7 @@ import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.openUrl
 import org.thoughtcrime.securesms.ui.createThemedComposeView
 
+@AndroidEntryPoint
 class NewMessageFragment : Fragment() {
     private val viewModel: NewMessageViewModel by viewModels()
 
@@ -26,7 +28,7 @@ class NewMessageFragment : Fragment() {
 
         lifecycleScope.launch {
             viewModel.success.collect {
-                createPrivateChat(it.publicKey)
+                createPrivateChat(it.address)
             }
         }
     }
@@ -46,9 +48,8 @@ class NewMessageFragment : Fragment() {
         )
     }
 
-    private fun createPrivateChat(hexEncodedPublicKey: String) {
-        val address = Address.fromSerialized(hexEncodedPublicKey)
-        ConversationActivityV2.createIntent(requireContext(), address as Address.Conversable).apply {
+    private fun createPrivateChat(address: Address.Standard) {
+        ConversationActivityV2.createIntent(requireContext(), address).apply {
             setDataAndType(requireActivity().intent.data, requireActivity().intent.type)
         }.let(requireContext()::startActivity)
         delegate.onDialogClosePressed()

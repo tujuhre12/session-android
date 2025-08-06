@@ -66,6 +66,7 @@ data class Recipient(
     val approved: Boolean get() = when (data) {
         is RecipientData.Contact -> data.approved
         is RecipientData.Group -> data.approved
+        is RecipientData.Generic -> false
         else -> true
     }
 
@@ -77,7 +78,7 @@ data class Recipient(
             is RecipientData.Group -> true
             is RecipientData.Generic -> {
                 // A generic recipient is the one we only have minimal information about,
-                // it's very unlikely they have approved us.
+                // we don't know if they have approved us or not.
                 false
             }
             is RecipientData.Contact -> data.approvedMe

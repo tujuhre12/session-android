@@ -2,9 +2,9 @@ package org.thoughtcrime.securesms.conversation.start.newmessage
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -16,18 +16,21 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import network.loki.messenger.R
 import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.snode.utilities.await
+import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toAddress
+import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.PublicKeyValidation
-import org.session.libsignal.utilities.retryWithUniformInterval
 import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.LoadingDialog
 import java.net.IDN
+import javax.inject.Inject
 
 @HiltViewModel
-internal class NewMessageViewModel @Inject constructor(
-    private val application: Application
-): AndroidViewModel(application), Callbacks {
+class NewMessageViewModel @Inject constructor(
+    private val application: Application,
+    private val configFactory: ConfigFactoryProtocol
+): ViewModel(), Callbacks {
 
     private val _state = MutableStateFlow(State())
     val state = _state.asStateFlow()
@@ -103,7 +106,19 @@ internal class NewMessageViewModel @Inject constructor(
 
     private fun onPublicKey(publicKey: String) {
         _state.update { it.copy(loading = false) }
-        viewModelScope.launch { _success.emit(Success(publicKey)) }
+
+        val address = publicKey.toAddress()
+        if (address is Address.Standard) {
+            // Add the address to the contact now
+            configFactory.withMutableUserConfigs {
+                it.contacts.upsertContact(address){
+                    approved = true
+                }
+            }
+
+            viewModelScope.launch { _success.emit(Success(address)) }
+        }
+
     }
 
     private fun onUnvalidatedPublicKey(publicKey: String) {
@@ -120,7 +135,7 @@ internal class NewMessageViewModel @Inject constructor(
     }
 }
 
-internal data class State(
+data class State(
     val newMessageIdOrOns: String = "",
     val isTextErrorColor: Boolean = false,
     val error: GetString? = null,
@@ -129,4 +144,4 @@ internal data class State(
     val isNextButtonEnabled: Boolean get() = newMessageIdOrOns.isNotBlank()
 }
 
-internal data class Success(val publicKey: String)
+data class Success(val address: Address.Standard)

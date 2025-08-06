@@ -1409,7 +1409,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }
 
             // If we're trying to message someone who has blocked community message requests
-            !recipient.acceptsCommunityMessageRequests -> {
+            recipient.address.isBlinded && !recipient.acceptsCommunityMessageRequests -> {
                 Phrase.from(applicationContext, R.string.messageRequestsTurnedOff)
                     .put(NAME_KEY, recipient.displayName())
                     .format()
