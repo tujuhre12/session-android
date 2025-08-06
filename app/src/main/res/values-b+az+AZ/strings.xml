@@ -3,6 +3,7 @@
     <string name="about">Haqqında</string>
     <string name="accept">Qəbul et</string>
     <string name="accountIDCopy">Hesab Kimliyini kopyala</string>
+    <string name="accountId">Hesab ID-si</string>
     <string name="accountIdCopied">Hesab Kimliyi kopyalandı</string>
     <string name="accountIdCopyDescription">Hesab Kimliyinizi kopyalayın və dostlarınızla paylaşın ki, sizə mesaj göndərə bilsinlər.</string>
     <string name="accountIdEnter">Hesab Kimliyini daxil edin</string>
@@ -15,6 +16,7 @@
     <string name="actualSize">Aktual həcmi</string>
     <string name="add">Əlavə et</string>
     <string name="addAdmins">İnzibatçılar əlavə et</string>
+    <string name="addAdminsDescription">Admin edəcəyiniz istifadəçinin Hesab ID-sini daxil edin.\n\nBirdən çox istifadəçi əlavə etmək üçün vergüllə ayrılmış hər Hesab ID-sini daxil edin. Bir dəfəyə 20-yə qədər Hesab ID-si daxil edilə bilər.</string>
     <string name="adminCannotBeRemoved">Adminlər çıxarıla bilməz.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> və <b>başqa {count} nəfər</b> Admin olaraq yüksəldildi.</string>
     <string name="adminPromote">Adminləri yüksəlt</string>
@@ -48,7 +50,10 @@
     <string name="andMore">+{count}</string>
     <string name="anonymous">Anonim</string>
     <string name="appIcon">Tətbiq ikonu</string>
+    <string name="appIconAndNameChange">Tətbiq ikonunu və adını dəyişdir</string>
+    <string name="appIconAndNameChangeConfirmation">Tətbiq ikonunu və adını dəyişdirərkən {app_name} bağlanılacaq. Bildirişlər, ilkin {app_name} ikonunu və adını istifadə etməyə davam edəcək.</string>
     <string name="appIconAndNameDescription">Alternativ tətbiq ikonu və adı, əsas ekranda və tətbiq siyirməsində nümayiş olunur.</string>
+    <string name="appIconAndNameSelectionDescription">Seçilmiş tətbiq ikonu və adı, əsas ekranda və tətbiq siyirməsində nümayiş olunur.</string>
     <string name="appIconAndNameSelectionTitle">İkon və ad</string>
     <string name="appIconDescription">Alternativ tətbiq ikonu, əsas ekranda və tətbiq kitabxanasında nümayiş olunur. Tətbiq adı hələ də \'{app_name}\' kimi görünəcək.</string>
     <string name="appIconEnableIcon">Alternativ tətbiq ikonunu istifadə et</string>
@@ -145,7 +150,9 @@
     <string name="banUser">İstifadəçini yasaqla</string>
     <string name="banUserBanned">İstifadəçi yasaqlandı</string>
     <string name="banUserDescription">Ban etdiyiniz istifadəçinin Hesab ID-sini daxil edin</string>
+    <string name="blindedId">Kor ID</string>
     <string name="block">Əngəllə</string>
+    <string name="blockBlockedDescription">Mesaj göndərmək üçün bu kontaktı əngəldən çıxardın.</string>
     <string name="blockBlockedNone">Əngəllənmiş kontakt yoxdur</string>
     <string name="blockBlockedUser">{name} əngəlləndi</string>
     <string name="blockDescription"><b>{name}</b> əngəllənsin? Əngəllənmiş istifadəçilər sizə mesaj tələbi, qrup dəvəti göndərə və ya sizə zəng edə bilməz.</string>
@@ -222,6 +229,7 @@
     <string name="clearMessagesNoteToSelfDescriptionUpdated">Bu cihazdakı bütün <b>Özünə Qeyd</b> mesajlarını silmək istədiyinizə əminsinizmi?</string>
     <string name="clearOnThisDevice">Bu cihazda təmizlə</string>
     <string name="close">Bağla</string>
+    <string name="closeApp">Tətbiqi bağla</string>
     <string name="closeWindow">Pəncərəni bağla</string>
     <string name="commitHashDesktop">Commit Hash: {hash}</string>
     <string name="communityBanDeleteDescription">Bununla seçilmiş istifadəçi bu İcmada yasaqlanacaq və onun bütün mesajları silinəcək. Davam etmək istədiyinizə əminsiniz?</string>
@@ -332,7 +340,7 @@
         <item quantity="one">Bu mesajı yalnız bu cihazdan silmək istədiyinizə əminsiniz?</item>
         <item quantity="other">Bu mesajları yalnız bu cihazdan silmək istədiyinizə əminsiniz?</item>
     </plurals>
-    <string name="deleteMessageDescriptionEveryone">Bu mesajı hamı üçün silmək istədiyinizə əminsiniz?</string>
+    <string name="deleteMessageDescriptionEveryone">Bu mesajı hər kəs üçün silmək istədiyinizə əminsiniz?</string>
     <string name="deleteMessageDeviceOnly">Yalnız bu cihazda sil</string>
     <string name="deleteMessageDevicesAll">Bütün cihazlarımda sil</string>
     <string name="deleteMessageEveryone">Hər kəs üçün sil</string>
@@ -396,6 +404,7 @@
     <string name="displayNameSet">Ekran adını ayarla</string>
     <string name="displayNameVisible">Ekran adınız, ünsiyyət qurduğunuz istifadəçilərə, qruplara və icmalara görünür.</string>
     <string name="document">Sənəd</string>
+    <string name="donate">İanə ver</string>
     <string name="done">Hazırdır</string>
     <string name="download">Endir</string>
     <string name="downloading">Endirilir...</string>
@@ -428,6 +437,7 @@
     <string name="errorConnection">Lütfən internet bağlantınızı yoxlayıb yenidən sınayın.</string>
     <string name="errorCopyAndQuit">Xətanı kopyala və çıx</string>
     <string name="errorDatabase">Databaza xətası</string>
+    <string name="errorGeneric">Nəsə səhv getdi. Lütfən daha sonra yenidən sınayın.</string>
     <string name="errorUnknown">Bilinməyən bir xəta baş verdi.</string>
     <string name="failedToDownload">Endirmək uğursuz oldu</string>
     <string name="failures">Xətalar</string>
@@ -479,7 +489,7 @@
     <string name="groupLeaveDescriptionAdmin"><b>{group_name}</b> qrupunu tərk etmək istədiyinizə əminsiniz?\n\nBununla bütün üzvləri çıxarılacaq və qrupun bütün məzmunu silinəcək.</string>
     <string name="groupLeaveErrorFailed">{group_name} qrupunu tərk etmə uğursuz oldu</string>
     <string name="groupMemberLeft"><b>{name}</b> qrupu tərk etdi.</string>
-    <string name="groupMemberLeftMultiple"><b>{name}</b> və <b>{count} başqaları</b> qrupu tərk etdi.</string>
+    <string name="groupMemberLeftMultiple"><b>{name}</b> və <b>başqa {count} nəfər</b> qrupu tərk etdi.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> və <b>{other_name}</b> qrupu tərk etdi.</string>
     <string name="groupMemberNew"><b>{name}</b> qrupa qoşuldu.</string>
     <string name="groupMemberNewHistory"><b>{name}</b> qrupa qoşulmaq üçün dəvət edildi. Söhbət tarixçəsi paylaşıldı.</string>
@@ -618,6 +628,7 @@
     <string name="membersInviteShareNewMessagesOnly">Yalnız yeni mesajları paylaş</string>
     <string name="membersInviteTitle">Dəvət et</string>
     <string name="message">Mesaj</string>
+    <string name="messageBubbleReadMore">Daha çox oxu</string>
     <string name="messageEmpty">Bu mesaj boşdur.</string>
     <string name="messageErrorDelivery">Mesaj çatdırılmadı</string>
     <string name="messageErrorLimit">Mesaj limitinə çatıldı</string>
@@ -641,6 +652,8 @@
         <item quantity="other">%1$s qrupunda %2$d yeni mesajınız var.</item>
     </plurals>
     <string name="messageReplyingTo">Cavab verilir</string>
+    <string name="messageRequestDisabledToastAttachments">Mesaj Tələbiniz qəbul edilənə qədər qoşma göndərə bilməzsiniz</string>
+    <string name="messageRequestDisabledToastVoiceMessages">Mesaj Tələbiniz qəbul edilənə qədər səsli mesaj göndərə bilməzsiniz</string>
     <string name="messageRequestGroupInvite"><b>{name}</b> sizi <b>{group_name}</b> qrupuna qoşulmağa dəvət etdi.</string>
     <string name="messageRequestGroupInviteDescription">Bu qrupa mesaj göndərdikdə, qrup dəvəti avtomatik qəbul ediləcək.</string>
     <string name="messageRequestPending">Hazırda mesaj tələbiniz gözləmədədir.</string>
@@ -649,8 +662,9 @@
     <string name="messageRequestsAcceptDescription">Bu istifadəçiyə mesaj göndərdikdə, onun mesaj tələbi avtomatik qəbul ediləcək və Hesab Kimliyiniz üzə çıxacaq.</string>
     <string name="messageRequestsAccepted">Mesaj tələbiniz qəbul edildi.</string>
     <string name="messageRequestsClearAllExplanation">Bütün mesaj tələblərini və qrup dəvətlərini silmək istədiyinizə əminsiniz?</string>
-    <string name="messageRequestsCommunities">Cəmiyyət Mesaj Tələbləri</string>
+    <string name="messageRequestsCommunities">İcma mesaj tələbləri</string>
     <string name="messageRequestsCommunitiesDescription">İcma danışıqlarından gələn mesaj tələblərinə icazə ver.</string>
+    <string name="messageRequestsContactDelete">Bu mesaj tələbini və əlaqəli kontaktı silmək istədiyinizə əminsiniz?</string>
     <string name="messageRequestsDelete">Bu mesaj tələbini silmək istədiyinizə əminsiniz?</string>
     <string name="messageRequestsNew">Yeni bir mesaj tələbiniz var</string>
     <string name="messageRequestsNonePending">Gözləyən mesaj tələbi yoxdur</string>
@@ -668,6 +682,15 @@
     <string name="messageVoiceSnippetGroup">{author}: {emoji} Səsyazmalı mesaj</string>
     <string name="messages">Mesajlar</string>
     <string name="minimize">Kiçilt</string>
+    <plurals name="modalMessageCharacterDisplayDescription">
+        <item quantity="one">Mesajların %1$s xarakter limiti var. %2$d xarakteriniz qaldı.</item>
+        <item quantity="other">Mesajların %1$s xarakter limiti var. %2$d xarakteriniz qaldı.</item>
+    </plurals>
+    <string name="modalMessageCharacterDisplayTitle">Mesaj uzunluğu</string>
+    <string name="modalMessageCharacterTooLongDescription">Bu mesaj üçün xarakter limitini aşmısınız. Lütfən mesajınızı {limit} xarakter və ya daha az qədər qısaldın.</string>
+    <string name="modalMessageCharacterTooLongTitle">Mesaj çox uzundur</string>
+    <string name="modalMessageTooLongDescription">Lütfən mesajınızı {limit} xarakter və ya daha az qədər qısaldın.</string>
+    <string name="modalMessageTooLongTitle">Mesaj çox uzundur</string>
     <string name="next">Növbəti</string>
     <string name="nicknameDescription"><b>{name}</b> üçün bir ləqəb seçin. Bu, təkbətək və qrup danışıqlarınızda sizə görünəcək.</string>
     <string name="nicknameEnter">Ləqəb daxil edin</string>
@@ -696,7 +719,7 @@
     <string name="notificationsHeaderAllMessages">Bildirişlər - Hamısı</string>
     <string name="notificationsHeaderMentionsOnly">Bildirişlər - Yalnız adçəkmə</string>
     <string name="notificationsHeaderMute">Bildirişlər - Səsi kəsildi</string>
-    <string name="notificationsIosGroup">{name} {conversation_name} üçün</string>
+    <string name="notificationsIosGroup">{name} > {conversation_name}</string>
     <string name="notificationsIosRestart">{device} yenidən başladığı zaman mesaj almış ola bilərsiniz.</string>
     <string name="notificationsLedColor">LED rəngi</string>
     <string name="notificationsMentionsOnly">Yalnız ad çəkildikdə</string>
@@ -707,6 +730,7 @@
     <string name="notificationsMuteUnmute">Səsi aç</string>
     <string name="notificationsMuted">Səssizdə</string>
     <string name="notificationsMutedFor">{time_large} müddətinə səssizə qoyulub</string>
+    <string name="notificationsMutedForTime">{date_time} qədər səssizdə</string>
     <string name="notificationsSlowMode">Yavaş rejim</string>
     <string name="notificationsSlowModeDescription">{app_name} arada arxaplanda yeni mesajları yoxlayacaq.</string>
     <string name="notificationsSound">Səs</string>
@@ -797,11 +821,27 @@
     <string name="permissionsStorageSave">{app_name} qoşmaları və medianı saxlamaq üçün anbara müraciət etməlidir.</string>
     <string name="permissionsStorageSaveDenied">{app_name} foto və videoları saxlamaq üçün anbara müraciət etməlidir, ancaq bu icazəyə həmişəlik rədd cavabı verilib. Lütfən tətbiq ayarlarına gedin, \"İcazələr\"i seçin və \"Anbar\" icazəsini fəallaşdırın.</string>
     <string name="permissionsStorageSend">{app_name} foto və videoları göndərmək üçün anbara müraciət etməlidir.</string>
+    <string name="permissionsWriteCommunity">Bu icmada yazma icazəniz yoxdur</string>
     <string name="pin">Sancaqla</string>
     <string name="pinConversation">Danışığı sancaqla</string>
     <string name="pinUnpin">Sancağı götür</string>
     <string name="pinUnpinConversation">Danışıq sancağını götür</string>
     <string name="preview">Önizləmə</string>
+    <string name="proActivated">Aktivləşdirildi</string>
+    <string name="proAlreadyPurchased">Artıq yüksəltdiniz</string>
+    <string name="proAnimatedDisplayPicture">Getdik və ekran şəkliniz üçün GIF-lər və animasiyalı WebP təsvirləri yükləyin!</string>
+    <string name="proAnimatedDisplayPictureCallToActionDescription">{app_pro} ilə animasiyalı ekran şəkillərini endirin və premium özəlliklərin kilidini açın</string>
+    <string name="proAnimatedDisplayPictureModalDescription">istifadəçiləri GIF-ləri yükləyə bilər</string>
+    <string name="proAnimatedDisplayPicturesNonProModalDescription">GIF-ləri yükləyin</string>
+    <string name="proCallToActionLongerMessages">Daha uzun mesajlar göndərmək istəyirsiniz? {app_pro} ilə daha çox mətn göndərin və premium özəlliklərin kilidini açın</string>
+    <string name="proCallToActionPinnedConversations">Daha çoxunu sancmaq istəyirsiniz? {app_pro} ilə söhbətlərinizi təşkil edin və premium özəlliklərin kilidini açın</string>
+    <string name="proCallToActionPinnedConversationsMoreThan">5-dən çoxunu sancmaq istəyirsiniz? {app_pro} ilə söhbətlərinizi təşkil edin və premium özəlliklərin kilidini açın</string>
+    <string name="proFeatureListAnimatedDisplayPicture">GIF və WebP ekran şəkilləri yüklə</string>
+    <string name="proFeatureListLargerGroups">300 üzvə qədər daha da böyük qrup söhbətləri</string>
+    <string name="proFeatureListLoadsMore">Üstəgəl, daha çox eksklüziv özəlliklər</string>
+    <string name="proFeatureListLongerMessages">10,000 xarakterə qədər mesajlar</string>
+    <string name="proFeatureListPinnedConversations">Limitsiz danışığı sancın</string>
+    <string name="proSendMore">Daha çoxunu göndərmək üçün</string>
     <string name="profile">Profil</string>
     <string name="profileDisplayPicture">Ekran şəkli</string>
     <string name="profileDisplayPictureRemoveError">Ekran şəklini silmə uğursuz oldu.</string>
@@ -853,6 +893,11 @@
     <string name="recoveryPasswordWarningSendDescription">Bu, sizin geri qaytarma parolunuzdur. Kiməsə göndərsəniz, hesabınıza tam müraciət edə bilər.</string>
     <string name="recreateGroup">Qrupu yenidən yarat</string>
     <string name="redo">Təkrar et</string>
+    <string name="remainingCharactersOverTooltip">Mesajın uzunluğunu {count} qədər azalt</string>
+    <plurals name="remainingCharactersTooltip">
+        <item quantity="one">%1$d xarakter qaldı</item>
+        <item quantity="other">%1$d xarakter qaldı</item>
+    </plurals>
     <string name="remove">Sil</string>
     <string name="removePasswordFail">Parol silmə uğursuz oldu</string>
     <string name="reply">Cavabla</string>
@@ -884,6 +929,7 @@
     <string name="searchSearching">Axtarılır...</string>
     <string name="select">Seç</string>
     <string name="selectAll">Hamısını seç</string>
+    <string name="selectAppIcon">Tətbiq ikonunu seç</string>
     <string name="send">Göndər</string>
     <string name="sending">Göndərilir</string>
     <string name="sendingCallOffer">Zəng təklifi göndərilir</string>
@@ -895,6 +941,16 @@
     <string name="sessionHelp">Kömək</string>
     <string name="sessionInviteAFriend">Bir dostu dəvət et</string>
     <string name="sessionMessageRequests">Mesaj tələbləri</string>
+    <string name="sessionNetworkCurrentPrice">Hazırkı {token_name_short} qiyməti</string>
+    <string name="sessionNetworkDescription">Mesajlar {network_name} üzərindən göndərilir. Şəbəkə, {app_name} tətbiqini mərkəzsiz və təhlükəsiz saxlamaq üçün {token_name_long} ilə təşviq olunan node-lardan ibarətdir. <font color="0"><b>Ətraflı öyrən</b> {icon}</font></string>
+    <string name="sessionNetworkLearnAboutStaking">Staking barədə ətraflı öyrən</string>
+    <string name="sessionNetworkMarketCap">Bazar dəyəri</string>
+    <string name="sessionNetworkNodesSecuring">{app_name} node-ları <font color="0">mesajlarınızın</font> təhlükəsizliyini təmin edir</string>
+    <string name="sessionNetworkNodesSwarm"><font color="0">Swarm-ınızdakı</font> {app_name} node-ları</string>
+    <string name="sessionNetworkNotificationLive">{token_name_long} artıq aktivdir! Ayarlarda yeni {network_name} bölməsini kəşf edin və {token_name_long} necə Session-u gücləndirdiyini öyrənin.</string>
+    <string name="sessionNetworkSecuredBy">Şəbəkənin təhlükəsizliyini təmin edən</string>
+    <string name="sessionNetworkTokenDescription">Şəbəkənin təhlükəsizliyini təmin etmək üçün {token_name_long} stake etdiyiniz zaman, {staking_reward_pool} fondundan {token_name_short} ilə mükafatlandırılırsınız.</string>
+    <string name="sessionNew"><font color="0"><b>•</b> Yeni</font></string>
     <string name="sessionNotifications">Bildirişlər</string>
     <string name="sessionPermissions">İcazələr</string>
     <string name="sessionPrivacy">Gizlilik</string>
@@ -921,9 +977,12 @@
     <string name="theContinue">Davam</string>
     <string name="theDefault">İlkin</string>
     <string name="theError">Xəta</string>
+    <string name="tooltipAccountIdVisible"><b>{name}</b> üçün Hesab ID-si əvvəlki qarşılıqlı əlaqələrə əsasən görünür</string>
+    <string name="tooltipBlindedIdCommunities">Kor ID-lər, spamı azaltmaq və məxfiliyi artırmaq üçün icmalarda istifadə olunur</string>
     <string name="tryAgain">Yenidən sına</string>
     <string name="typingIndicators">Yazma göstəriciləri</string>
     <string name="typingIndicatorsDescription">Yazma göstəricilərini gör və paylaş.</string>
+    <string name="unavailable">Əlçatmazdır</string>
     <string name="undo">Geri al</string>
     <string name="unknown">Bilinmir</string>
     <string name="updateApp">Tətbiq güncəlləmələri</string>
@@ -939,6 +998,8 @@
     <string name="updateReleaseNotes">Buraxılış qeydlərinə get</string>
     <string name="updateSession">{app_name} güncəlləməsi</string>
     <string name="updateVersion">Versiya {version}</string>
+    <string name="updated">Son güncəlləmə: {relative_time} əvvəl</string>
+    <string name="upgradeTo">Yüksəlt</string>
     <string name="uploading">Yüklənir</string>
     <string name="urlCopy">URL-ni kopyala</string>
     <string name="urlOpen">URL-ni aç</string>
