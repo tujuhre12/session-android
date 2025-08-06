@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import network.loki.messenger.libsession_util.util.BaseCommunityInfo
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
@@ -28,7 +29,7 @@ private typealias CommunityServerUrl = String
  */
 @Singleton
 class BlindMappingRepository @Inject constructor(
-    configFactory: ConfigFactory,
+    private val configFactory: ConfigFactory,
     prefs: TextSecurePreferences,
     @param:ManagerScope private val scope: CoroutineScope,
 ) {
@@ -92,13 +93,22 @@ class BlindMappingRepository @Inject constructor(
             }
     }
 
-    fun getReverseMappings(
+    fun calculateReverseMappings(
         contactAddress: Address.Standard,
-    ): List<Pair<CommunityServerUrl, Address.Blinded>> {
-        return mappings.value.flatMap { (communityUrl, mapping) ->
-            mapping.filter { it.value == contactAddress }
-                .map { (blindedAddress, _) -> communityUrl to blindedAddress }
-        }
+    ): List<Pair<BaseCommunityInfo, Address.Blinded>> {
+        return configFactory.withUserConfigs { it.userGroups.allCommunityInfo() }
+            .asSequence()
+            .flatMap { c ->
+                (BlindKeyAPI.blind15Ids(
+                    sessionId = contactAddress.accountId.hexString,
+                    serverPubKey = c.community.pubKeyHex
+                ).asSequence() + BlindKeyAPI.blind25Id(
+                    sessionId = contactAddress.accountId.hexString,
+                    serverPubKey = c.community.pubKeyHex
+                ))
+                    .map { id -> c.community to Address.Blinded(AccountId(id)) }
+            }
+            .toList()
     }
 
     fun observeMapping(

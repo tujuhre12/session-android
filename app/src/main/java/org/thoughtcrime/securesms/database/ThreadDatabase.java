@@ -59,7 +59,9 @@ import org.thoughtcrime.securesms.notifications.MarkReadReceiver;
 
 import java.io.Closeable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -101,7 +103,6 @@ public class ThreadDatabase extends Database {
   public  static final String SNIPPET_TYPE           = "snippet_type";
   @Deprecated(forRemoval = true)
   public  static final String SNIPPET_URI            = "snippet_uri";
-  @Deprecated(forRemoval = true)
   /**
    * The column that hold a {@link MessageContent}. See {@link MmsDatabase#MESSAGE_CONTENT} for more information
    */
@@ -376,7 +377,7 @@ public class ThreadDatabase extends Database {
   }
 
   @NonNull
-  public List<ThreadRecord> getThreads(@Nullable List<Address> addresses) {
+  public List<ThreadRecord> getThreads(@Nullable Collection<? extends Address> addresses) {
     if (addresses == null || addresses.isEmpty())
       return Collections.emptyList();
 
@@ -526,9 +527,9 @@ public class ThreadDatabase extends Database {
     }
   }
 
-  public List<Long> getThreadIDsFor(List<String> addresses) {
+  public List<Long> getThreadIDsFor(Collection<? extends Address> addresses) {
     final String where = ADDRESS + " IN (SELECT value FROM json_each(?))";
-    final String whereArg = new JSONArray(addresses).toString();
+    final String whereArg = new JSONArray(CollectionsKt.map(addresses, Address::getAddress)).toString();
 
     try (final Cursor cursor = getReadableDatabase().query(TABLE_NAME, new String[]{ID}, where,
             new String[]{whereArg}, null, null, null)) {

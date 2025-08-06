@@ -10194,6 +10194,17 @@ public final class SignalServiceProtos {
        */
       com.google.protobuf.ByteString
           getProfilePictureBytes();
+
+      /**
+       * <code>optional uint64 profileUpdateTimestamp = 3;</code>
+       * @return Whether the profileUpdateTimestamp field is set.
+       */
+      boolean hasProfileUpdateTimestamp();
+      /**
+       * <code>optional uint64 profileUpdateTimestamp = 3;</code>
+       * @return The profileUpdateTimestamp.
+       */
+      long getProfileUpdateTimestamp();
     }
     /**
      * Protobuf type {@code signalservice.DataMessage.LokiProfile}
@@ -10333,6 +10344,25 @@ public final class SignalServiceProtos {
         }
       }
 
+      public static final int PROFILEUPDATETIMESTAMP_FIELD_NUMBER = 3;
+      private long profileUpdateTimestamp_ = 0L;
+      /**
+       * <code>optional uint64 profileUpdateTimestamp = 3;</code>
+       * @return Whether the profileUpdateTimestamp field is set.
+       */
+      @java.lang.Override
+      public boolean hasProfileUpdateTimestamp() {
+        return ((bitField0_ & 0x00000004) != 0);
+      }
+      /**
+       * <code>optional uint64 profileUpdateTimestamp = 3;</code>
+       * @return The profileUpdateTimestamp.
+       */
+      @java.lang.Override
+      public long getProfileUpdateTimestamp() {
+        return profileUpdateTimestamp_;
+      }
+
       private byte memoizedIsInitialized = -1;
       @java.lang.Override
       public final boolean isInitialized() {
@@ -10353,6 +10383,9 @@ public final class SignalServiceProtos {
         if (((bitField0_ & 0x00000002) != 0)) {
           com.google.protobuf.GeneratedMessage.writeString(output, 2, profilePicture_);
         }
+        if (((bitField0_ & 0x00000004) != 0)) {
+          output.writeUInt64(3, profileUpdateTimestamp_);
+        }
         getUnknownFields().writeTo(output);
       }
 
@@ -10367,6 +10400,10 @@ public final class SignalServiceProtos {
         }
         if (((bitField0_ & 0x00000002) != 0)) {
           size += com.google.protobuf.GeneratedMessage.computeStringSize(2, profilePicture_);
+        }
+        if (((bitField0_ & 0x00000004) != 0)) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeUInt64Size(3, profileUpdateTimestamp_);
         }
         size += getUnknownFields().getSerializedSize();
         memoizedSize = size;
@@ -10393,6 +10430,11 @@ public final class SignalServiceProtos {
           if (!getProfilePicture()
               .equals(other.getProfilePicture())) return false;
         }
+        if (hasProfileUpdateTimestamp() != other.hasProfileUpdateTimestamp()) return false;
+        if (hasProfileUpdateTimestamp()) {
+          if (getProfileUpdateTimestamp()
+              != other.getProfileUpdateTimestamp()) return false;
+        }
         if (!getUnknownFields().equals(other.getUnknownFields())) return false;
         return true;
       }
@@ -10411,6 +10453,11 @@ public final class SignalServiceProtos {
         if (hasProfilePicture()) {
           hash = (37 * hash) + PROFILEPICTURE_FIELD_NUMBER;
           hash = (53 * hash) + getProfilePicture().hashCode();
+        }
+        if (hasProfileUpdateTimestamp()) {
+          hash = (37 * hash) + PROFILEUPDATETIMESTAMP_FIELD_NUMBER;
+          hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+              getProfileUpdateTimestamp());
         }
         hash = (29 * hash) + getUnknownFields().hashCode();
         memoizedHashCode = hash;
@@ -10545,6 +10592,7 @@ public final class SignalServiceProtos {
           bitField0_ = 0;
           displayName_ = "";
           profilePicture_ = "";
+          profileUpdateTimestamp_ = 0L;
           return this;
         }
 
@@ -10587,6 +10635,10 @@ public final class SignalServiceProtos {
             result.profilePicture_ = profilePicture_;
             to_bitField0_ |= 0x00000002;
           }
+          if (((from_bitField0_ & 0x00000004) != 0)) {
+            result.profileUpdateTimestamp_ = profileUpdateTimestamp_;
+            to_bitField0_ |= 0x00000004;
+          }
           result.bitField0_ |= to_bitField0_;
         }
 
@@ -10611,6 +10663,9 @@ public final class SignalServiceProtos {
             profilePicture_ = other.profilePicture_;
             bitField0_ |= 0x00000002;
             onChanged();
+          }
+          if (other.hasProfileUpdateTimestamp()) {
+            setProfileUpdateTimestamp(other.getProfileUpdateTimestamp());
           }
           this.mergeUnknownFields(other.getUnknownFields());
           onChanged();
@@ -10648,6 +10703,11 @@ public final class SignalServiceProtos {
                   bitField0_ |= 0x00000002;
                   break;
                 } // case 18
+                case 24: {
+                  profileUpdateTimestamp_ = input.readUInt64();
+                  bitField0_ |= 0x00000004;
+                  break;
+                } // case 24
                 default: {
                   if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                     done = true; // was an endgroup tag
@@ -10821,6 +10881,46 @@ public final class SignalServiceProtos {
           if (value == null) { throw new NullPointerException(); }
           profilePicture_ = value;
           bitField0_ |= 0x00000002;
+          onChanged();
+          return this;
+        }
+
+        private long profileUpdateTimestamp_ ;
+        /**
+         * <code>optional uint64 profileUpdateTimestamp = 3;</code>
+         * @return Whether the profileUpdateTimestamp field is set.
+         */
+        @java.lang.Override
+        public boolean hasProfileUpdateTimestamp() {
+          return ((bitField0_ & 0x00000004) != 0);
+        }
+        /**
+         * <code>optional uint64 profileUpdateTimestamp = 3;</code>
+         * @return The profileUpdateTimestamp.
+         */
+        @java.lang.Override
+        public long getProfileUpdateTimestamp() {
+          return profileUpdateTimestamp_;
+        }
+        /**
+         * <code>optional uint64 profileUpdateTimestamp = 3;</code>
+         * @param value The profileUpdateTimestamp to set.
+         * @return This builder for chaining.
+         */
+        public Builder setProfileUpdateTimestamp(long value) {
+
+          profileUpdateTimestamp_ = value;
+          bitField0_ |= 0x00000004;
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>optional uint64 profileUpdateTimestamp = 3;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearProfileUpdateTimestamp() {
+          bitField0_ = (bitField0_ & ~0x00000004);
+          profileUpdateTimestamp_ = 0L;
           onChanged();
           return this;
         }
@@ -29792,7 +29892,7 @@ public final class SignalServiceProtos {
       "otification\022<\n\004type\030\001 \002(\0162..signalservic" +
       "e.DataExtractionNotification.Type\022\021\n\ttim" +
       "estamp\030\002 \001(\004\"\'\n\004Type\022\016\n\nSCREENSHOT\020\001\022\017\n\013" +
-      "MEDIA_SAVED\020\002\"\211\027\n\013DataMessage\022\014\n\004body\030\001 " +
+      "MEDIA_SAVED\020\002\"\251\027\n\013DataMessage\022\014\n\004body\030\001 " +
       "\001(\t\0225\n\013attachments\030\002 \003(\0132 .signalservice" +
       ".AttachmentPointer\022\r\n\005flags\030\004 \001(\r\022\023\n\013exp" +
       "ireTimer\030\005 \001(\r\022\022\n\nprofileKey\030\006 \001(\014\022\021\n\tti" +
@@ -29816,76 +29916,77 @@ public final class SignalServiceProtos {
       "flags\030\004 \001(\r\"\032\n\005Flags\022\021\n\rVOICE_MESSAGE\020\001\032" +
       "V\n\007Preview\022\013\n\003url\030\001 \002(\t\022\r\n\005title\030\002 \001(\t\022/" +
       "\n\005image\030\003 \001(\0132 .signalservice.Attachment" +
-      "Pointer\032:\n\013LokiProfile\022\023\n\013displayName\030\001 " +
-      "\001(\t\022\026\n\016profilePicture\030\002 \001(\t\0320\n\023OpenGroup" +
-      "Invitation\022\013\n\003url\030\001 \002(\t\022\014\n\004name\030\003 \002(\t\032\316\005" +
-      "\n\022GroupUpdateMessage\022J\n\rinviteMessage\030\001 " +
-      "\001(\01323.signalservice.DataMessage.GroupUpd" +
-      "ateInviteMessage\022R\n\021infoChangeMessage\030\002 " +
-      "\001(\01327.signalservice.DataMessage.GroupUpd" +
-      "ateInfoChangeMessage\022V\n\023memberChangeMess" +
-      "age\030\003 \001(\01329.signalservice.DataMessage.Gr" +
-      "oupUpdateMemberChangeMessage\022L\n\016promoteM" +
-      "essage\030\004 \001(\01324.signalservice.DataMessage" +
-      ".GroupUpdatePromoteMessage\022R\n\021memberLeft" +
-      "Message\030\005 \001(\01327.signalservice.DataMessag" +
-      "e.GroupUpdateMemberLeftMessage\022S\n\016invite" +
-      "Response\030\006 \001(\0132;.signalservice.DataMessa" +
-      "ge.GroupUpdateInviteResponseMessage\022]\n\023d" +
-      "eleteMemberContent\030\007 \001(\0132@.signalservice" +
-      ".DataMessage.GroupUpdateDeleteMemberCont" +
-      "entMessage\022j\n\035memberLeftNotificationMess" +
-      "age\030\010 \001(\0132C.signalservice.DataMessage.Gr" +
-      "oupUpdateMemberLeftNotificationMessage\032p" +
-      "\n\030GroupUpdateInviteMessage\022\026\n\016groupSessi" +
-      "onId\030\001 \002(\t\022\014\n\004name\030\002 \002(\t\022\026\n\016memberAuthDa" +
-      "ta\030\003 \002(\014\022\026\n\016adminSignature\030\004 \002(\014\032L\n\030Grou" +
-      "pUpdateDeleteMessage\022\030\n\020memberSessionIds" +
-      "\030\001 \003(\t\022\026\n\016adminSignature\030\002 \002(\014\032D\n\031GroupU" +
-      "pdatePromoteMessage\022\031\n\021groupIdentitySeed" +
-      "\030\001 \002(\014\022\014\n\004name\030\002 \002(\t\032\353\001\n\034GroupUpdateInfo" +
-      "ChangeMessage\022J\n\004type\030\001 \002(\0162<.signalserv" +
-      "ice.DataMessage.GroupUpdateInfoChangeMes" +
-      "sage.Type\022\023\n\013updatedName\030\002 \001(\t\022\031\n\021update" +
-      "dExpiration\030\003 \001(\r\022\026\n\016adminSignature\030\004 \002(" +
-      "\014\"7\n\004Type\022\010\n\004NAME\020\001\022\n\n\006AVATAR\020\002\022\031\n\025DISAP" +
-      "PEARING_MESSAGES\020\003\032\345\001\n\036GroupUpdateMember" +
-      "ChangeMessage\022L\n\004type\030\001 \002(\0162>.signalserv" +
-      "ice.DataMessage.GroupUpdateMemberChangeM" +
-      "essage.Type\022\030\n\020memberSessionIds\030\002 \003(\t\022\025\n" +
-      "\rhistoryShared\030\003 \001(\010\022\026\n\016adminSignature\030\004" +
-      " \002(\014\",\n\004Type\022\t\n\005ADDED\020\001\022\013\n\007REMOVED\020\002\022\014\n\010" +
-      "PROMOTED\020\003\032\036\n\034GroupUpdateMemberLeftMessa" +
-      "ge\0326\n GroupUpdateInviteResponseMessage\022\022" +
-      "\n\nisApproved\030\001 \002(\010\032p\n%GroupUpdateDeleteM" +
-      "emberContentMessage\022\030\n\020memberSessionIds\030" +
-      "\001 \003(\t\022\025\n\rmessageHashes\030\002 \003(\t\022\026\n\016adminSig" +
-      "nature\030\003 \001(\014\032*\n(GroupUpdateMemberLeftNot" +
-      "ificationMessage\032\222\001\n\010Reaction\022\n\n\002id\030\001 \002(" +
-      "\004\022\016\n\006author\030\002 \002(\t\022\r\n\005emoji\030\003 \001(\t\022:\n\006acti" +
-      "on\030\004 \002(\0162*.signalservice.DataMessage.Rea" +
-      "ction.Action\"\037\n\006Action\022\t\n\005REACT\020\000\022\n\n\006REM" +
-      "OVE\020\001\"$\n\005Flags\022\033\n\027EXPIRATION_TIMER_UPDAT" +
-      "E\020\002J\004\010h\020i\"\352\001\n\013CallMessage\022-\n\004type\030\001 \002(\0162" +
-      "\037.signalservice.CallMessage.Type\022\014\n\004sdps" +
-      "\030\002 \003(\t\022\027\n\017sdpMLineIndexes\030\003 \003(\r\022\017\n\007sdpMi" +
-      "ds\030\004 \003(\t\022\014\n\004uuid\030\005 \002(\t\"f\n\004Type\022\r\n\tPRE_OF" +
-      "FER\020\006\022\t\n\005OFFER\020\001\022\n\n\006ANSWER\020\002\022\026\n\022PROVISIO" +
-      "NAL_ANSWER\020\003\022\022\n\016ICE_CANDIDATES\020\004\022\014\n\010END_" +
-      "CALL\020\005\"y\n\026MessageRequestResponse\022\022\n\nisAp" +
-      "proved\030\001 \002(\010\022\022\n\nprofileKey\030\002 \001(\014\0227\n\007prof" +
-      "ile\030\003 \001(\0132&.signalservice.DataMessage.Lo" +
-      "kiProfile\"u\n\016ReceiptMessage\0220\n\004type\030\001 \002(" +
-      "\0162\".signalservice.ReceiptMessage.Type\022\021\n" +
-      "\ttimestamp\030\002 \003(\004\"\036\n\004Type\022\014\n\010DELIVERY\020\000\022\010" +
-      "\n\004READ\020\001\"\354\001\n\021AttachmentPointer\022\n\n\002id\030\001 \002" +
-      "(\006\022\023\n\013contentType\030\002 \001(\t\022\013\n\003key\030\003 \001(\014\022\014\n\004" +
-      "size\030\004 \001(\r\022\021\n\tthumbnail\030\005 \001(\014\022\016\n\006digest\030" +
-      "\006 \001(\014\022\020\n\010fileName\030\007 \001(\t\022\r\n\005flags\030\010 \001(\r\022\r" +
-      "\n\005width\030\t \001(\r\022\016\n\006height\030\n \001(\r\022\017\n\007caption" +
-      "\030\013 \001(\t\022\013\n\003url\030e \001(\t\"\032\n\005Flags\022\021\n\rVOICE_ME" +
-      "SSAGE\020\001B3\n\034org.session.libsignal.protosB" +
-      "\023SignalServiceProtos"
+      "Pointer\032Z\n\013LokiProfile\022\023\n\013displayName\030\001 " +
+      "\001(\t\022\026\n\016profilePicture\030\002 \001(\t\022\036\n\026profileUp" +
+      "dateTimestamp\030\003 \001(\004\0320\n\023OpenGroupInvitati" +
+      "on\022\013\n\003url\030\001 \002(\t\022\014\n\004name\030\003 \002(\t\032\316\005\n\022GroupU" +
+      "pdateMessage\022J\n\rinviteMessage\030\001 \001(\01323.si" +
+      "gnalservice.DataMessage.GroupUpdateInvit" +
+      "eMessage\022R\n\021infoChangeMessage\030\002 \001(\01327.si" +
+      "gnalservice.DataMessage.GroupUpdateInfoC" +
+      "hangeMessage\022V\n\023memberChangeMessage\030\003 \001(" +
+      "\01329.signalservice.DataMessage.GroupUpdat" +
+      "eMemberChangeMessage\022L\n\016promoteMessage\030\004" +
+      " \001(\01324.signalservice.DataMessage.GroupUp" +
+      "datePromoteMessage\022R\n\021memberLeftMessage\030" +
+      "\005 \001(\01327.signalservice.DataMessage.GroupU" +
+      "pdateMemberLeftMessage\022S\n\016inviteResponse" +
+      "\030\006 \001(\0132;.signalservice.DataMessage.Group" +
+      "UpdateInviteResponseMessage\022]\n\023deleteMem" +
+      "berContent\030\007 \001(\0132@.signalservice.DataMes" +
+      "sage.GroupUpdateDeleteMemberContentMessa" +
+      "ge\022j\n\035memberLeftNotificationMessage\030\010 \001(" +
+      "\0132C.signalservice.DataMessage.GroupUpdat" +
+      "eMemberLeftNotificationMessage\032p\n\030GroupU" +
+      "pdateInviteMessage\022\026\n\016groupSessionId\030\001 \002" +
+      "(\t\022\014\n\004name\030\002 \002(\t\022\026\n\016memberAuthData\030\003 \002(\014" +
+      "\022\026\n\016adminSignature\030\004 \002(\014\032L\n\030GroupUpdateD" +
+      "eleteMessage\022\030\n\020memberSessionIds\030\001 \003(\t\022\026" +
+      "\n\016adminSignature\030\002 \002(\014\032D\n\031GroupUpdatePro" +
+      "moteMessage\022\031\n\021groupIdentitySeed\030\001 \002(\014\022\014" +
+      "\n\004name\030\002 \002(\t\032\353\001\n\034GroupUpdateInfoChangeMe" +
+      "ssage\022J\n\004type\030\001 \002(\0162<.signalservice.Data" +
+      "Message.GroupUpdateInfoChangeMessage.Typ" +
+      "e\022\023\n\013updatedName\030\002 \001(\t\022\031\n\021updatedExpirat" +
+      "ion\030\003 \001(\r\022\026\n\016adminSignature\030\004 \002(\014\"7\n\004Typ" +
+      "e\022\010\n\004NAME\020\001\022\n\n\006AVATAR\020\002\022\031\n\025DISAPPEARING_" +
+      "MESSAGES\020\003\032\345\001\n\036GroupUpdateMemberChangeMe" +
+      "ssage\022L\n\004type\030\001 \002(\0162>.signalservice.Data" +
+      "Message.GroupUpdateMemberChangeMessage.T" +
+      "ype\022\030\n\020memberSessionIds\030\002 \003(\t\022\025\n\rhistory" +
+      "Shared\030\003 \001(\010\022\026\n\016adminSignature\030\004 \002(\014\",\n\004" +
+      "Type\022\t\n\005ADDED\020\001\022\013\n\007REMOVED\020\002\022\014\n\010PROMOTED" +
+      "\020\003\032\036\n\034GroupUpdateMemberLeftMessage\0326\n Gr" +
+      "oupUpdateInviteResponseMessage\022\022\n\nisAppr" +
+      "oved\030\001 \002(\010\032p\n%GroupUpdateDeleteMemberCon" +
+      "tentMessage\022\030\n\020memberSessionIds\030\001 \003(\t\022\025\n" +
+      "\rmessageHashes\030\002 \003(\t\022\026\n\016adminSignature\030\003" +
+      " \001(\014\032*\n(GroupUpdateMemberLeftNotificatio" +
+      "nMessage\032\222\001\n\010Reaction\022\n\n\002id\030\001 \002(\004\022\016\n\006aut" +
+      "hor\030\002 \002(\t\022\r\n\005emoji\030\003 \001(\t\022:\n\006action\030\004 \002(\016" +
+      "2*.signalservice.DataMessage.Reaction.Ac" +
+      "tion\"\037\n\006Action\022\t\n\005REACT\020\000\022\n\n\006REMOVE\020\001\"$\n" +
+      "\005Flags\022\033\n\027EXPIRATION_TIMER_UPDATE\020\002J\004\010h\020" +
+      "i\"\352\001\n\013CallMessage\022-\n\004type\030\001 \002(\0162\037.signal" +
+      "service.CallMessage.Type\022\014\n\004sdps\030\002 \003(\t\022\027" +
+      "\n\017sdpMLineIndexes\030\003 \003(\r\022\017\n\007sdpMids\030\004 \003(\t" +
+      "\022\014\n\004uuid\030\005 \002(\t\"f\n\004Type\022\r\n\tPRE_OFFER\020\006\022\t\n" +
+      "\005OFFER\020\001\022\n\n\006ANSWER\020\002\022\026\n\022PROVISIONAL_ANSW" +
+      "ER\020\003\022\022\n\016ICE_CANDIDATES\020\004\022\014\n\010END_CALL\020\005\"y" +
+      "\n\026MessageRequestResponse\022\022\n\nisApproved\030\001" +
+      " \002(\010\022\022\n\nprofileKey\030\002 \001(\014\0227\n\007profile\030\003 \001(" +
+      "\0132&.signalservice.DataMessage.LokiProfil" +
+      "e\"u\n\016ReceiptMessage\0220\n\004type\030\001 \002(\0162\".sign" +
+      "alservice.ReceiptMessage.Type\022\021\n\ttimesta" +
+      "mp\030\002 \003(\004\"\036\n\004Type\022\014\n\010DELIVERY\020\000\022\010\n\004READ\020\001" +
+      "\"\354\001\n\021AttachmentPointer\022\n\n\002id\030\001 \002(\006\022\023\n\013co" +
+      "ntentType\030\002 \001(\t\022\013\n\003key\030\003 \001(\014\022\014\n\004size\030\004 \001" +
+      "(\r\022\021\n\tthumbnail\030\005 \001(\014\022\016\n\006digest\030\006 \001(\014\022\020\n" +
+      "\010fileName\030\007 \001(\t\022\r\n\005flags\030\010 \001(\r\022\r\n\005width\030" +
+      "\t \001(\r\022\016\n\006height\030\n \001(\r\022\017\n\007caption\030\013 \001(\t\022\013" +
+      "\n\003url\030e \001(\t\"\032\n\005Flags\022\021\n\rVOICE_MESSAGE\020\001B" +
+      "3\n\034org.session.libsignal.protosB\023SignalS" +
+      "erviceProtos"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -29956,7 +30057,7 @@ public final class SignalServiceProtos {
     internal_static_signalservice_DataMessage_LokiProfile_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_signalservice_DataMessage_LokiProfile_descriptor,
-        new java.lang.String[] { "DisplayName", "ProfilePicture", });
+        new java.lang.String[] { "DisplayName", "ProfilePicture", "ProfileUpdateTimestamp", });
     internal_static_signalservice_DataMessage_OpenGroupInvitation_descriptor =
       internal_static_signalservice_DataMessage_descriptor.getNestedTypes().get(3);
     internal_static_signalservice_DataMessage_OpenGroupInvitation_fieldAccessorTable = new

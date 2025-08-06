@@ -2,6 +2,7 @@ package org.session.libsession.messaging.messages
 
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
 import network.loki.messenger.libsession_util.util.UserPic
+import org.session.libsession.messaging.messages.visible.Profile
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -152,6 +153,18 @@ class ProfileUpdateHandler @Inject constructor(
                 }
 
                 return Updates(name, pic, blocksCommunityMessageRequests, profileUpdateTime)
+            }
+
+            fun Profile.toUpdates(
+                blocksCommunityMessageRequests: Boolean? = null,
+            ): Updates? {
+                return create(
+                    name = this.displayName,
+                    picUrl = this.profilePictureURL,
+                    picKey = this.profileKey,
+                    blocksCommunityMessageRequests = blocksCommunityMessageRequests,
+                    profileUpdateTime = this.profileUpdated
+                )
             }
         }
     }

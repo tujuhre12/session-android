@@ -300,7 +300,7 @@ class OpenGroupPoller @AssistedInject constructor(
         handleDeletedMessages(server, roomToken, deletions.map { it.id })
     }
 
-    private fun handleDirectMessages(
+    private suspend fun handleDirectMessages(
         server: String,
         fromOutbox: Boolean,
         messages: List<OpenGroupApi.DirectMessage>

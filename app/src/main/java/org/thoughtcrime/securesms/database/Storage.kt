@@ -24,7 +24,6 @@ import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.ProfileUpdateHandler
 import org.session.libsession.messaging.messages.control.GroupUpdated
-import org.session.libsession.messaging.messages.control.MessageRequestResponse
 import org.session.libsession.messaging.messages.signal.IncomingEncryptedMessage
 import org.session.libsession.messaging.messages.signal.IncomingGroupMessage
 import org.session.libsession.messaging.messages.signal.IncomingMediaMessage
@@ -60,7 +59,6 @@ import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.isGroupV2
 import org.session.libsession.utilities.isLegacyGroup
 import org.session.libsession.utilities.isStandard
-import org.session.libsession.utilities.updateContact
 import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
@@ -1240,117 +1238,6 @@ open class Storage @Inject constructor(
         )
 
         mmsDatabase.insertSecureDecryptedMessageInbox(mediaMessage, threadId, runThreadUpdate = true)
-    }
-
-    /**
-     * This will create a control message used to indicate that a contact has accepted our message request
-     */
-    override fun insertMessageRequestResponseFromContact(response: MessageRequestResponse) {
-        val userPublicKey = getUserPublicKey()
-        val senderPublicKey = response.sender!!
-        val recipientPublicKey = response.recipient!!
-
-        if (
-            userPublicKey == null
-            || (userPublicKey != recipientPublicKey && userPublicKey != senderPublicKey)
-            // this is true if it is a sync message
-            || (userPublicKey == recipientPublicKey && userPublicKey == senderPublicKey)
-        ) return
-
-        if (userPublicKey == senderPublicKey) {
-            val requestRecipient = fromSerialized(recipientPublicKey)
-            val threadId = threadDatabase.getOrCreateThreadIdFor(requestRecipient)
-            threadDatabase.setHasSent(threadId, true)
-        } else {
-            val sender = fromSerialized(senderPublicKey)
-            val threadId = getOrCreateThreadIdFor(sender)
-            val profile = response.profile
-            if (profile != null) {
-                val updates = ProfileUpdateHandler.Updates.create(
-                    name = profile.displayName,
-                    picUrl = profile.profilePictureURL,
-                    picKey = profile.profileKey,
-                    blocksCommunityMessageRequests = null,
-                    proStatus = null,
-                    profileUpdateTime = null
-                )
-
-                if (updates != null) {
-                    profileUpdateHandler.handleProfileUpdate(
-                        senderId = AccountId(senderPublicKey),
-                        updates = updates,
-                        fromCommunity = null
-                    )
-                }
-            }
-
-//            blindedIdMappingRepository.getReverseMappings(sender)
-//
-//            val mappings = mutableMapOf<String, BlindedIdMapping>()
-//
-//            for ((address, threadId) in threadDatabase.allThreads) {
-//                val blindedId = when {
-//                    address.isGroupOrCommunity -> null
-//                    address.isCommunityInbox -> GroupUtil.getDecodedOpenGroupInboxAccountId(address.toString())
-//                    else -> address.address.takeIf { AccountId.fromStringOrNull(it)?.prefix == IdPrefix.BLINDED }
-//                } ?: continue
-//            }
-//
-//            // TODO: Actually move the conversation from blind to normal
-//            for (mapping in mappings) {
-//                if (!BlindKeyAPI.sessionIdMatchesBlindedId(
-//                        sessionId = senderPublicKey,
-//                        blindedId = mapping.value.blindedId,
-//                        serverPubKey = mapping.value.serverId
-//                    )
-//                ) {
-//                    continue
-//                }
-//
-//                val blindedThreadId = threadDatabase.getOrCreateThreadIdFor(fromSerialized(mapping.key))
-//                mmsDatabase.updateThreadId(blindedThreadId, threadId)
-//                smsDatabase.updateThreadId(blindedThreadId, threadId)
-//                deleteConversation(blindedThreadId)
-//            }
-
-            var alreadyApprovedMe = false
-
-            if (sender is Address.Standard) {
-                // Update the contact's approval status
-                configFactory.withMutableUserConfigs { configs ->
-                    configs.contacts.updateContact(sender) {
-                        alreadyApprovedMe = approvedMe
-                        approvedMe = true
-                    }
-                }
-            }
-
-            // only show the message if wasn't already approvedMe before
-            if(!alreadyApprovedMe) {
-                val message = IncomingMediaMessage(
-                    sender,
-                    response.sentTimestamp!!,
-                    -1,
-                    0,
-                    0,
-                    true,
-                    false,
-                    Optional.absent(),
-                    Optional.absent(),
-                    Optional.absent(),
-                    null,
-                    Optional.absent(),
-                    Optional.absent(),
-                    Optional.absent(),
-                    Optional.absent()
-                )
-                mmsDatabase.insertSecureDecryptedMessageInbox(
-                    message,
-                    threadId,
-                    runThreadUpdate = true
-                )
-            }
-        }
     }
 
     /**
