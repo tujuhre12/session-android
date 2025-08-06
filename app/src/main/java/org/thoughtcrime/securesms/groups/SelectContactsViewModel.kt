@@ -131,7 +131,7 @@ open class SelectContactsViewModel @AssistedInject constructor(
         mutableSearchQuery.value = query
     }
 
-    fun onContactItemClicked(accountID: AccountId) {
+    open fun onContactItemClicked(accountID: AccountId) {
         val newSet = mutableSelectedContactAccountIDs.value.toHashSet()
         if (!newSet.remove(accountID)) {
             newSet.add(accountID)
