@@ -15,18 +15,24 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.R
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.ContactItem
 import org.thoughtcrime.securesms.groups.compose.multiSelectMemberList
+import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.BottomFadingEdgeBox
+import org.thoughtcrime.securesms.ui.DialogButtonData
+import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.SearchBar
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.OutlineButton
+import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -51,6 +57,25 @@ fun BlockedContactsScreen(
         onDoneClicked = viewModel::onUnblockClicked,
         onBack = onBack,
     )
+
+    // dialogs
+    val showConfirmDialog by viewModel.unblockDialog.collectAsState()
+
+    if(showConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = viewModel::hideUnblockDialog,
+            title = annotatedStringResource(R.string.blockUnblock),
+            text = annotatedStringResource(viewModel.getDialogText()),
+            buttons = listOf(
+                DialogButtonData(
+                    GetString(R.string.blockUnblock),
+                    color = LocalColors.current.danger,
+                    onClick = viewModel::unblock
+                ),
+                DialogButtonData(GetString(android.R.string.cancel), dismissOnClick = true)
+            )
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
