@@ -49,6 +49,7 @@ import org.session.libsession.messaging.utilities.MessageAuthentication.buildMem
 import org.session.libsession.messaging.utilities.WebRtcUtils
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.GroupUtil.doubleEncodeGroupID
@@ -56,6 +57,8 @@ import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.getType
+import org.session.libsession.utilities.updateContact
+import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
@@ -289,8 +292,7 @@ class ReceivedMessageHandler @Inject constructor(
         runProfileUpdate: Boolean
     ): MessageId? {
         val userPublicKey = context.storage.getUserPublicKey()
-        val messageSender: String? = message.sender
-        val senderId = AccountId(messageSender!!)
+        val senderAddress = message.sender!!.toAddress()
 
         // Do nothing if the message was outdated
         if (messageIsOutdated(message, context.threadId, context.openGroupID)) { return null }
@@ -298,13 +300,13 @@ class ReceivedMessageHandler @Inject constructor(
 
         // Handle group invite response if new closed group
         val threadRecipientAddress = context.threadRecipient?.address
-        if (threadRecipientAddress is Address.Group) {
+        if (threadRecipientAddress is Address.Group && senderAddress is Address.Standard) {
             scope.launch {
                 try {
                     groupManagerV2
                         .handleInviteResponse(
-                            threadRecipientAddress.id,
-                            senderId,
+                            threadRecipientAddress.accountId,
+                            senderAddress.accountId,
                             approved = true
                         )
                 } catch (e: Exception) {
@@ -365,7 +367,7 @@ class ReceivedMessageHandler @Inject constructor(
                 context.storage.addReaction(
                     threadId = context.threadId,
                     reaction = reaction,
-                    messageSender = messageSender,
+                    messageSender = senderAddress.address,
                     notifyUnread = !threadIsGroup
                 )
             } else {
@@ -401,7 +403,7 @@ class ReceivedMessageHandler @Inject constructor(
             val messageID = context.storage.persist(message, quoteModel, linkPreviews, message.groupPublicKey, context.openGroupID, attachments, runThreadUpdate) ?: return null
 
             // Update profile if needed (must be done after the message is persisted)
-            if (runProfileUpdate) {
+            if (runProfileUpdate && senderAddress is Address.WithAccountId) {
                 val updates = ProfileUpdateHandler.Updates.create(
                     name = message.profile?.displayName,
                     picUrl = message.profile?.profilePictureURL,
@@ -413,7 +415,7 @@ class ReceivedMessageHandler @Inject constructor(
 
                 if (updates != null) {
                     profileUpdateHandler.handleProfileUpdate(
-                        senderId = senderId,
+                        senderId = senderAddress.accountId,
                         updates = updates,
                         fromCommunity = context.openGroup?.toCommunityInfo(),
                     )
@@ -421,14 +423,23 @@ class ReceivedMessageHandler @Inject constructor(
             }
 
             // If we have previously "hidden" the sender, we should flip the flag back to visible
-            if (senderId.prefix == IdPrefix.STANDARD) {
+            if (senderAddress is Address.Standard && senderAddress.address != userPublicKey) {
                 val existingContact =
-                    configFactory.withUserConfigs { it.contacts.get(senderId.hexString) }
+                    configFactory.withUserConfigs { it.contacts.get(senderAddress.accountId.hexString) }
+
                 if (existingContact != null && existingContact.priority == PRIORITY_HIDDEN) {
+                    Log.d(TAG, "Flipping thread for ${senderAddress.debugString} to visible")
                     configFactory.withMutableUserConfigs { configs ->
-                        configs.contacts.get(senderId.hexString)?.let { contact ->
-                            contact.priority = PRIORITY_VISIBLE
-                            configs.contacts.set(contact)
+                        configs.contacts.updateContact(senderAddress) {
+                            priority = PRIORITY_VISIBLE
+                        }
+                    }
+                } else if (existingContact == null) {
+                    // If we don't have the contact, create a new one with approvedMe = true as
+                    Log.d(TAG, "Creating new contact for ${senderAddress.debugString} with approvedMe = true")
+                    configFactory.withMutableUserConfigs { configs ->
+                        configs.contacts.upsertContact(senderAddress) {
+                            approvedMe = true
                         }
                     }
                 }
@@ -436,7 +447,7 @@ class ReceivedMessageHandler @Inject constructor(
 
             // Parse & persist attachments
             // Start attachment downloads if needed
-            if (messageID.mms && (context.threadRecipient?.autoDownloadAttachments == true || messageSender == userPublicKey)) {
+            if (messageID.mms && (context.threadRecipient?.autoDownloadAttachments == true || senderAddress.address == userPublicKey)) {
                 context.storage.getAttachmentsForMessage(messageID.id).iterator().forEach { attachment ->
                     attachment.attachmentId?.let { id ->
                         JobQueue.shared.add(attachmentDownloadJobFactory.create(
@@ -680,6 +691,10 @@ class ReceivedMessageHandler @Inject constructor(
                 storage.deleteConversation(threadId)
             }
         }
+    }
+
+    companion object {
+        private const val TAG = "ReceivedMessageHandler"
     }
 
 }

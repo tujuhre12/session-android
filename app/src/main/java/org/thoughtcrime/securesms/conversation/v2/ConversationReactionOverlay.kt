@@ -33,6 +33,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -194,7 +195,8 @@ class ConversationReactionOverlay : FrameLayout {
 
         job = GlobalScope.launch {
             // Wait for the message to be deleted
-            repository.changes(messageRecord.threadId)
+            threadDatabase.updateNotifications
+                .filter { it == messageRecord.threadId }
                 .first { mmsSmsDatabase.getMessageById(messageRecord.messageId) == null }
 
             withContext(Dispatchers.Main) {

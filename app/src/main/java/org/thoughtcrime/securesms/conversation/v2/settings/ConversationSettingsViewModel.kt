@@ -1319,14 +1319,10 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private fun setNickname(nickname: String?){
         val conversation = recipient ?: return
 
-        viewModelScope.launch(Dispatchers.Default) {
-            val publicKey = conversation.address.toString()
-
-            if (AccountId.fromStringOrNull(publicKey)?.prefix == IdPrefix.STANDARD) {
-                configFactory.withMutableUserConfigs { configs ->
-                    configs.contacts.upsertContact(publicKey) {
-                        this.nickname = nickname.orEmpty()
-                    }
+        if (!conversation.isSelf && conversation.address is Address.Standard) {
+            configFactory.withMutableUserConfigs { configs ->
+                configs.contacts.upsertContact(conversation.address) {
+                    this.nickname = nickname.orEmpty()
                 }
             }
         }

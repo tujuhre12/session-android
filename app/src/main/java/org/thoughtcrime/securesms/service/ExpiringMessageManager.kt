@@ -34,6 +34,7 @@ import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.Storage
+import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
 import org.thoughtcrime.securesms.mms.MmsException
@@ -62,6 +63,7 @@ class ExpiringMessageManager @Inject constructor(
     private val storage: Lazy<Storage>,
     private val preferences: TextSecurePreferences,
     private val recipientRepository: RecipientRepository,
+    private val threadDatabase: ThreadDatabase,
 ) : MessageExpirationManagerProtocol {
 
     init {
@@ -87,7 +89,7 @@ class ExpiringMessageManager @Inject constructor(
         var recipient = recipientRepository.getRecipientSync(address)
 
         // if the sender is blocked, we don't display the update, except if it's in a closed group
-        if (recipient?.blocked == true && groupId == null) return null
+        if (recipient.blocked && groupId == null) return null
         return try {
             if (groupId != null) {
                 val groupAddress: Address
@@ -104,7 +106,7 @@ class ExpiringMessageManager @Inject constructor(
                 }
                 recipient = recipientRepository.getRecipientSync(groupAddress)
             }
-            val threadId = recipient?.address?.let(storage.get()::getThreadId) ?: return null
+            val threadId = recipient.address.let(storage.get()::getThreadId) ?: return null
             val mediaMessage = IncomingMediaMessage(
                 address, sentTimestamp!!, -1,
                 expiresInMillis,
@@ -250,7 +252,7 @@ class ExpiringMessageManager @Inject constructor(
                 continue // Proceed to the next iteration if the next expiration is already or about go to in the past
             }
 
-            val dbChanges = context.contentResolver.observeChanges(DatabaseContentProviders.Conversation.CONTENT_URI, true)
+            val dbChanges = threadDatabase.updateNotifications
 
             if (nextExpiration > 0) {
                 val delayMills = nextExpiration - now

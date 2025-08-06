@@ -264,7 +264,7 @@ class RecipientRepository @Inject constructor(
 
                         changeSource = merge(
                             configFactory.configUpdateNotifications.filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
-                                .filter { it.groupId == address.id },
+                                .filter { it.groupId == address.accountId },
                             configFactory.userConfigsChanged(),
                             recipientSettingsDatabase.changeNotification.filter { it == address }
                         )
@@ -334,7 +334,7 @@ class RecipientRepository @Inject constructor(
             // Is this in our contact?
             address is Address.Standard -> {
                 configFactory.withUserConfigs { configs ->
-                    configs.contacts.get(address.id.hexString)
+                    configs.contacts.get(address.accountId.hexString)
                 }?.let { contact ->
                     RecipientData.Contact(
                         name = contact.name,
@@ -352,8 +352,8 @@ class RecipientRepository @Inject constructor(
 
             // Is this a group?
             address is Address.Group -> {
-                val groupInfo = configFactory.getGroup(address.id) ?: return null
-                configFactory.withGroupConfigs(address.id) { configs ->
+                val groupInfo = configFactory.getGroup(address.accountId) ?: return null
+                configFactory.withGroupConfigs(address.accountId) { configs ->
                     RecipientData.Group(
                         avatar = configs.groupInfo.getProfilePic().toRecipientAvatar(),
                         expiryMode = configs.groupInfo.expiryMode,

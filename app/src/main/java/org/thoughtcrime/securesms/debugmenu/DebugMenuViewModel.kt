@@ -27,6 +27,8 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
+import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.Environment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.upsertContact
@@ -199,7 +201,7 @@ class DebugMenuViewModel @Inject constructor(
                         configFactory.withMutableUserConfigs { configs ->
                             for ((index, key) in keys.withIndex()) {
                                 configs.contacts.upsertContact(
-                                    accountId = key.x25519KeyPair.hexEncodedPublicKey
+                                    key.x25519KeyPair.hexEncodedPublicKey.toAddress() as Address.Standard,
                                 ) {
                                     name = "${command.prefix}$index"
                                     approved = true

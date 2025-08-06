@@ -53,7 +53,7 @@ class ProfileUpdateHandler @Inject constructor(
         val standardSender = unblinded ?: (senderAddress as? Address.Standard)
         if (standardSender != null && (updates.name != null || updates.pic != null || updates.profileUpdateTime != null)) {
             configFactory.withMutableUserConfigs { configs ->
-                configs.contacts.get(standardSender.id.hexString)?.let { existingContact ->
+                configs.contacts.get(standardSender.accountId.hexString)?.let { existingContact ->
                     if (shouldUpdateProfile(
                         lastUpdated = existingContact.profileUpdatedEpochSeconds.asEpochSeconds(),
                         newUpdateTime = updates.profileUpdateTime

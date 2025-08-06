@@ -22,10 +22,12 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -148,6 +150,14 @@ class ConversationViewModel @AssistedInject constructor(
         .filterNotNull()
         .mapToStateFlow(viewModelScope, recipientRepository.getRecipientSync(address)) { it }
 
+    // A flow that emits when we need to reload the conversation.
+    // We normally don't need to do this but as we are transitioning to using more flow based approach,
+    // the conversation is still using a cursor loader, so we need an alternative way to trigger a reload
+    // than the traditional Uri change.
+    val conversationReloadNotification: SharedFlow<*> = threadDb.updateNotifications
+        .filter { it == threadId }
+        .shareIn(viewModelScope, SharingStarted.Eagerly)
+
 
     val showSendAfterApprovalText: Flow<Boolean> get() = recipientFlow.map { r ->
         (r.acceptsCommunityMessageRequests || r.isStandardRecipient) && !r.isLocalNumber && !r.approvedMe
@@ -159,24 +169,7 @@ class ConversationViewModel @AssistedInject constructor(
     val openGroup: OpenGroup?
         get() = openGroupFlow.value
 
-    val isAdmin: StateFlow<Boolean> = when {
-        address.isCommunity -> openGroupFlow.mapStateFlow(viewModelScope) { og -> isUserCommunityManager(og) }
-        address.isGroupV2 -> configFactory.userConfigsChanged(500)
-            .onStart { emit(Unit) }
-            .mapToStateFlow(viewModelScope, initialData = null) {
-                configFactory.getGroup(AccountId(address.address))?.hasAdminKey() == true
-            }
-
-        address.isLegacyGroup -> textSecurePreferences.watchLocalNumber()
-            .filterNotNull()
-            .mapToStateFlow(viewModelScope, initialData = textSecurePreferences.getLocalNumber()) { myAddress ->
-                myAddress != null && storage.getGroup(address.toGroupString())
-                    ?.admins?.contains(fromSerialized(myAddress)) == true
-            }
-            .stateIn(viewModelScope, SharingStarted.Eagerly, false)
-
-        else -> MutableStateFlow(false)
-    }
+    val isAdmin: StateFlow<Boolean> = recipientFlow.mapStateFlow(viewModelScope) { it.isAdmin }
 
     private val _searchOpened = MutableStateFlow(false)
 
@@ -564,22 +557,14 @@ class ConversationViewModel @AssistedInject constructor(
     private fun buildMessageRequestState(recipient: Recipient): MessageRequestUiState {
         // The basic requirement of showing a message request is:
         // 1. The other party has not been approved by us, AND
-        // 2. We haven't sent a message to them before (if we do, we would be the one requesting permission), AND
-        // 3. We have received message from them AND
-        // 4. The type of conversation supports message request (only 1to1 and groups v2)
+        // 2. The type of conversation supports message request (only 1to1 and groups v2)
 
         if (
             // Req 1: we haven't approved the other party
             (!recipient.approved && !recipient.isLocalNumber) &&
 
-            // Req 4: the type of conversation supports message request
-            (recipient.is1on1 || recipient.isGroupV2Recipient) &&
-
-            // Req 2: we haven't sent a message to them before
-            !threadDb.getLastSeenAndHasSent(threadId).second() &&
-
-            // Req 3: we have received message from them
-            threadDb.getMessageCount(threadId) > 0
+            // Req 2: the type of conversation supports message request
+            (recipient.address is Address.Standard || recipient.address is Address.Group)
         ) {
 
             return MessageRequestUiState.Visible(
@@ -589,11 +574,7 @@ class ConversationViewModel @AssistedInject constructor(
                     R.string.messageRequestsAcceptDescription
                 },
                 // You can block a 1to1 conversation, or a normal groups v2 conversation
-                blockButtonText = when {
-                    recipient.is1on1 ||
-                            recipient.isGroupV2Recipient -> application.getString(R.string.block)
-                    else -> null
-                }
+                blockButtonText = application.getString(R.string.block)
             )
         }
 
@@ -1055,20 +1036,26 @@ class ConversationViewModel @AssistedInject constructor(
         val currentState = messageRequestState.value as? MessageRequestUiState.Visible
             ?: return@launch Log.w("Loki", "Current state was not visible for accept message request action")
 
-        _acceptingMessageRequest.value = true
+        if (address is Address.Standard) {
+            _acceptingMessageRequest.value = true
 
-        repository.acceptMessageRequest(threadId, address)
-            .onFailure {
-                Log.w("Loki", "Couldn't accept message request due to error", it)
-                _acceptingMessageRequest.value = false
-            }
+            repository.acceptMessageRequest(threadId, address)
+                .onFailure {
+                    Log.w("Loki", "Couldn't accept message request due to error", it)
+                    _acceptingMessageRequest.value = false
+                }
+        }
     }
 
     fun declineMessageRequest() = viewModelScope.launch {
-        repository.declineMessageRequest(threadId, address)
-            .onFailure {
-                Log.w("Loki", "Couldn't decline message request due to error", it)
-            }
+        if (address is Address.Standard) {
+            repository.declineMessageRequest(threadId, address)
+                .onFailure {
+                    Log.w("Loki", "Couldn't decline message request due to error", it)
+                }
+        } else {
+            Result.success(Unit)
+        }
     }
 
     private fun showMessage(message: String) {
@@ -1112,10 +1099,11 @@ class ConversationViewModel @AssistedInject constructor(
 
         if (messageRequestState.value is MessageRequestUiState.Visible) {
             return acceptMessageRequest()
-        } else if (recipient.approved == false) {
+        } else if (!recipient.approved && address is Address.Standard) {
             // edge case for new outgoing thread on new recipient without sending approval messages
-            repository.setApproved(recipient.address, true)
+            repository.setApproved(address, true)
         }
+
         return null
     }
 

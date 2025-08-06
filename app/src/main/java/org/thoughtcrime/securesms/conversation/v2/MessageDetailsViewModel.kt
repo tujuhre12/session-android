@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -88,7 +89,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
 
     init {
         viewModelScope.launch {
-            val messageRecord =  withContext(Dispatchers.Default) {
+            val messageRecord = withContext(Dispatchers.Default) {
                 mmsSmsDatabase.getMessageById(messageId)
             }
 
@@ -98,7 +99,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
             }
 
             // listen to conversation and attachments changes
-            (context.contentResolver.observeChanges(DatabaseContentProviders.Conversation.getUriForThread(messageRecord.threadId)) as Flow<*>)
+            (threadDb.updateNotifications.filter { it == messageRecord.threadId } as Flow<*>)
                     .debounce(200L)
                     .map {
                         withContext(Dispatchers.Default) {

@@ -21,39 +21,42 @@ sealed class Address : Parcelable, Comparable<Address> {
 
     override fun compareTo(other: Address) = address.compareTo(other.address)
 
-    data class Group(val id: AccountId) : Conversable() {
+    data class Group(override val accountId: AccountId) : Conversable(), WithAccountId {
         override val address: String
-            get() = id.hexString
+            get() = accountId.hexString
 
         override val debugString: String
-            get() = id.toString()
+            get() = accountId.toString()
 
         init {
-            check(id.prefix == IdPrefix.GROUP) {
-                "AccountId must have a GROUP prefix, but was: ${id.prefix}"
+            check(accountId.prefix == IdPrefix.GROUP) {
+                "AccountId must have a GROUP prefix, but was: ${accountId.prefix}"
             }
         }
 
         override fun toString(): String = address
     }
 
-    data class Standard(val id: AccountId) : Conversable() {
+    data class Standard(override val accountId: AccountId) : Conversable(), WithAccountId {
         override val address: String
-            get() = id.hexString
+            get() = accountId.hexString
 
         override val debugString: String
-            get() = id.toString()
+            get() = accountId.toString()
 
         init {
-            check(id.prefix == IdPrefix.STANDARD) {
-                "AccountId must have a STANDARD prefix, but was: ${id.prefix}"
+            check(accountId.prefix == IdPrefix.STANDARD) {
+                "AccountId must have a STANDARD prefix, but was: ${accountId.prefix}"
             }
         }
 
         override fun toString(): String = address
     }
 
-    data class Blinded(val blindedId: AccountId) : Address() {
+    data class Blinded(val blindedId: AccountId) : Address(), WithAccountId {
+        override val accountId: AccountId
+            get() = blindedId
+
         override val address: String
             get() = blindedId.hexString
 
@@ -80,7 +83,10 @@ sealed class Address : Parcelable, Comparable<Address> {
         override fun toString(): String = address
     }
 
-    data class CommunityBlindedId(val serverUrl: String, val serverPubKey: String, val blindedId: Blinded) : Conversable() {
+    data class CommunityBlindedId(val serverUrl: String, val serverPubKey: String, val blindedId: Blinded) : Conversable(), WithAccountId {
+        override val accountId: AccountId
+            get() = blindedId.blindedId
+
         override val address: String by lazy(LazyThreadSafetyMode.NONE) {
             GroupUtil.getEncodedOpenGroupInboxAddress(
                 server = serverUrl,
@@ -125,6 +131,9 @@ sealed class Address : Parcelable, Comparable<Address> {
      * A marker interface for addresses that can be used to start a conversation
      */
     sealed class Conversable : Address()
+    sealed interface WithAccountId {
+        val accountId: AccountId
+    }
 
     override fun describeContents(): Int = 0
 

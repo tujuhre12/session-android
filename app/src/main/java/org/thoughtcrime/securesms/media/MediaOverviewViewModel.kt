@@ -325,7 +325,7 @@ class MediaOverviewViewModel @AssistedInject constructor(
 
             // Notify the content provider that the thread has been updated
             if (threadId >= 0) {
-                application.contentResolver.notifyChange(DatabaseContentProviders.Conversation.getUriForThread(threadId), null)
+                threadDatabase.notifyThreadUpdated(threadId)
             }
 
             mutableShowingActionProgress.value = null

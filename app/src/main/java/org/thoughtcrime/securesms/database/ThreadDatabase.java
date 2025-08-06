@@ -59,6 +59,7 @@ import org.thoughtcrime.securesms.notifications.MarkReadReceiver;
 
 import java.io.Closeable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -79,9 +80,6 @@ import network.loki.messenger.libsession_util.util.GroupInfo;
 @Singleton
 public class ThreadDatabase extends Database {
 
-  public interface ConversationThreadUpdateListener {
-    void threadCreated(@NonNull Address address, long threadId);
-  }
 
   private static final String TAG = ThreadDatabase.class.getSimpleName();
 
@@ -165,7 +163,6 @@ public class ThreadDatabase extends Database {
             "ADD COLUMN " + UNREAD_MENTION_COUNT + " INTEGER DEFAULT 0;";
   }
 
-  private ConversationThreadUpdateListener updateListener;
   private final MutableSharedFlow<Long> updateNotifications = SharedFlowKt.MutableSharedFlow(0, 256, BufferOverflow.DROP_OLDEST);
   private final Json json;
   private final TextSecurePreferences prefs;
@@ -224,10 +221,6 @@ public class ThreadDatabase extends Database {
           update(cursor.getLong(0), false);
        }
     }
-  }
-
-  public void setUpdateListener(ConversationThreadUpdateListener updateListener) {
-    this.updateListener = updateListener;
   }
 
   private long createThreadForRecipient(Address address) {
@@ -383,32 +376,27 @@ public class ThreadDatabase extends Database {
   }
 
   @NonNull
-  private ArrayList<ThreadRecord> getThreadRecords(@NonNull final Cursor cursor) {
-    final ArrayList<ThreadRecord> threads = new ArrayList<>(cursor.getCount());
-    Reader reader = new Reader(cursor);
-    ThreadRecord thread;
-    while ((thread = reader.getNext()) != null) {
-      threads.add(thread);
-    }
-
-    return threads;
-  }
-
-  @NonNull
-  public ArrayList<ThreadRecord> getFilteredConversationList(@Nullable List<Address> filter) {
-    if (filter == null || filter.isEmpty())
-      return new ArrayList<>(0);
+  public List<ThreadRecord> getThreads(@Nullable List<Address> addresses) {
+    if (addresses == null || addresses.isEmpty())
+      return Collections.emptyList();
 
     final String query = createQuery(
             TABLE_NAME + "." + ADDRESS + " IN (SELECT value FROM json_each(?))"
     );
 
     final String[] selectionArgs = new String[] {
-        new JSONArray(CollectionsKt.map(filter, Address::toString)).toString()
+        new JSONArray(CollectionsKt.map(addresses, Address::getAddress)).toString()
     };
 
     try (final Cursor cursor = getReadableDatabase().rawQuery(query, selectionArgs)) {
-      return getThreadRecords(cursor);
+      final ArrayList<ThreadRecord> threads = new ArrayList<>(cursor.getCount());
+      final Reader reader = new Reader(cursor);
+      ThreadRecord thread;
+      while ((thread = reader.getNext()) != null) {
+        threads.add(thread);
+      }
+
+      return threads;
     }
   }
 
@@ -598,10 +586,6 @@ public class ThreadDatabase extends Database {
         }
 
         if (created) {
-          if (updateListener != null) {
-              updateListener.threadCreated(address, threadId);
-          }
-
           updateNotifications.tryEmit(threadId);
         }
 
@@ -715,6 +699,7 @@ public class ThreadDatabase extends Database {
   }
 
   public void notifyThreadUpdated(long threadId) {
+    Log.d(TAG, "Notifying thread updated: " + threadId);
     updateNotifications.tryEmit(threadId);
   }
 

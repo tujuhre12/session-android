@@ -61,10 +61,10 @@ class BlindMappingRepository @Inject constructor(
                     community.baseUrl to allContacts.asSequence()
                         .flatMap { contactAddress ->
                             val allBlindIDs = BlindKeyAPI.blind15Ids(
-                                sessionId = contactAddress.id.hexString,
+                                sessionId = contactAddress.accountId.hexString,
                                 serverPubKey = community.pubKeyHex
                             ).asSequence() + BlindKeyAPI.blind25Id(
-                                sessionId = contactAddress.id.hexString,
+                                sessionId = contactAddress.accountId.hexString,
                                 serverPubKey = community.pubKeyHex
                             )
 

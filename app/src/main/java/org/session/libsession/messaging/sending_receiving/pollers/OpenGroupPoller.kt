@@ -335,7 +335,7 @@ class OpenGroupPoller @AssistedInject constructor(
                     val syncTarget = blindMappingRepository.getMapping(
                         serverUrl = server,
                         blindedAddress = Address.Blinded(AccountId(it.recipient))
-                    )?.id?.hexString ?: it.recipient
+                    )?.accountId?.hexString ?: it.recipient
 
                     if (message is VisibleMessage) {
                         message.syncTarget = syncTarget

@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -45,7 +46,6 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.upsertContact
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.DraftDatabase
@@ -78,7 +78,6 @@ interface ConversationRepository {
     ): List<Address>
 
     fun maybeGetRecipientForThreadId(threadId: Long): Address?
-    fun changes(threadId: Long): Flow<Query>
     fun saveDraft(threadId: Long, text: String)
     fun getDraft(threadId: Long): String?
     fun clearDrafts(threadId: Long)
@@ -87,7 +86,7 @@ interface ConversationRepository {
     fun markAsDeletedLocally(messages: Set<MessageRecord>, displayedMessage: String)
     fun deleteMessages(messages: Set<MessageRecord>, threadId: Long)
     fun deleteAllLocalMessagesInThreadFromSenderOfMessage(messageRecord: MessageRecord)
-    fun setApproved(recipient: Address, isApproved: Boolean)
+    fun setApproved(recipient: Address.Standard, isApproved: Boolean)
     fun isGroupReadOnly(recipient: Recipient): Boolean
     fun getLastSentMessageID(threadId: Long): Flow<MessageId?>
 
@@ -114,8 +113,8 @@ interface ConversationRepository {
     suspend fun deleteThread(threadId: Long): Result<Unit>
     suspend fun deleteMessageRequest(thread: ThreadRecord): Result<Unit>
     suspend fun clearAllMessageRequests(block: Boolean): Result<Unit>
-    suspend fun acceptMessageRequest(threadId: Long, recipient: Address): Result<Unit>
-    suspend fun declineMessageRequest(threadId: Long, recipient: Address): Result<Unit>
+    suspend fun acceptMessageRequest(threadId: Long, recipient: Address.Standard): Result<Unit>
+    suspend fun declineMessageRequest(threadId: Long, recipient: Address.Standard): Result<Unit>
     fun hasReceived(threadId: Long): Boolean
     fun getInvitingAdmin(threadId: Long): Address?
 
@@ -240,7 +239,12 @@ class DefaultConversationRepository @Inject constructor(
                 .onStart { emit(Unit) }
                 .mapLatest {
                     withContext(Dispatchers.Default) {
-                        threadDb.getFilteredConversationList(allAddresses)
+                        threadDb.getThreads(allAddresses)
+                            // We don't actually want to show unapproved threads without any
+                            // messages.
+                            .filter { record ->
+                                record.recipient.approved || record.lastMessage != null
+                            }
                     }
                 }
         }
@@ -249,9 +253,6 @@ class DefaultConversationRepository @Inject constructor(
     override fun maybeGetRecipientForThreadId(threadId: Long): Address? {
         return threadDb.getRecipientForThreadId(threadId)
     }
-
-    override fun changes(threadId: Long): Flow<Query> =
-        contentResolver.observeQuery(DatabaseContentProviders.Conversation.getUriForThread(threadId))
 
     override fun saveDraft(threadId: Long, text: String) {
         if (text.isEmpty()) return
@@ -280,7 +281,7 @@ class DefaultConversationRepository @Inject constructor(
             }
             message.openGroupInvitation = openGroupInvitation
             val contactThreadId = threadDb.getOrCreateThreadIdFor(contact)
-            val expirationConfig = recipientRepository.getRecipientSync(contact)?.expiryMode ?: ExpiryMode.NONE
+            val expirationConfig = recipientRepository.getRecipientSync(contact).expiryMode
             val expireStartedAt = if (expirationConfig is ExpiryMode.AfterSend) message.sentTimestamp!! else 0
             val outgoingTextMessage = OutgoingTextMessage.fromOpenGroupInvitation(
                 openGroupInvitation,
@@ -312,7 +313,7 @@ class DefaultConversationRepository @Inject constructor(
     }
 
     override fun getLastSentMessageID(threadId: Long): Flow<MessageId?> {
-        return (contentResolver.observeChanges(DatabaseContentProviders.Conversation.getUriForThread(threadId)) as Flow<*>)
+        return (threadDb.updateNotifications.filter { it == threadId } as Flow<*>)
             .onStart { emit(Unit) }
             .map {
                 withContext(Dispatchers.Default) {
@@ -390,15 +391,11 @@ class DefaultConversationRepository @Inject constructor(
         }
     }
 
-    override fun setApproved(recipient: Address, isApproved: Boolean) {
-        if (IdPrefix.fromValue(recipient.address) == IdPrefix.STANDARD) {
-            configFactory.withMutableUserConfigs { configs ->
-                configs.contacts.upsertContact(recipient.address) {
-                    approved = isApproved
-                }
+    override fun setApproved(recipient: Address.Standard, isApproved: Boolean) {
+        configFactory.withMutableUserConfigs { configs ->
+            configs.contacts.upsertContact(recipient) {
+                approved = isApproved
             }
-        } else {
-            // Can not approve anything that is not a standard contact
         }
     }
 
@@ -524,8 +521,18 @@ class DefaultConversationRepository @Inject constructor(
         }
     }
 
-    override suspend fun deleteMessageRequest(thread: ThreadRecord)
-        = declineMessageRequest(thread.threadId, thread.recipient.address)
+    override suspend fun deleteMessageRequest(thread: ThreadRecord): Result<Unit> {
+        val address = thread.recipient.address
+
+        return if (address is Address.Standard) {
+            declineMessageRequest(
+                thread.threadId,
+                address
+            )
+        } else {
+            Result.success(Unit)
+        }
+    }
 
     override suspend fun clearAllMessageRequests(block: Boolean) = runCatching {
         observeConversationList(approved = false)
@@ -554,7 +561,7 @@ class DefaultConversationRepository @Inject constructor(
         }
     }
 
-    override suspend fun acceptMessageRequest(threadId: Long, recipient: Address) = runCatching {
+    override suspend fun acceptMessageRequest(threadId: Long, recipient: Address.Standard) = runCatching {
         withContext(Dispatchers.Default) {
             setApproved(recipient, true)
             if (recipient.isGroupV2) {
@@ -575,7 +582,7 @@ class DefaultConversationRepository @Inject constructor(
         }
     }
 
-    override suspend fun declineMessageRequest(threadId: Long, recipient: Address): Result<Unit> = runCatching {
+    override suspend fun declineMessageRequest(threadId: Long, recipient: Address.Standard): Result<Unit> = runCatching {
         withContext(Dispatchers.Default) {
             sessionJobDb.cancelPendingMessageSendJobs(threadId)
             if (recipient.isGroupV2) {

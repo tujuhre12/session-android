@@ -113,7 +113,7 @@ class SearchRepository @Inject constructor(
         val numbers = contactAccessor.getNumbersForThreadSearchFilter(context, query)
         val addresses = numbers.map { fromSerialized(it) }
 
-        return threadDatabase.getFilteredConversationList(addresses)
+        return threadDatabase.getThreads(addresses)
             .map { groupDatabase.getGroup(it.recipient.address.toGroupString()).get() }
     }
 
