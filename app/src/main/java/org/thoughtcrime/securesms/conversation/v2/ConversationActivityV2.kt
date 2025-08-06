@@ -92,6 +92,7 @@ import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.GroupUtil
@@ -260,6 +261,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     @Inject lateinit var typingStatusSender: TypingStatusSender
     @Inject lateinit var openGroupManager: OpenGroupManager
     @Inject lateinit var attachmentDatabase: AttachmentDatabase
+    @Inject lateinit var clock: SnodeClock
 
     override val applyDefaultWindowInsets: Boolean
         get() = false
@@ -1294,6 +1296,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             .start()
     }
 
+    private var hasClearedUnread = false
     private fun handleRecyclerViewScrolled() {
         // Note: The typing indicate is whether the other person / other people are typing - it has
         // nothing to do with the IME keyboard state.
@@ -1301,19 +1304,28 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         binding.typingIndicatorViewContainer.isVisible = wasTypingIndicatorVisibleBefore && isScrolledToBottom
 
         showScrollToBottomButtonIfApplicable()
-        val maybeTargetVisiblePosition = layoutManager?.findLastVisibleItemPosition()
-        val targetVisiblePosition = maybeTargetVisiblePosition ?: RecyclerView.NO_POSITION
-        if (!firstLoad.get() && targetVisiblePosition != RecyclerView.NO_POSITION) {
-            adapter.getTimestampForItemAt(targetVisiblePosition)?.let { visibleItemTimestamp ->
-                bufferedLastSeenChannel.trySend(visibleItemTimestamp).apply {
-                    if (isFailure) Log.e(TAG, "trySend failed", exceptionOrNull())
-                }
-            }
-        }
 
         val layoutUnreadCount = layoutManager?.let { (it.itemCount - 1) - it.findLastVisibleItemPosition() }
             ?: RecyclerView.NO_POSITION
         unreadCount = min(unreadCount, layoutUnreadCount).coerceAtLeast(0)
+
+        val maybeTargetVisiblePosition = layoutManager?.findLastVisibleItemPosition()
+        val targetVisiblePosition = maybeTargetVisiblePosition ?: RecyclerView.NO_POSITION
+        if (!firstLoad.get() && targetVisiblePosition != RecyclerView.NO_POSITION) {
+            adapter.getTimestampForItemAt(targetVisiblePosition)?.let { visibleItemTimestamp ->
+                if (!hasClearedUnread && unreadCount == 0) {
+                    // For conversations that have been marked as unread
+                    lifecycleScope.launch(Dispatchers.Default) {
+                        storage.markConversationAsRead(viewModel.threadId, clock.currentTimeMills())
+                    }
+                } else {
+                    bufferedLastSeenChannel.trySend(visibleItemTimestamp).apply {
+                        if (isFailure) Log.e(TAG, "trySend failed", exceptionOrNull())
+                    }
+                }
+                hasClearedUnread = true
+            }
+        }
 
         updateUnreadCountIndicator()
     }
