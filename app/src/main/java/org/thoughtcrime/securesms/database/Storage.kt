@@ -314,8 +314,6 @@ open class Storage @Inject constructor(
             // don't set the last read in the volatile if we didn't set it in the DB
             if (!threadDb.markAllAsRead(threadId, lastSeenTime, force) && !force) return
 
-            threadDb.updateReadStatus(threadId, true)
-
             // don't process configs for inbox recipients
             if (recipient.isCommunityInboxRecipient) return
 
