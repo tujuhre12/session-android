@@ -41,6 +41,7 @@ import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.StringSubstitutionConstants.VERSION_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.currentUserName
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.ExternalStorageUtil.getImageDir
 import org.session.libsignal.utilities.Log
@@ -59,6 +60,7 @@ import org.thoughtcrime.securesms.util.BitmapDecodingException
 import org.thoughtcrime.securesms.util.BitmapUtil
 import org.thoughtcrime.securesms.util.ClearDataUtils
 import org.thoughtcrime.securesms.util.NetworkConnectivity
+import org.thoughtcrime.securesms.util.mapToStateFlow
 import java.io.File
 import java.io.IOException
 import javax.inject.Inject
@@ -81,28 +83,23 @@ class SettingsViewModel @Inject constructor(
 
     private var tempFile: File? = null
 
-    val hexEncodedPublicKey: String = prefs.getLocalNumber() ?: ""
-
-    private val userRecipient by lazy {
-        recipientRepository.getRecipientSync(Address.fromSerialized(hexEncodedPublicKey))
-    }
+    private val selfRecipient: StateFlow<Recipient> = recipientRepository.observeSelf()
+        .mapToStateFlow(viewModelScope, recipientRepository.getSelf(), valueGetter = { it })
 
     private val _uiState = MutableStateFlow(UIState(
         username = "",
-        accountID = hexEncodedPublicKey,
+        accountID = selfRecipient.value.address.address,
         hasPath = true,
         version = getVersionNumber(),
         recoveryHidden = prefs.getHidePassword(),
         isPro = proStatusManager.isCurrentUserPro(),
         isPostPro = proStatusManager.isPostPro(),
-        showProBadge = proStatusManager.shouldShowProBadge(userRecipient.address),
+        showProBadge = proStatusManager.shouldShowProBadge(selfRecipient.value.address),
     ))
     val uiState: StateFlow<UIState>
         get() = _uiState
 
     init {
-        updateAvatar()
-
         // observe current user
         viewModelScope.launch {
             recipientRepository.observeSelf()
@@ -139,6 +136,13 @@ class SettingsViewModel @Inject constructor(
                 _uiState.update { it.copy(hasPath = it.hasPath) }
             }
         }
+
+        viewModelScope.launch {
+            selfRecipient
+                .collectLatest { r ->
+                    _uiState.update { it.copy(avatarData = avatarUtils.getUIDataFromRecipient(r)) }
+                }
+        }
     }
 
     private fun getVersionNumber(): CharSequence {
@@ -146,12 +150,6 @@ class SettingsViewModel @Inject constructor(
         val environment: String = if(BuildConfig.BUILD_TYPE == "release") "" else " - ${prefs.getEnvironment().label}"
         val versionDetails = " ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE} - $gitCommitFirstSixChars) $environment"
         return Phrase.from(context, R.string.updateVersion).put(VERSION_KEY, versionDetails).format()
-    }
-
-    private fun updateAvatar(){
-        viewModelScope.launch(Dispatchers.Default) {
-            _uiState.update { it.copy(avatarData = avatarUtils.getUIDataFromRecipient(userRecipient)) }
-        }
     }
 
     fun hasAvatar() = configFactory.withUserConfigs { it.userProfile.getPic().url.isNotBlank() }
@@ -244,7 +242,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     private suspend fun getDefaultAvatarDialogState() = if (hasAvatar()) AvatarDialogState.UserAvatar(
-        avatarUtils.getUIDataFromRecipient(userRecipient)
+        avatarUtils.getUIDataFromRecipient(selfRecipient.value)
     )
     else AvatarDialogState.NoAvatar
 
@@ -340,7 +338,7 @@ class SettingsViewModel @Inject constructor(
                     }
 
                     // update dialog state
-                    _uiState.update { it.copy(avatarDialogState = AvatarDialogState.UserAvatar(avatarUtils.getUIDataFromRecipient(userRecipient))) }
+                    _uiState.update { it.copy(avatarDialogState = AvatarDialogState.UserAvatar(avatarUtils.getUIDataFromRecipient(selfRecipient.value))) }
                 }
 
             } catch (e: Exception){ // If the sync failed then inform the user
@@ -350,8 +348,6 @@ class SettingsViewModel @Inject constructor(
                 }
             }
 
-            // Finally update the main avatar
-            updateAvatar()
             // And remove the loader animation after we've waited for the attempt to succeed or fail
             _uiState.update { it.copy(showLoader = false) }
         }

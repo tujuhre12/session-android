@@ -11,8 +11,10 @@ import android.os.Bundle
 import android.view.ViewGroup.MarginLayoutParams
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.compose.foundation.clickable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
@@ -60,6 +62,7 @@ import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SessionJobDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -81,7 +84,10 @@ import org.thoughtcrime.securesms.reviews.ui.InAppReview
 import org.thoughtcrime.securesms.reviews.ui.InAppReviewViewModel
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.tokenpage.TokenPageNotificationManager
+import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.setThemedContent
+import org.thoughtcrime.securesms.ui.theme.LocalDimensions
+import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import org.thoughtcrime.securesms.util.disableClipping
@@ -125,6 +131,8 @@ class HomeActivity : ScreenLockActionBarActivity(),
     @Inject lateinit var openGroupManager: OpenGroupManager
     @Inject lateinit var storeReviewManager: StoreReviewManager
     @Inject lateinit var proStatusManager: ProStatusManager
+    @Inject lateinit var recipientRepository: RecipientRepository
+    @Inject lateinit var avatarUtils: AvatarUtils
 
     private val globalSearchViewModel by viewModels<GlobalSearchViewModel>()
     private val homeViewModel by viewModels<HomeViewModel>()
@@ -203,7 +211,17 @@ class HomeActivity : ScreenLockActionBarActivity(),
         // Set up Glide
         glide = Glide.with(this)
         // Set up toolbar buttons
-        binding.profileButton.setOnClickListener { openSettings() }
+        binding.profileButton.setThemedContent {
+            val recipient by recipientRepository.observeSelf()
+                .collectAsState(null)
+
+            Avatar(
+                size = LocalDimensions.current.iconMediumAvatar,
+                data = avatarUtils.getUIDataFromRecipient(recipient),
+                modifier = Modifier.clickable(onClick = ::openSettings)
+            )
+        }
+
         binding.searchViewContainer.setOnClickListener {
             homeViewModel.onSearchClicked()
         }
@@ -252,7 +270,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
         // Set up new conversation button
         binding.newConversationButton.setOnClickListener { showStartConversation() }
-        // Observe blocked contacts changed events
 
         // subscribe to outdated config updates, this should be removed after long enough time for device migration
         lifecycleScope.launch {
@@ -289,15 +306,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 // Set up remaining components if needed
                 if (textSecurePreferences.getLocalNumber() != null) {
                     JobQueue.shared.resumePendingJobs()
-                }
-
-                withContext(Dispatchers.Main) {
-                    updateProfileButton()
-
-                    configFactory.userConfigsChanged()
-                        .collectLatest {
-                            updateProfileButton()
-                        }
                 }
             }
 
@@ -505,8 +513,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
         messageNotifier.setHomeScreenVisible(true)
         if (textSecurePreferences.getLocalNumber() == null) { return; } // This can be the case after a secondary device is auto-cleared
         IdentityKeyUtil.checkUpdate(this)
-        binding.profileButton.recycle() // clear cached image before update tje profilePictureView
-        binding.profileButton.update()
         if (textSecurePreferences.getHasViewedSeed()) {
             binding.seedReminderView.isVisible = false
         }
@@ -522,15 +528,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         Permissions.onRequestPermissionsResult(this, requestCode, permissions, grantResults)
-    }
-    // endregion
-
-    // region Updating
-    private fun updateProfileButton() {
-        binding.profileButton.publicKey = publicKey
-        binding.profileButton.displayName = homeViewModel.getCurrentUsername()
-        binding.profileButton.recycle()
-        binding.profileButton.update()
     }
     // endregion
 

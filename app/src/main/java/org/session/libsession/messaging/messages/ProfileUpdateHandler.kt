@@ -146,8 +146,11 @@ class ProfileUpdateHandler @Inject constructor(
                 profileUpdateTime: ZonedDateTime?
             ): Updates? {
                 val hasNameUpdate = !name.isNullOrBlank()
-                val pic = if (!picUrl.isNullOrBlank() && picKey != null &&
-                        VALID_PROFILE_KEY_LENGTH.contains(picKey.size)) UserPic(picUrl, picKey) else null
+                val pic = when {
+                    picUrl == null -> null
+                    picUrl.isBlank() || picKey == null || picKey.size !in VALID_PROFILE_KEY_LENGTH -> UserPic.DEFAULT
+                    else -> UserPic(picUrl, picKey)
+                }
 
                 if (!hasNameUpdate && pic == null && blocksCommunityMessageRequests == null && proStatus == null) {
                     return null
