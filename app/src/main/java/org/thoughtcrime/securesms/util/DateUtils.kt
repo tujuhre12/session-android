@@ -228,5 +228,11 @@ class DateUtils @Inject constructor(
 
             return Instant.ofEpochSecond(this).atZone(ZoneId.of("UTC"))
         }
+
+        fun Long.asEpochMillis(): ZonedDateTime? {
+            if (this <= 0) return null
+
+            return Instant.ofEpochMilli(this).atZone(ZoneId.of("UTC"))
+        }
     }
 }

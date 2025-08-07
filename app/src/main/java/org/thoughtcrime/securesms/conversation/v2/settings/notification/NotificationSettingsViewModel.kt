@@ -32,6 +32,7 @@ import org.thoughtcrime.securesms.ui.OptionsCardData
 import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.DateUtils
+import org.thoughtcrime.securesms.util.DateUtils.Companion.asEpochMillis
 import org.thoughtcrime.securesms.util.DateUtils.Companion.asEpochSeconds
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.milliseconds
@@ -258,7 +259,7 @@ class NotificationSettingsViewModel @AssistedInject constructor(
         val conversation = thread ?: return
         withContext(Dispatchers.Default) {
             recipientDatabase.save(conversation.address) {
-                it.copy(muteUntil = until.asEpochSeconds())
+                it.copy(muteUntil = until.asEpochMillis())
             }
         }
     }

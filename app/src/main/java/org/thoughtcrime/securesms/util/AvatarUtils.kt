@@ -68,11 +68,6 @@ class AvatarUtils @Inject constructor(
 
         val elements = buildList {
             when {
-                // if the recipient has a custom avatar, use that
-                recipient.avatar != null -> {
-                    add(getUIElementForRecipient(recipient))
-                }
-
                 // The recipient is group like and have two members, use both images
                 firstMember != null && secondMember != null -> {
                     add(getUIElementForRecipient(firstMember))
@@ -90,7 +85,7 @@ class AvatarUtils @Inject constructor(
                 }
 
                 else -> {
-                    add(AvatarUIElement()) // Fallback to an empty element if no avatar or members are available
+                    add(getUIElementForRecipient(recipient))
                 }
             }
         }

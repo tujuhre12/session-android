@@ -19,6 +19,8 @@ import android.widget.FrameLayout
 import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -27,6 +29,7 @@ import androidx.core.view.isVisible
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.MutableStateFlow
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewEmojiReactionsBinding
 import network.loki.messenger.databinding.ViewVisibleMessageBinding
@@ -39,6 +42,7 @@ import org.session.libsession.utilities.ThemeUtil.getThemedColor
 import org.session.libsession.utilities.ViewUtil
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.modifyLayoutParams
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.toGroupString
 import org.session.libsignal.utilities.AccountId
@@ -59,10 +63,13 @@ import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.ProBadgeText
+import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.setThemedContent
 import org.thoughtcrime.securesms.ui.theme.LocalColors
+import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.bold
+import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.disableClipping
 import org.thoughtcrime.securesms.util.toDp
@@ -91,6 +98,7 @@ class VisibleMessageView : FrameLayout {
     @Inject lateinit var openGroupManager: OpenGroupManager
     @Inject lateinit var recipientRepository: RecipientRepository
     @Inject lateinit var proStatusManager: ProStatusManager
+    @Inject lateinit var avatarUtils: AvatarUtils
 
     private val binding = ViewVisibleMessageBinding.inflate(LayoutInflater.from(context), this, true)
 
@@ -212,40 +220,17 @@ class VisibleMessageView : FrameLayout {
 
         if (isGroupThread && !message.isOutgoing) {
             if (isEndOfMessageCluster) {
-                binding.profilePictureView.update(sender)
-                binding.profilePictureView.setOnClickListener {
-                    delegate?.showUserProfileModal(message.recipient)
-                }
-
-                if (threadRecipient.isCommunityRecipient) {
-                    val openGroup = lokiThreadDb.getOpenGroupChat(threadID) ?: return
-                    var standardPublicKey = ""
-                    var blindedPublicKey: String? = null
-                    if (IdPrefix.fromValue(sender.address.address)?.isBlinded() == true) {
-                        blindedPublicKey = sender.address.address
-                    } else {
-                        standardPublicKey = sender.address.address
-                    }
-                    val isModerator = openGroupManager.isUserModerator(
-                        openGroup.groupId,
-                        standardPublicKey,
-                        blindedPublicKey
+                binding.profilePictureView.setThemedContent {
+                    Avatar(
+                        size = LocalDimensions.current.iconMediumAvatar,
+                        data = avatarUtils.getUIDataFromRecipient(sender),
+                        modifier = Modifier.clickable {
+                            delegate?.showUserProfileModal(message.recipient)
+                        }
                     )
-                    binding.moderatorIconImageView.isVisible = isModerator
                 }
-                else if (threadRecipient.isLegacyGroupRecipient) { // legacy groups
-                    val groupRecord = groupDb.getGroup(threadRecipient.address.toGroupString()).orNull()
-                    val isAdmin: Boolean = groupRecord?.admins?.contains(sender.address) ?: false
 
-                    binding.moderatorIconImageView.isVisible = isAdmin
-                }
-                else if (threadRecipient.isGroupV2Recipient) { // groups v2
-                    val isAdmin = configFactory.withGroupConfigs(AccountId(threadRecipient.address.toString())) {
-                        it.groupMembers.getOrNull(sender.address.address)?.admin == true
-                    }
-
-                    binding.moderatorIconImageView.isVisible = isAdmin
-                }
+                binding.moderatorIconImageView.isVisible = threadRecipient.isAdmin
             }
         }
         if(!message.isOutgoing && (isStartOfMessageCluster && (isGroupThread || snIsSelected))){
@@ -532,7 +517,6 @@ class VisibleMessageView : FrameLayout {
     }
 
     fun recycle() {
-        binding.profilePictureView.recycle()
         binding.messageContentView.root.recycle()
     }
 
