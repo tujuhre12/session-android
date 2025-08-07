@@ -791,6 +791,25 @@ public class ThreadDatabase extends Database {
     }
   }
 
+  public boolean isRead(long threadId) {
+    SQLiteDatabase db = getReadableDatabase();
+    // Only ask for the "READ" column
+    String[] projection = {READ};
+    String selection = ID + " = ?";
+    String[] args = {String.valueOf(threadId)};
+
+    Cursor cursor = db.query(TABLE_NAME, projection, selection, args, null, null, null);
+    try {
+      if (cursor != null && cursor.moveToFirst()) {
+        // READ is stored as 1 = read, 0 = unread
+        return cursor.getInt(0) == 1;
+      }
+      return false;
+    } finally {
+      if (cursor != null) cursor.close();
+    }
+  }
+
   /**
    * @param threadId
    * @param lastSeenTime

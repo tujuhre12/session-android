@@ -164,18 +164,23 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
             TextViewCompat.setCompoundDrawablesRelativeWithIntrinsicBounds(this, drawableStartRes, 0, 0, 0)
         }
 
-        val hasCountUnread = thread.unreadCount > 0
-        // Only if we have 0 hard unread, check the volatile config
-        val isConfigUnread = if (hasCountUnread) { false } else { configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(thread) } }
-        val shouldShowUnread = hasCountUnread || isConfigUnread
+        // We have three states for a conversation:
+        // 1. The conversation has unread messages
+        // 2. The conversation is marked as unread (which is different from having unread messages)
+        // 3. The conversation is up to date
+        // Case 1 and 2 should show the 'mark as read' button while case 3 should show 'mark as unread'
 
-        val isRead = !isDeprecatedLegacyGroup &&
-                thread.isRead &&
-                !shouldShowUnread
+        // case 1
+        val hasUnreadMessages = thread.unreadCount > 0
 
-        binding.markAllAsReadTextView.isVisible = !isRead
+        // case 2
+        val isMarkedAsUnread = configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(thread) } || !thread.isRead
+
+        val showMarkAsReadButton = hasUnreadMessages || isMarkedAsUnread
+
+        binding.markAllAsReadTextView.isVisible = showMarkAsReadButton && !isDeprecatedLegacyGroup
         binding.markAllAsReadTextView.setOnClickListener(this)
-        binding.markAsUnreadTextView.isVisible = isRead
+        binding.markAsUnreadTextView.isVisible = !showMarkAsReadButton  && !isDeprecatedLegacyGroup
         binding.markAsUnreadTextView.setOnClickListener(this)
         binding.pinTextView.isVisible = !thread.isPinned && !isDeprecatedLegacyGroup
         binding.unpinTextView.isVisible = thread.isPinned

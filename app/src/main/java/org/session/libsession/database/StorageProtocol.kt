@@ -193,6 +193,7 @@ interface StorageProtocol {
     fun getTotalPinned(): Int
     fun setPinned(threadID: Long, isPinned: Boolean)
     fun isPinned(threadID: Long): Boolean
+    fun isRead(threadId: Long) : Boolean
     fun deleteConversation(threadID: Long)
     fun setThreadCreationDate(threadId: Long, newDate: Long)
     fun getLastLegacyRecipient(threadRecipient: String): String?

@@ -777,12 +777,19 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 if (firstLoad.getAndSet(false)) {
                     scrollToFirstUnreadMessageOrBottom()
 
+                    // On the first load, check if there unread messages
                     if (unreadCount == 0 && adapter.itemCount > 0) {
+                        // Get the last visible timestamp
                         val lastPos = adapter.itemCount - 1
                         val lastTimestamp = adapter.getTimestampForItemAt(lastPos)
                             ?: clock.currentTimeMills()
+
                         lifecycleScope.launch(Dispatchers.IO) {
-                            storage.markConversationAsRead(viewModel.threadId, lastTimestamp)
+                            // Check first if it is already unread to avoid unnecessary operation
+                            val isRead = storage.isRead(viewModel.threadId)
+                            if (!isRead) {
+                                storage.markConversationAsRead(viewModel.threadId, lastTimestamp)
+                            }
                         }
                     }
                 }

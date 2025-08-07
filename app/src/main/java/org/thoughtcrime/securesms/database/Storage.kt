@@ -1419,6 +1419,11 @@ open class Storage @Inject constructor(
         return threadDB.isPinned(threadID)
     }
 
+    override fun isRead(threadId: Long) : Boolean {
+        val threadDB = threadDatabase
+        return threadDB.isRead(threadId)
+    }
+
     override fun setThreadCreationDate(threadId: Long, newDate: Long) {
         val threadDb = threadDatabase
         threadDb.setCreationDate(threadId, newDate)
