@@ -51,8 +51,11 @@ import org.thoughtcrime.securesms.database.model.RecipientSettings
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import java.lang.ref.WeakReference
+import java.util.concurrent.locks.ReentrantReadWriteLock
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.concurrent.read
+import kotlin.concurrent.write
 
 /**
  * This repository is responsible for observing and retrieving recipient data from different sources.
@@ -75,17 +78,30 @@ class RecipientRepository @Inject constructor(
     private val proStatusManager: ProStatusManager,
     @param:ManagerScope private val managerScope: CoroutineScope,
 ) {
-    private val recipientCache = LruCache<Address, WeakReference<SharedFlow<Recipient>>>(512)
+    private val recipientFlowCache = LruCache<Address, WeakReference<SharedFlow<Recipient>>>(512)
+    private val recipientFlowCacheLock = ReentrantReadWriteLock()
 
     fun observeRecipient(address: Address): Flow<Recipient> {
-        synchronized(recipientCache) {
-            var cached = recipientCache[address]?.get()
-            if (cached == null) {
-                cached = createRecipientFlow(address)
-                recipientCache.put(address, WeakReference(cached))
+        recipientFlowCacheLock.read {
+            val cache = recipientFlowCache[address]?.get()
+            if (cache != null) {
+                return cache
+            }
+        }
+
+        // If the cache is not found, we need to create a new flow for this address.
+        recipientFlowCacheLock.write {
+            // Double check the cache in case another thread has created it while we were waiting for the lock.
+            val cached = recipientFlowCache[address]?.get()
+            if (cached != null) {
+                return cached
             }
 
-            return cached
+            // Create a new flow and put it in the cache.
+            Log.d(TAG, "Creating new recipient flow for ${address.debugString}")
+            val newFlow = createRecipientFlow(address)
+            recipientFlowCache.put(address, WeakReference(newFlow))
+            return newFlow
         }
     }
 
@@ -292,13 +308,11 @@ class RecipientRepository @Inject constructor(
      */
     @DelicateCoroutinesApi
     fun getRecipientSync(address: Address): Recipient {
-        val flow = observeRecipient(address)
-
-        // If the flow is a SharedFlow, we might be able to access its last cached value directly.
-        if (flow is SharedFlow<Recipient?>) {
-            val lastCacheValue = flow.replayCache.lastOrNull()
-            if (lastCacheValue != null) {
-                return lastCacheValue
+        // If we have a cached flow, we can try to grab its current value.
+        recipientFlowCacheLock.read {
+            val cached = recipientFlowCache[address]?.get()?.replayCache?.firstOrNull()
+            if (cached != null) {
+                return cached
             }
         }
 

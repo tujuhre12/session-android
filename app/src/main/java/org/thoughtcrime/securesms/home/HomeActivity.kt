@@ -48,6 +48,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_K
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.displayName
+import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
@@ -292,9 +293,11 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
                 withContext(Dispatchers.Main) {
                     updateProfileButton()
-                    TextSecurePreferences.events.filter { it == TextSecurePreferences.PROFILE_NAME_PREF }.collect {
-                        updateProfileButton()
-                    }
+
+                    configFactory.userConfigsChanged()
+                        .collectLatest {
+                            updateProfileButton()
+                        }
                 }
             }
 
