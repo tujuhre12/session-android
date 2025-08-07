@@ -49,6 +49,7 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.database.model.RecipientSettings
 import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.groups.GroupMemberComparator
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import java.lang.ref.WeakReference
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -402,6 +403,7 @@ class RecipientRepository @Inject constructor(
             // Is this a group?
             address is Address.Group -> {
                 val groupInfo = configFactory.getGroup(address.accountId) ?: return null
+                val groupMemberComparator = GroupMemberComparator(AccountId(preferences.getLocalNumber()!!))
                 configFactory.withGroupConfigs(address.accountId) { configs ->
                     RecipientData.PartialGroup(
                         avatar = configs.groupInfo.getProfilePic().toRecipientAvatar(),
@@ -413,7 +415,12 @@ class RecipientRepository @Inject constructor(
                         kicked = groupInfo.kicked,
                         destroyed = groupInfo.destroyed,
                         proStatus = if (proStatusManager.isUserPro(address)) ProStatus.ProVisible else ProStatus.Unknown,
-                        members = configs.groupMembers.all()
+                        members = configs.groupMembers.all().sortedWith { o1, o2 ->
+                            groupMemberComparator.compare(
+                                AccountId(o1.accountId()),
+                                AccountId(o2.accountId())
+                            )
+                        }
                     )
                 }
             }
