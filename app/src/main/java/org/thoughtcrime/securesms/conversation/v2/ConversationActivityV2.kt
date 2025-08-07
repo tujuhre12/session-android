@@ -1317,10 +1317,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         showScrollToBottomButtonIfApplicable()
 
-        val layoutUnreadCount = layoutManager?.let { (it.itemCount - 1) - it.findLastVisibleItemPosition() }
-            ?: RecyclerView.NO_POSITION
-        unreadCount = min(unreadCount, layoutUnreadCount).coerceAtLeast(0)
-
         val maybeTargetVisiblePosition = layoutManager?.findLastVisibleItemPosition()
         val targetVisiblePosition = maybeTargetVisiblePosition ?: RecyclerView.NO_POSITION
         if (!firstLoad.get() && targetVisiblePosition != RecyclerView.NO_POSITION) {
@@ -1330,6 +1326,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     }
             }
         }
+
+        val layoutUnreadCount = layoutManager?.let { (it.itemCount - 1) - it.findLastVisibleItemPosition() }
+            ?: RecyclerView.NO_POSITION
+        unreadCount = min(unreadCount, layoutUnreadCount).coerceAtLeast(0)
 
         updateUnreadCountIndicator()
     }
