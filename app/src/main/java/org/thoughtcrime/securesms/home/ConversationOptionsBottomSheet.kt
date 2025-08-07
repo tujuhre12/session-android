@@ -164,20 +164,14 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
             TextViewCompat.setCompoundDrawablesRelativeWithIntrinsicBounds(this, drawableStartRes, 0, 0, 0)
         }
 
-        val hasUnreadMessages = thread.unreadCount > 0
-
-        val configStillUnread = if (!hasUnreadMessages) {
-            configFactory.withUserConfigs {
-                it.convoInfoVolatile.getConversationUnread(thread)
-            }
-        } else {
-            // no need to hit storage at all if there are no unread
-            false
-        }
+        val hasCountUnread = thread.unreadCount > 0
+        // Only if we have 0 hard unread, check the volatile config
+        val isConfigUnread = if (hasCountUnread) { false } else { configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(thread) } }
+        val shouldShowUnread = hasCountUnread || isConfigUnread
 
         val isRead = !isDeprecatedLegacyGroup &&
-        !hasUnreadMessages &&
-                (thread.isRead && !configStillUnread)
+                thread.isRead &&
+                !shouldShowUnread
 
         binding.markAllAsReadTextView.isVisible = !isRead
         binding.markAllAsReadTextView.setOnClickListener(this)
