@@ -55,6 +55,15 @@ class GroupMemberDatabase(context: Context, helper: Provider<SQLCipherOpenHelper
         return mappings.map { it.role }
     }
 
+    fun getGroupMembers(groupId: String): List<GroupMember> {
+        val query = "$GROUP_ID = ?"
+        val args = arrayOf(groupId)
+
+        return readableDatabase.query(TABLE_NAME, allColumns, query, args, null, null, null).use { cursor ->
+            cursor.asSequence().map { readGroupMember(it) }.toList()
+        }
+    }
+
     fun getGroupMembersRoles(groupId: String, memberIDs: Collection<String>): Map<String, List<GroupMemberRole>> {
         val sql = """
             SELECT * FROM $TABLE_NAME

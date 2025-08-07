@@ -37,7 +37,7 @@ data class Recipient(
      * Check if current user is an admin of this assumed-group recipient.
      * If the recipient is not a group or community, this will always return false.
      */
-    val isAdmin: Boolean get() = when (data) {
+    val isCurrentUserAdmin: Boolean get() = when (data) {
         is RecipientData.Group -> data.partial.isAdmin
         is RecipientData.Community -> data.openGroup.isAdmin || data.openGroup.isModerator
         else -> false

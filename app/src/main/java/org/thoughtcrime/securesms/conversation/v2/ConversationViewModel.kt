@@ -50,10 +50,8 @@ import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
-import org.session.libsession.utilities.isCommunity
 import org.session.libsession.utilities.isCommunityInbox
 import org.session.libsession.utilities.isGroupV2
-import org.session.libsession.utilities.isLegacyGroup
 import org.session.libsession.utilities.isStandard
 import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
@@ -174,8 +172,7 @@ class ConversationViewModel @AssistedInject constructor(
     val openGroup: OpenGroup?
         get() = openGroupFlow.value
 
-    val isAdmin: StateFlow<Boolean> = recipientFlow.mapStateFlow(viewModelScope) { it.isAdmin }
-
+    val isAdmin: StateFlow<Boolean> = recipientFlow.mapStateFlow(viewModelScope) { it.isCurrentUserAdmin }
     private val _searchOpened = MutableStateFlow(false)
 
     val appBarData: StateFlow<ConversationAppBarData> = combine(

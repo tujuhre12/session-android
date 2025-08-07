@@ -4,9 +4,11 @@ import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISI
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupMember
 import network.loki.messenger.libsession_util.util.UserPic
+import org.session.libsession.messaging.open_groups.GroupMemberRole
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.AccountId
+import java.util.EnumSet
 
 /**
  * Represents different kind of data associated with different types of recipients.
@@ -20,9 +22,25 @@ sealed interface RecipientData {
     // Marker interface to distinguish between config-based and other recipient data.
     sealed interface ConfigBased
 
+    /**
+     * Represents a group-like recipient, which can be a group or community.
+     */
     sealed interface GroupLike {
+        // The first member of this group, for profile picture assembly purposes.
         val firstMember: Recipient?
+
+        // The second member of this group, for profile picture assembly purposes.
         val secondMember: Recipient?
+
+        /**
+         * Checks if the given user is an admin of this group or community.
+         */
+        fun hasAdmin(user: AccountId): Boolean
+
+        /**
+         * Determines if the admin crown should be shown for the given user.
+         */
+        fun shouldShowAdminCrown(user: AccountId): Boolean
     }
 
     data class Generic(
@@ -44,9 +62,27 @@ sealed interface RecipientData {
     data class Community(
         val openGroup: OpenGroup,
         override val priority: Long,
-    ) : RecipientData {
+        val roles: Map<AccountId, GroupMemberRole>,
+    ) : RecipientData, GroupLike {
         override val avatar: RemoteFile?
             get() = openGroup.imageId?.let { RemoteFile.Community(openGroup.server, openGroup.room, it) }
+
+        override val firstMember: Recipient?
+            get() = null
+
+        override val secondMember: Recipient?
+            get() = null
+
+        override fun hasAdmin(user: AccountId): Boolean {
+            return roles[user]?.isModerator == true
+        }
+
+        override fun shouldShowAdminCrown(user: AccountId): Boolean {
+            return roles[user] in EnumSet.of(
+                GroupMemberRole.ADMIN,
+                GroupMemberRole.MODERATOR,
+            )
+        }
 
         override val proStatus: ProStatus
             get() = ProStatus.Unknown
@@ -84,12 +120,14 @@ sealed interface RecipientData {
     data class GroupMemberInfo(
         val address: Address.Standard,
         val name: String,
-        val profilePic: UserPic?
+        val profilePic: UserPic?,
+        val isAdmin: Boolean
     ) {
         constructor(member: GroupMember) : this(
             name = member.name,
             profilePic = member.profilePic(),
-            address = Address.Standard(AccountId(member.accountId()))
+            address = Address.Standard(AccountId(member.accountId())),
+            isAdmin = member.admin
         )
     }
 
@@ -127,12 +165,20 @@ sealed interface RecipientData {
 
         override val proStatus: ProStatus
             get() = partial.proStatus
+
+        override fun hasAdmin(user: AccountId): Boolean {
+            return partial.members.any { it.address.accountId == user && it.isAdmin }
+        }
+
+        override fun shouldShowAdminCrown(user: AccountId): Boolean {
+            return hasAdmin(user)
+        }
     }
 
     data class LegacyGroup(
         val name: String,
         override val priority: Long,
-        val memberAddresses: List<Address.Standard>,
+        val members: Map<AccountId, GroupMemberRole>,
         override val firstMember: Recipient?, // Used primarily to assemble the profile picture for the group.
         override val secondMember: Recipient?, // Used primarily to assemble the profile picture for the group.
     ) : RecipientData, GroupLike {
@@ -141,5 +187,16 @@ sealed interface RecipientData {
 
         override val proStatus: ProStatus
             get() = ProStatus.Unknown
+
+        override fun hasAdmin(user: AccountId): Boolean {
+            return members[user]?.isModerator == true
+        }
+
+        override fun shouldShowAdminCrown(user: AccountId): Boolean {
+            return members[user] in EnumSet.of(
+                GroupMemberRole.ADMIN,
+                GroupMemberRole.MODERATOR,
+            )
+        }
     }
 }

@@ -26,6 +26,8 @@ import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.database.StorageProtocol
+import org.session.libsession.messaging.open_groups.GroupMember as GroupMemberWithRole
+import org.session.libsession.messaging.open_groups.GroupMemberRole
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
@@ -69,6 +71,7 @@ import kotlin.concurrent.write
 class RecipientRepository @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val groupDatabase: GroupDatabase,
+    private val groupMemberDatabase: GroupMemberDatabase,
     private val recipientSettingsDatabase: RecipientSettingsDatabase,
     private val preferences: TextSecurePreferences,
     private val lokiThreadDatabase: LokiThreadDatabase,
@@ -128,6 +131,9 @@ class RecipientRepository @Inject constructor(
                     },
                     openGroupFetcher = {
                         withContext(Dispatchers.Default) { storage.get().getOpenGroup(it) }
+                    },
+                    fetchGroupMemberRoles = { groupId ->
+                        withContext(Dispatchers.Default) { groupMemberDatabase.getGroupMembers(groupId) }
                     }
                 )
 
@@ -152,7 +158,8 @@ class RecipientRepository @Inject constructor(
     private inline fun fetchRecipient(
         address: Address,
         settingsFetcher: (address: Address) -> RecipientSettings,
-        openGroupFetcher: (address: Address.Community) -> OpenGroup?
+        openGroupFetcher: (address: Address.Community) -> OpenGroup?,
+        fetchGroupMemberRoles: (groupId: String) -> List<GroupMemberWithRole>
     ): Pair<Recipient, Flow<*>> {
         val recipientData =
             address.toBlinded()?.let { blindedIdMappingRepository.findMappings(it).firstOrNull()?.second }
@@ -231,15 +238,15 @@ class RecipientRepository @Inject constructor(
                             it.userGroups.getLegacyGroupInfo(GroupUtil.doubleDecodeGroupId(address.address))
                         }
 
-                        val memberAddresses = groupDatabase.getGroupMemberAddresses(address.toGroupString(), true)
+                        val memberAddresses = group?.members?.toSet().orEmpty()
 
                         changeSource = merge(
                             groupDatabase.updateNotification,
-                            recipientSettingsDatabase.changeNotification.filter { it == address || memberAddresses.contains(it) },
+                            recipientSettingsDatabase.changeNotification.filter { it == address || it in memberAddresses },
                             configFactory.userConfigsChanged(),
                         )
 
-                        value = group?.let { createLegacyGroupRecipient(address, groupConfig, memberAddresses, it, settings, settingsFetcher) }
+                        value = group?.let { createLegacyGroupRecipient(address, groupConfig, it, settings, settingsFetcher) }
                             ?: createGenericRecipient(address, settings)
                     }
 
@@ -251,10 +258,11 @@ class RecipientRepository @Inject constructor(
                                 }
 
                                 createCommunityRecipient(
-                                    address,
-                                    groupConfig,
-                                    openGroup,
-                                    settings
+                                    address = address,
+                                    config = groupConfig,
+                                    roles = fetchGroupMemberRoles(address.toGroupString()),
+                                    community = openGroup,
+                                    settings = settings
                                 )
                             }
                             ?: createGenericRecipient(address, settings)
@@ -386,7 +394,8 @@ class RecipientRepository @Inject constructor(
         return fetchRecipient(
             address = address,
             settingsFetcher = recipientSettingsDatabase::getSettings,
-            openGroupFetcher = storage.get()::getOpenGroup
+            openGroupFetcher = storage.get()::getOpenGroup,
+            fetchGroupMemberRoles = groupMemberDatabase::getGroupMembers
         ).first
     }
 
@@ -535,15 +544,16 @@ class RecipientRepository @Inject constructor(
     private inline fun createLegacyGroupRecipient(
         address: Address,
         config: GroupInfo.LegacyGroupInfo?,
-        memberAddresses: List<Address>, // Local db data
         group: GroupRecord, // Local db data
         settings: RecipientSettings?, // Local db data
         settingsFetcher: (Address) -> RecipientSettings
     ): Recipient {
-        val memberAddresses = memberAddresses
+        val memberAddresses = group
+            .members
             .asSequence()
             .filterIsInstance<Address.Standard>()
-            .mapTo(arrayListOf()) { it }
+            .toMutableList()
+
 
         val groupMemberComparator = GroupMemberComparator(AccountId(preferences.getLocalNumber()!!))
 
@@ -556,7 +566,13 @@ class RecipientRepository @Inject constructor(
             data = RecipientData.LegacyGroup(
                 name = group.title,
                 priority = config?.priority ?: PRIORITY_VISIBLE,
-                memberAddresses = memberAddresses,
+                members = memberAddresses.associate { address ->
+                    address.accountId to if (group.admins.contains(address)) {
+                        GroupMemberRole.ADMIN
+                    } else {
+                        GroupMemberRole.STANDARD
+                    }
+                },
                 firstMember = memberAddresses.firstOrNull()?.let { fetchLegacyGroupMember(it, settingsFetcher) },
                 secondMember = memberAddresses.getOrNull(1)?.let { fetchLegacyGroupMember(it, settingsFetcher) },
             ),
@@ -605,6 +621,7 @@ class RecipientRepository @Inject constructor(
         private fun createCommunityRecipient(
             address: Address,
             config: GroupInfo.CommunityGroupInfo?,
+            roles: List<GroupMemberWithRole>,
             community: OpenGroup,
             settings: RecipientSettings?,
         ): Recipient {
@@ -613,6 +630,9 @@ class RecipientRepository @Inject constructor(
                 data = RecipientData.Community(
                     openGroup = community,
                     priority = config?.priority ?: PRIORITY_VISIBLE,
+                    roles = roles.associate { member ->
+                        AccountId(member.profileId) to member.role
+                    },
                 ),
                 mutedUntil = settings?.muteUntil,
                 autoDownloadAttachments = settings?.autoDownloadAttachments,
