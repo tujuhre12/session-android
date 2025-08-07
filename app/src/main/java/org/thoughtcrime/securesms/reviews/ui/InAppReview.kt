@@ -14,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -127,6 +128,8 @@ private fun InAppReviewDialog(
     message: String,
     positiveButtonText: String,
     negativeButtonText: String,
+    positiveButtonQaTag: String,
+    negativeButtonQaTag: String,
     sendCommands: (InAppReviewViewModel.UiCommand) -> Unit,
 ) {
     AlertDialogContent(
@@ -138,6 +141,7 @@ private fun InAppReviewDialog(
             DialogButtonData(
                 text = GetString.FromString(positiveButtonText),
                 color = LocalColors.current.accentText,
+                qaTag = positiveButtonQaTag,
                 dismissOnClick = false
             ) {
                 sendCommands(InAppReviewViewModel.UiCommand.PositiveButtonClicked)
@@ -145,6 +149,7 @@ private fun InAppReviewDialog(
 
             DialogButtonData(
                 text = GetString.FromString(negativeButtonText),
+                qaTag = negativeButtonQaTag,
                 dismissOnClick = false
             ) {
                 sendCommands(InAppReviewViewModel.UiCommand.NegativeButtonClicked)
@@ -176,6 +181,8 @@ private fun InAppReviewStartPrompt(
             .put(EMOJI_KEY, "\uD83D\uDE15")
             .format()
             .toString(),
+        positiveButtonQaTag = stringResource(R.string.qa_inapp_review_dialog_button_great),
+        negativeButtonQaTag = stringResource(R.string.qa_inapp_review_dialog_button_work),
         sendCommands = sendCommands
     )
 }
@@ -199,6 +206,8 @@ private fun InAppReviewPositivePrompt(
             .toString(),
         positiveButtonText = context.getString(R.string.rateSessionApp),
         negativeButtonText = context.getString(R.string.notNow),
+        positiveButtonQaTag = stringResource(R.string.qa_inapp_review_dialog_button_rate),
+        negativeButtonQaTag = stringResource(R.string.qa_inapp_review_dialog_button_not_now),
         sendCommands = sendCommands
     )
 }
@@ -218,6 +227,8 @@ private fun InAppReviewNegativePrompt(
             .toString(),
         positiveButtonText = context.getString(R.string.openSurvey),
         negativeButtonText = context.getString(R.string.notNow),
+        positiveButtonQaTag = stringResource(R.string.qa_inapp_review_dialog_button_survey),
+        negativeButtonQaTag = stringResource(R.string.qa_inapp_review_dialog_button_not_now),
         sendCommands = sendCommands
     )
 }
