@@ -1397,15 +1397,11 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
     }
 
-    fun inviteContactsToCommunity(contacts: Set<AccountId>) {
+    fun inviteContactsToCommunity(contacts: Set<Address>) {
         showLoading()
         viewModelScope.launch {
             try {
                 withContext(Dispatchers.Default) {
-                    val recipients = contacts.map { contact ->
-                        fromSerialized(contact.hexString)
-                    }
-
                     repository.inviteContactsToCommunity(threadId, recipients)
                 }
 

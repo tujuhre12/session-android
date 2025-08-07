@@ -6,12 +6,10 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineScope
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -39,20 +37,20 @@ open class SelectContactsViewModel @AssistedInject constructor(
     private val configFactory: ConfigFactory,
     private val avatarUtils: AvatarUtils,
     private val proStatusManager: ProStatusManager,
-    @Assisted private val excludingAccountIDs: Set<AccountId>,
-    @Assisted private val applyDefaultFiltering: Boolean, // true by default - If true will filter out blocked and unapproved contacts
-    @Assisted private val scope: CoroutineScope,
+    @ApplicationContext private val appContext: Context,
+    @Assisted private val excludingAccountIDs: Set<Address>,
+    @Assisted private val contactFiltering: (Recipient) -> Boolean, //  default will filter out blocked and unapproved contacts
     private val recipientRepository: RecipientRepository,
 ) : ViewModel() {
     // Input: The search query
     private val mutableSearchQuery = MutableStateFlow("")
 
     // Input: The selected contact account IDs
-    private val mutableSelectedContactAccountIDs = MutableStateFlow(emptySet<AccountId>())
+    private val mutableSelectedContactAccountIDs = MutableStateFlow(emptySet<Address>())
 
     // Input: The manually added items to select from. This will be combined (and deduped) with the contacts
     // the user has. This is useful for selecting contacts that are not in the user's contacts list.
-    private val mutableManuallyAddedContacts = MutableStateFlow(emptySet<AccountId>())
+    private val mutableManuallyAddedContacts = MutableStateFlow(emptySet<Address>())
 
     // Output: The search query
     val searchQuery: StateFlow<String> get() = mutableSearchQuery
@@ -66,14 +64,8 @@ open class SelectContactsViewModel @AssistedInject constructor(
     ).stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     // Output
-    val currentSelected: Set<AccountId>
+    val currentSelected: Set<Address>
         get() = mutableSelectedContactAccountIDs.value
-
-    override fun onCleared() {
-        super.onCleared()
-
-        scope.cancel()
-    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun observeContacts() = (configFactory.configUpdateNotifications as Flow<Any>)
@@ -85,20 +77,17 @@ open class SelectContactsViewModel @AssistedInject constructor(
                     val allContacts =
                         (configFactory.withUserConfigs { configs -> configs.contacts.all() }
                             .asSequence()
-                            .map { AccountId(it.id) } + manuallyAdded)
+                            .map { Address.fromSerialized(it.id) } + manuallyAdded)
 
                     val recipientContacts = if (excludingAccountIDs.isEmpty()) {
                         allContacts.toSet()
                     } else {
                         allContacts.filterNotTo(mutableSetOf()) { it in excludingAccountIDs }
                     }.map {
-                        val address = Address.fromSerialized(it.hexString)
-                        recipientRepository.getRecipient(address)
+                        recipientRepository.getRecipient(it)
                     }
 
-                    if(applyDefaultFiltering){
-                        recipientContacts.filter { !it.blocked && it.approved } // filter out blocked contacts and unapproved contacts
-                    } else recipientContacts
+                    recipientContacts.filter(contactFiltering)
                 }
             }
         }
@@ -107,19 +96,18 @@ open class SelectContactsViewModel @AssistedInject constructor(
     private suspend fun filterContacts(
         contacts: Collection<Recipient>,
         query: String,
-        selectedAccountIDs: Set<AccountId>
+        selectedAccountIDs: Set<Address>
     ): List<ContactItem> {
         val items = mutableListOf<ContactItem>()
         for (contact in contacts) {
             if (query.isBlank() || contact.searchName.contains(query, ignoreCase = true)) {
-                val accountId = AccountId(contact.address.toString())
                 val avatarData = avatarUtils.getUIDataFromRecipient(contact)
                 items.add(
                     ContactItem(
                         name = contact.searchName,
-                        accountID = accountId,
+                        address = contact.address,
                         avatarUIData = avatarData,
-                        selected = selectedAccountIDs.contains(accountId),
+                        selected = selectedAccountIDs.contains(contact.address),
                         showProBadge = proStatusManager.shouldShowProBadge(contact.address)
                     )
                 )
@@ -128,7 +116,7 @@ open class SelectContactsViewModel @AssistedInject constructor(
         return items.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name })
     }
 
-    fun setManuallyAddedContacts(accountIDs: Set<AccountId>) {
+    fun setManuallyAddedContacts(accountIDs: Set<Address>) {
         mutableManuallyAddedContacts.value = accountIDs
     }
 
@@ -136,15 +124,15 @@ open class SelectContactsViewModel @AssistedInject constructor(
         mutableSearchQuery.value = query
     }
 
-    fun onContactItemClicked(accountID: AccountId) {
+    open fun onContactItemClicked(address: Address) {
         val newSet = mutableSelectedContactAccountIDs.value.toHashSet()
-        if (!newSet.remove(accountID)) {
-            newSet.add(accountID)
+        if (!newSet.remove(address)) {
+            newSet.add(address)
         }
         mutableSelectedContactAccountIDs.value = newSet
     }
 
-    fun selectAccountIDs(accountIDs: Set<AccountId>) {
+    fun selectAccountIDs(accountIDs: Set<Address>) {
         mutableSelectedContactAccountIDs.value += accountIDs
     }
 
@@ -155,15 +143,18 @@ open class SelectContactsViewModel @AssistedInject constructor(
     @AssistedFactory
     interface Factory {
         fun create(
-            excludingAccountIDs: Set<AccountId> = emptySet(),
-            applyDefaultFiltering: Boolean = true,
-            scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate),
+            excludingAccountIDs: Set<Address> = emptySet(),
+            contactFiltering: (Recipient) -> Boolean = defaultFiltering,
         ): SelectContactsViewModel
+
+        companion object {
+            val defaultFiltering: (Recipient) -> Boolean = { !it.isBlocked && it.isApproved }
+        }
     }
 }
 
 data class ContactItem(
-    val accountID: AccountId,
+    val address: Address,
     val name: String,
     val avatarUIData: AvatarUIData,
     val selected: Boolean,
