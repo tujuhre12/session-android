@@ -155,24 +155,24 @@ class RecipientRepository @Inject constructor(
         settingsFetcher: (address: Address) -> RecipientSettings,
         openGroupFetcher: (address: Address.Community) -> OpenGroup?
     ): Pair<Recipient, Flow<*>> {
-        val basicRecipient =
+        val recipientData =
             address.toBlinded()?.let { blindedIdMappingRepository.findMappings(it).firstOrNull()?.second }
-                ?.let(this::getConfigBasedData)
-                ?: getConfigBasedData(address)
+                ?.let(this::getDataFromConfig)
+                ?: getDataFromConfig(address)
 
         val changeSource: Flow<*>
         val value: Recipient
 
-        when (basicRecipient) {
+        when (recipientData) {
             is RecipientData.Self -> {
-                value = createLocalRecipient(address, basicRecipient)
+                value = createLocalRecipient(address, recipientData)
                 changeSource = configFactory.userConfigsChanged()
             }
 
             is RecipientData.BlindedContact -> {
                 value = Recipient(
                     address = address,
-                    data = basicRecipient,
+                    data = recipientData,
                 )
 
                 changeSource = configFactory.userConfigsChanged()
@@ -181,7 +181,7 @@ class RecipientRepository @Inject constructor(
             is RecipientData.Contact -> {
                 value = createContactRecipient(
                     address = address,
-                    basic = basicRecipient,
+                    basic = recipientData,
                     fallbackSettings = settingsFetcher(address)
                 )
 
@@ -191,11 +191,12 @@ class RecipientRepository @Inject constructor(
                 )
             }
 
-            is RecipientData.Group -> {
+            is RecipientData.PartialGroup -> {
                 value = createGroupV2Recipient(
                     address = address,
-                    basic = basicRecipient,
-                    settings = settingsFetcher(address)
+                    partial = recipientData,
+                    settings = settingsFetcher(address),
+                    settingsFetcher = settingsFetcher
                 )
 
                 changeSource = merge(
@@ -297,6 +298,40 @@ class RecipientRepository @Inject constructor(
         return value to changeSource
     }
 
+    /**
+     * A cut-down version of the fetchRecipient function that only fetches standard recipient.
+     *
+     * This is needed to to fetch the first two members of the group, as we can't go through the
+     * same function recursively as it's an inline function that would lead to a stack overflow.
+     */
+    private inline fun fetchStandardRecipient(
+        address: Address.Standard,
+        settingsFetcher: (address: Address) -> RecipientSettings,
+    ): Recipient {
+        return when (val configData = getDataFromConfig(address)) {
+            is RecipientData.Self -> {
+                createLocalRecipient(address, configData)
+            }
+
+            is RecipientData.Contact -> {
+                createContactRecipient(
+                    address = address,
+                    basic = configData,
+                    fallbackSettings = settingsFetcher(address)
+                )
+            }
+
+            else -> {
+                // If we don't have the right config data, we can still create a generic recipient
+                // with the settings fetched from the database.
+                createGenericRecipient(
+                    address = address,
+                    settings = settingsFetcher(address)
+                )
+            }
+        }
+    }
+
     suspend fun getRecipient(address: Address): Recipient {
         return observeRecipient(address).first()
     }
@@ -325,11 +360,12 @@ class RecipientRepository @Inject constructor(
     }
 
     /**
-     * Returns a [RecipientData.ConfigBased] for the given address, by only looking
-     * at the config data. This method is useful when you know what you are looking for and it's
-     * all in memory operation (almost) without any database access.
+     * Try to source the recipient data from the config system based on the address type.
+     *
+     * Note that some of the data might not be available in the config system so it's your
+     * responsibility to fill in the gaps if needed.
      */
-    fun getConfigBasedData(address: Address): RecipientData.ConfigBased? {
+    private fun getDataFromConfig(address: Address): RecipientData.ConfigBased? {
         return when {
             // Is this our own address?
             address.address.equals(preferences.getLocalNumber(), ignoreCase = true) -> {
@@ -367,7 +403,7 @@ class RecipientRepository @Inject constructor(
             address is Address.Group -> {
                 val groupInfo = configFactory.getGroup(address.accountId) ?: return null
                 configFactory.withGroupConfigs(address.accountId) { configs ->
-                    RecipientData.Group(
+                    RecipientData.PartialGroup(
                         avatar = configs.groupInfo.getProfilePic().toRecipientAvatar(),
                         expiryMode = configs.groupInfo.expiryMode,
                         name = configs.groupInfo.getName() ?: groupInfo.name,
@@ -376,7 +412,8 @@ class RecipientRepository @Inject constructor(
                         isAdmin = groupInfo.adminKey != null,
                         kicked = groupInfo.kicked,
                         destroyed = groupInfo.destroyed,
-                        proStatus = if (proStatusManager.isUserPro(address)) ProStatus.ProVisible else ProStatus.Unknown
+                        proStatus = if (proStatusManager.isUserPro(address)) ProStatus.ProVisible else ProStatus.Unknown,
+                        members = configs.groupMembers.all()
                     )
                 }
             }
@@ -426,6 +463,31 @@ class RecipientRepository @Inject constructor(
         )
     }
 
+    private inline fun createGroupV2Recipient(
+        address: Address,
+        partial: RecipientData.PartialGroup,
+        settings: RecipientSettings?,
+        settingsFetcher: (Address) -> RecipientSettings,
+    ): Recipient {
+        return Recipient(
+            address = address,
+            data = RecipientData.Group(
+                partial = partial,
+                firstMember = partial.members.firstOrNull()?.let { member ->
+                    fetchStandardRecipient(Address.Standard(AccountId(member.accountId())), settingsFetcher)
+                },
+                secondMember = partial.members.getOrNull(1)?.let { member ->
+                    fetchStandardRecipient(Address.Standard(AccountId(member.accountId())), settingsFetcher)
+                },
+            ),
+            mutedUntil = settings?.muteUntil,
+            autoDownloadAttachments = settings?.autoDownloadAttachments,
+            notifyType = settings?.notifyType ?: NotifyType.ALL,
+        )
+
+    }
+
+
     companion object {
         private const val TAG = "RecipientRepository"
 
@@ -445,21 +507,6 @@ class RecipientRepository @Inject constructor(
                     else -> ExpiryMode.NONE
                 }
             }
-
-        private fun createGroupV2Recipient(
-            address: Address,
-            basic: RecipientData.Group,
-            settings: RecipientSettings?
-        ): Recipient {
-            return Recipient(
-                address = address,
-                data = basic,
-                mutedUntil = settings?.muteUntil,
-                autoDownloadAttachments = settings?.autoDownloadAttachments,
-                notifyType = settings?.notifyType ?: NotifyType.ALL,
-            )
-
-        }
 
         /**
          * Creates a RecipientV2 instance from the provided Contact config and optional fallback settings.

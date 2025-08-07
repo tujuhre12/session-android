@@ -62,7 +62,7 @@ class DisappearingMessagesViewModel @AssistedInject constructor(
             val expiryMode = recipient.expiryMode
 
             val isAdmin = when {
-                recipient.data is RecipientData.Group -> recipient.data.isAdmin
+                recipient.data is RecipientData.Group -> recipient.data.partial.isAdmin
 
                 address.isLegacyGroup -> {
                     val groupRecord = groupDb.getGroup(address.toGroupString()).orNull()

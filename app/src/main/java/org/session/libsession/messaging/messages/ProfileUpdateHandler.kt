@@ -41,8 +41,9 @@ class ProfileUpdateHandler @Inject constructor(
         }
 
         val senderAddress = senderId.toAddress()
+        val sender = recipientRepository.getRecipientSync(senderAddress)
 
-        if (recipientRepository.getConfigBasedData(senderAddress) is RecipientData.Self) {
+        if (sender.isSelf) {
             Log.d(TAG, "Ignoring profile update for ourselves")
             return
         }

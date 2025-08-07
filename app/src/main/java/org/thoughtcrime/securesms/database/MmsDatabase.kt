@@ -22,6 +22,7 @@ import android.database.Cursor
 import com.annimon.stream.Stream
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.apache.commons.lang3.StringUtils
 import org.json.JSONArray

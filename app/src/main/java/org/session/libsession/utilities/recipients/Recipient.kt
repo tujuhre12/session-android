@@ -1,9 +1,7 @@
 package org.session.libsession.utilities.recipients
 
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
-import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.ExpiryMode
-import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.isCommunity
 import org.session.libsession.utilities.isCommunityInbox
@@ -40,7 +38,7 @@ data class Recipient(
      * If the recipient is not a group or community, this will always return false.
      */
     val isAdmin: Boolean get() = when (data) {
-        is RecipientData.Group -> data.isAdmin
+        is RecipientData.Group -> data.partial.isAdmin
         is RecipientData.Community -> data.openGroup.isAdmin || data.openGroup.isModerator
         else -> false
     }
@@ -58,13 +56,13 @@ data class Recipient(
     val expiryMode: ExpiryMode get() = when (data) {
         is RecipientData.Self -> data.expiryMode
         is RecipientData.Contact -> data.expiryMode
-        is RecipientData.Group -> data.expiryMode
+        is RecipientData.Group -> data.partial.expiryMode
         else -> ExpiryMode.NONE
     }
 
     val approved: Boolean get() = when (data) {
         is RecipientData.Contact -> data.approved
-        is RecipientData.Group -> data.approved
+        is RecipientData.Group -> data.partial.approved
         is RecipientData.Generic -> false
         else -> true
     }
@@ -117,89 +115,6 @@ data class Recipient(
         }
 }
 
-sealed interface RecipientData {
-    val avatar: RemoteFile?
-    val priority: Long
-
-    val proStatus: ProStatus
-
-    /**
-     * A recipient that is backed by the config system.
-     */
-    sealed interface ConfigBased : RecipientData
-
-    data class Generic(
-        val displayName: String = "",
-        override val avatar: RemoteFile? = null,
-        override val priority: Long = PRIORITY_VISIBLE,
-        override val proStatus: ProStatus = ProStatus.Unknown,
-        val acceptsCommunityMessageRequests: Boolean = false,
-    ) : RecipientData
-
-    data class BlindedContact(
-        val displayName: String,
-        override val avatar: RemoteFile.Encrypted?,
-        override val priority: Long,
-        override val proStatus: ProStatus,
-        val acceptsCommunityMessageRequests: Boolean
-    ) : ConfigBased
-
-    data class Community(
-        val openGroup: OpenGroup,
-        override val priority: Long,
-    ) : RecipientData {
-        override val avatar: RemoteFile?
-            get() = openGroup.imageId?.let { RemoteFile.Community(openGroup.server, openGroup.room, it) }
-
-        override val proStatus: ProStatus
-            get() = ProStatus.Unknown
-    }
-
-    /**
-     * Yourself.
-     */
-    data class Self(
-        val name: String,
-        override val avatar: RemoteFile.Encrypted?,
-        val expiryMode: ExpiryMode,
-        override val priority: Long,
-        override val proStatus: ProStatus
-    ) : ConfigBased
-
-    /**
-     * A recipient that was saved in your contact config.
-     */
-    data class Contact(
-        val name: String,
-        val nickname: String?,
-        override val avatar: RemoteFile.Encrypted?,
-        val approved: Boolean,
-        val approvedMe: Boolean,
-        val blocked: Boolean,
-        val expiryMode: ExpiryMode,
-        override val priority: Long,
-        override val proStatus: ProStatus
-    ) : ConfigBased {
-        val displayName: String
-            get() = nickname?.takeIf { it.isNotBlank() } ?: name
-    }
-
-    /**
-     * A recipient that is a groupv2.
-     */
-    data class Group(
-        val name: String,
-        override val avatar: RemoteFile.Encrypted?,
-        val expiryMode: ExpiryMode,
-        val approved: Boolean,
-        override val priority: Long,
-        val isAdmin: Boolean,
-        val kicked: Boolean,
-        val destroyed: Boolean,
-        override val proStatus: ProStatus
-    ) : ConfigBased
-}
-
 
 /**
  * Retrieve a formatted display name for a recipient.
@@ -213,7 +128,7 @@ fun Recipient.displayName(
     val name = when (data) {
         is RecipientData.Self -> data.name
         is RecipientData.Contact -> data.displayName
-        is RecipientData.Group -> data.name
+        is RecipientData.Group -> data.partial.name
         is RecipientData.Generic -> data.displayName
         is RecipientData.Community -> data.openGroup.name
         is RecipientData.BlindedContact -> data.displayName
