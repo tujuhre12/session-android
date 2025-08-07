@@ -23,10 +23,13 @@ import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.ProBadgeText
+import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.setThemedContent
 import org.thoughtcrime.securesms.ui.theme.LocalColors
+import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.bold
+import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.UnreadStylingHelper
 import org.thoughtcrime.securesms.util.getConversationUnread
@@ -38,6 +41,7 @@ class ConversationView : LinearLayout {
     @Inject lateinit var configFactory: ConfigFactory
     @Inject lateinit var dateUtils: DateUtils
     @Inject lateinit var proStatusManager: ProStatusManager
+    @Inject lateinit var avatarUtils: AvatarUtils
 
     private val binding: ViewConversationBinding by lazy { ViewConversationBinding.bind(this) }
     private val screenWidth = Resources.getSystem().displayMetrics.widthPixels
@@ -144,10 +148,13 @@ class ConversationView : LinearLayout {
             else -> binding.statusIndicatorImageView.setImageResource(R.drawable.ic_circle_check)
         }
 
-        binding.profilePictureView.update(thread.recipient)
+        binding.profilePictureView.setThemedContent {
+            Avatar(
+                size = LocalDimensions.current.iconLarge,
+                data = avatarUtils.getUIDataFromRecipient(thread.recipient)
+            )
+        }
     }
-
-    fun recycle() { binding.profilePictureView.recycle() }
 
     private fun getTitle(recipient: Recipient): String = when {
         recipient.isLocalNumber -> context.getString(R.string.noteToSelf)

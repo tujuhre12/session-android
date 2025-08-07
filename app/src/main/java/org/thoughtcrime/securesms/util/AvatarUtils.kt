@@ -18,19 +18,15 @@ import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.request.RequestOptions
-import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
-import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
-import org.session.libsession.utilities.toGroupString
 import org.session.libsignal.utilities.IdPrefix
-import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import java.math.BigInteger
@@ -41,9 +37,7 @@ import javax.inject.Singleton
 
 @Singleton
 class AvatarUtils @Inject constructor(
-    @ApplicationContext private val context: Context,
-    private val groupDatabase: GroupDatabase, // for legacy groups
-    private val storage: Lazy<StorageProtocol>,
+    @param:ApplicationContext private val context: Context,
     private val recipientRepository: RecipientRepository,
     private val proStatusManager: ProStatusManager,
 ) {
