@@ -18,6 +18,7 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
+import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
 import org.thoughtcrime.securesms.database.GroupDatabase
@@ -75,7 +76,7 @@ class CreateGroupViewModel @AssistedInject constructor(
                         val accountIDs = group.members
                             .asSequence()
                             .filter { it.toString() != myPublicKey }
-                            .mapTo(mutableSetOf()) { AccountId(it.toString()) }
+                            .mapTo(mutableSetOf()) { Address.fromSerialized(it.toString()) }
 
                         selectAccountIDs(accountIDs)
                         setManuallyAddedContacts(accountIDs)
@@ -115,7 +116,7 @@ class CreateGroupViewModel @AssistedInject constructor(
                     groupManagerV2.createGroup(
                         groupName = groupName,
                         groupDescription = "",
-                        members = selected
+                        members = selected.map { AccountId(it.toString()) }.toSet()
                     )
                 }
             }

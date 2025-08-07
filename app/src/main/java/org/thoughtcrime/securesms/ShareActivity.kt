@@ -21,7 +21,9 @@ import android.net.Uri
 import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 // An activity to quickly share content with contacts.
 @AndroidEntryPoint
@@ -48,6 +50,16 @@ class ShareActivity : FullComposeScreenLockActivity() {
         super.onCreate(icicle, ready)
 
         initializeMedia()
+
+        lifecycleScope.launch {
+            viewModel.uiEvents.collect {
+                when (it) {
+                    is ShareViewModel.ShareUIEvent.GoToScreen -> {
+                        startActivity(it.intent)
+                    }
+                }
+            }
+        }
     }
 
     override fun onNewIntent(intent: Intent) {

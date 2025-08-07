@@ -18,11 +18,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.R
-import org.session.libsignal.utilities.AccountId
+import org.session.libsession.utilities.Address
 import org.thoughtcrime.securesms.groups.ContactItem
 import org.thoughtcrime.securesms.groups.compose.multiSelectMemberList
 import org.thoughtcrime.securesms.ui.AlertDialog
@@ -82,7 +81,7 @@ fun BlockedContactsScreen(
 @Composable
 fun BlockedContacts(
     contacts: List<ContactItem>,
-    onContactItemClicked: (accountId: AccountId) -> Unit,
+    onContactItemClicked: (address: Address) -> Unit,
     searchQuery: String,
     onSearchQueryChanged: (String) -> Unit,
     onSearchQueryClear: () -> Unit,
@@ -170,7 +169,7 @@ private fun PreviewSelectContacts() {
     val random = "05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234"
     val contacts = List(20) {
         ContactItem(
-            accountID = AccountId(random),
+            address = Address.fromSerialized(random),
             name = "User $it",
             selected = it % 3 == 0,
             showProBadge = true,
