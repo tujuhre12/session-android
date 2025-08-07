@@ -164,15 +164,6 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
             TextViewCompat.setCompoundDrawablesRelativeWithIntrinsicBounds(this, drawableStartRes, 0, 0, 0)
         }
 
-//        val hasUnread = thread.unreadCount > 0
-//        val isConfigUnread = configFactory.withUserConfigs {
-//            it.convoInfoVolatile.getConversationUnread(thread)
-//        }
-//        val localIsRead = thread.isRead
-//        val isDeprecatedLegacy = isDeprecatedLegacyGroup
-//        val isMarkedUnread = !hasUnread && (thread.isRead || isConfigUnread)
-
-
         val hasUnreadMessages = thread.unreadCount > 0
 
         val configStillUnread = if (!hasUnreadMessages) {
@@ -184,13 +175,9 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
             false
         }
 
-//        val isRead = (thread.unreadCount == 0 ||
-//                (!configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(thread) }) || thread.isRead)
-//                && !isDeprecatedLegacyGroup
-
         val isRead = !isDeprecatedLegacyGroup &&
         !hasUnreadMessages &&
-                (thread.isRead || !configStillUnread)
+                (thread.isRead && !configStillUnread)
 
         binding.markAllAsReadTextView.isVisible = !isRead
         binding.markAllAsReadTextView.setOnClickListener(this)
