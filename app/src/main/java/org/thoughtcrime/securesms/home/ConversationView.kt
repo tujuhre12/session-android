@@ -58,7 +58,7 @@ class ConversationView : LinearLayout {
         this.thread = thread
         binding.iconPinned.isVisible = thread.isPinned
 
-        val isConversationUnread = configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(thread) }
+        val isConversationUnread = (configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(thread) } || !thread.isRead)
         val unreadCount = thread.unreadCount
         val hasUnreadCount = unreadCount > 0
         val isMarkedUnread = !hasUnreadCount && isConversationUnread
@@ -78,8 +78,9 @@ class ConversationView : LinearLayout {
 
         binding.unreadCountTextView.text = UnreadStylingHelper.formatUnreadCount(unreadCount)
 
-        binding.unreadCountIndicator.isVisible = hasUnreadCount || isMarkedUnread
+        binding.unreadCountIndicator.isVisible = hasUnreadCount
         binding.unreadMentionIndicator.isVisible = (thread.unreadMentionCount != 0 && thread.recipient.address.isGroupOrCommunity)
+        binding.markedUnreadIndicator.isVisible = isMarkedUnread
 
         val senderDisplayName = getTitle(thread.recipient)
 

@@ -314,6 +314,8 @@ open class Storage @Inject constructor(
             // don't set the last read in the volatile if we didn't set it in the DB
             if (!threadDb.markAllAsRead(threadId, lastSeenTime, force) && !force) return
 
+            threadDb.updateReadStatus(threadId, true)
+
             // don't process configs for inbox recipients
             if (recipient.isCommunityInboxRecipient) return
 
@@ -331,16 +333,20 @@ open class Storage @Inject constructor(
     }
 
     override fun markConversationAsUnread(threadId: Long) {
+        val threadDb = threadDatabase
         getRecipientForThread(threadId)?.let { recipient ->
 
+            threadDb.updateReadStatus(threadId, false)
             // don't process configs for inbox recipients
             if (recipient.isCommunityInboxRecipient) return
 
             configFactory.withMutableUserConfigs { configs ->
                 val config = configs.convoInfoVolatile
-                val convo = getConvo(threadId, recipient, config)  ?: return@withMutableUserConfigs
+                val convo = getConvo(threadId, recipient, config) ?: return@withMutableUserConfigs
+
                 convo.unread = true
                 notifyConversationListListeners()
+
                 config.set(convo)
             }
         }
@@ -1291,7 +1297,7 @@ open class Storage @Inject constructor(
             deleteContact(it.address.toString())
         }
     }
-    
+
     override fun shouldAutoDownloadAttachments(recipient: Recipient): Boolean {
         return recipient.autoDownloadAttachments
     }
@@ -1580,7 +1586,7 @@ open class Storage @Inject constructor(
                     profileManager.setProfilePicture(context, sender, profile.profilePictureURL!!, newProfileKey!!)
                 }
             }
-            
+
             val mappingDb = blindedIdMappingDatabase
             val mappings = mutableMapOf<String, BlindedIdMapping>()
             threadDatabase.readerFor(threadDatabase.conversationList).use { reader ->

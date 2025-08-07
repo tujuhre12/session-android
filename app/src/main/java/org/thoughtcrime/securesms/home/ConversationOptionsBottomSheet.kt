@@ -164,13 +164,37 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
             TextViewCompat.setCompoundDrawablesRelativeWithIntrinsicBounds(this, drawableStartRes, 0, 0, 0)
         }
 
-        val isRead = (thread.unreadCount > 0 ||
-                configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(thread) })
-                && !isDeprecatedLegacyGroup
+//        val hasUnread = thread.unreadCount > 0
+//        val isConfigUnread = configFactory.withUserConfigs {
+//            it.convoInfoVolatile.getConversationUnread(thread)
+//        }
+//        val localIsRead = thread.isRead
+//        val isDeprecatedLegacy = isDeprecatedLegacyGroup
+//        val isMarkedUnread = !hasUnread && (thread.isRead || isConfigUnread)
 
-        binding.markAllAsReadTextView.isVisible = isRead
+
+        val hasUnreadMessages = thread.unreadCount > 0
+
+        val configStillUnread = if (!hasUnreadMessages) {
+            configFactory.withUserConfigs {
+                it.convoInfoVolatile.getConversationUnread(thread)
+            }
+        } else {
+            // no need to hit storage at all if there are no unread
+            false
+        }
+
+//        val isRead = (thread.unreadCount == 0 ||
+//                (!configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(thread) }) || thread.isRead)
+//                && !isDeprecatedLegacyGroup
+
+        val isRead = !isDeprecatedLegacyGroup &&
+        !hasUnreadMessages &&
+                (thread.isRead || !configStillUnread)
+
+        binding.markAllAsReadTextView.isVisible = !isRead
         binding.markAllAsReadTextView.setOnClickListener(this)
-        binding.markAsUnreadTextView.isVisible = !isRead
+        binding.markAsUnreadTextView.isVisible = isRead
         binding.markAsUnreadTextView.setOnClickListener(this)
         binding.pinTextView.isVisible = !thread.isPinned && !isDeprecatedLegacyGroup
         binding.unpinTextView.isVisible = thread.isPinned

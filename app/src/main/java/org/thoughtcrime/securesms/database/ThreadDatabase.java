@@ -805,6 +805,23 @@ public class ThreadDatabase extends Database {
     return setLastSeen(threadId, lastSeenTime);
   }
 
+  public void updateReadStatus(long threadId, boolean isRead) {
+    // update the thread row
+    SQLiteDatabase db = getWritableDatabase();
+
+    int readStatus = 0;
+
+    if(isRead){
+      readStatus = 1;
+    }
+
+    ContentValues contentValues = new ContentValues();
+    contentValues.put(READ, readStatus); // mark the thread unread
+
+    db.update(TABLE_NAME, contentValues, ID + " = ?", new String[]{String.valueOf(threadId)});
+    notifyConversationListListeners();
+  }
+
   private @NonNull String getFormattedBodyFor(@NonNull MessageRecord messageRecord) {
     if (messageRecord.isMms()) {
       MmsMessageRecord record = (MmsMessageRecord) messageRecord;
@@ -929,6 +946,7 @@ public class ThreadDatabase extends Database {
       boolean            pinned              = cursor.getInt(cursor.getColumnIndexOrThrow(ThreadDatabase.IS_PINNED)) != 0;
       String             invitingAdmin       = cursor.getString(cursor.getColumnIndexOrThrow(LokiMessageDatabase.invitingSessionId));
       String messageContentJson = cursor.getString(cursor.getColumnIndexOrThrow(ThreadDatabase.SNIPPET_CONTENT));
+      boolean isReadFlag = cursor.getInt(cursor.getColumnIndexOrThrow(ThreadDatabase.READ)) != 0;
 
       if (!TextSecurePreferences.isReadReceiptsEnabled(context)) {
         readReceiptCount = 0;
@@ -970,7 +988,7 @@ public class ThreadDatabase extends Database {
         }
         return new ThreadRecord(body, snippetUri, lastMessage, recipient, date, count,
                               unreadCount, unreadMentionCount, threadId, deliveryReceiptCount, status, type,
-                              distributionType, archived, expiresIn, lastSeen, readReceiptCount, pinned, invitingAdmin, groupThreadStatus, messageContent);
+                              distributionType, archived, expiresIn, lastSeen, readReceiptCount, pinned, invitingAdmin, groupThreadStatus, messageContent, isReadFlag);
     }
 
     private @Nullable Uri getSnippetUri(Cursor cursor) {
