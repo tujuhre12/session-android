@@ -733,19 +733,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         super.onPause()
         ApplicationContext.getInstance(this).messageNotifier.setVisibleThread(-1)
         contentResolver.unregisterContentObserver(screenshotObserver)
-
-        val lastSeen = binding.conversationRecyclerView.let { _ ->
-                adapter.findLastSeenItemPosition(threadDb.getLastSeenAndHasSent(threadId).first())
-            }?.let { position ->
-                adapter.getTimestampForItemAt(position)
-            }
-
-        lastSeen?.let {
-            lifecycleScope.launch(Dispatchers.Default) {
-                storage.markConversationAsRead(viewModel.threadId, clock.currentTimeMills())
-            }
-        }
-
     }
 
     override fun getSystemService(name: String): Any? {
