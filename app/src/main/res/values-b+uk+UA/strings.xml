@@ -152,7 +152,9 @@
     <string name="banUser">Додати користувача до чорного списку</string>
     <string name="banUserBanned">Користувач заблокований</string>
     <string name="banUserDescription">Введіть ідентифікатор облікового запису користувача, якого ви блокуєте</string>
+    <string name="blindedId">Знеособлений ID</string>
     <string name="block">Заблокувати</string>
+    <string name="blockBlockedDescription">Розблокувати контакт для надсилання повідомлення.</string>
     <string name="blockBlockedNone">Немає заблокованих контактів</string>
     <string name="blockBlockedUser">Заблоковано {name}</string>
     <string name="blockDescription">Ви дійсно бажаєте заблокувати <b>{name}?</b> Заблоковані користувачі не можуть відправляти вам запити, групові запрошення або зателефонувати вам.</string>
@@ -452,6 +454,10 @@
     <string name="emojiReactsHoverYouNameTwoDesktop">Ви та {name} відреагували з {emoji_name}</string>
     <string name="emojiReactsNotification">Відреагували на ваше повідомлення {emoji}</string>
     <string name="enable">Увімкнути</string>
+    <string name="enjoyingSession">Подобається {app_name}?</string>
+    <string name="enjoyingSessionButtonNegative">Потребує доопрацювання {emoji}</string>
+    <string name="enjoyingSessionButtonPositive">Крутяк {emoji}</string>
+    <string name="enjoyingSessionDescription">Ви вже деякий час користуєтесь {app_name}, які у вас враження? Нам би дуже хотілося дізнатися вашу думку.</string>
     <string name="errorConnection">Будь ласка, перевірте підключення до Інтернету та спробуйте ще раз.</string>
     <string name="errorCopyAndQuit">Скопіювати помилку та вийти</string>
     <string name="errorDatabase">Помилка бази даних</string>
@@ -468,6 +474,8 @@
     <string name="gif">ГІФ</string>
     <string name="giphyWarning">Giphy</string>
     <string name="giphyWarningDescription">{app_name} під\'єднається до Giphy для надання результатів пошуку. У вас не буде повного захисту метаданих при відправленні GIF-файлів.</string>
+    <string name="giveFeedback">Залишити відгук?</string>
+    <string name="giveFeedbackDescription">Шкодуємо, що ваш досвід користування {app_name} був неідеальним. Ми були б вдячні, якби ви змогли поділитися своїми думками у короткому опитуванні</string>
     <string name="groupAddMemberMaximum">Максимальна кількість учасників групи: 100</string>
     <string name="groupCreate">Створити групу</string>
     <string name="groupCreateErrorNoMembers">Будь ласка, виберіть принаймні 1 учасника групи.</string>
@@ -722,6 +730,12 @@
     <string name="messageVoiceSnippetGroup">{author}: {emoji} Голосове повідомлення</string>
     <string name="messages">Повідомлення</string>
     <string name="minimize">Згорнути в трей</string>
+    <plurals name="modalMessageCharacterDisplayDescription">
+        <item quantity="one">Повідомлення має обмеження кількості символів — %1$s. Залишився %2$d символ</item>
+        <item quantity="few">Повідомлення має обмеження кількості символів — %1$s. Залишилось %2$d символів</item>
+        <item quantity="many">Повідомлення має обмеження кількості символів — %1$s. Залишилось %2$d символів</item>
+        <item quantity="other">Повідомлення має обмеження кількості символів — %1$s. Залишилось %2$d символів</item>
+    </plurals>
     <string name="modalMessageCharacterDisplayTitle">Довжина повідомлення</string>
     <string name="modalMessageCharacterTooLongDescription">Ви перевищили максимальну кількість символів для цього повідомлення. Будь ласка, скоротіть ваше повідомлення до {limit} символів або менше.</string>
     <string name="modalMessageCharacterTooLongTitle">Задовге повідомлення</string>
@@ -803,6 +817,7 @@
     <string name="onsErrorNotRecognized">Не вдалося розпізнати цей ONS. Будь ласка, перевірте його та спробуйте ще раз.</string>
     <string name="onsErrorUnableToSearch">Не вдалося виконати пошук цього ONS. Спробуйте пізніше.</string>
     <string name="open">Відкрити</string>
+    <string name="openSurvey">Пройти опитування</string>
     <string name="other">Інші</string>
     <string name="passwordChange">Змінити пароль</string>
     <string name="passwordChangeDescription">Змінити пароль, необхідний для розблокування {app_name}.</string>
@@ -815,7 +830,6 @@
     <string name="passwordEnterCurrent">Будь ласка, введіть поточний пароль</string>
     <string name="passwordEnterNew">Будь ласка, введіть новий пароль</string>
     <string name="passwordError">Пароль має містити лише літери, цифри та символи</string>
-    <string name="passwordErrorLength">Пароль має бути довжиною від 6 до 64 символів</string>
     <string name="passwordErrorMatch">Паролі не збігаються</string>
     <string name="passwordFailed">Не вдалося встановити пароль</string>
     <string name="passwordIncorrect">Неправильний пароль</string>
@@ -867,18 +881,30 @@
     <string name="proActivated">активовано</string>
     <string name="proAlreadyPurchased">У вас вже є</string>
     <string name="proAnimatedDisplayPicture">Не зволікайте і завантажуйте GIF та анімовані WebP картинки для свого аватара!</string>
+    <string name="proAnimatedDisplayPictureCallToActionDescription">Отримайте анімовані аватари та розблокуйте преміальні функції з {app_pro}</string>
+    <string name="proAnimatedDisplayPictureFeature">Анімоване зображення профілю</string>
     <string name="proAnimatedDisplayPictureModalDescription">користувачі можуть завантажувати GIF</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Завантажувати GIF з</string>
+    <string name="proBadge">{app_pro} значок</string>
+    <string name="proCallToActionLongerMessages">Хочете відправляти довші повідомлення? Надсилайте більше тексту та розблокуйте преміальні функції застосунку з Session Pro</string>
+    <string name="proCallToActionPinnedConversations">Потрібно більше закріплених бесід? Впорядкуйте свої чати та розблокуйте преміальні функції з {app_pro}</string>
+    <string name="proCallToActionPinnedConversationsMoreThan">Потрібно понад 5 закріплених бесід? Впорядкуйте свої бесіди та розблокуйте преміальні функції з {app_pro}</string>
     <string name="proFeatureListAnimatedDisplayPicture">Завантажуйте GIF та WebP аватари</string>
     <string name="proFeatureListLargerGroups">Більша кількість — до 300 учасників — групових чатів</string>
     <string name="proFeatureListLoadsMore">Та велика кількість ексклюзивних можливостей</string>
     <string name="proFeatureListLongerMessages">Повідомлення до 10 000 символів</string>
     <string name="proFeatureListPinnedConversations">Закріплюйте необмежену кількість бесід</string>
+    <string name="proGroupActivated">Групу активовано</string>
+    <string name="proGroupActivatedDescription">У цієї групи розширено можливості! Тепер вона може вміщати до 300 учасників, тому що адміністратор групи має</string>
+    <string name="proIncreasedAttachmentSizeFeature">Збільшений розмір вкладення</string>
+    <string name="proIncreasedMessageLengthFeature">Збільшена довжина повідомлень</string>
+    <string name="proMessageInfoFeatures">У цьому повідомленні наявні наступні функції Session Pro:</string>
     <string name="proSendMore">Надсилайте довші повідомлення з</string>
+    <string name="proUserProfileModalCallToAction">Хочете отримати більше від {app_name}? Оновіться до {app_pro}, щоб мати потужніший досвід обміну повідомленнями.</string>
     <string name="profile">Профіль</string>
-    <string name="profileDisplayPicture">Встановити зображення для показу</string>
+    <string name="profileDisplayPicture">Аватар</string>
     <string name="profileDisplayPictureRemoveError">Не вдалося видалити зображення профілю</string>
-    <string name="profileDisplayPictureSet">Обрати картинку для показу</string>
+    <string name="profileDisplayPictureSet">Встановити аватар</string>
     <string name="profileDisplayPictureSizeError">Будь ласка, виберіть файл меншого розміру.</string>
     <string name="profileErrorUpdate">Не вдалося оновити профіль.</string>
     <string name="promote">Підвищити</string>
@@ -902,6 +928,9 @@
     <string name="qrYoursDescription">Друзі можуть надіслати вам повідомлення, відсканувавши ваш QR-код.</string>
     <string name="quit">Вийти з {app_name}</string>
     <string name="quitButton">Вийти</string>
+    <string name="rateSession">Оцінити {app_name}?</string>
+    <string name="rateSessionApp">Оцінити застосунок</string>
+    <string name="rateSessionModalDescription">Ми раді, що вам подобається {app_name}. Якщо маєте хвильку, оцініть нас у {storevariant} — це допоможе іншим знайти безпечний та приватний спосіб спілкування!</string>
     <string name="read">Прочитано</string>
     <string name="readReceipts">Звіти про перегляд</string>
     <string name="readReceiptsDescription">Показувати підтвердження прочитання для всіх повідомлень, які ви відправляєте та отримуєте.</string>
@@ -931,7 +960,12 @@
     <string name="recreateGroup">Оновити групу</string>
     <string name="redo">Вперед</string>
     <string name="remainingCharactersOverTooltip">Скоротіть довжину повідомлення на {count}</string>
-    <string name="remainingCharactersTooltip">{count} символів залишилось</string>
+    <plurals name="remainingCharactersTooltip">
+        <item quantity="one">%1$d символ залишився</item>
+        <item quantity="few">%1$d символів залишилось</item>
+        <item quantity="many">%1$d символів залишилось</item>
+        <item quantity="other">%1$d символів залишилось</item>
+    </plurals>
     <string name="remove">Видалити</string>
     <string name="removePasswordFail">Не вдалося видалити пароль</string>
     <string name="reply">Відповісти</string>
@@ -940,6 +974,8 @@
     <string name="restart">Перезапустити</string>
     <string name="resync">Синхронізувати повторно</string>
     <string name="retry">Спробувати знову</string>
+    <string name="reviewLimit">Ліміт на відгуки</string>
+    <string name="reviewLimitDescription">Здається, ви нещодавно вже залишали відгук про {app_name}. Дякуємо за ваш зворотний зв\'язок!</string>
     <string name="save">Зберегти</string>
     <string name="saved">Збережено</string>
     <string name="savedMessages">Збережені повідомлення</string>
@@ -986,6 +1022,7 @@
     <string name="sessionNetworkNotificationLive">{token_name_long} запущено! Ознайомтеся з новим розділом {network_name} у Налаштуваннях, щоб дізнатися, як {token_name_long} забезпечує роботу Session.</string>
     <string name="sessionNetworkSecuredBy">Мережа захищена</string>
     <string name="sessionNetworkTokenDescription">Коли ви робите стейкінг {token_name_long}, щоб захистити мережу, ви заробляєте винагороди у {token_name_short} з {staking_reward_pool}.</string>
+    <string name="sessionNew"><font color="0"><b>•</b> Нове</font></string>
     <string name="sessionNotifications">Сповіщення</string>
     <string name="sessionPermissions">Дозволи</string>
     <string name="sessionPrivacy">Конфіденційність</string>
@@ -1012,6 +1049,8 @@
     <string name="theContinue">Продовжити</string>
     <string name="theDefault">За Замовчуванням</string>
     <string name="theError">Помилка</string>
+    <string name="tooltipAccountIdVisible">Account ID <b>{name}</b> видимий через вашу попередню взаємодію</string>
+    <string name="tooltipBlindedIdCommunities">Знеособлені ID використовуються у спільнотах задля зменшення кількості небажаних повідомлень та підвищення приватності</string>
     <string name="tryAgain">Спробуйте ще</string>
     <string name="typingIndicators">Індикатор введення тексту</string>
     <string name="typingIndicatorsDescription">Бачити та надсилати індикатори введення тексту.</string>

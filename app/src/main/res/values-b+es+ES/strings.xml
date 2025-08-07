@@ -128,6 +128,7 @@
     <string name="banUser">Banear usuario</string>
     <string name="banUserBanned">Usuario expulsado</string>
     <string name="block">Bloquear</string>
+    <string name="blockBlockedDescription">Desbloquea este contacto para enviar mensajes.</string>
     <string name="blockBlockedNone">No hay contactos bloqueados</string>
     <string name="blockBlockedUser">Bloqueado {name}</string>
     <string name="blockDescription">¿Estás seguro de que quieres bloquear a <b>{name}?</b> Los usuarios bloqueados no pueden enviarte solicitudes de mensajes, invitaciones a grupos ni llamarte.</string>
@@ -456,6 +457,7 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> y <b>{count} más</b> fueron invitados a unirse al grupo.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> y <b>{other_name}</b> fueron invitados a unirse al grupo.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Tú</b> y <b>{count} más</b> habéis sido invitados a uniros al grupo. El historial de mensajes ha sido compartido.</string>
+    <string name="groupMemberNewYouHistoryTwo"><b>Tú</b> y <b>{other_name}</b> fueron invitados a unirse al grupo. Se ha compartido el historial del chat.</string>
     <string name="groupMemberYouLeft"><b>Tú</b> has abandonado el grupo.</string>
     <string name="groupMembers">Miembros del grupo</string>
     <string name="groupMembersNone">No hay otros miembros en este grupo.</string>
@@ -712,7 +714,6 @@
     <string name="passwordEnterCurrent">Por favor, introduzca su antigua contraseña</string>
     <string name="passwordEnterNew">Por favor, ingrese su nueva contraseña</string>
     <string name="passwordError">La contraseña solo debe contener letras, números y símbolos</string>
-    <string name="passwordErrorLength">La contraseña debe tener entre 6 y 64 caracteres de longitud</string>
     <string name="passwordErrorMatch">Las contraseñas no coinciden</string>
     <string name="passwordFailed">Error al establecer la contraseña</string>
     <string name="passwordIncorrect">Contraseña incorrecta</string>

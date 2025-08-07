@@ -122,6 +122,7 @@
     <string name="banUser">Blokkeer Gebruiker</string>
     <string name="banUserBanned">Gebruiker verban</string>
     <string name="block">Blokkeer</string>
+    <string name="blockBlockedDescription">Deblokkeer hierdie kontak om \'n boodskap te stuur.</string>
     <string name="blockBlockedNone">Geen geblokkeerde kontakte</string>
     <string name="blockBlockedUser">{name} Geblokkeer</string>
     <string name="blockDescription">Is jy seker jy wil <b>{name} blokkeer?</b> Geblokkeerde gebruikers kan nie vir jou boodskapversoeke stuur, groepuitnodigings stuur of jou bel nie.</string>
@@ -654,7 +655,6 @@
     <string name="passwordEnterCurrent">Voer jou huidige wagwoord in</string>
     <string name="passwordEnterNew">Voer jou nuwe wagwoord in</string>
     <string name="passwordError">Wagwoord moet slegs letters, syfers en simbole bevat</string>
-    <string name="passwordErrorLength">Wagwoord moet tussen 6 en 64 karakters lank wees</string>
     <string name="passwordErrorMatch">Wagwoorde stem nie ooreen nie</string>
     <string name="passwordFailed">Kon nie wagwoord stel nie</string>
     <string name="passwordIncorrect">Verkeerde wagwoord</string>

@@ -122,6 +122,7 @@
     <string name="banUser">Bannlys bruker</string>
     <string name="banUserBanned">Bruker utestengt</string>
     <string name="block">Blokker</string>
+    <string name="blockBlockedDescription">Opphev blokkeringen på denne kontakten for å sende en melding.</string>
     <string name="blockBlockedNone">Ingen blokkerte kontakter</string>
     <string name="blockBlockedUser">Blokkert {name}</string>
     <string name="blockDescription">Er du sikker på at du vil blokkere <b>{name}</b>? Blokkerte brukere kan ikke sende deg meldingsforespørsler, gruppeinvitasjoner eller ringe deg.</string>
@@ -658,7 +659,6 @@
     <string name="passwordEnterCurrent">Vennligst skriv inn ditt nåværende passord</string>
     <string name="passwordEnterNew">Vennligst skriv inn det nye passordet ditt</string>
     <string name="passwordError">Passordet kan kun inneholde bokstaver, tall og symboler</string>
-    <string name="passwordErrorLength">Passordet må være mellom 6 og 64 tegn langt</string>
     <string name="passwordErrorMatch">Passordene stemmer ikke overens</string>
     <string name="passwordFailed">Kunne ikke stille passordet</string>
     <string name="passwordIncorrect">Galt passord</string>

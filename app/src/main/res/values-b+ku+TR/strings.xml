@@ -122,6 +122,7 @@
     <string name="banUser">دەسەڵاتدانە کەسی</string>
     <string name="banUserBanned">بەکارهێنەر بەرچاوکرا</string>
     <string name="block">دووری دەخەیتەوە‬</string>
+    <string name="blockBlockedDescription">ئەم پەیوەندە لابردن بۆ بریتیە لە ناردنی پەیامێک.</string>
     <string name="blockBlockedNone">هیچ پەیوەندیکەرێکی بڵاوکراو نییە</string>
     <string name="blockBlockedUser">{name} دوورکرایەوە</string>
     <string name="blockDescription">دڵنیایت لەوەی ناو بەچەندەی <b>{name} </b>? بەچەندەکانی بەچەرمی نەتوانێ بمەMarker دووبارە.</string>
@@ -654,7 +655,6 @@
     <string name="passwordEnterCurrent">تکایە لەبەشی حالەتی تێپەڕەوشەوە بنووسە</string>
     <string name="passwordEnterNew">تکایە تێپەڕەوشەی نوێت بنووسە</string>
     <string name="passwordError">پەیامەکان تەنها دەبێ سەرنج amin FischerAzadhace.</string>
-    <string name="passwordErrorLength">تێپەڕبووی تێپەڕاندەکانی تێپەڕەبە دووبارە بکەوە دەگل ناچێ.</string>
     <string name="passwordErrorMatch">تێپەڕبووان وەک یەک نین</string>
     <string name="passwordFailed">شکستی دانانی وشەی نهێنی</string>
     <string name="passwordIncorrect">وشەی نهێنیکردنەوەی نەگونجاو</string>

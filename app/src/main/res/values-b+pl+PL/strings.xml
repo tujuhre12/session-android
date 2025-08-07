@@ -153,6 +153,7 @@
     <string name="banUserBanned">Zablokowano użytkownikowi dostęp</string>
     <string name="banUserDescription">Wprowadź identyfikator konta użytkownika, którego chcesz zablokować</string>
     <string name="block">Zablokuj</string>
+    <string name="blockBlockedDescription">Odblokuj ten kontakt, aby wysłać wiadomość</string>
     <string name="blockBlockedNone">Brak zablokowanych kontaktów</string>
     <string name="blockBlockedUser">Zablokowano {name}</string>
     <string name="blockDescription">Czy na pewno chcesz zablokować <b>{name}</b>? Zablokowani użytkownicy nie mogą wysyłać próśb o wiadomości, zaproszeń do grupy ani dzwonić.</string>
@@ -420,6 +421,7 @@
     <string name="displayNameSet">Ustaw nazwę wyświetlaną</string>
     <string name="displayNameVisible">Wyświetlana nazwa użytkownika jest widoczna dla użytkowników, grup i społeczności, z którymi użytkownik wchodzi w interakcje.</string>
     <string name="document">Dokument</string>
+    <string name="donate">Wspomóż</string>
     <string name="done">Gotowe</string>
     <string name="download">Pobierz</string>
     <string name="downloading">Pobieranie...</string>
@@ -808,7 +810,6 @@
     <string name="passwordEnterCurrent">Wprowadź aktualne hasło</string>
     <string name="passwordEnterNew">Wprowadź nowe hasło</string>
     <string name="passwordError">Hasło może zawierać jedynie litery, cyfry i symbole</string>
-    <string name="passwordErrorLength">Hasło musi zawierać od 6 do 64 znaków</string>
     <string name="passwordErrorMatch">Podane hasła różnią się</string>
     <string name="passwordFailed">Nie udało się ustawić hasła</string>
     <string name="passwordIncorrect">Nieprawidłowe hasło</string>

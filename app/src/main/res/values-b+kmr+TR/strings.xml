@@ -126,6 +126,7 @@
     <string name="banUser">Bikarhênerê Asteng bike</string>
     <string name="banUserBanned">Bikarhênker astengî bû</string>
     <string name="block">Blok bike</string>
+    <string name="blockBlockedDescription">ئەم پەیوەندە لابردن بۆ بریتیە لە ناردنی پەیامێک.</string>
     <string name="blockBlockedNone">Kontaktên astengkirî nehatin dîtin</string>
     <string name="blockBlockedUser">{name} asteng kir</string>
     <string name="blockDescription">Tu piştrast î ku tu dixwazî <b>{name}</b> blok bikî? Bikarhênerên blokkirî nikarin daxwazên peyamê bişînin, dawetên li grûban bişînin an telefona te bikin.</string>
@@ -691,7 +692,6 @@
     <string name="passwordEnterCurrent">Ji kerema xwe şîfreya xwe ya berdest têkeve</string>
     <string name="passwordEnterNew">Ji kerema xwe şîfreya xwe ya nû têkeve</string>
     <string name="passwordError">Şîfre divê tenê herf, nimre û sembolan bihewîne</string>
-    <string name="passwordErrorLength">Divê şîfre di navbera dirêjiya 6 û 64 karakteran de be</string>
     <string name="passwordErrorMatch">Şîfre li hev nayên</string>
     <string name="passwordFailed">Bi ser neket ku şîfre deyne</string>
     <string name="passwordIncorrect">Şîfreya nerast</string>
