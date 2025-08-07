@@ -76,7 +76,7 @@ interface ConversationRepository {
     fun saveDraft(threadId: Long, text: String)
     fun getDraft(threadId: Long): String?
     fun clearDrafts(threadId: Long)
-    fun inviteContactsToCommunity(threadId: Long, contacts: List<Address>)
+    fun inviteContactsToCommunity(threadId: Long, contacts: Collection<Address>)
     fun setBlocked(recipient: Address, blocked: Boolean)
     fun markAsDeletedLocally(messages: Set<MessageRecord>, displayedMessage: String)
     fun deleteMessages(messages: Set<MessageRecord>, threadId: Long)
@@ -277,7 +277,7 @@ class DefaultConversationRepository @Inject constructor(
         draftDb.clearDrafts(threadId)
     }
 
-    override fun inviteContactsToCommunity(threadId: Long, contacts: List<Address>) {
+    override fun inviteContactsToCommunity(threadId: Long, contacts: Collection<Address>) {
         val openGroup = lokiThreadDb.getOpenGroupChat(threadId) ?: return
         for (contact in contacts) {
             val message = VisibleMessage()

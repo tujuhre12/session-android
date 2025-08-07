@@ -62,7 +62,7 @@ class AvatarUtils @Inject constructor(
             getUIDataFromRecipient(recipientRepository.getRecipient(Address.fromSerialized(accountId)))
         }
 
-    suspend fun getUIDataFromRecipient(recipient: Recipient?): AvatarUIData {
+    fun getUIDataFromRecipient(recipient: Recipient?): AvatarUIData {
         if (recipient == null) {
             return AvatarUIData(elements = emptyList())
         }

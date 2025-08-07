@@ -37,7 +37,6 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ExpirationUtil
 import org.session.libsession.utilities.StringSubstitutionConstants.COMMUNITY_NAME_KEY
@@ -1402,7 +1401,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         viewModelScope.launch {
             try {
                 withContext(Dispatchers.Default) {
-                    repository.inviteContactsToCommunity(threadId, recipients)
+                    repository.inviteContactsToCommunity(threadId, contacts)
                 }
 
                 hideLoading()

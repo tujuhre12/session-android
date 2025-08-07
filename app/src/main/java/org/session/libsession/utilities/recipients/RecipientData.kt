@@ -3,7 +3,10 @@ package org.session.libsession.utilities.recipients
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupMember
+import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.messaging.open_groups.OpenGroup
+import org.session.libsession.utilities.Address
+import org.session.libsignal.utilities.AccountId
 
 /**
  * Represents different kind of data associated with different types of recipients.
@@ -73,6 +76,18 @@ sealed interface RecipientData {
             get() = nickname?.takeIf { it.isNotBlank() } ?: name
     }
 
+    data class GroupMemberInfo(
+        val address: Address.Standard,
+        val name: String,
+        val profilePic: UserPic?
+    ) {
+        constructor(member: GroupMember) : this(
+            name = member.name,
+            profilePic = member.profilePic(),
+            address = Address.Standard(AccountId(member.accountId()))
+        )
+    }
+
     /**
      * Group data fetched from the config. It's named as "partial" because it does not include
      * all the information we need to resemble a full group recipient, hence not implementing the
@@ -88,7 +103,7 @@ sealed interface RecipientData {
         val kicked: Boolean,
         val destroyed: Boolean,
         val proStatus: ProStatus,
-        val members: List<GroupMember>,
+        val members: List<GroupMemberInfo>,
     ) : ConfigBased
 
     /**

@@ -300,25 +300,23 @@ class RecipientRepository @Inject constructor(
     }
 
     /**
-     * A cut-down version of the fetchRecipient function that only fetches standard recipient.
-     *
-     * This is needed to to fetch the first two members of the group, as we can't go through the
-     * same function recursively as it's an inline function that would lead to a stack overflow.
+     * A cut-down version of the fetchRecipient function that only fetches the recipient
+     * for a group member purpose.
      */
-    private inline fun fetchStandardRecipient(
-        address: Address.Standard,
+    private inline fun fetchGroupMember(
+        member: RecipientData.GroupMemberInfo,
         settingsFetcher: (address: Address) -> RecipientSettings,
     ): Recipient {
-        return when (val configData = getDataFromConfig(address)) {
+        return when (val configData = getDataFromConfig(member.address)) {
             is RecipientData.Self -> {
-                createLocalRecipient(address, configData)
+                createLocalRecipient(member.address, configData)
             }
 
             is RecipientData.Contact -> {
                 createContactRecipient(
-                    address = address,
+                    address = member.address,
                     basic = configData,
-                    fallbackSettings = settingsFetcher(address)
+                    fallbackSettings = settingsFetcher(member.address)
                 )
             }
 
@@ -326,8 +324,9 @@ class RecipientRepository @Inject constructor(
                 // If we don't have the right config data, we can still create a generic recipient
                 // with the settings fetched from the database.
                 createGenericRecipient(
-                    address = address,
-                    settings = settingsFetcher(address)
+                    address = member.address,
+                    settings = settingsFetcher(member.address),
+                    groupMemberInfo = member,
                 )
             }
         }
@@ -415,12 +414,13 @@ class RecipientRepository @Inject constructor(
                         kicked = groupInfo.kicked,
                         destroyed = groupInfo.destroyed,
                         proStatus = if (proStatusManager.isUserPro(address)) ProStatus.ProVisible else ProStatus.Unknown,
-                        members = configs.groupMembers.all().sortedWith { o1, o2 ->
-                            groupMemberComparator.compare(
-                                AccountId(o1.accountId()),
-                                AccountId(o2.accountId())
-                            )
-                        }
+                        members = configs.groupMembers.all()
+                            .asSequence()
+                            .map(RecipientData::GroupMemberInfo)
+                            .sortedWith { o1, o2 ->
+                                groupMemberComparator.compare(o1.address.accountId, o2.address.accountId)
+                            }
+                            .toList()
                     )
                 }
             }
@@ -455,12 +455,18 @@ class RecipientRepository @Inject constructor(
     private fun createGenericRecipient(
         address: Address,
         settings: RecipientSettings,
+        // Additional data for group members, if available.
+        groupMemberInfo: RecipientData.GroupMemberInfo? = null,
     ): Recipient {
+        check(groupMemberInfo == null || address == groupMemberInfo.address) {
+            "Address must match the group member info address if provided."
+        }
+
         return Recipient(
             address = address,
             data = RecipientData.Generic(
-                displayName = settings.name.orEmpty(),
-                avatar = settings.profilePic?.toRecipientAvatar(),
+                displayName = settings.name?.takeIf { it.isNotBlank() } ?: groupMemberInfo?.name.orEmpty(),
+                avatar = settings.profilePic?.toRecipientAvatar() ?: groupMemberInfo?.profilePic?.toRecipientAvatar(),
                 proStatus = settings.proStatus,
                 acceptsCommunityMessageRequests = !settings.blocksCommunityMessagesRequests,
             ),
@@ -481,10 +487,10 @@ class RecipientRepository @Inject constructor(
             data = RecipientData.Group(
                 partial = partial,
                 firstMember = partial.members.firstOrNull()?.let { member ->
-                    fetchStandardRecipient(Address.Standard(AccountId(member.accountId())), settingsFetcher)
+                    fetchGroupMember(member, settingsFetcher)
                 },
                 secondMember = partial.members.getOrNull(1)?.let { member ->
-                    fetchStandardRecipient(Address.Standard(AccountId(member.accountId())), settingsFetcher)
+                    fetchGroupMember(member, settingsFetcher)
                 },
             ),
             mutedUntil = settings?.muteUntil,

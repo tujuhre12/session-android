@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.groups
 
 import android.content.Context
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -41,11 +40,10 @@ class CreateGroupViewModel @AssistedInject constructor(
     recipientRepository: RecipientRepository,
 ): SelectContactsViewModel(
     configFactory = configFactory,
-    excludingAccountIDs = emptySet(),
-    contactFiltering = SelectContactsViewModel.Factory.defaultFiltering,
-    appContext = appContext,
     avatarUtils = avatarUtils,
     proStatusManager = proStatusManager,
+    excludingAccountIDs = emptySet(),
+    contactFiltering = SelectContactsViewModel.Factory.defaultFiltering,
     recipientRepository = recipientRepository,
 ) {
     // Child view model to handle contact selection logic
