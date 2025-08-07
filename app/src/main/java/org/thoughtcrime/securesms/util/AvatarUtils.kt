@@ -26,6 +26,7 @@ import network.loki.messenger.R
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.toGroupString
 import org.session.libsignal.utilities.IdPrefix
@@ -67,64 +68,40 @@ class AvatarUtils @Inject constructor(
             return AvatarUIData(elements = emptyList())
         }
 
-        return withContext(Dispatchers.Default) {
-            // set up the data based on the conversation type
-            val elements = mutableListOf<AvatarUIElement>()
+        val groupData = recipient.data as? RecipientData.GroupLike
+        val firstMember = groupData?.firstMember
+        val secondMember = groupData?.secondMember
 
-            // Groups can have a double avatar setup, if they don't have a custom image
-            if (recipient.isGroupRecipient) {
-                // if the group has a custom image, use that
-                // other wise make up a double avatar from the first two members
-                // if there is only one member then use that member + an unknown icon coloured based on the group id
-                if (recipient.avatar != null) {
-                    elements.add(getUIElementForRecipient(recipient))
-                } else {
-                    val members = if (recipient.isLegacyGroupRecipient) {
-                        groupDatabase.getGroupMemberAddresses(
-                            recipient.address.toGroupString(),
-                            true
-                        )
-                    } else {
-                        storage.get().getMembers(recipient.address.toString())
-                            .map { Address.fromSerialized(it.accountId()) }
-                    }.sorted().take(2)
-
-                    when (members.size) {
-                        0 -> elements.add(AvatarUIElement())
-
-                        1 -> {
-                            // when we only have one member, use that member as one of the two avatar
-                            // and the second should be the unknown icon with a colour based on the group id
-                            elements.add(
-                                getUIElementForRecipient(
-                                    recipientRepository.getRecipient(Address.fromSerialized(members[0].toString()))
-                                )
-                            )
-
-                            elements.add(
-                                AvatarUIElement(
-                                    color = Color(getColorFromKey(recipient.address.toString()))
-                                )
-                            )
-                        }
-
-                        else -> {
-                            members.forEach {
-                                elements.add(
-                                    getUIElementForRecipient(recipientRepository.getRecipient(it))
-                                )
-                            }
-                        }
-                    }
+        val elements = buildList {
+            when {
+                // if the recipient has a custom avatar, use that
+                recipient.avatar != null -> {
+                    add(getUIElementForRecipient(recipient))
                 }
-            } else {
-                elements.add(getUIElementForRecipient(recipient))
-            }
 
-            AvatarUIData(
-                elements = elements
-            )
+                // The recipient is group like and have two members, use both images
+                firstMember != null && secondMember != null -> {
+                    add(getUIElementForRecipient(firstMember))
+                    add(getUIElementForRecipient(secondMember))
+                }
+
+                // The recipient is group like and has only one member, use that member + an unknown icon
+                firstMember != null -> {
+                    add(getUIElementForRecipient(firstMember))
+                    add(
+                        AvatarUIElement(
+                            color = Color(getColorFromKey(recipient.address.toString()))
+                        )
+                    )
+                }
+
+                else -> {
+                    add(AvatarUIElement()) // Fallback to an empty element if no avatar or members are available
+                }
+            }
         }
+
+        return AvatarUIData(elements = elements)
     }
 
     private fun getUIElementForRecipient(recipient: Recipient): AvatarUIElement {

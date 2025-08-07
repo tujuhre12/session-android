@@ -20,6 +20,11 @@ sealed interface RecipientData {
     // Marker interface to distinguish between config-based and other recipient data.
     sealed interface ConfigBased
 
+    sealed interface GroupLike {
+        val firstMember: Recipient?
+        val secondMember: Recipient?
+    }
+
     data class Generic(
         val displayName: String = "",
         override val avatar: RemoteFile? = null,
@@ -111,9 +116,9 @@ sealed interface RecipientData {
      */
     data class Group(
         val partial: PartialGroup,
-        val firstMember: Recipient?, // Used primarily to assemble the profile picture for the group.
-        val secondMember: Recipient?, // Used primarily to assemble the profile picture for the group.
-    ) : RecipientData {
+        override val firstMember: Recipient?, // Used primarily to assemble the profile picture for the group.
+        override val secondMember: Recipient?, // Used primarily to assemble the profile picture for the group.
+    ) : RecipientData, GroupLike {
         override val avatar: RemoteFile?
             get() = partial.avatar
 
@@ -122,5 +127,19 @@ sealed interface RecipientData {
 
         override val proStatus: ProStatus
             get() = partial.proStatus
+    }
+
+    data class LegacyGroup(
+        val name: String,
+        override val priority: Long,
+        val memberAddresses: List<Address.Standard>,
+        override val firstMember: Recipient?, // Used primarily to assemble the profile picture for the group.
+        override val secondMember: Recipient?, // Used primarily to assemble the profile picture for the group.
+    ) : RecipientData, GroupLike {
+        override val avatar: RemoteFile?
+            get() = null
+
+        override val proStatus: ProStatus
+            get() = ProStatus.Unknown
     }
 }

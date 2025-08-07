@@ -71,16 +71,15 @@ data class Recipient(
 
     val approvedMe: Boolean get() {
         return when (data) {
-            is RecipientData.Self -> true
-            is RecipientData.Group -> true
-            is RecipientData.Generic -> {
-                // A generic recipient is the one we only have minimal information about,
-                // we don't know if they have approved us or not.
-                false
-            }
             is RecipientData.Contact -> data.approvedMe
-            is RecipientData.Community -> true // Communities don't have approval status for users.
+
+            is RecipientData.Generic,
             is RecipientData.BlindedContact -> false
+
+            is RecipientData.Self,
+            is RecipientData.Group,
+            is RecipientData.Community,
+            is RecipientData.LegacyGroup -> true
         }
     }
 
@@ -109,6 +108,7 @@ data class Recipient(
             is RecipientData.BlindedContact -> data.acceptsCommunityMessageRequests
             is RecipientData.Generic -> data.acceptsCommunityMessageRequests
             is RecipientData.Community,
+            is RecipientData.LegacyGroup,
             is RecipientData.Contact,
             is RecipientData.Self,
             is RecipientData.Group -> false
@@ -128,6 +128,7 @@ fun Recipient.displayName(
     val name = when (data) {
         is RecipientData.Self -> data.name
         is RecipientData.Contact -> data.displayName
+        is RecipientData.LegacyGroup -> data.name
         is RecipientData.Group -> data.partial.name
         is RecipientData.Generic -> data.displayName
         is RecipientData.Community -> data.openGroup.name

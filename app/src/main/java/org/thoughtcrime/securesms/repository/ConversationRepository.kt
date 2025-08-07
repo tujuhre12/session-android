@@ -63,6 +63,8 @@ import javax.inject.Singleton
 interface ConversationRepository {
     fun observeConversationList(approved: Boolean? = null): Flow<List<ThreadRecord>>
 
+    fun getConversationList(approved: Boolean? = null): List<ThreadRecord>
+
     fun getConversationListAddresses(
         nts: (ReadableUserProfile) -> Boolean = { false },
         contactFilter: (Contact) -> Boolean = { false },
@@ -218,24 +220,33 @@ class DefaultConversationRepository @Inject constructor(
     private val GroupInfo.ClosedGroupInfo.approved: Boolean
         get() = !invited
 
+
+    private fun getConversationListAddresses(approved: Boolean?) =  getConversationListAddresses(
+        blindedContactFilter = { true },
+        nts = { approved == null || approved },
+        contactFilter = {
+            !it.blocked && (approved == null || it.approved == approved)
+        },
+        groupFilter = {
+            approved == null || it.approved == approved
+        },
+        legacyFilter = { approved != false }, // Legacy groups are always approved
+        communityFilter = { approved != false } // Communities are always approved
+    )
+
+    private fun List<ThreadRecord>.filterThreadsForApprovalStatus(): List<ThreadRecord> {
+        return this.filter { record ->
+            // We don't actually want to show unapproved threads without any messages.
+            record.recipient.approved || record.lastMessage != null
+        }
+    }
+
+
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     override fun observeConversationList(approved: Boolean?): Flow<List<ThreadRecord>> {
         return configFactory.userConfigsChanged(200)
             .onStart { emit(Unit) }
-            .map {
-                getConversationListAddresses(
-                    blindedContactFilter = { true },
-                    nts = { approved == null || approved },
-                    contactFilter = {
-                        !it.blocked && (approved == null || it.approved == approved)
-                    },
-                    groupFilter = {
-                        approved == null || it.approved == approved
-                    },
-                    legacyFilter = { approved != false }, // Legacy groups are always approved
-                    communityFilter = { approved != false } // Communities are always approved
-                )
-            }
+            .map { getConversationListAddresses(approved) }
             .distinctUntilChanged()
             .flatMapLatest { allAddresses ->
                 merge(
@@ -246,15 +257,15 @@ class DefaultConversationRepository @Inject constructor(
                     .onStart { emit(Unit) }
                     .mapLatest {
                         withContext(Dispatchers.Default) {
-                            threadDb.getThreads(allAddresses)
-                                // We don't actually want to show unapproved threads without any
-                                // messages.
-                                .filter { record ->
-                                    record.recipient.approved || record.lastMessage != null
-                                }
+                            threadDb.getThreads(allAddresses).filterThreadsForApprovalStatus()
                         }
                     }
             }
+    }
+
+    override fun getConversationList(approved: Boolean?): List<ThreadRecord> {
+        return threadDb.getThreads(getConversationListAddresses(approved))
+            .filterThreadsForApprovalStatus()
     }
 
     override fun maybeGetRecipientForThreadId(threadId: Long): Address? {

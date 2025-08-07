@@ -25,7 +25,6 @@ import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISI
 import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
-import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.utilities.Address
@@ -37,9 +36,8 @@ import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.ProStatus
-import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.recipients.RemoteFile
+import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRecipientAvatar
 import org.session.libsession.utilities.toBlinded
 import org.session.libsession.utilities.toGroupString
@@ -200,12 +198,14 @@ class RecipientRepository @Inject constructor(
                     settingsFetcher = settingsFetcher
                 )
 
+                val memberAddresses = recipientData.members.mapTo(hashSetOf()) { it.address }
+
                 changeSource = merge(
                     configFactory.userConfigsChanged(),
                     configFactory.configUpdateNotifications
                         .filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
                         .filter { it.groupId.hexString == address.address },
-                    recipientSettingsDatabase.changeNotification.filter { it == address }
+                    recipientSettingsDatabase.changeNotification.filter { it == address || memberAddresses.contains(it) }
                 )
             }
 
@@ -224,12 +224,6 @@ class RecipientRepository @Inject constructor(
 
                 when (address) {
                     is Address.LegacyGroup -> {
-                        changeSource = merge(
-                            groupDatabase.updateNotification,
-                            recipientSettingsDatabase.changeNotification.filter { it == address },
-                            configFactory.userConfigsChanged(),
-                        )
-
                         val group: GroupRecord? =
                             groupDatabase.getGroup(address.toGroupString()).orNull()
 
@@ -237,7 +231,15 @@ class RecipientRepository @Inject constructor(
                             it.userGroups.getLegacyGroupInfo(GroupUtil.doubleDecodeGroupId(address.address))
                         }
 
-                        value = group?.let { createLegacyGroupRecipient(address, groupConfig, it, settings) }
+                        val memberAddresses = groupDatabase.getGroupMemberAddresses(address.toGroupString(), true)
+
+                        changeSource = merge(
+                            groupDatabase.updateNotification,
+                            recipientSettingsDatabase.changeNotification.filter { it == address || memberAddresses.contains(it) },
+                            configFactory.userConfigsChanged(),
+                        )
+
+                        value = group?.let { createLegacyGroupRecipient(address, groupConfig, memberAddresses, it, settings, settingsFetcher) }
                             ?: createGenericRecipient(address, settings)
                     }
 
@@ -274,10 +276,10 @@ class RecipientRepository @Inject constructor(
                             .mapNotNull { groupInfo ->
                                 configFactory.withGroupConfigs(AccountId(groupInfo.groupAccountId)) {
                                     it.groupMembers.get(address.address)
-                                }
+                                }?.let(RecipientData::GroupMemberInfo)
                             }
                             .firstOrNull()
-                            ?.let { groupMember -> createGroupMemberRecipient(address, groupMember) }
+                            ?.let { groupMember -> fetchGroupMember(groupMember, settingsFetcher) }
                             ?: createGenericRecipient(address, settings)
 
                         changeSource = merge(
@@ -332,6 +334,35 @@ class RecipientRepository @Inject constructor(
         }
     }
 
+    private inline fun fetchLegacyGroupMember(
+        address: Address.Standard,
+        settingsFetcher: (address: Address) -> RecipientSettings,
+    ): Recipient {
+        return when (val configData = getDataFromConfig(address)) {
+            is RecipientData.Self -> {
+                createLocalRecipient(address, configData)
+            }
+
+            is RecipientData.Contact -> {
+                createContactRecipient(
+                    address = address,
+                    basic = configData,
+                    fallbackSettings = settingsFetcher(address)
+                )
+            }
+
+            else -> {
+                // If we don't have the right config data, we can still create a generic recipient
+                // with the settings fetched from the database.
+                createGenericRecipient(
+                    address = address,
+                    settings = settingsFetcher(address),
+                )
+            }
+        }
+
+    }
+
     suspend fun getRecipient(address: Address): Recipient {
         return observeRecipient(address).first()
     }
@@ -366,41 +397,42 @@ class RecipientRepository @Inject constructor(
      * responsibility to fill in the gaps if needed.
      */
     private fun getDataFromConfig(address: Address): RecipientData.ConfigBased? {
-        return when {
-            // Is this our own address?
-            address.address.equals(preferences.getLocalNumber(), ignoreCase = true) -> {
-                configFactory.withUserConfigs { configs ->
-                    RecipientData.Self(
-                        name = configs.userProfile.getName().orEmpty(),
-                        avatar = configs.userProfile.getPic().toRecipientAvatar(),
-                        expiryMode = configs.userProfile.getNtsExpiry(),
-                        priority = configs.userProfile.getNtsPriority(),
-                        proStatus = if (proStatusManager.isCurrentUserPro()) ProStatus.ProVisible else ProStatus.Unknown,
-                    )
+        return when (address) {
+            is Address.Standard -> {
+                // Is this our own address?
+                if (address.address.equals(preferences.getLocalNumber(), ignoreCase = true)) {
+                    configFactory.withUserConfigs { configs ->
+                        RecipientData.Self(
+                            name = configs.userProfile.getName().orEmpty(),
+                            avatar = configs.userProfile.getPic().toRecipientAvatar(),
+                            expiryMode = configs.userProfile.getNtsExpiry(),
+                            priority = configs.userProfile.getNtsPriority(),
+                            proStatus = if (proStatusManager.isCurrentUserPro()) ProStatus.ProVisible else ProStatus.Unknown,
+                        )
+                    }
+                } else {
+                    // Is this a contact?
+                    configFactory.withUserConfigs { configs ->
+                        configs.contacts.get(address.accountId.hexString)
+                    }?.let { contact ->
+                        RecipientData.Contact(
+                            name = contact.name,
+                            nickname = contact.nickname.takeIf { it.isNotBlank() },
+                            avatar = contact.profilePicture.toRecipientAvatar(),
+                            approved = contact.approved,
+                            approvedMe = contact.approvedMe,
+                            blocked = contact.blocked,
+                            expiryMode = contact.expiryMode,
+                            priority = contact.priority,
+                            proStatus = if (proStatusManager.isUserPro(address)) ProStatus.ProVisible else ProStatus.Unknown
+                        )
+                    }
                 }
             }
 
-            // Is this in our contact?
-            address is Address.Standard -> {
-                configFactory.withUserConfigs { configs ->
-                    configs.contacts.get(address.accountId.hexString)
-                }?.let { contact ->
-                    RecipientData.Contact(
-                        name = contact.name,
-                        nickname = contact.nickname.takeIf { it.isNotBlank() },
-                        avatar = contact.profilePicture.toRecipientAvatar(),
-                        approved = contact.approved,
-                        approvedMe = contact.approvedMe,
-                        blocked = contact.blocked,
-                        expiryMode = contact.expiryMode,
-                        priority = contact.priority,
-                        proStatus = if (proStatusManager.isUserPro(address)) ProStatus.ProVisible else ProStatus.Unknown
-                    )
-                }
-            }
 
             // Is this a group?
-            address is Address.Group -> {
+            is Address.Group -> {
                 val groupInfo = configFactory.getGroup(address.accountId) ?: return null
                 val groupMemberComparator = GroupMemberComparator(AccountId(preferences.getLocalNumber()!!))
                 configFactory.withGroupConfigs(address.accountId) { configs ->
@@ -426,7 +458,8 @@ class RecipientRepository @Inject constructor(
             }
 
             // Is this a blinded contact?
-            address is Address.Blinded || address is Address.CommunityBlindedId -> {
+            is Address.Blinded,
+            is Address.CommunityBlindedId -> {
                 val blinded = address.toBlinded() ?: return null
                 val contact = configFactory.withUserConfigs { it.contacts.getBlinded(blinded.blindedId.hexString) } ?: return null
 
@@ -443,8 +476,8 @@ class RecipientRepository @Inject constructor(
                 )
             }
 
-            // Otherwise, there's no fast way to get a basic recipient
-            else -> null
+            // No config data for these addresses.
+            is Address.Community, is Address.LegacyGroup, is Address.Unknown -> null
         }
     }
 
@@ -497,8 +530,42 @@ class RecipientRepository @Inject constructor(
             autoDownloadAttachments = settings?.autoDownloadAttachments,
             notifyType = settings?.notifyType ?: NotifyType.ALL,
         )
-
     }
+
+    private inline fun createLegacyGroupRecipient(
+        address: Address,
+        config: GroupInfo.LegacyGroupInfo?,
+        memberAddresses: List<Address>, // Local db data
+        group: GroupRecord, // Local db data
+        settings: RecipientSettings?, // Local db data
+        settingsFetcher: (Address) -> RecipientSettings
+    ): Recipient {
+        val memberAddresses = memberAddresses
+            .asSequence()
+            .filterIsInstance<Address.Standard>()
+            .mapTo(arrayListOf()) { it }
+
+        val groupMemberComparator = GroupMemberComparator(AccountId(preferences.getLocalNumber()!!))
+
+        memberAddresses.sortedWith { a1, a2 ->
+            groupMemberComparator.compare(a1.accountId, a2.accountId)
+        }
+
+        return Recipient(
+            address = address,
+            data = RecipientData.LegacyGroup(
+                name = group.title,
+                priority = config?.priority ?: PRIORITY_VISIBLE,
+                memberAddresses = memberAddresses,
+                firstMember = memberAddresses.firstOrNull()?.let { fetchLegacyGroupMember(it, settingsFetcher) },
+                secondMember = memberAddresses.getOrNull(1)?.let { fetchLegacyGroupMember(it, settingsFetcher) },
+            ),
+            mutedUntil = settings?.muteUntil,
+            autoDownloadAttachments = settings?.autoDownloadAttachments,
+            notifyType = settings?.notifyType ?: NotifyType.ALL,
+        )
+    }
+
 
 
     companion object {
@@ -521,9 +588,6 @@ class RecipientRepository @Inject constructor(
                 }
             }
 
-        /**
-         * Creates a RecipientV2 instance from the provided Contact config and optional fallback settings.
-         */
         private fun createContactRecipient(
             address: Address,
             basic: RecipientData.Contact,
@@ -553,49 +617,6 @@ class RecipientRepository @Inject constructor(
                 mutedUntil = settings?.muteUntil,
                 autoDownloadAttachments = settings?.autoDownloadAttachments,
                 notifyType = settings?.notifyType ?: NotifyType.ALL,
-            )
-        }
-
-        private fun createLegacyGroupRecipient(
-            address: Address,
-            config: GroupInfo.LegacyGroupInfo?,
-            group: GroupRecord, // Local db data
-            settings: RecipientSettings?, // Local db data
-        ): Recipient {
-            return Recipient(
-                address = address,
-                data = RecipientData.Generic(
-                    displayName = group.title,
-                    avatar = if (group.url != null && group.avatarId != null) {
-                        RemoteFile.Community(
-                            communityServerBaseUrl = group.url,
-                            roomId = "",
-                            fileId = group.avatarId.toString()
-                        )
-                    } else {
-                        null
-                    },
-                    priority = config?.priority ?: PRIORITY_VISIBLE,
-                    proStatus = ProStatus.Unknown,
-                    acceptsCommunityMessageRequests = false,
-                ),
-                mutedUntil = settings?.muteUntil,
-                autoDownloadAttachments = settings?.autoDownloadAttachments,
-                notifyType = settings?.notifyType ?: NotifyType.ALL,
-            )
-        }
-
-        private fun createGroupMemberRecipient(
-            address: Address,
-            groupMember: GroupMember,
-        ): Recipient {
-            return Recipient(
-                address = address,
-                data = RecipientData.Generic(
-                    displayName = groupMember.name,
-                    avatar = groupMember.profilePic()?.toRecipientAvatar(),
-                    acceptsCommunityMessageRequests = false,
-                ),
             )
         }
 

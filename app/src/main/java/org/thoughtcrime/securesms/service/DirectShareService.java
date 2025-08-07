@@ -11,19 +11,16 @@ import android.os.Bundle;
 import android.service.chooser.ChooserTarget;
 import android.service.chooser.ChooserTargetService;
 
-import androidx.annotation.NonNull;
-
 import com.bumptech.glide.Glide;
 
-import org.jetbrains.annotations.NotNull;
 import org.session.libsession.database.StorageProtocol;
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsession.utilities.recipients.RecipientKt;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.ShareActivity;
-import org.thoughtcrime.securesms.contacts.ShareContactListLoader;
 import org.thoughtcrime.securesms.database.RecipientRepository;
+import org.thoughtcrime.securesms.database.model.ThreadRecord;
 import org.thoughtcrime.securesms.repository.ConversationRepository;
 import org.thoughtcrime.securesms.util.BitmapUtil;
 
@@ -58,9 +55,10 @@ public class DirectShareService extends ChooserTargetService {
     List<ChooserTarget> results        = new ArrayList<>();
     ComponentName       componentName  = new ComponentName(this, ShareActivity.class);
 
-    List<@NotNull Recipient> items = new ShareContactListLoader(this, null, legacyGroupDeprecationManager, storage, conversationRepository).loadInBackground();
+    List<ThreadRecord> records = conversationRepository.getConversationList(true);
 
-    for (final Recipient recipient : items) {
+    for (final ThreadRecord thread : records) {
+        final Recipient recipient = thread.getRecipient();
         Bitmap avatar;
 
         if (recipient.getAvatar() != null) {

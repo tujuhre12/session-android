@@ -3,16 +3,14 @@ package org.thoughtcrime.securesms
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Parcel
 import android.provider.OpenableColumns
+import androidx.core.content.IntentCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -20,9 +18,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -30,17 +25,11 @@ import network.loki.messenger.R
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
-import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.ShareActivity.Companion.EXTRA_ADDRESS_MARSHALLED
-import org.thoughtcrime.securesms.ShareActivity.Companion.EXTRA_DISTRIBUTION_TYPE
-import org.thoughtcrime.securesms.ShareActivity.Companion.EXTRA_THREAD_ID
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
-import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.home.search.searchName
 import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.pro.ProStatusManager
@@ -56,8 +45,6 @@ import javax.inject.Inject
 @HiltViewModel
 class ShareViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
-    private val storage: StorageProtocol,
-    private val threadDatabase: ThreadDatabase,
     private val avatarUtils: AvatarUtils,
     private val proStatusManager: ProStatusManager,
     private val deprecationManager: LegacyGroupDeprecationManager,
@@ -164,24 +151,9 @@ class ShareViewModel @Inject constructor(
     }
 
     private fun handleResolvedMedia(intent: Intent) {
-        val threadId = intent.getLongExtra(EXTRA_THREAD_ID, -1)
-        val distributionType = intent.getIntExtra(EXTRA_DISTRIBUTION_TYPE, -1)
-        var address: Address? = null
+        val address = IntentCompat.getParcelableExtra<Address>(intent, ShareActivity.EXTRA_ADDRESS, Address::class.java)
 
-        if (intent.hasExtra(EXTRA_ADDRESS_MARSHALLED)) {
-            val parcel = Parcel.obtain()
-            val marshalled = intent.getByteArrayExtra(EXTRA_ADDRESS_MARSHALLED)
-            parcel.unmarshall(marshalled!!, 0, marshalled.size)
-            parcel.setDataPosition(0)
-            address = parcel.readParcelable<Address?>(context.classLoader)
-            parcel.recycle()
-        }
-
-        val hasResolvedDestination = threadId != -1L && address != null && distributionType != -1
-
-         if (!hasResolvedDestination) {
-             _uiState.update { it.copy(showLoader = false) }
-        } else if (address is Address.Conversable) {
+         if (address is Address.Conversable) {
             createConversation(address)
         }
     }
