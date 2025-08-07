@@ -221,6 +221,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
+import kotlin.concurrent.thread
 import kotlin.math.abs
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -732,6 +733,19 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         super.onPause()
         ApplicationContext.getInstance(this).messageNotifier.setVisibleThread(-1)
         contentResolver.unregisterContentObserver(screenshotObserver)
+
+        val lastSeen = binding.conversationRecyclerView.let { _ ->
+                adapter.findLastSeenItemPosition(threadDb.getLastSeenAndHasSent(threadId).first())
+            }?.let { position ->
+                adapter.getTimestampForItemAt(position)
+            }
+
+        lastSeen?.let {
+            lifecycleScope.launch(Dispatchers.Default) {
+                storage.markConversationAsRead(viewModel.threadId, clock.currentTimeMills())
+            }
+        }
+
     }
 
     override fun getSystemService(name: String): Any? {
@@ -773,7 +787,19 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             if (author != null && messageTimestamp >= 0) {
                 jumpToMessage(author, messageTimestamp, firstLoad.get(), null)
             } else {
-                if (firstLoad.getAndSet(false)) scrollToFirstUnreadMessageOrBottom()
+                if (firstLoad.getAndSet(false)) {
+                    scrollToFirstUnreadMessageOrBottom()
+
+                    if (unreadCount == 0 && adapter.itemCount > 0) {
+                        val lastPos = adapter.itemCount - 1
+                        val lastTimestamp = adapter.getTimestampForItemAt(lastPos)
+                            ?: clock.currentTimeMills()
+                        lifecycleScope.launch(Dispatchers.IO) {
+                            storage.markConversationAsRead(viewModel.threadId, lastTimestamp)
+                        }
+                    }
+                }
+
                 handleRecyclerViewScrolled()
             }
 
@@ -1103,8 +1129,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     private fun scrollToFirstUnreadMessageOrBottom() {
         // if there are no unread messages, go straight to the very bottom of the list
-        if(unreadCount == 0){
-            layoutManager?.scrollToPositionWithOffset(adapter.itemCount -1, Int.MIN_VALUE)
+        if (unreadCount == 0) {
+            layoutManager?.scrollToPositionWithOffset(adapter.itemCount - 1, Int.MIN_VALUE)
             return
         }
 
@@ -1296,7 +1322,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             .start()
     }
 
-    private var hasClearedUnread = false
     private fun handleRecyclerViewScrolled() {
         // Note: The typing indicate is whether the other person / other people are typing - it has
         // nothing to do with the IME keyboard state.
@@ -1313,17 +1338,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val targetVisiblePosition = maybeTargetVisiblePosition ?: RecyclerView.NO_POSITION
         if (!firstLoad.get() && targetVisiblePosition != RecyclerView.NO_POSITION) {
             adapter.getTimestampForItemAt(targetVisiblePosition)?.let { visibleItemTimestamp ->
-                if (!hasClearedUnread && unreadCount == 0) {
-                    // For conversations that have been marked as unread
-                    lifecycleScope.launch(Dispatchers.Default) {
-                        storage.markConversationAsRead(viewModel.threadId, clock.currentTimeMills())
-                    }
-                } else {
                     bufferedLastSeenChannel.trySend(visibleItemTimestamp).apply {
                         if (isFailure) Log.e(TAG, "trySend failed", exceptionOrNull())
                     }
-                }
-                hasClearedUnread = true
             }
         }
 
