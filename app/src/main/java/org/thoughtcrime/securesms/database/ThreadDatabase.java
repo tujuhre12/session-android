@@ -627,6 +627,25 @@ public class ThreadDatabase extends Database {
     }
   }
 
+  public boolean isRead(long threadId) {
+    SQLiteDatabase db = getReadableDatabase();
+    // Only ask for the "READ" column
+    String[] projection = {READ};
+    String selection = ID + " = ?";
+    String[] args = {String.valueOf(threadId)};
+
+    Cursor cursor = db.query(TABLE_NAME, projection, selection, args, null, null, null);
+    try {
+      if (cursor != null && cursor.moveToFirst()) {
+        // READ is stored as 1 = read, 0 = unread
+        return cursor.getInt(0) == 1;
+      }
+      return false;
+    } finally {
+      if (cursor != null) cursor.close();
+    }
+  }
+
   /**
    * @param threadId
    * @param lastSeenTime
@@ -638,6 +657,23 @@ public class ThreadDatabase extends Database {
     MarkReadReceiver.process(context, messages);
     messageNotifier.get().updateNotification(context, threadId);
     return setLastSeen(threadId, lastSeenTime);
+  }
+
+  public void updateReadStatus(long threadId, boolean isRead) {
+    // update the thread row
+    SQLiteDatabase db = getWritableDatabase();
+
+    int readStatus = 0;
+
+    if(isRead){
+      readStatus = 1;
+    }
+
+    ContentValues contentValues = new ContentValues();
+    contentValues.put(READ, readStatus); // mark the thread unread
+
+    db.update(TABLE_NAME, contentValues, ID + " = ?", new String[]{String.valueOf(threadId)});
+    notifyConversationListListeners();
   }
 
   private @NonNull String getFormattedBodyFor(@NonNull MessageRecord messageRecord) {
@@ -720,6 +756,7 @@ public class ThreadDatabase extends Database {
       long               lastSeen             = cursor.getLong(cursor.getColumnIndexOrThrow(ThreadDatabase.LAST_SEEN));
       String             invitingAdmin       = cursor.getString(cursor.getColumnIndexOrThrow(LokiMessageDatabase.invitingSessionId));
       String messageContentJson = cursor.getString(cursor.getColumnIndexOrThrow(ThreadDatabase.SNIPPET_CONTENT));
+      boolean isReadFlag = cursor.getInt(cursor.getColumnIndexOrThrow(ThreadDatabase.READ)) != 0;
 
       if (!TextSecurePreferences.isReadReceiptsEnabled(context)) {
         readReceiptCount = 0;
@@ -761,7 +798,7 @@ public class ThreadDatabase extends Database {
 
       return new ThreadRecord(body, lastMessage, recipient, date, count,
                               unreadCount, unreadMentionCount, threadId, deliveryReceiptCount, status, type,
-              lastSeen, readReceiptCount, invitingAdmin, groupThreadStatus, messageContent);
+              lastSeen, readReceiptCount, invitingAdmin, groupThreadStatus, messageContent, isReadFlag);
     }
 
     @Override

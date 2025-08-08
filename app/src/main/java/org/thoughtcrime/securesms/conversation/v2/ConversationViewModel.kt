@@ -463,7 +463,8 @@ class ConversationViewModel @AssistedInject constructor(
             pagerData += ConversationAppBarPagerData(
                 title = title,
                 action = {
-                    showGroupMembers(conversation)
+                    if(conversation.isCommunityRecipient) showConversationSettings()
+                    else showGroupMembers(conversation)
                 },
             )
         }
@@ -1232,6 +1233,15 @@ class ConversationViewModel @AssistedInject constructor(
         }
     }
 
+    private fun showConversationSettings() {
+        recipient?.let { convo ->
+            _uiEvents.tryEmit(ConversationUiEvent.ShowConversationSettings(
+                threadId = threadId,
+                threadAddress = convo.address
+            ))
+        }
+    }
+
     private fun showNotificationSettings() {
         _uiEvents.tryEmit(ConversationUiEvent.ShowNotificationSettings(address))
     }
@@ -1355,6 +1365,7 @@ sealed interface ConversationUiEvent {
     data class ShowDisappearingMessages(val address: Address) : ConversationUiEvent
     data class ShowNotificationSettings(val address: Address) : ConversationUiEvent
     data class ShowGroupMembers(val groupId: String) : ConversationUiEvent
+    data class ShowConversationSettings(val threadId: Long, val threadAddress: Address) : ConversationUiEvent
     data object ShowUnblockConfirmation : ConversationUiEvent
 }
 

@@ -177,6 +177,7 @@ interface StorageProtocol {
     fun getMessageCount(threadID: Long): Long
     fun getTotalPinned(): Int
     fun setPinned(address: Address, isPinned: Boolean)
+    fun isRead(threadId: Long) : Boolean
     fun deleteConversation(threadID: Long)
     fun setThreadCreationDate(threadId: Long, newDate: Long)
     fun getLastLegacyRecipient(threadRecipient: String): String?
@@ -200,6 +201,7 @@ interface StorageProtocol {
      */
     fun persist(message: VisibleMessage, quotes: QuoteModel?, linkPreview: List<LinkPreview?>, groupPublicKey: String?, openGroupID: String?, attachments: List<Attachment>, runThreadUpdate: Boolean): MessageId?
     fun markConversationAsRead(threadId: Long, lastSeenTime: Long, force: Boolean = false)
+    fun markConversationAsUnread(threadId: Long)
     fun getLastSeen(threadId: Long): Long
     fun ensureMessageHashesAreSender(hashes: Set<String>, sender: String, closedGroupId: String): Boolean
     fun updateThread(threadId: Long, unarchive: Boolean)

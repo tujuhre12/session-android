@@ -82,7 +82,7 @@ class UserProfileUtils @AssistedInject constructor(
             !resolvedAddress.isBlinded && (userAddress.isBlinded || userAddress.isCommunityInbox) -> {
                 displayAddress = "${resolvedAddress.address.substring(0, 23)}\n${resolvedAddress.address.substring(23, 46)}\n${resolvedAddress.address.substring(46)}"
                 tooltipText = Phrase.from(context, R.string.tooltipAccountIdVisible)
-                    .put(NAME_KEY, recipient.displayName())
+                    .put(NAME_KEY, truncateName(recipient.displayName()))
                     .format()
             }
 
@@ -128,6 +128,14 @@ class UserProfileUtils @AssistedInject constructor(
             messageAddress = messageAddress,
         )
 
+    }
+
+    private fun truncateName(name: String): String {
+        return if (name.length > 10) {
+            name.take(10) + "…"
+        } else {
+            name
+        }
     }
 
     fun onCommand(command: UserProfileModalCommands){

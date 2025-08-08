@@ -103,7 +103,7 @@ class MentionViewModel @AssistedInject constructor(
 
                     address.isCommunity -> mmsSmsDatabase.getRecentChatMemberAddresses(
                         threadID,
-                        20
+                        300
                     )
                     else -> listOf(address.address)
                 }
@@ -150,7 +150,7 @@ class MentionViewModel @AssistedInject constructor(
                 ) + memberIDs
                     .asSequence()
                     .filter { it != myId }
-                    .mapNotNull { recipientRepository.getRecipientSync(Address.fromSerialized(it)) }
+                    .map { recipientRepository.getRecipientSync(Address.fromSerialized(it)) }
                     .filter { !it.isGroupOrCommunityRecipient }
                     .map { contact ->
                         Member(
@@ -310,7 +310,6 @@ class MentionViewModel @AssistedInject constructor(
         companion object {
             val MENTION_LIST_COMPARATOR = compareBy<Candidate> { !it.member.isMe }
                 .thenBy { it.matchScore }
-                .then(compareBy { it.member.name })
         }
     }
 

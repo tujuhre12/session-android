@@ -63,9 +63,13 @@ class ConversationView : LinearLayout {
         this.thread = thread
         binding.iconPinned.isVisible = thread.isPinned
 
+        val isConversationUnread = (configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(thread) } || !thread.isRead)
         val unreadCount = thread.unreadCount
-        val isUnread = unreadCount > 0 && !thread.isRead
-        binding.root.background = UnreadStylingHelper.getUnreadBackground(context, isUnread)
+        val hasUnreadCount = unreadCount > 0
+        val isMarkedUnread = !hasUnreadCount && isConversationUnread
+
+        binding.root.background = UnreadStylingHelper.getUnreadBackground(context,
+            hasUnreadCount || isMarkedUnread)
 
         if (thread.recipient.blocked) {
             binding.accentView.setBackgroundColor(ThemeUtil.getThemedColor(context, R.attr.danger))
@@ -74,13 +78,14 @@ class ConversationView : LinearLayout {
             binding.accentView.background = UnreadStylingHelper.getAccentBackground(context)
             // Using thread.isRead we can determine if the last message was our own, and display it as 'read' even though previous messages may not be
             // This would also not trigger the disappearing message timer which may or may not be desirable
-            binding.accentView.visibility = if(isUnread) View.VISIBLE else View.INVISIBLE
+            binding.accentView.visibility = if(hasUnreadCount) View.VISIBLE else View.INVISIBLE
         }
 
         binding.unreadCountTextView.text = UnreadStylingHelper.formatUnreadCount(unreadCount)
 
-        binding.unreadCountIndicator.isVisible = (isUnread) || (configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(thread) })
+        binding.unreadCountIndicator.isVisible = hasUnreadCount
         binding.unreadMentionIndicator.isVisible = (thread.unreadMentionCount != 0 && thread.recipient.address.isGroupOrCommunity)
+        binding.markedUnreadIndicator.isVisible = isMarkedUnread
 
         val senderDisplayName = getTitle(thread.recipient)
 
@@ -121,7 +126,7 @@ class ConversationView : LinearLayout {
 
         binding.snippetTextView.apply {
             text = snippet
-            typeface = UnreadStylingHelper.getUnreadTypeface(isUnread)
+            typeface = UnreadStylingHelper.getUnreadTypeface(hasUnreadCount)
             visibility = if (isTyping) View.GONE else View.VISIBLE
         }
 

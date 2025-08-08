@@ -7,9 +7,11 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
+import network.loki.messenger.libsession_util.MutableConversationVolatileConfig
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.Bytes
+import network.loki.messenger.libsession_util.util.Conversation
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.KeyPair
@@ -216,30 +218,54 @@ open class Storage @Inject constructor(
 
             configFactory.withMutableUserConfigs { configs ->
                 val config = configs.convoInfoVolatile
-                val convo = when {
-                    // recipient closed group
-                    recipient.isLegacyGroup -> config.getOrConstructLegacyGroup(GroupUtil.doubleDecodeGroupId(recipient.toString()))
-                    recipient.isGroupV2 -> config.getOrConstructClosedGroup(recipient.toString())
-                    // recipient is open group
-                    recipient.isCommunity -> {
-                        val openGroupJoinUrl = getOpenGroup(threadId)?.joinURL ?: return@withMutableUserConfigs
-                        BaseCommunityInfo.parseFullUrl(openGroupJoinUrl)?.let { (base, room, pubKey) ->
-                            config.getOrConstructCommunity(base, room, pubKey)
-                        } ?: return@withMutableUserConfigs
-                    }
-                    // otherwise recipient is one to one
-                    recipient.isStandard -> {
-                        config.getOrConstructOneToOne(recipient.toString())
-                    }
-
-                    else -> throw NullPointerException("Weren't expecting to have a convo with address ${recipient.toString()}")
-                }
+                val convo = getConvo(threadId, recipient, config)  ?: return@withMutableUserConfigs
                 convo.lastRead = lastSeenTime
                 if (convo.unread) {
                     convo.unread = lastSeenTime <= currentLastRead
+                    notifyConversationListListeners()
                 }
                 config.set(convo)
             }
+        }
+    }
+
+    override fun markConversationAsUnread(threadId: Long) {
+        val threadDb = threadDatabase
+        getRecipientForThread(threadId)?.let { recipient ->
+
+            threadDb.updateReadStatus(threadId, false)
+            // don't process configs for inbox recipients
+            if (recipient.isCommunityInboxRecipient) return
+
+            configFactory.withMutableUserConfigs { configs ->
+                val config = configs.convoInfoVolatile
+                val convo = getConvo(threadId, recipient, config) ?: return@withMutableUserConfigs
+
+                convo.unread = true
+                notifyConversationListListeners()
+
+                config.set(convo)
+            }
+        }
+    }
+
+    private fun getConvo(threadId: Long, recipient : Recipient, config : MutableConversationVolatileConfig) : Conversation? {
+        return when {
+            // recipient closed group
+            recipient.isLegacyGroup -> config.getOrConstructLegacyGroup(GroupUtil.doubleDecodeGroupId(recipient.address.toString()))
+            recipient.isGroupV2 -> config.getOrConstructClosedGroup(recipient.address.toString())
+            // recipient is open group
+            recipient.isCommunity -> {
+                val openGroupJoinUrl = getOpenGroup(threadId)?.joinURL ?: return null
+                BaseCommunityInfo.parseFullUrl(openGroupJoinUrl)?.let { (base, room, pubKey) ->
+                    config.getOrConstructCommunity(base, room, pubKey)
+                } ?: return null
+            }
+            // otherwise recipient is one to one
+            recipient.isStandard -> {
+                config.getOrConstructOneToOne(recipient.address.toString())
+            }
+            else -> throw NullPointerException("Weren't expecting to have a convo with address ${recipient.address.toString()}")
         }
     }
 
@@ -1116,6 +1142,11 @@ open class Storage @Inject constructor(
             }
 
         }
+    }
+
+    override fun isRead(threadId: Long) : Boolean {
+        val threadDB = threadDatabase
+        return threadDB.isRead(threadId)
     }
 
     override fun setThreadCreationDate(threadId: Long, newDate: Long) {
