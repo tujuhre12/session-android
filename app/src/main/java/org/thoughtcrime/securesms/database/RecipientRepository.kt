@@ -478,7 +478,7 @@ class RecipientRepository @Inject constructor(
                 RecipientData.BlindedContact(
                     displayName = contact.name,
                     avatar = contact.profilePic.toRecipientAvatar(),
-                    priority = PRIORITY_VISIBLE,
+                    priority = contact.priority,
                     proStatus = if (proStatusManager.isUserPro(address)) ProStatus.ProVisible else ProStatus.Unknown,
 
                     // This information is not available in the config but we infer that
