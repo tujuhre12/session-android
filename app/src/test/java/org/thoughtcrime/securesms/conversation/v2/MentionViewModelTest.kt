@@ -42,7 +42,7 @@ class MentionViewModelTest : BaseViewModelTest() {
     private data class MemberInfo(
         val name: String,
         val pubKey: String,
-        val roles: List<GroupMemberRole>,
+        val role: GroupMemberRole,
         val isMe: Boolean
     )
 
@@ -51,13 +51,13 @@ class MentionViewModelTest : BaseViewModelTest() {
     )!!
 
     private val threadMembers = listOf(
-        MemberInfo("You", myId.hexString, listOf(GroupMemberRole.STANDARD), isMe = true),
-        MemberInfo("Alice", "151234567890123456789012345678901234567890123456789012345678901235", listOf(GroupMemberRole.ADMIN), isMe = false),
-        MemberInfo("Bob", "151234567890123456789012345678901234567890123456789012345678901236", listOf(GroupMemberRole.STANDARD), isMe = false),
-        MemberInfo("Charlie", "151234567890123456789012345678901234567890123456789012345678901237", listOf(GroupMemberRole.MODERATOR), isMe = false),
-        MemberInfo("David", "151234567890123456789012345678901234567890123456789012345678901238", listOf(GroupMemberRole.HIDDEN_ADMIN), isMe = false),
-        MemberInfo("Eve", "151234567890123456789012345678901234567890123456789012345678901239", listOf(GroupMemberRole.HIDDEN_MODERATOR), isMe = false),
-        MemberInfo("李云海", "151234567890123456789012345678901234567890123456789012345678901240", listOf(GroupMemberRole.ZOOMBIE), isMe = false),
+        MemberInfo("You", myId.hexString, GroupMemberRole.STANDARD, isMe = true),
+        MemberInfo("Alice", "151234567890123456789012345678901234567890123456789012345678901235", GroupMemberRole.ADMIN, isMe = false),
+        MemberInfo("Bob", "151234567890123456789012345678901234567890123456789012345678901236", GroupMemberRole.STANDARD, isMe = false),
+        MemberInfo("Charlie", "151234567890123456789012345678901234567890123456789012345678901237", GroupMemberRole.MODERATOR, isMe = false),
+        MemberInfo("David", "151234567890123456789012345678901234567890123456789012345678901238", GroupMemberRole.HIDDEN_ADMIN, isMe = false),
+        MemberInfo("Eve", "151234567890123456789012345678901234567890123456789012345678901239", GroupMemberRole.HIDDEN_MODERATOR, isMe = false),
+        MemberInfo("李云海", "151234567890123456789012345678901234567890123456789012345678901240", GroupMemberRole.ZOOMBIE, isMe = false),
     )
 
     private val openGroup = OpenGroup(
@@ -90,7 +90,7 @@ class MentionViewModelTest : BaseViewModelTest() {
                 on { getGroupMembersRoles(eq(openGroup.id), any()) } doAnswer {
                     val memberIDs = it.arguments[1] as Collection<String>
                     memberIDs.associateWith { id ->
-                        threadMembers.first { it.pubKey == id }.roles
+                        threadMembers.first { it.pubKey == id }.role
                     }
                 }
             },
@@ -155,7 +155,7 @@ class MentionViewModelTest : BaseViewModelTest() {
                     val name = if (m.isMe) "You" else "${m.name} (${truncateIdForDisplay(m.pubKey)})"
 
                     MentionViewModel.Candidate(
-                        MentionViewModel.Member(m.pubKey, name, m.roles.any { it.isModerator }, isMe = m.isMe),
+                        MentionViewModel.Member(m.pubKey, name, m.role.isModerator, isMe = m.isMe),
                         name,
                         0
                     )

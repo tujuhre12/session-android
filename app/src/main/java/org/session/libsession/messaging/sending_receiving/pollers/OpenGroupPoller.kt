@@ -44,6 +44,7 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.BlindMappingRepository
+import org.thoughtcrime.securesms.database.GroupMemberDatabase
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import java.util.concurrent.TimeUnit
 
@@ -63,6 +64,7 @@ class OpenGroupPoller @AssistedInject constructor(
     private val blindMappingRepository: BlindMappingRepository,
     private val receivedMessageHandler: ReceivedMessageHandler,
     private val batchMessageJobFactory: BatchMessageReceiveJob.Factory,
+    private val groupMemberDatabase: GroupMemberDatabase,
     @Assisted private val server: String,
     @Assisted private val scope: CoroutineScope,
 ) {
@@ -79,6 +81,7 @@ class OpenGroupPoller @AssistedInject constructor(
 
         fun handleRoomPollInfo(
             storage: StorageProtocol,
+            memberDb: GroupMemberDatabase,
             server: String,
             roomToken: String,
             pollInfo: OpenGroupApi.RoomPollInfo,
@@ -116,25 +119,25 @@ class OpenGroupPoller @AssistedInject constructor(
 
             // - Moderators
             pollInfo.details?.moderators?.let { moderatorList ->
-                storage.setGroupMemberRoles(moderatorList.map {
-                    GroupMember(groupId, it, GroupMemberRole.MODERATOR)
-                })
+                memberDb.updateGroupMembers(
+                    groupId, GroupMemberRole.MODERATOR, moderatorList
+                )
             }
             pollInfo.details?.hiddenModerators?.let { moderatorList ->
-                storage.setGroupMemberRoles(moderatorList.map {
-                    GroupMember(groupId, it, GroupMemberRole.HIDDEN_MODERATOR)
-                })
+                memberDb.updateGroupMembers(
+                    groupId, GroupMemberRole.HIDDEN_MODERATOR, moderatorList
+                )
             }
             // - Admins
             pollInfo.details?.admins?.let { moderatorList ->
-                storage.setGroupMemberRoles(moderatorList.map {
-                    GroupMember(groupId, it, GroupMemberRole.ADMIN)
-                })
+                memberDb.updateGroupMembers(
+                    groupId, GroupMemberRole.ADMIN, moderatorList
+                )
             }
             pollInfo.details?.hiddenAdmins?.let { moderatorList ->
-                storage.setGroupMemberRoles(moderatorList.map {
-                    GroupMember(groupId, it, GroupMemberRole.HIDDEN_ADMIN)
-                })
+                memberDb.updateGroupMembers(
+                    groupId, GroupMemberRole.HIDDEN_ADMIN, moderatorList
+                )
             }
 
             // Update the group avatar
@@ -223,7 +226,7 @@ class OpenGroupPoller @AssistedInject constructor(
                             handleCapabilities(server, response.body as OpenGroupApi.Capabilities)
                         }
                         is Endpoint.RoomPollInfo -> {
-                            handleRoomPollInfo(storage, server, response.endpoint.roomToken, response.body as OpenGroupApi.RoomPollInfo)
+                            handleRoomPollInfo(storage, groupMemberDatabase, server, response.endpoint.roomToken, response.body as OpenGroupApi.RoomPollInfo)
                         }
                         is Endpoint.RoomMessagesRecent -> {
                             handleMessages(server, response.endpoint.roomToken, response.body as List<OpenGroupApi.Message>)

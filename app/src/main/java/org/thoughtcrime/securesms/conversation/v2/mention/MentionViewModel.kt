@@ -120,8 +120,8 @@ class MentionViewModel @AssistedInject constructor(
                         emptySet()
                     } else {
                         memberDatabase.getGroupMembersRoles(groupId, memberIDs)
-                            .mapNotNullTo(hashSetOf()) { (memberId, roles) ->
-                                memberId.takeIf { roles.any { it.isModerator } }
+                            .mapNotNullTo(hashSetOf()) { (memberId, role) ->
+                                memberId.takeIf { role.isModerator }
                             }
                     }
                 } else if (address.isGroupV2) {
