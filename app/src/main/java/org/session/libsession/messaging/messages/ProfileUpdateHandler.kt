@@ -78,15 +78,20 @@ class ProfileUpdateHandler @Inject constructor(
         if (senderAddress is Address.Blinded && (updates.pic != null || !updates.name.isNullOrBlank())) {
             configFactory.withMutableUserConfigs { configs ->
                 configs.contacts.getBlinded(senderAddress.blindedId.hexString)?.let { c ->
-                    if (updates.pic != null) {
-                        c.profilePic = updates.pic
-                    }
+                    if (shouldUpdateProfile(
+                        lastUpdated = c.profileUpdatedEpochSeconds.asEpochSeconds(),
+                        newUpdateTime = updates.profileUpdateTime
+                    )) {
+                        if (updates.pic != null) {
+                            c.profilePic = updates.pic
+                        }
 
-                    if (!updates.name.isNullOrBlank()) {
-                        c.name = updates.name
-                    }
+                        if (!updates.name.isNullOrBlank()) {
+                            c.name = updates.name
+                        }
 
-                    configs.contacts.setBlinded(c)
+                        configs.contacts.setBlinded(c)
+                    }
                 }
             }
         }

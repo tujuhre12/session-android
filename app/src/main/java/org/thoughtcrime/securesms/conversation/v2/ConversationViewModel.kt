@@ -1290,6 +1290,7 @@ class ConversationViewModel @AssistedInject constructor(
                                 name = recipient.displayName(attachesBlindedId = false),
                                 createdEpochSeconds = ZonedDateTime.now().toEpochSecond(),
                                 profilePic = recipient.data.avatar?.toUserPic() ?: UserPic.DEFAULT,
+                                profileUpdatedEpochSeconds = recipient.data.profileUpdatedAt?.toEpochSecond() ?: 0L,
                             )
                         )
                     }

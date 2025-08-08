@@ -21,6 +21,7 @@ import android.content.Intent
 import android.os.AsyncTask
 import android.os.Handler
 import android.os.HandlerThread
+import android.os.StrictMode
 import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.core.content.pm.ShortcutInfoCompat

@@ -50,7 +50,6 @@ class GroupMemberDatabase(context: Context, helper: Provider<SQLCipherOpenHelper
     }
 
     private val cacheByGroupId = LruCache<Address.Community, Map<AccountId, GroupMemberRole>>(100)
-    private val cacheLock = ReentrantReadWriteLock()
 
     private val _changeNotification = MutableSharedFlow<Address.Community>(
         extraBufferCapacity = 32,
@@ -61,17 +60,13 @@ class GroupMemberDatabase(context: Context, helper: Provider<SQLCipherOpenHelper
 
     fun getGroupMembers(communityAddress: Address.Community): Map<AccountId, GroupMemberRole> {
         // Look at cache first
-        cacheLock.read {
-            cacheByGroupId[communityAddress]?.let { return it }
-        }
+        cacheByGroupId[communityAddress]?.let { return it }
 
         // If not in cache, fetch from database
         val map = fetchGroupMembersFromDb(communityAddress)
 
         // Update cache
-        cacheLock.write {
-            cacheByGroupId.put(communityAddress, map)
-        }
+        cacheByGroupId.put(communityAddress, map)
 
         return map
     }
@@ -121,8 +116,6 @@ class GroupMemberDatabase(context: Context, helper: Provider<SQLCipherOpenHelper
 
     private fun updateCache(address: Address.Community) {
         val members = fetchGroupMembersFromDb(address)
-        cacheLock.write {
-            cacheByGroupId.put(address, members)
-        }
+        cacheByGroupId.put(address, members)
     }
 }
