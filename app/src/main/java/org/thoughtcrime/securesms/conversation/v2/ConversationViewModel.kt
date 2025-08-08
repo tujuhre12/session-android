@@ -1234,9 +1234,8 @@ class ConversationViewModel @AssistedInject constructor(
     }
 
     private fun showConversationSettings() {
-        recipient?.let { convo ->
+        recipient.let { convo ->
             _uiEvents.tryEmit(ConversationUiEvent.ShowConversationSettings(
-                threadId = threadId,
                 threadAddress = convo.address
             ))
         }
@@ -1365,7 +1364,7 @@ sealed interface ConversationUiEvent {
     data class ShowDisappearingMessages(val address: Address) : ConversationUiEvent
     data class ShowNotificationSettings(val address: Address) : ConversationUiEvent
     data class ShowGroupMembers(val groupId: String) : ConversationUiEvent
-    data class ShowConversationSettings(val threadId: Long, val threadAddress: Address) : ConversationUiEvent
+    data class ShowConversationSettings(val threadAddress: Address) : ConversationUiEvent
     data object ShowUnblockConfirmation : ConversationUiEvent
 }
 

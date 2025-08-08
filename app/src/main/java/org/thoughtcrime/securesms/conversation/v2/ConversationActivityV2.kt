@@ -705,8 +705,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     is ConversationUiEvent.ShowConversationSettings -> {
                         val intent = ConversationSettingsActivity.createIntent(
                             context = this@ConversationActivityV2,
-                            threadId = event.threadId,
-                            threadAddress = event.threadAddress
+                            address = event.threadAddress
                         )
                         startActivity(intent)
                     }

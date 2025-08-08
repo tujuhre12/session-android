@@ -56,11 +56,8 @@ import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.isCommunity
-import org.session.libsession.utilities.isCommunityInbox
-import org.session.libsession.utilities.isGroupOrCommunity
-import org.session.libsession.utilities.isGroupV2
-import org.session.libsession.utilities.isLegacyGroup
-import org.session.libsession.utilities.isStandard
+import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
@@ -208,21 +205,21 @@ open class Storage @Inject constructor(
 
     override fun markConversationAsRead(threadId: Long, lastSeenTime: Long, force: Boolean) {
         val threadDb = threadDatabase
-        getRecipientForThread(threadId)?.let { recipient ->
+        getRecipientForThread(threadId)?.let { address ->
+            val recipient = recipientRepository.getRecipientSync(address)
             val currentLastRead = threadDb.getLastSeenAndHasSent(threadId).first()
             // don't set the last read in the volatile if we didn't set it in the DB
             if (!threadDb.markAllAsRead(threadId, lastSeenTime, force) && !force) return
 
             // don't process configs for inbox recipients
-            if (recipient.isCommunityInbox) return
+            if (recipient.isCommunityInboxRecipient) return
 
             configFactory.withMutableUserConfigs { configs ->
                 val config = configs.convoInfoVolatile
-                val convo = getConvo(threadId, recipient, config)  ?: return@withMutableUserConfigs
+                val convo = getConvo(recipient, config)  ?: return@withMutableUserConfigs
                 convo.lastRead = lastSeenTime
                 if (convo.unread) {
                     convo.unread = lastSeenTime <= currentLastRead
-                    notifyConversationListListeners()
                 }
                 config.set(convo)
             }
@@ -231,7 +228,8 @@ open class Storage @Inject constructor(
 
     override fun markConversationAsUnread(threadId: Long) {
         val threadDb = threadDatabase
-        getRecipientForThread(threadId)?.let { recipient ->
+        getRecipientForThread(threadId)?.let { address ->
+            val recipient = recipientRepository.getRecipientSync(address)
 
             threadDb.updateReadStatus(threadId, false)
             // don't process configs for inbox recipients
@@ -239,33 +237,33 @@ open class Storage @Inject constructor(
 
             configFactory.withMutableUserConfigs { configs ->
                 val config = configs.convoInfoVolatile
-                val convo = getConvo(threadId, recipient, config) ?: return@withMutableUserConfigs
+                val convo = getConvo(recipient, config) ?: return@withMutableUserConfigs
 
                 convo.unread = true
-                notifyConversationListListeners()
-
                 config.set(convo)
             }
         }
     }
 
-    private fun getConvo(threadId: Long, recipient : Recipient, config : MutableConversationVolatileConfig) : Conversation? {
-        return when {
+    private fun getConvo(recipient: Recipient, config: MutableConversationVolatileConfig) : Conversation? {
+        return when (recipient.address) {
             // recipient closed group
-            recipient.isLegacyGroup -> config.getOrConstructLegacyGroup(GroupUtil.doubleDecodeGroupId(recipient.address.toString()))
-            recipient.isGroupV2 -> config.getOrConstructClosedGroup(recipient.address.toString())
+            is Address.LegacyGroup -> config.getOrConstructLegacyGroup(recipient.address.groupPublicKeyHex)
+            is Address.Group -> config.getOrConstructClosedGroup(recipient.address.accountId.hexString)
             // recipient is open group
-            recipient.isCommunity -> {
-                val openGroupJoinUrl = getOpenGroup(threadId)?.joinURL ?: return null
-                BaseCommunityInfo.parseFullUrl(openGroupJoinUrl)?.let { (base, room, pubKey) ->
-                    config.getOrConstructCommunity(base, room, pubKey)
-                } ?: return null
+            is Address.Community -> {
+                val og = recipient.data as RecipientData.Community
+                config.getOrConstructCommunity(
+                    baseUrl = og.openGroup.server,
+                    room = og.openGroup.room,
+                    pubKeyHex = og.openGroup.publicKey,
+                )
             }
             // otherwise recipient is one to one
-            recipient.isStandard -> {
-                config.getOrConstructOneToOne(recipient.address.toString())
+            is Address.Standard -> {
+                config.getOrConstructOneToOne(recipient.address.accountId.hexString)
             }
-            else -> throw NullPointerException("Weren't expecting to have a convo with address ${recipient.address.toString()}")
+            else -> throw NullPointerException("Weren't expecting to have a convo with address ${recipient.address}")
         }
     }
 
@@ -864,7 +862,7 @@ open class Storage @Inject constructor(
         val recipient = recipientRepository.getRecipientSync(address)
         val threadDb = threadDatabase
         val threadID = threadDb.getThreadIdIfExistsFor(address)
-        val expiryMode = recipient?.expiryMode
+        val expiryMode = recipient.expiryMode
         val expiresInMillis = expiryMode?.expiryMillis ?: 0
         val expireStartedAt = if (expiryMode is ExpiryMode.AfterSend) sentTimestamp else 0
         val inviteJson = updateData.toJSON()
@@ -1300,7 +1298,7 @@ open class Storage @Inject constructor(
     override fun insertCallMessage(senderPublicKey: String, callMessageType: CallMessageType, sentTimestamp: Long) {
         val address = fromSerialized(senderPublicKey)
         val recipient = recipientRepository.getRecipientSync(address)
-        val expiryMode = recipient.expiryMode.coerceSendToRead() ?: ExpiryMode.NONE
+        val expiryMode = recipient.expiryMode.coerceSendToRead()
         val expiresInMillis = expiryMode.expiryMillis
         val expireStartedAt = if (expiryMode != ExpiryMode.NONE) clock.currentTimeMills() else 0
         val callMessage = IncomingTextMessage.fromCallInfo(callMessageType, address, Optional.absent(), sentTimestamp, expiresInMillis, expireStartedAt)

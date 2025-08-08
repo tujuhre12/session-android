@@ -673,7 +673,7 @@ public class ThreadDatabase extends Database {
     contentValues.put(READ, readStatus); // mark the thread unread
 
     db.update(TABLE_NAME, contentValues, ID + " = ?", new String[]{String.valueOf(threadId)});
-    notifyConversationListListeners();
+    notifyThreadUpdated(threadId);
   }
 
   private @NonNull String getFormattedBodyFor(@NonNull MessageRecord messageRecord) {
