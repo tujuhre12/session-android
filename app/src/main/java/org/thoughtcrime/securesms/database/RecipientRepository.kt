@@ -26,7 +26,6 @@ import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.open_groups.GroupMember as GroupMemberWithRole
 import org.session.libsession.messaging.open_groups.GroupMemberRole
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.utilities.Address
@@ -157,9 +156,9 @@ class RecipientRepository @Inject constructor(
 
     private inline fun fetchRecipient(
         address: Address,
-        settingsFetcher: (address: Address) -> RecipientSettings,
-        openGroupFetcher: (address: Address.Community) -> OpenGroup?,
-        fetchGroupMemberRoles: (groupId: String) -> List<GroupMemberWithRole>
+        settingsFetcher: (Address) -> RecipientSettings,
+        openGroupFetcher: (Address.Community) -> OpenGroup?,
+        fetchGroupMemberRoles: (Address.Community) -> Map<AccountId, GroupMemberRole>,
     ): Pair<Recipient, Flow<*>> {
         val recipientData =
             address.toBlinded()?.let { blindedIdMappingRepository.findMappings(it).firstOrNull()?.second }
@@ -260,7 +259,7 @@ class RecipientRepository @Inject constructor(
                                 createCommunityRecipient(
                                     address = address,
                                     config = groupConfig,
-                                    roles = fetchGroupMemberRoles(address.toGroupString()),
+                                    roles = fetchGroupMemberRoles(address),
                                     community = openGroup,
                                     settings = settings
                                 )
@@ -270,6 +269,7 @@ class RecipientRepository @Inject constructor(
                         changeSource = merge(
                             lokiThreadDatabase.changeNotification,
                             recipientSettingsDatabase.changeNotification.filter { it == address },
+                            groupMemberDatabase.changeNotification.filter { it == address },
                             configFactory.userConfigsChanged(),
                         )
                     }
@@ -555,7 +555,8 @@ class RecipientRepository @Inject constructor(
             .toMutableList()
 
 
-        val groupMemberComparator = GroupMemberComparator(AccountId(preferences.getLocalNumber()!!))
+        val myAccountId = AccountId(preferences.getLocalNumber()!!)
+        val groupMemberComparator = GroupMemberComparator(myAccountId)
 
         memberAddresses.sortedWith { a1, a2 ->
             groupMemberComparator.compare(a1.accountId, a2.accountId)
@@ -567,7 +568,7 @@ class RecipientRepository @Inject constructor(
                 name = group.title,
                 priority = config?.priority ?: PRIORITY_VISIBLE,
                 members = memberAddresses.associate { address ->
-                    address.accountId to if (group.admins.contains(address)) {
+                    address.accountId to if (address in group.admins) {
                         GroupMemberRole.ADMIN
                     } else {
                         GroupMemberRole.STANDARD
@@ -575,6 +576,7 @@ class RecipientRepository @Inject constructor(
                 },
                 firstMember = memberAddresses.firstOrNull()?.let { fetchLegacyGroupMember(it, settingsFetcher) },
                 secondMember = memberAddresses.getOrNull(1)?.let { fetchLegacyGroupMember(it, settingsFetcher) },
+                isCurrentUserAdmin = Address.Standard(myAccountId) in group.admins
             ),
             mutedUntil = settings?.muteUntil,
             autoDownloadAttachments = settings?.autoDownloadAttachments,
@@ -621,7 +623,7 @@ class RecipientRepository @Inject constructor(
         private fun createCommunityRecipient(
             address: Address,
             config: GroupInfo.CommunityGroupInfo?,
-            roles: List<GroupMemberWithRole>,
+            roles: Map<AccountId, GroupMemberRole>,
             community: OpenGroup,
             settings: RecipientSettings?,
         ): Recipient {
@@ -630,9 +632,7 @@ class RecipientRepository @Inject constructor(
                 data = RecipientData.Community(
                     openGroup = community,
                     priority = config?.priority ?: PRIORITY_VISIBLE,
-                    roles = roles.associate { member ->
-                        AccountId(member.profileId) to member.role
-                    },
+                    roles = roles,
                 ),
                 mutedUntil = settings?.muteUntil,
                 autoDownloadAttachments = settings?.autoDownloadAttachments,

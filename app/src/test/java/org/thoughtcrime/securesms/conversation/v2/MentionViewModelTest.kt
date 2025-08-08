@@ -155,7 +155,7 @@ class MentionViewModelTest : BaseViewModelTest() {
                     val name = if (m.isMe) "You" else "${m.name} (${truncateIdForDisplay(m.pubKey)})"
 
                     MentionViewModel.Candidate(
-                        MentionViewModel.Member(m.pubKey, name, m.role.isModerator, isMe = m.isMe),
+                        MentionViewModel.Member(m.pubKey, name, m.role.canModerate, isMe = m.isMe),
                         name,
                         0
                     )

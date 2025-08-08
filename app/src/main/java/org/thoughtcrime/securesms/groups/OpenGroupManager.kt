@@ -110,14 +110,4 @@ class OpenGroupManager @Inject constructor(
         val threadID = GroupManager.getOpenGroupThreadID(openGroup.groupId, context)
         lokiThreadDB.setOpenGroupChat(openGroup, threadID)
     }
-
-    fun isUserModerator(
-        groupId: String,
-        standardPublicKey: String,
-        blindedPublicKey: String? = null
-    ): Boolean {
-        val standardRole = groupMemberDatabase.getGroupMemberRole(groupId, standardPublicKey)
-        val blindedRole = blindedPublicKey?.let { groupMemberDatabase.getGroupMemberRole(groupId, it) }
-        return standardRole?.isModerator == true || blindedRole?.isModerator == true
-    }
 }

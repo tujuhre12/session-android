@@ -10,5 +10,5 @@ fun ViewMentionCandidateV2Binding.update(candidate: MentionViewModel.Candidate) 
     profilePictureView.displayName = candidate.member.name
     profilePictureView.additionalPublicKey = null
     profilePictureView.update()
-    moderatorIconImageView.visibility = if (candidate.member.isModerator) View.VISIBLE else View.GONE
+    moderatorIconImageView.visibility = if (candidate.member.showAdminCrown) View.VISIBLE else View.GONE
 }

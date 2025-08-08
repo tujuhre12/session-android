@@ -25,7 +25,7 @@ sealed interface RecipientData {
     /**
      * Represents a group-like recipient, which can be a group or community.
      */
-    sealed interface GroupLike {
+    sealed interface GroupLike : RecipientData {
         // The first member of this group, for profile picture assembly purposes.
         val firstMember: Recipient?
 
@@ -74,7 +74,7 @@ sealed interface RecipientData {
             get() = null
 
         override fun hasAdmin(user: AccountId): Boolean {
-            return roles[user]?.isModerator == true
+            return roles[user]?.canModerate == true
         }
 
         override fun shouldShowAdminCrown(user: AccountId): Boolean {
@@ -179,6 +179,7 @@ sealed interface RecipientData {
         val name: String,
         override val priority: Long,
         val members: Map<AccountId, GroupMemberRole>,
+        val isCurrentUserAdmin: Boolean,
         override val firstMember: Recipient?, // Used primarily to assemble the profile picture for the group.
         override val secondMember: Recipient?, // Used primarily to assemble the profile picture for the group.
     ) : RecipientData, GroupLike {
@@ -189,7 +190,7 @@ sealed interface RecipientData {
             get() = ProStatus.Unknown
 
         override fun hasAdmin(user: AccountId): Boolean {
-            return members[user]?.isModerator == true
+            return members[user]?.canModerate == true
         }
 
         override fun shouldShowAdminCrown(user: AccountId): Boolean {

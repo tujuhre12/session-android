@@ -30,7 +30,6 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
-import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.database.StorageProtocol
@@ -49,8 +48,6 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.Hex
-import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
@@ -392,16 +389,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         else null
 
         // admin
-        val isAdmin: Boolean =  when {
-            // for Groups V2
-            conversation.isGroupV2Recipient -> groupV2?.hasAdminKey() == true
-
-            // for communities the the `isUserModerator` field
-            conversation.isCommunityRecipient -> isCommunityAdmin()
-
-            // false in other cases
-            else -> false
-        }
+        val isAdmin: Boolean = conversation.takeIf { it.isGroupV2Recipient || it.isCommunityRecipient }
+            ?.currentUserRole?.canModerate == true
 
         // edit name - Can edit name for 1on1, or if admin of a groupV2
         val editCommand = when {
@@ -757,21 +746,6 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val manager = context.getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
         manager.setPrimaryClip(clip)
         Toast.makeText(context, R.string.copied, Toast.LENGTH_SHORT).show()
-    }
-
-    private fun isCommunityAdmin(): Boolean {
-        if(community == null) return false
-        else{
-            val userPublicKey = textSecurePreferences.getLocalNumber() ?: return false
-            val keyPair = storage.getUserED25519KeyPair() ?: return false
-            val blindedPublicKey = community!!.publicKey.let {
-                BlindKeyAPI.blind15KeyPairOrNull(
-                    ed25519SecretKey = keyPair.secretKey.data,
-                    serverPubKey = Hex.fromStringCondensed(it),
-                )?.pubKey?.data }
-                ?.let { AccountId(IdPrefix.BLINDED, it) }?.hexString
-            return openGroupManager.isUserModerator(community!!.id, userPublicKey, blindedPublicKey)
-        }
     }
 
     private fun pinConversation(){

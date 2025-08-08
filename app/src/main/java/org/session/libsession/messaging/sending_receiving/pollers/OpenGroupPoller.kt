@@ -28,7 +28,6 @@ import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.Endpoint
-import org.session.libsession.messaging.open_groups.GroupMember
 import org.session.libsession.messaging.open_groups.GroupMemberRole
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
@@ -117,26 +116,28 @@ class OpenGroupPoller @AssistedInject constructor(
             // - User Count
             storage.setUserCount(roomToken, server, pollInfo.activeUsers)
 
+            val community = Address.Community(openGroup)
+
             // - Moderators
-            pollInfo.details?.moderators?.let { moderatorList ->
+            pollInfo.details?.moderators?.let { list ->
                 memberDb.updateGroupMembers(
-                    groupId, GroupMemberRole.MODERATOR, moderatorList
+                    community, GroupMemberRole.MODERATOR, list.map(::AccountId)
                 )
             }
-            pollInfo.details?.hiddenModerators?.let { moderatorList ->
+            pollInfo.details?.hiddenModerators?.let { list ->
                 memberDb.updateGroupMembers(
-                    groupId, GroupMemberRole.HIDDEN_MODERATOR, moderatorList
+                    community, GroupMemberRole.HIDDEN_MODERATOR, list.map(::AccountId)
                 )
             }
             // - Admins
-            pollInfo.details?.admins?.let { moderatorList ->
+            pollInfo.details?.admins?.let { list ->
                 memberDb.updateGroupMembers(
-                    groupId, GroupMemberRole.ADMIN, moderatorList
+                    community, GroupMemberRole.ADMIN, list.map(::AccountId)
                 )
             }
-            pollInfo.details?.hiddenAdmins?.let { moderatorList ->
+            pollInfo.details?.hiddenAdmins?.let { list ->
                 memberDb.updateGroupMembers(
-                    groupId, GroupMemberRole.HIDDEN_ADMIN, moderatorList
+                    community, GroupMemberRole.HIDDEN_ADMIN, list.map(::AccountId)
                 )
             }
 

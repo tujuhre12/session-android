@@ -220,7 +220,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
-import kotlin.concurrent.thread
 import kotlin.math.abs
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -1599,10 +1598,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         adapter.toggleSelection(message, position)
         val actionModeCallback = ConversationActionModeCallback(
             adapter = adapter,
-            threadID = viewModel.threadId,
+            threadRecipient = viewModel.recipient,
             context = this,
             deprecationManager = viewModel.legacyGroupDeprecationManager,
-            openGroupManager = openGroupManager,
         )
         actionModeCallback.delegate = this
         actionModeCallback.updateActionModeMenu(actionMode.menu)
@@ -1623,10 +1621,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val actionMode = this.actionMode
         val actionModeCallback = ConversationActionModeCallback(
             adapter = adapter,
-            threadID = viewModel.threadId,
+            threadRecipient = viewModel.recipient,
             context = this,
             deprecationManager = viewModel.legacyGroupDeprecationManager,
-            openGroupManager = openGroupManager,
         )
         actionModeCallback.delegate = this
         if(binding.searchBottomBar.isVisible) onSearchClosed()
@@ -1681,7 +1678,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             message.isOutgoing,
             messageContentView
         )
-        reactionDelegate.show(this, message, selectedConversationModel, viewModel.blindedPublicKey)
+        reactionDelegate.show(this, viewModel.recipient,message, selectedConversationModel)
     }
 
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean = reactionDelegate.applyTouchEvent(ev) || super.dispatchTouchEvent(ev)
@@ -1987,16 +1984,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun onReactionLongClicked(messageId: MessageId, emoji: String?) {
-        if (viewModel.recipient.isGroupOrCommunityRecipient == true) {
-            val isUserModerator = viewModel.openGroup?.let { openGroup ->
-                val userPublicKey = textSecurePreferences.getLocalNumber() ?: return@let false
-                openGroupManager.isUserModerator(
-                    openGroup.id,
-                    userPublicKey,
-                    viewModel.blindedPublicKey
-                )
-            } ?: false
-            val fragment = ReactionsDialogFragment.create(messageId, isUserModerator, emoji, viewModel.canRemoveReaction)
+        if (viewModel.recipient.isGroupOrCommunityRecipient) {
+            val isUserCommunityModerator = viewModel.recipient.takeIf { it.isCommunityRecipient }?.currentUserRole?.canModerate == true
+            val fragment = ReactionsDialogFragment.create(messageId, isUserCommunityModerator, emoji, viewModel.canRemoveReaction)
             fragment.show(supportFragmentManager, null)
         }
     }

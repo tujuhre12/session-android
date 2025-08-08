@@ -27,7 +27,6 @@ import androidx.core.view.isVisible
 import androidx.vectordrawable.graphics.drawable.AnimatorInflaterCompat
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
-import java.util.Locale
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.Dispatchers
@@ -40,7 +39,6 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import org.session.libsession.LocalisedTimeUtil.toShortTwoPartString
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
-import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_LARGE_KEY
@@ -50,6 +48,8 @@ import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.isCommunity
 import org.session.libsession.utilities.isLegacyGroup
+import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientData
 import org.thoughtcrime.securesms.components.emoji.EmojiImageView
 import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
 import org.thoughtcrime.securesms.components.menu.ActionItem
@@ -75,8 +75,8 @@ class ConversationReactionOverlay : FrameLayout {
     private val deadzoneTouchPoint = PointF()
     private lateinit var activity: Activity
     lateinit var messageRecord: MessageRecord
+    lateinit var threadRecipient: Recipient
     private lateinit var selectedConversationModel: SelectedConversationModel
-    private var blindedPublicKey: String? = null
     private var overlayState = OverlayState.HIDDEN
     private lateinit var recentEmojiPageModel: RecentEmojiPageModel
     private var downIsOurs = false
@@ -166,15 +166,15 @@ class ConversationReactionOverlay : FrameLayout {
     }
 
     fun show(activity: Activity,
+             threadRecipient: Recipient,
              messageRecord: MessageRecord,
              lastSeenDownPoint: PointF,
-             selectedConversationModel: SelectedConversationModel,
-             blindedPublicKey: String?) {
+             selectedConversationModel: SelectedConversationModel) {
         job?.cancel()
         if (overlayState != OverlayState.HIDDEN) return
         this.messageRecord = messageRecord
+        this.threadRecipient = threadRecipient
         this.selectedConversationModel = selectedConversationModel
-        this.blindedPublicKey = blindedPublicKey
         overlayState = OverlayState.UNINITAILIZED
         selected = -1
         recentEmojiPageModel = RecentEmojiPageModel(activity)
@@ -596,8 +596,7 @@ class ConversationReactionOverlay : FrameLayout {
         val containsControlMessage = message.isControlMessage
         
         val hasText = !message.body.isEmpty()
-        val openGroup = lokiThreadDatabase.getOpenGroupChat(message.threadId)
-        val userPublicKey = textSecurePreferences.getLocalNumber()!!
+        val openGroup = (threadRecipient.data as? RecipientData.Community)?.openGroup
 
         val isDeprecatedLegacyGroup = recipient.isLegacyGroup &&
                 deprecationManager.isDeprecated
@@ -642,11 +641,11 @@ class ConversationReactionOverlay : FrameLayout {
         }
 
         // Ban user
-        if (userCanBanSelectedUsers(context, message, openGroup, userPublicKey, blindedPublicKey) && !isDeleteOnly && !isDeprecatedLegacyGroup) {
+        if (userCanBanSelectedUsers(message) && !isDeleteOnly && !isDeprecatedLegacyGroup) {
             items += ActionItem(R.attr.menu_ban_icon, R.string.banUser, { handleActionItemClicked(Action.BAN_USER) })
         }
         // Ban and delete all
-        if (userCanBanSelectedUsers(context, message, openGroup, userPublicKey, blindedPublicKey) && !isDeleteOnly && !isDeprecatedLegacyGroup) {
+        if (userCanBanSelectedUsers(message) && !isDeleteOnly && !isDeprecatedLegacyGroup) {
             items += ActionItem(R.attr.menu_trash_icon, R.string.banDeleteAll, { handleActionItemClicked(Action.BAN_AND_DELETE_ALL) })
         }
         // Message detail
@@ -683,10 +682,10 @@ class ConversationReactionOverlay : FrameLayout {
         return items
     }
 
-    private fun userCanBanSelectedUsers(context: Context, message: MessageRecord, openGroup: OpenGroup?, userPublicKey: String, blindedPublicKey: String?): Boolean {
-        if (openGroup == null)  return false
+    private fun userCanBanSelectedUsers(message: MessageRecord): Boolean {
         if (message.isOutgoing) return false // Users can't ban themselves
-        return openGroupManager.isUserModerator(openGroup.groupId, userPublicKey, blindedPublicKey)
+        return threadRecipient.takeIf { it.isCommunityRecipient }
+            ?.currentUserRole?.canModerate == true
     }
 
     private fun handleActionItemClicked(action: Action) {

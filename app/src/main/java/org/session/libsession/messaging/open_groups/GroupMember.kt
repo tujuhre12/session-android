@@ -1,12 +1,13 @@
 package org.session.libsession.messaging.open_groups
 
-data class GroupMember(
-    val groupId: String,
-    val profileId: String,
+import org.session.libsignal.utilities.AccountId
+
+data class GroupMemberAndRole(
+    val memberId: AccountId,
     val role: GroupMemberRole
 )
 
-enum class GroupMemberRole(val isModerator: Boolean = false) {
+enum class GroupMemberRole(val canModerate: Boolean = false) {
     STANDARD,
     ZOOMBIE,
     MODERATOR(true),

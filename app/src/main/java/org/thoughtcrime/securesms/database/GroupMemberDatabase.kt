@@ -4,12 +4,15 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
 import androidx.collection.LruCache
-import org.json.JSONArray
-import org.session.libsession.messaging.open_groups.GroupMember
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import org.session.libsession.messaging.open_groups.GroupMemberAndRole
 import org.session.libsession.messaging.open_groups.GroupMemberRole
+import org.session.libsession.utilities.Address
+import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.util.asSequence
-import java.util.EnumSet
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import javax.inject.Provider
 import kotlin.concurrent.read
@@ -19,11 +22,9 @@ class GroupMemberDatabase(context: Context, helper: Provider<SQLCipherOpenHelper
 
     companion object {
         const val TABLE_NAME = "group_member"
-        const val GROUP_ID = "group_id"
-        const val PROFILE_ID = "profile_id"
+        const val GROUP_ID = "group_id" // Very specific format for the community address: "serverUrl.room"
+        const val PROFILE_ID = "profile_id" // This is the AccountId of the member
         const val ROLE = "role"
-
-        private val allColumns = arrayOf(GROUP_ID, PROFILE_ID, ROLE)
 
         @JvmField
         val CREATE_GROUP_MEMBER_TABLE_COMMAND = """
@@ -35,106 +36,65 @@ class GroupMemberDatabase(context: Context, helper: Provider<SQLCipherOpenHelper
       )
     """.trimIndent()
 
-        private fun readGroupMember(cursor: Cursor): GroupMember {
-            return GroupMember(
-                groupId = cursor.getString(cursor.getColumnIndexOrThrow(GROUP_ID)),
-                profileId = cursor.getString(cursor.getColumnIndexOrThrow(PROFILE_ID)),
+        private fun readGroupMember(cursor: Cursor): GroupMemberAndRole {
+            return GroupMemberAndRole(
+                memberId = AccountId(cursor.getString(cursor.getColumnIndexOrThrow(PROFILE_ID))),
                 role = GroupMemberRole.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(ROLE))),
             )
         }
+
+        // We use a very specific format for group ID in the db so we have no choice but to convert it here.
+        private fun Address.Community.toGroupId(): String {
+            return "${serverUrl}.${room}"
+        }
     }
 
-    private val cacheByGroupId = LruCache<String, Map<String, GroupMemberRole>>(100)
+    private val cacheByGroupId = LruCache<Address.Community, Map<AccountId, GroupMemberRole>>(100)
     private val cacheLock = ReentrantReadWriteLock()
 
-    fun getGroupMemberRole(groupId: String, profileId: String): GroupMemberRole? {
-        // Check cache first
+    private val _changeNotification = MutableSharedFlow<Address.Community>(
+        extraBufferCapacity = 32,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
+
+    val changeNotification: SharedFlow<Address.Community> get() = _changeNotification
+
+    fun getGroupMembers(communityAddress: Address.Community): Map<AccountId, GroupMemberRole> {
+        // Look at cache first
         cacheLock.read {
-            cacheByGroupId[groupId]?.let { members ->
-                return members[profileId]
-            }
+            cacheByGroupId[communityAddress]?.let { return it }
         }
 
-        val query = "$GROUP_ID = ? AND $PROFILE_ID = ?"
-        val args = arrayOf(groupId, profileId)
-
-        readableDatabase.query(TABLE_NAME, allColumns, query, args, null, null, null).use { cursor ->
-            if (cursor.moveToNext()) {
-                return readGroupMember(cursor).role
-            }
-        }
-
-        return null
-    }
-
-    fun getGroupMembers(groupId: String): List<GroupMember> {
-        val query = "$GROUP_ID = ?"
-        val args = arrayOf(groupId)
-
-        return readableDatabase.query(TABLE_NAME, allColumns, query, args, null, null, null).use { cursor ->
-            cursor.asSequence().map { readGroupMember(it) }.toList()
-        }
-    }
-
-    fun getGroupMembersRoles(groupId: String, memberIDs: Collection<String>): Map<String, GroupMemberRole> {
-        // Check cache first
-        cacheLock.read {
-            cacheByGroupId[groupId]?.let { members ->
-                return members.filterKeys { it in memberIDs }
-            }
-        }
-        val sql = """
-            SELECT * FROM $TABLE_NAME
-            WHERE $GROUP_ID = ? AND $PROFILE_ID IN (SELECT value FROM json_each(?))
-        """.trimIndent()
-
-        return readableDatabase.rawQuery(sql, groupId, JSONArray(memberIDs).toString()).use { cursor ->
-            cursor.asSequence()
-                .map { readGroupMember(it) }
-                .associate { it.profileId to it.role }
-        }
-    }
-
-    fun getGroupMembersRoles(groupId: String): Map<String, GroupMemberRole> {
-        // Check cache first
-        cacheLock.read {
-            cacheByGroupId[groupId]?.let { members ->
-                return members
-            }
-        }
-
-        val members = fetchGroupMembersFromDb(groupId)
+        // If not in cache, fetch from database
+        val map = fetchGroupMembersFromDb(communityAddress)
 
         // Update cache
         cacheLock.write {
-            cacheByGroupId.put(groupId, members)
+            cacheByGroupId.put(communityAddress, map)
         }
 
-        return members
+        return map
     }
 
-    private fun fetchGroupMembersFromDb(groupId: String): Map<String, GroupMemberRole> {
-        return readableDatabase.query("SELECT $PROFILE_ID, $ROLE FROM $TABLE_NAME WHERE $GROUP_ID = ?", arrayOf(groupId)).use { cursor ->
-            buildMap {
-                while (cursor.moveToNext()) {
-                    val profileId = cursor.getString(cursor.getColumnIndexOrThrow(PROFILE_ID))
-                    val role =
-                        GroupMemberRole.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(ROLE)))
-                    put(profileId, role)
-                }
-            }
+    private fun fetchGroupMembersFromDb(address: Address.Community): Map<AccountId, GroupMemberRole> {
+        return readableDatabase.rawQuery("SELECT $PROFILE_ID, $ROLE FROM $TABLE_NAME WHERE $GROUP_ID = ?", address.toGroupId()).use {
+            it.asSequence()
+                .map(::readGroupMember)
+                .associate { m -> m.memberId to m.role }
         }
     }
 
     fun updateGroupMembers(
-        groupId: String,
+        community: Address.Community,
         role: GroupMemberRole,
-        memberIDs: Collection<String>
+        memberIDs: Collection<AccountId>
     ) {
         val values = ContentValues(3)
 
         writableDatabase.beginTransaction()
+        val groupId = community.toGroupId()
         try {
+            // Clean up the existing members with the same role
             val toDeleteQuery = "$GROUP_ID = ? AND $ROLE = ?"
             val toDeleteArgs = arrayOf(groupId, role.name)
 
@@ -143,10 +103,10 @@ class GroupMemberDatabase(context: Context, helper: Provider<SQLCipherOpenHelper
             memberIDs.forEach { memberId ->
                 with(values) {
                     put(GROUP_ID, groupId)
-                    put(PROFILE_ID, memberId)
+                    put(PROFILE_ID, memberId.hexString)
                     put(ROLE, role.name)
                 }
-                writableDatabase.insertOrUpdate(TABLE_NAME, values, "$GROUP_ID = ? AND $PROFILE_ID = ?", arrayOf(groupId, memberId))
+                writableDatabase.insertOrUpdate(TABLE_NAME, values, "$GROUP_ID = ? AND $PROFILE_ID = ?", arrayOf(groupId, memberId.hexString))
             }
 
             writableDatabase.setTransactionSuccessful()
@@ -154,13 +114,15 @@ class GroupMemberDatabase(context: Context, helper: Provider<SQLCipherOpenHelper
             writableDatabase.endTransaction()
         }
 
-        updateCache(groupId)
+        updateCache(community)
+
+        _changeNotification.tryEmit(community)
     }
 
-    private fun updateCache(groupId: String) {
-        val members = fetchGroupMembersFromDb(groupId)
+    private fun updateCache(address: Address.Community) {
+        val members = fetchGroupMembersFromDb(address)
         cacheLock.write {
-            cacheByGroupId.put(groupId, members)
+            cacheByGroupId.put(address, members)
         }
     }
 }

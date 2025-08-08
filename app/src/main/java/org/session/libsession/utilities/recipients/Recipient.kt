@@ -2,6 +2,7 @@ package org.session.libsession.utilities.recipients
 
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
 import network.loki.messenger.libsession_util.util.ExpiryMode
+import org.session.libsession.messaging.open_groups.GroupMemberRole
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.isCommunity
 import org.session.libsession.utilities.isCommunityInbox
@@ -34,13 +35,18 @@ data class Recipient(
     val isSelf: Boolean get() = data is RecipientData.Self
 
     /**
-     * Check if current user is an admin of this assumed-group recipient.
-     * If the recipient is not a group or community, this will always return false.
+     * The role of the current user in the group or community. If the recipient is not a group or community,
+     * it will always return [GroupMemberRole.STANDARD].
      */
-    val isCurrentUserAdmin: Boolean get() = when (data) {
-        is RecipientData.Group -> data.partial.isAdmin
-        is RecipientData.Community -> data.openGroup.isAdmin || data.openGroup.isModerator
-        else -> false
+    val currentUserRole: GroupMemberRole get() = when (data) {
+        is RecipientData.Group -> if (data.partial.isAdmin) GroupMemberRole.ADMIN else GroupMemberRole.STANDARD
+        is RecipientData.Community -> when {
+            data.openGroup.isAdmin -> GroupMemberRole.ADMIN
+            data.openGroup.isModerator -> GroupMemberRole.MODERATOR
+            else -> GroupMemberRole.STANDARD
+        }
+        is RecipientData.LegacyGroup -> if (data.isCurrentUserAdmin) GroupMemberRole.ADMIN else GroupMemberRole.STANDARD
+        else -> GroupMemberRole.STANDARD
     }
 
     val isGroupOrCommunityRecipient: Boolean get() = address.isGroupOrCommunity

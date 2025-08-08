@@ -40,6 +40,7 @@ import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
+import org.session.libsession.messaging.open_groups.GroupMemberRole
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
@@ -102,6 +103,7 @@ import org.thoughtcrime.securesms.webrtc.CallManager
 import org.thoughtcrime.securesms.webrtc.data.State
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.util.EnumSet
 import java.util.UUID
 
 @HiltViewModel(assistedFactory = ConversationViewModel.Factory::class)
@@ -172,7 +174,10 @@ class ConversationViewModel @AssistedInject constructor(
     val openGroup: OpenGroup?
         get() = openGroupFlow.value
 
-    val isAdmin: StateFlow<Boolean> = recipientFlow.mapStateFlow(viewModelScope) { it.isCurrentUserAdmin }
+    val isAdmin: StateFlow<Boolean> = recipientFlow.mapStateFlow(viewModelScope) {
+        it.currentUserRole in EnumSet.of(GroupMemberRole.ADMIN, GroupMemberRole.HIDDEN_ADMIN)
+    }
+
     private val _searchOpened = MutableStateFlow(false)
 
     val appBarData: StateFlow<ConversationAppBarData> = combine(
@@ -997,11 +1002,6 @@ class ConversationViewModel @AssistedInject constructor(
             _showLoader.value = false
         }
     }
-
-    private fun isUserCommunityManager(openGroup: OpenGroup?) = openGroup?.let { openGroup ->
-        val userPublicKey = textSecurePreferences.getLocalNumber() ?: return@let false
-        openGroupManager.isUserModerator(openGroup.id, userPublicKey, blindedPublicKey)
-    } ?: false
 
     /**
      * Stops audio player if its current playing is the one given in the message.

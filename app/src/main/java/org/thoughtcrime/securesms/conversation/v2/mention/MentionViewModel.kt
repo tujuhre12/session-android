@@ -13,7 +13,6 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
@@ -27,19 +26,16 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.allWithStatus
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.isCommunity
 import org.session.libsession.utilities.isGroupV2
 import org.session.libsession.utilities.isLegacyGroup
-import org.session.libsession.utilities.isStandard
+import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.toGroupString
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.database.GroupDatabase
-import org.thoughtcrime.securesms.database.GroupMemberDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.Storage
@@ -58,9 +54,7 @@ class MentionViewModel @AssistedInject constructor(
     @Assisted address: Address,
     threadDatabase: ThreadDatabase,
     groupDatabase: GroupDatabase,
-    memberDatabase: GroupMemberDatabase,
     storage: Storage,
-    configFactory: ConfigFactoryProtocol,
     recipientRepository: RecipientRepository,
     mmsSmsDatabase: MmsSmsDatabase
 ) : ViewModel() {
@@ -87,7 +81,7 @@ class MentionViewModel @AssistedInject constructor(
     @Suppress("OPT_IN_USAGE")
     private val members: StateFlow<List<Member>?> =
         recipientRepository.observeRecipient(address)
-            .mapLatest {
+            .mapLatest { recipient ->
                 val threadID = withContext(Dispatchers.Default) {
                     threadDatabase.getThreadIdIfExistsFor(address)
                 }
@@ -108,31 +102,7 @@ class MentionViewModel @AssistedInject constructor(
                     else -> listOf(address.address)
                 }
 
-                val openGroup = if (address.isCommunity) {
-                    storage.getOpenGroup(threadID)
-                } else {
-                    null
-                }
-
-                val moderatorIDs = if (address.isCommunity) {
-                    val groupId = openGroup?.id
-                    if (groupId.isNullOrBlank()) {
-                        emptySet()
-                    } else {
-                        memberDatabase.getGroupMembersRoles(groupId, memberIDs)
-                            .mapNotNullTo(hashSetOf()) { (memberId, role) ->
-                                memberId.takeIf { role.isModerator }
-                            }
-                    }
-                } else if (address.isGroupV2) {
-                    configFactory.withGroupConfigs(AccountId(address.toString())) {
-                        it.groupMembers.allWithStatus()
-                            .filter { (member, status) -> member.isAdminOrBeingPromoted(status) }
-                            .mapTo(hashSetOf()) { (member, _) -> member.accountId() }
-                    }
-                } else {
-                    emptySet()
-                }
+                val openGroup = (recipient.data as? RecipientData.Community)?.openGroup
 
                 val myId = if (openGroup != null) {
                     requireNotNull(storage.getUserBlindedAccountId(openGroup.publicKey)).hexString
@@ -144,19 +114,21 @@ class MentionViewModel @AssistedInject constructor(
                     Member(
                         publicKey = myId,
                         name = application.getString(R.string.you),
-                        isModerator = myId in moderatorIDs,
+                        showAdminCrown = (recipient.data as? RecipientData.GroupLike)?.shouldShowAdminCrown(
+                            AccountId(myId)
+                        ) == true,
                         isMe = true
                     )
                 ) + memberIDs
                     .asSequence()
                     .filter { it != myId }
                     .map { recipientRepository.getRecipientSync(Address.fromSerialized(it)) }
-                    .filter { !it.isGroupOrCommunityRecipient }
-                    .map { contact ->
+                    .mapNotNull { m ->
+                        val accountId = (m.address as? Address.WithAccountId)?.accountId ?: return@mapNotNull null
                         Member(
-                            publicKey = contact.address.toString(),
-                            name = contact.displayName(attachesBlindedId = true),
-                            isModerator = contact.address.address in moderatorIDs,
+                            publicKey = accountId.hexString,
+                            name = m.displayName(attachesBlindedId = true),
+                            showAdminCrown = (recipient.data as? RecipientData.GroupLike)?.shouldShowAdminCrown(accountId) == true,
                             isMe = false
                         )
                     })
@@ -202,7 +174,7 @@ class MentionViewModel @AssistedInject constructor(
         name: String,
         isModerator: Boolean,
         isMe: Boolean
-    ) = Member(publicKey = id, name = name, isModerator = isModerator, isMe = isMe)
+    ) = Member(publicKey = id, name = name, showAdminCrown = isModerator, isMe = isMe)
 
     private fun searchAndHighlight(
         haystack: Member,
@@ -296,7 +268,7 @@ class MentionViewModel @AssistedInject constructor(
     data class Member(
         val publicKey: String,
         val name: String,
-        val isModerator: Boolean,
+        val showAdminCrown: Boolean,
         val isMe: Boolean,
     )
 
