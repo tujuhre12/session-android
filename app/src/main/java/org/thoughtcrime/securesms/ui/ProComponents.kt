@@ -52,6 +52,7 @@ import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
@@ -154,7 +155,7 @@ fun ProBadgeText(
     modifier: Modifier = Modifier,
     textStyle: TextStyle = LocalType.current.h5,
     showBadge: Boolean = true,
-    invertBadgeColor: Boolean = false,
+    badgeColors: ProBadgeColors = proBadgeColorStandard(),
     badgeAtStart: Boolean = false,
     onBadgeClick: (() -> Unit)? = null
 ) {
@@ -173,6 +174,7 @@ fun ProBadgeText(
                 }
                 ProBadge(
                     modifier = proBadgeModifier.height(textStyle.lineHeight.value.dp * 0.8f),
+                    colors = badgeColors
                 )
             }
         }
@@ -209,7 +211,7 @@ private fun PreviewProBadgeText(
         ) {
             ProBadgeText(text = "Hello Pro", textStyle = LocalType.current.base)
             ProBadgeText(text = "Hello Pro")
-            ProBadgeText(text = "Inverted Badge Color", invertBadgeColor = true)
+            ProBadgeText(text = "Outgoing Badge Color", badgeColors = proBadgeColorOutgoing())
             ProBadgeText(text = "Hello Pro with a very long name that should overflow")
             ProBadgeText(text = "No Badge", showBadge = false)
         }
@@ -947,11 +949,11 @@ fun SessionProSettingsHeader(
                         modifier = Modifier
                             .fillMaxWidth()
                             .fillMaxHeight()
-                            .scale(ratio, 1f)
+                            .scale(ratio, 1.5f)
                             .background(
                                 Brush.radialGradient(
                                     // Gradient runs from our washed-out accent colour in the center to the background colour at the edges
-                                    listOf(accentColourWithLowAlpha, LocalColors.current.background)
+                                    colors = listOf(accentColourWithLowAlpha, LocalColors.current.background),
                                 )
                             )
                     )
@@ -990,9 +992,10 @@ fun SessionProSettingsHeader(
 
                     Spacer(Modifier.width(LocalDimensions.current.xxxsSpacing))
 
-                    Image(
-                        painter = painterResource(R.drawable.ic_pro_badge),
-                        contentDescription = null,
+                    ProBadge(
+                        colors = proBadgeColorStandard().copy(
+                            backgroundColor = color
+                        )
                     )
                 }
             }
@@ -1006,6 +1009,16 @@ fun SessionProSettingsHeader(
 @Composable
 fun PreviewSessionHeader(){
     PreviewTheme {
-        SessionProSettingsHeader()
+        Column {
+            Spacer(Modifier.height(LocalDimensions.current.xlargeSpacing))
+
+            SessionProSettingsHeader()
+
+            Spacer(Modifier.height(LocalDimensions.current.xlargeSpacing))
+
+            SessionProSettingsHeader(
+                color = LocalColors.current.disabled
+            )
+        }
     }
 }
