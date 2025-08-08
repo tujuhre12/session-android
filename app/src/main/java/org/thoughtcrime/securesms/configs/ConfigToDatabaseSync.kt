@@ -423,10 +423,32 @@ class ConfigToDatabaseSync @Inject constructor(
                     continue
                 }
             }
+
             if (threadId != null) {
-                if (conversation.lastRead > storage.getLastSeen(threadId)) {
-                    storage.markConversationAsRead(threadId, conversation.lastRead, force = true)
-                    storage.updateThread(threadId, false)
+                // Snapshot current local DB state once to avoid duplicate queries.
+                val isLocalRead = storage.isRead(threadId)
+                val isConfigUnread = conversation.unread
+
+                // Sync the config's unread status with the thread from our local database
+                if (isConfigUnread) {
+                    // CONFIG -> UNREAD is authoritative? I think we want to follow the config.
+                    // If DB is currently read, flip it to unread. If it's already unread, do nothing.
+                    if (isLocalRead) {
+                        storage.markConversationAsUnread(threadId)
+                    }
+                } else {
+                    // CONFIG -> READ
+                    // Update DB if there's a mismatch:
+                    //  1) DB still shows unread, or
+                    //  2) DB is read but lastSeen lags behind config's lastRead.
+                    if ((conversation.lastRead > storage.getLastSeen(threadId)) || !isLocalRead) {
+                        storage.markConversationAsRead(
+                            threadId,
+                            conversation.lastRead,
+                            force = true
+                        )
+                        storage.updateThread(threadId, false)
+                    }
                 }
             }
         }
