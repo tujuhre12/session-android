@@ -1,3 +1,4 @@
+import com.android.build.api.dsl.VariantDimension
 import com.android.build.api.variant.FilterConfiguration
 import java.io.ByteArrayOutputStream
 
@@ -24,8 +25,8 @@ configurations.configureEach {
     exclude(module = "commons-logging")
 }
 
-val canonicalVersionCode = 415
-val canonicalVersionName = "1.26.0"
+val canonicalVersionCode = 416
+val canonicalVersionName = "1.27.0"
 
 val postFixSize = 10
 val abiPostFix = mapOf(
@@ -43,6 +44,39 @@ val getGitHash = providers
     .standardOutput
     .asText
     .map { it.trim() }
+
+val firebaseEnabledVariants = listOf("play", "fdroid")
+val nonPlayVariants = listOf("fdroid", "website") + if (huaweiEnabled) listOf("huawei") else emptyList()
+
+fun VariantDimension.devNetDefaultOn(defaultOn: Boolean) {
+    val fqEnumClass = "org.session.libsession.utilities.Environment"
+    buildConfigField(
+        fqEnumClass,
+        "DEFAULT_ENVIRONMENT",
+        if (defaultOn) "$fqEnumClass.DEV_NET" else "$fqEnumClass.MAIN_NET"
+    )
+}
+
+fun VariantDimension.enablePermissiveNetworkSecurityConfig(permissive: Boolean) {
+    manifestPlaceholders["network_security_config"] = if (permissive) {
+        "@xml/network_security_configuration_permissive"
+    } else {
+        "@xml/network_security_configuration"
+    }
+}
+
+fun VariantDimension.setAlternativeAppName(alternative: String?) {
+    if (alternative != null) {
+        manifestPlaceholders["app_name"] = alternative
+    } else {
+        manifestPlaceholders["app_name"] = "@string/app_name"
+    }
+}
+
+fun VariantDimension.setAuthorityPostfix(postfix: String) {
+    manifestPlaceholders["authority_postfix"] = postfix
+    buildConfigField("String", "AUTHORITY_POSTFIX", "\"$postfix\"")
+}
 
 kotlin {
     compilerOptions {
@@ -110,17 +144,36 @@ android {
         }
     }
 
-    sourceSets {
-        val sharedTestDir = "src/sharedTest/java"
-        getByName("test").java.srcDirs(sharedTestDir)
-        getByName("androidTest").java.srcDirs(sharedTestDir)
-
-        getByName("test").resources.srcDirs("$projectDir/src/main/assets")
-    }
-
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
+
+            devNetDefaultOn(false)
+            enablePermissiveNetworkSecurityConfig(false)
+            setAlternativeAppName(null)
+            setAuthorityPostfix("")
+        }
+
+        create("qa") {
+            initWith(getByName("release"))
+
+            matchingFallbacks += "release"
+
+            signingConfig = signingConfigs.getByName("debug")
+            applicationIdSuffix = ".$name"
+
+            devNetDefaultOn(false)
+            enablePermissiveNetworkSecurityConfig(true)
+
+            setAlternativeAppName("Session QA")
+            setAuthorityPostfix(".qa")
+        }
+
+        create("automaticQa") {
+            initWith(getByName("qa"))
+
+            devNetDefaultOn(true)
+            setAlternativeAppName("Session AQA")
         }
 
         getByName("debug") {
@@ -128,8 +181,35 @@ android {
             isMinifyEnabled = false
             enableUnitTestCoverage = false
             signingConfig = signingConfigs.getByName("debug")
+
+            applicationIdSuffix = ".${name}"
+            enablePermissiveNetworkSecurityConfig(true)
+            devNetDefaultOn(false)
+            setAlternativeAppName("Session Debug")
+            setAuthorityPostfix(".debug")
         }
     }
+
+    sourceSets {
+        getByName("test").apply {
+            java.srcDirs("$projectDir/src/sharedTest/java")
+            resources.srcDirs("$projectDir/src/main/assets")
+        }
+
+        val firebaseCommonDir = "src/firebaseCommon"
+        firebaseEnabledVariants.forEach { variant ->
+            maybeCreate(variant).java.srcDirs("$firebaseCommonDir/kotlin")
+        }
+
+        val nonPlayCommonDir = "src/nonPlayCommon"
+        nonPlayVariants.forEach { variant ->
+            maybeCreate(variant).apply {
+                java.srcDirs("$nonPlayCommonDir/kotlin")
+                resources.srcDirs("$nonPlayCommonDir/resources")
+            }
+        }
+    }
+
 
     signingConfigs {
         create("play") {
@@ -160,39 +240,38 @@ android {
         }
     }
 
+
     flavorDimensions += "distribution"
     productFlavors {
         create("play") {
             isDefault = true
             dimension = "distribution"
-            ext["websiteUpdateUrl"] = "null"
             buildConfigField("boolean", "PLAY_STORE_DISABLED", "false")
             buildConfigField("org.session.libsession.utilities.Device", "DEVICE", "org.session.libsession.utilities.Device.ANDROID")
-            buildConfigField("String", "NOPLAY_UPDATE_URL", ext["websiteUpdateUrl"] as String)
             buildConfigField("String", "PUSH_KEY_SUFFIX", "\"\"")
             signingConfig = signingConfigs.getByName("play")
+        }
+
+        create("fdroid") {
+            initWith(getByName("play"))
         }
 
         if (huaweiEnabled) {
             create("huawei") {
                 dimension = "distribution"
-                ext["websiteUpdateUrl"] = "null"
                 buildConfigField("boolean", "PLAY_STORE_DISABLED", "true")
                 buildConfigField("org.session.libsession.utilities.Device", "DEVICE", "org.session.libsession.utilities.Device.HUAWEI")
-                buildConfigField("String", "NOPLAY_UPDATE_URL", ext["websiteUpdateUrl"] as String)
                 buildConfigField("String", "PUSH_KEY_SUFFIX", "\"_HUAWEI\"")
                 signingConfig = signingConfigs.getByName("huawei")
             }
         }
 
         create("website") {
-            dimension = "distribution"
-            ext["websiteUpdateUrl"] = "https://github.com/session-foundation/session-android/releases"
+            initWith(getByName("play"))
+
             buildConfigField("boolean", "PLAY_STORE_DISABLED", "true")
-            buildConfigField("org.session.libsession.utilities.Device", "DEVICE", "org.session.libsession.utilities.Device.ANDROID")
-            buildConfigField("String", "NOPLAY_UPDATE_URL", "\"${ext["websiteUpdateUrl"]}\"")
-            buildConfigField("String", "PUSH_KEY_SUFFIX", "\"\"")
         }
+
     }
 
     testOptions {
@@ -251,12 +330,19 @@ dependencies {
     implementation(libs.androidx.fragment.ktx)
     implementation(libs.androidx.core.ktx)
 
-    val playImplementation = configurations.maybeCreate("playImplementation")
-    playImplementation(libs.firebase.messaging) {
-        exclude(group = "com.google.firebase", module = "firebase-core")
-        exclude(group = "com.google.firebase", module = "firebase-analytics")
-        exclude(group = "com.google.firebase", module = "firebase-measurement-connector")
+    // Add firebase dependencies to specific variants
+    for (variant in firebaseEnabledVariants) {
+        val configuration = configurations.maybeCreate("${variant}Implementation")
+        configuration(libs.firebase.messaging) {
+            exclude(group = "com.google.firebase", module = "firebase-core")
+            exclude(group = "com.google.firebase", module = "firebase-analytics")
+            exclude(group = "com.google.firebase", module = "firebase-measurement-connector")
+        }
     }
+
+    val playImplementation = configurations.maybeCreate("playImplementation")
+    playImplementation(libs.google.play.review)
+    playImplementation(libs.google.play.review.ktx)
 
     if (huaweiEnabled) {
         val huaweiImplementation = configurations.maybeCreate("huaweiImplementation")
@@ -267,7 +353,6 @@ dependencies {
     implementation(libs.androidx.media3.ui)
     implementation(libs.conscrypt.android)
     implementation(libs.android)
-    implementation(libs.shortcutbadger)
     implementation(libs.photoview)
     implementation(libs.glide)
     implementation(libs.compose)
@@ -357,7 +442,6 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
 
     implementation(libs.accompanist.permissions)
-    implementation(libs.accompanist.drawablepainter)
 
     implementation(libs.androidx.camera.camera2)
     implementation(libs.androidx.camera.lifecycle)
@@ -393,10 +477,12 @@ androidComponents {
     }
 }
 
-// Disable google services for non-google variants
+// Only enable google services tasks for firebase-enabled variants
 androidComponents {
     finalizeDsl {
         tasks.named { it.contains("GoogleServices") }
-            .configureEach { enabled = name.contains("play", true) }
+            .configureEach {
+                enabled = firebaseEnabledVariants.any { name.contains(it, true) }
+            }
     }
 }

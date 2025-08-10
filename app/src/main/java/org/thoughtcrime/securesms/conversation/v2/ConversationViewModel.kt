@@ -81,6 +81,9 @@ import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.RecipientChangeSource
+import org.thoughtcrime.securesms.util.UserProfileModalCommands
+import org.thoughtcrime.securesms.util.UserProfileModalData
+import org.thoughtcrime.securesms.util.UserProfileUtils
 import org.thoughtcrime.securesms.util.avatarOptions
 import org.thoughtcrime.securesms.webrtc.CallManager
 import org.thoughtcrime.securesms.webrtc.data.State
@@ -111,6 +114,7 @@ class ConversationViewModel(
     private val recipientChangeSource: RecipientChangeSource,
     private val openGroupManager: OpenGroupManager,
     private val proStatusManager: ProStatusManager,
+    private val upmFactory: UserProfileUtils.UserProfileUtilsFactory
 ) : InputbarViewModel(
     application = application,
     proStatusManager = proStatusManager
@@ -145,6 +149,9 @@ class ConversationViewModel(
         )
     ))
     val appBarData: StateFlow<ConversationAppBarData> = _appBarData
+
+    private var userProfileModalJob: Job? = null
+    private var userProfileModalUtils: UserProfileUtils? = null
 
     private var _recipient: RetrieveOnce<Recipient> = RetrieveOnce {
         val conversation = repository.maybeGetRecipientForThreadId(threadId)
@@ -487,7 +494,8 @@ class ConversationViewModel(
                     pagerData += ConversationAppBarPagerData(
                         title = title,
                         action = {
-                            showGroupMembers()
+                            if(conversation.isCommunityRecipient) showConversationSettings()
+                            else showGroupMembers()
                         },
                     )
                 }
@@ -507,7 +515,10 @@ class ConversationViewModel(
             avatarData.elements.mapNotNull { it.contactPhoto }.forEach {
                 val loadSize = application.resources.getDimensionPixelSize(R.dimen.large_profile_picture_size)
                 Glide.with(application).load(it)
-                    .avatarOptions(loadSize)
+                    .avatarOptions(
+                        sizePx = loadSize,
+                        freezeFrame = proStatusManager.freezeFrameForUser(recipient?.address)
+                    )
                     .preload(loadSize, loadSize)
             }
         }
@@ -1244,6 +1255,14 @@ class ConversationViewModel(
             is Commands.NavigateToConversation -> {
                 _uiEvents.tryEmit(ConversationUiEvent.NavigateToConversation(command.threadId))
             }
+
+            is Commands.HideUserProfileModal -> {
+                _dialogsState.update { it.copy(userProfileModal = null) }
+            }
+
+            is Commands.HandleUserProfileCommand -> {
+                userProfileModalUtils?.onCommand(command.upmCommand)
+            }
         }
     }
 
@@ -1301,6 +1320,15 @@ class ConversationViewModel(
         }
     }
 
+    private fun showConversationSettings() {
+        recipient?.let { convo ->
+            _uiEvents.tryEmit(ConversationUiEvent.ShowConversationSettings(
+                threadId = threadId,
+                threadAddress = convo.address
+            ))
+        }
+    }
+
     private fun showNotificationSettings() {
         _uiEvents.tryEmit(ConversationUiEvent.ShowNotificationSettings(threadId))
     }
@@ -1311,6 +1339,23 @@ class ConversationViewModel(
             val newAppBarNotificationState = getNotificationStatusTitle(recipient!!)
             if(currentAppBarNotificationState != newAppBarNotificationState){
                 updateAppBarData(recipient)
+            }
+        }
+    }
+
+    fun showUserProfileModal(recipient: Recipient) {
+        // get the helper class for the selected user
+        userProfileModalUtils = upmFactory.create(
+            recipient = recipient,
+            threadId = threadId,
+            scope = viewModelScope
+        )
+
+        // cancel previous job if any then listen in on the changes
+        userProfileModalJob?.cancel()
+        userProfileModalJob = viewModelScope.launch {
+            userProfileModalUtils?.userProfileModalData?.collect { upmData ->
+                _dialogsState.update { it.copy(userProfileModal = upmData) }
             }
         }
     }
@@ -1347,6 +1392,7 @@ class ConversationViewModel(
         private val recipientChangeSource: RecipientChangeSource,
         private val openGroupManager: OpenGroupManager,
         private val proStatusManager: ProStatusManager,
+        private val upmFactory: UserProfileUtils.UserProfileUtilsFactory
     ) : ViewModelProvider.Factory {
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -1374,6 +1420,7 @@ class ConversationViewModel(
                 recipientChangeSource = recipientChangeSource,
                 openGroupManager = openGroupManager,
                 proStatusManager = proStatusManager,
+                upmFactory = upmFactory
             ) as T
         }
     }
@@ -1384,6 +1431,7 @@ class ConversationViewModel(
         val deleteEveryone: DeleteForEveryoneDialogData? = null,
         val recreateGroupConfirm: Boolean = false,
         val recreateGroupData: RecreateGroupDialogData? = null,
+        val userProfileModal: UserProfileModalData? = null,
     )
 
     data class RecreateGroupDialogData(
@@ -1420,6 +1468,11 @@ class ConversationViewModel(
         data object HideRecreateGroupConfirm : Commands
         data object HideRecreateGroup : Commands
         data class NavigateToConversation(val threadId: Long) : Commands
+
+        data object HideUserProfileModal: Commands
+        data class HandleUserProfileCommand(
+            val upmCommand: UserProfileModalCommands
+        ): Commands
     }
 }
 
@@ -1437,6 +1490,7 @@ sealed interface ConversationUiEvent {
     data class ShowDisappearingMessages(val threadId: Long) : ConversationUiEvent
     data class ShowNotificationSettings(val threadId: Long) : ConversationUiEvent
     data class ShowGroupMembers(val groupId: String) : ConversationUiEvent
+    data class ShowConversationSettings(val threadId: Long, val threadAddress: Address) : ConversationUiEvent
     data object ShowUnblockConfirmation : ConversationUiEvent
 }
 

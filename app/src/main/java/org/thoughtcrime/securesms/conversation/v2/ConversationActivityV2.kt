@@ -172,7 +172,6 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.giph.ui.GiphyActivity
 import org.thoughtcrime.securesms.groups.GroupMembersActivity
 import org.thoughtcrime.securesms.groups.OpenGroupManager
-import org.thoughtcrime.securesms.home.UserDetailsBottomSheet
 import org.thoughtcrime.securesms.home.search.getSearchName
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewRepository
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewUtil
@@ -237,8 +236,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     InputBarRecordingViewDelegate, AttachmentManager.AttachmentListener, ActivityDispatcher,
     ConversationActionModeCallbackDelegate, VisibleMessageViewDelegate, RecipientModifiedListener,
     SearchBottomBar.EventListener, LoaderManager.LoaderCallbacks<Cursor>,
-    OnReactionSelectedListener, ReactWithAnyEmojiDialogFragment.Callback, ReactionsDialogFragment.Callback,
-    UserDetailsBottomSheet.UserDetailsBottomSheetCallback {
+    OnReactionSelectedListener, ReactWithAnyEmojiDialogFragment.Callback, ReactionsDialogFragment.Callback {
 
     private lateinit var binding: ActivityConversationV2Binding
 
@@ -689,6 +687,15 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
                     is ConversationUiEvent.ShowUnblockConfirmation -> {
                         unblock()
+                    }
+
+                    is ConversationUiEvent.ShowConversationSettings -> {
+                        val intent = ConversationSettingsActivity.createIntent(
+                            context = this@ConversationActivityV2,
+                            threadId = event.threadId,
+                            threadAddress = event.threadAddress
+                        )
+                        startActivity(intent)
                     }
                 }
             }
@@ -1537,8 +1544,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     // `position` is the adapter position; not the visual position
     private fun handleSwipeToReply(message: MessageRecord) {
         if (message.isOpenGroupInvitation) return
-        val recipient = viewModel.recipient ?: return
-        binding.inputBar.draftQuote(recipient, message, glide)
+        reply(setOf(message))
     }
 
     // `position` is the adapter position; not the visual position
@@ -1930,6 +1936,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         if (indexInAdapter < 0 || indexInAdapter >= adapter.itemCount) { return }
         val viewHolder = binding.conversationRecyclerView.findViewHolderForAdapterPosition(indexInAdapter) as? ConversationAdapter.VisibleMessageViewHolder ?: return
         viewHolder.view.playVoiceMessage()
+    }
+
+    override fun showUserProfileModal(recipient: Recipient){
+        viewModel.showUserProfileModal(recipient)
     }
 
     override fun sendMessage() {
@@ -2655,10 +2665,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun onSearchMoveDownPressed() {
         this.searchViewModel.onMoveDown()
-    }
-
-    override fun onNicknameSaved() {
-        adapter.notifyDataSetChanged()
     }
 
     private fun jumpToMessage(author: Address, timestamp: Long, highlight: Boolean, onMessageNotFound: Runnable?) {
