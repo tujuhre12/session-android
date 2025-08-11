@@ -162,7 +162,7 @@
     <string name="blockUnblockNameMultiple">Are you sure you want to unblock <b>{name}</b> and <b>{count} others</b>?</string>
     <string name="blockUnblockNameTwo">Are you sure you want to unblock <b>{name}</b> and 1 other?</string>
     <string name="blockUnblockedUser">Unblocked {name}</string>
-    <string name="blockedContactsmanageDescription">View and manage blocked contacts.</string>
+    <string name="blockedContactsManageDescription">View and manage blocked contacts.</string>
     <string name="call">Call</string>
     <string name="callsCalledYou">{name} called you</string>
     <string name="callsCannotStart">You cannot start a new call. Finish your current call first.</string>
