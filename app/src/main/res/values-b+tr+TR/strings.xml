@@ -66,7 +66,6 @@
     <string name="appNameNotes">Notlar</string>
     <string name="appNameStocks">Borsa</string>
     <string name="appNameWeather">Hava Durumu</string>
-    <string name="appearanceAutoDarkMode">Otomatik karanlık-mod</string>
     <string name="appearanceHideMenuBar">Menü Çubuğunu Gizle</string>
     <string name="appearanceLanguage">Dil</string>
     <string name="appearanceLanguageDescription">{app_name} dil ayarınızı seçin. Dil ayarınızı değiştirdiğinizde {app_name} yeniden başlatılacak.</string>
@@ -277,15 +276,11 @@
     <string name="conversationsEmpty">{conversation_name}\'de ileti yok.</string>
     <string name="conversationsEnter">Giriş Tuşu</string>
     <string name="conversationsEnterDescription">Sohbette yazarken enter tuşunun fonksiyonu.</string>
-    <string name="conversationsEnterNewLine">SHIFT + ENTER ileti gönderir, ENTER yeni bir satır başlatır</string>
-    <string name="conversationsEnterSends">ENTER iletiyi gönderir, SHIFT + ENTER yeni satır başlatır</string>
     <string name="conversationsGroups">Gruplar</string>
     <string name="conversationsMessageTrimming">İleti kırpma</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Toplulukları Kırp</string>
-    <string name="conversationsMessageTrimmingTrimCommunitiesDescription">Topluluk sohbetlerinden 6 aydan eski ve 2.000\'den fazla ileti içeren iletileri silin.</string>
     <string name="conversationsNew">Yeni Konuşma</string>
     <string name="conversationsNone">Henüz herhangi bir konuşmanız yok</string>
-    <string name="conversationsSendWithEnterKey">Enter tuşu ile gönder</string>
     <string name="conversationsSendWithEnterKeyDescription">Enter tuşuna basmak yeni bir satıra geçmek yerine ileti gönderir.</string>
     <string name="conversationsSettingsAllMedia">Tüm Medya</string>
     <string name="conversationsSpellCheck">Yazım Denetimi</string>
@@ -443,7 +438,6 @@
     <string name="failures">Hatalar</string>
     <string name="file">Dosya</string>
     <string name="files">Dosyalar</string>
-    <string name="followSystemSettings">Sistem ayarlarını takip et</string>
     <string name="forever">Sonsuza dek</string>
     <string name="from">Kimden:</string>
     <string name="fullScreenToggle">Tam Ekranı Aç/Kapat</string>
@@ -540,16 +534,13 @@
     <string name="handlingConnectionCandidates">Bağlantı Adayları İşleniyor</string>
     <string name="helpFAQ">SSS</string>
     <string name="helpHelpUsTranslateSession">{app_name}\'yi çevirmemize yardımcı olun</string>
-    <string name="helpReportABug">Bir hata bildir</string>
     <string name="helpReportABugDescription">Sorununuzu çözmemize yardımcı olmak için bazı ayrıntılar paylaşın. Günlüklerinizi dışa aktarın ve ardından dosyayı {app_name}\'in Destek Merkezi\'ne yükleyin.</string>
     <string name="helpReportABugExportLogs">Günlüğu Dışa Aktar</string>
     <string name="helpReportABugExportLogsDescription">Günlüklerinizi dışa aktarın, ardından dosyayı {app_name}\'ın Yardım Masası üzerinden yükleyin.</string>
     <string name="helpReportABugExportLogsSaveToDesktop">Masaüstüne kaydet</string>
-    <string name="helpReportABugExportLogsSaveToDesktopDescription">Bu dosyayı masaüstüne kaydedin, ardından {app_name}\'in geliştiricileriyle paylaşın.</string>
     <string name="helpSupport">Destek</string>
     <string name="helpWedLoveYourFeedback">Görüşlerinizi almak isteriz</string>
     <string name="hide">Gizle</string>
-    <string name="hideMenuBarDescription">Sistem menü çubuğu görünürlüğünü değiştirin</string>
     <string name="hideNoteToSelfDescription"><b>Kendime Not</b>\'u sohbet listenizden gizlemek istediğinizden emin misiniz?</string>
     <string name="hideOthers">Diğerlerini Gizle</string>
     <string name="image">Görüntü</string>
@@ -772,9 +763,7 @@
     <string name="passwordChangeDescription">{app_name} kilidini açmak için gereken parolayı değiştirin.</string>
     <string name="passwordChangedDescription">Şifreniz değiştirildi. Lütfen güvende tutunuz.</string>
     <string name="passwordConfirm">Şifreyi Doğrula</string>
-    <string name="passwordCreate">Parolanızı oluşturun</string>
     <string name="passwordCurrentIncorrect">Mevcut şifreniz yanlış.</string>
-    <string name="passwordDescription">{app_name} uygulamasının kilidini açmak için şifre iste.</string>
     <string name="passwordEnter">Parolayı girin</string>
     <string name="passwordEnterCurrent">Lütfen mevcut parolanızı girin</string>
     <string name="passwordEnterNew">Lütfen yeni parolanızı girin</string>
@@ -783,10 +772,8 @@
     <string name="passwordFailed">Parolayı ayarlama başarısız oldu</string>
     <string name="passwordIncorrect">Yanlış şifre</string>
     <string name="passwordRemove">Parolayı Kaldır</string>
-    <string name="passwordRemoveDescription">{app_name} uygulamasının kilidini açmak için gereken şifreyi kaldırın.</string>
     <string name="passwordRemovedDescription">Parolanız kaldırıldı.</string>
     <string name="passwordSet">Şifre Belirle</string>
-    <string name="passwordSetDescription">Şifreniz ayarlandı. Lütfen güvende tutunuz.</string>
     <string name="paste">Yapıştır</string>
     <string name="permissionChange">İzin Değişimi</string>
     <string name="permissionMusicAudioDenied">{app_name} dosya, müzik ve ses gönderimi için müzik ve ses erişimine ihtiyaç duyuyor, ancak bu erişim kalıcı olarak reddedildi. Ayarlar → İzinler üzerine dokunun ve \"Müzik ve ses\" seçeneğini açın.</string>
@@ -799,7 +786,6 @@
     <string name="permissionsCameraDescriptionIos">Görüntülü aramalar için kamera erişimine izin verin.</string>
     <string name="permissionsFaceId">{app_name} ekran kilidi özelliği Face ID kullanır.</string>
     <string name="permissionsKeepInSystemTray">Sistem Tepsisinde Sakla</string>
-    <string name="permissionsKeepInSystemTrayDescription">{app_name} pencereyi kapattığınızda arka planda çalışmaya devam eder</string>
     <string name="permissionsLibrary">{app_name} devam etmek için fotoğraf kitaplığı erişimine ihtiyaç duyuyor. Erişimi iOS ayarlarından etkinleştirebilirsiniz.</string>
     <string name="permissionsLocalNetworkAccessRequiredCallsIos">Aramaları sağlamak için Yerel Ağ erişimi gereklidir. Devam etmek için Ayarlar\'dan \"Yerel Ağ\" iznini açın.</string>
     <string name="permissionsLocalNetworkAccessRequiredIos">{app_name} uygulamasının sesli ve görüntülü arama yapabilmesi için yerel ağa erişmesi gerekiyor.</string>
@@ -875,7 +861,6 @@
     <string name="recommended">Önerilen</string>
     <string name="recoveryPasswordBannerDescription">Hesabınıza erişimi kaybetmemek için kurtarma şifrenizi kaydedin.</string>
     <string name="recoveryPasswordBannerTitle">Kurtarma şifrenizi kaydedin</string>
-    <string name="recoveryPasswordDescription">Hesabınızı yeni cihazlarda yüklemek için kurtarma şifrenizi kullanın.\n\nKurtarma şifreniz olmadan hesabınız geri yüklenemez. Güvende olduğundan emin olun ve kimseyle paylaşmayın.</string>
     <string name="recoveryPasswordEnter">Kurtarma parolanızı girin</string>
     <string name="recoveryPasswordErrorLoad">Kurtarma şifrenizi yüklemeye çalışırken bir sorun oluştu.\n\nLütfen kayıtları dışarı aktarın. Ardından {app_name} uygulamasının Yardım Merkezi üzerinden dışa aktarılmış dosyayı yükleyerek sorunun çözümlenmesine yardımcı olun.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Lütfen kurtarma parolanızı kontrol edin ve tekrar deneyin.</string>
@@ -885,7 +870,6 @@
     <string name="recoveryPasswordExplanation">Hesabınızı yüklemek için kurtarma şifrenizi girin.</string>
     <string name="recoveryPasswordHidePermanently">Kurtarma Şifresini Kalıcı Olarak Gizle</string>
     <string name="recoveryPasswordHidePermanentlyDescription1">Recovery password olmadan hesabınızı yeni cihazlarda yükleyemezsiniz.\n\nDevam etmeden önce recovery password\'ınızı güvenli bir yerde saklamanızı şiddetle tavsiye ederiz.</string>
-    <string name="recoveryPasswordHidePermanentlyDescription2">Bu cihazdaki kurtarma şifrenizi kalıcı olarak gizlemek istediğinizden emin misiniz? Bu geri alınamaz.</string>
     <string name="recoveryPasswordHideRecoveryPassword">Kurtarma Şifresini Gizle</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Kurtarma parolanızı bu cihazda kalıcı olarak gizleyin.</string>
     <string name="recoveryPasswordRestoreDescription">Hesabınızı yüklemek için kurtarma parolanızı girin. Kaydetmediyseniz, uygulama ayarlarınızda bulabilirsiniz.</string>
