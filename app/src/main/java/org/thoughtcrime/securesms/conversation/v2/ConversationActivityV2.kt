@@ -68,6 +68,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
@@ -207,6 +208,7 @@ import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import org.thoughtcrime.securesms.util.drawToBitmap
 import org.thoughtcrime.securesms.util.fadeIn
 import org.thoughtcrime.securesms.util.fadeOut
+import org.thoughtcrime.securesms.util.getConversationUnread
 import org.thoughtcrime.securesms.util.isFullyScrolled
 import org.thoughtcrime.securesms.util.isNearBottom
 import org.thoughtcrime.securesms.util.push
@@ -790,14 +792,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     if (unreadCount == 0 && adapter.itemCount > 0) {
                         // Get the last visible timestamp
                         val lastPos = adapter.itemCount - 1
-                        val lastTimestamp = adapter.getTimestampForItemAt(lastPos)
-                            ?: clock.currentTimeMills()
 
                         lifecycleScope.launch(Dispatchers.IO) {
-                            // Check first if it is already unread to avoid unnecessary operation
-                            val isRead = storage.isRead(viewModel.threadId)
-                            if (!isRead) {
-                                storage.markConversationAsRead(viewModel.threadId, lastTimestamp)
+                            val thread = viewModel.threadRecord.filterNotNull().first() // one-shot
+                            val isUnread = configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(thread) }
+                            if (isUnread){
+                                storage.markConversationAsRead(viewModel.threadId, clock.currentTimeMills())
                             }
                         }
                     }
