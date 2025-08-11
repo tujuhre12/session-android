@@ -102,6 +102,7 @@ import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
 import org.thoughtcrime.securesms.ui.theme.monospace
 import org.thoughtcrime.securesms.util.ActivityDispatcher
+import org.thoughtcrime.securesms.util.AvatarBadge
 import org.thoughtcrime.securesms.util.push
 import javax.inject.Inject
 
@@ -328,7 +329,8 @@ fun CellMetadata(
                                     modifier = Modifier
                                         .align(Alignment.CenterVertically),
                                     size = LocalDimensions.current.iconLarge,
-                                    data = senderAvatarData
+                                    data = senderAvatarData,
+                                    badge = if (state.senderIsAdmin) { AvatarBadge.Admin } else AvatarBadge.None
                                 )
                                 Spacer(modifier = Modifier.width(LocalDimensions.current.smallSpacing))
                             }
