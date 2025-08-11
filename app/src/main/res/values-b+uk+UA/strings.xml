@@ -68,7 +68,6 @@
     <string name="appNameNotes">Нотатки</string>
     <string name="appNameStocks">Акції</string>
     <string name="appNameWeather">Погода</string>
-    <string name="appearanceAutoDarkMode">Автоматичний темний режим</string>
     <string name="appearanceHideMenuBar">Сховати панель меню</string>
     <string name="appearanceLanguage">Мова</string>
     <string name="appearanceLanguageDescription">Виберіть мовні налаштування для {app_name}. {app_name} перезапуститься при зміні мовного налаштування.</string>
@@ -281,15 +280,11 @@
     <string name="conversationsEmpty">Немає повідомлень в {conversation_name}.</string>
     <string name="conversationsEnter">Введіть Key</string>
     <string name="conversationsEnterDescription">Функція клавіші Enter під час набору повідомлення.</string>
-    <string name="conversationsEnterNewLine">SHIFT + ENTER надсилає повідомлення, ENTER починає новий рядок</string>
-    <string name="conversationsEnterSends">ENTER надсилає повідомлення, SHIFT + ENTER починає новий рядок</string>
     <string name="conversationsGroups">Групи</string>
     <string name="conversationsMessageTrimming">Автовидалення повідомлень</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Автовидалення повідомлень спільнот</string>
-    <string name="conversationsMessageTrimmingTrimCommunitiesDescription">Видаляти повідомлення у спільнотах старше 6 місяців і де більше 2 000 повідомлень.</string>
     <string name="conversationsNew">Нова бесіда</string>
     <string name="conversationsNone">У вас ще немає жодних розмов</string>
-    <string name="conversationsSendWithEnterKey">Надіслати клавішею Enter</string>
     <string name="conversationsSendWithEnterKeyDescription">Натискання клавіші Enter буде відправляти повідомлення замість переходу на новий рядок.</string>
     <string name="conversationsSettingsAllMedia">Всі медіа</string>
     <string name="conversationsSpellCheck">Перевірка орфографії</string>
@@ -467,7 +462,6 @@
     <string name="failures">Відмови</string>
     <string name="file">Файл</string>
     <string name="files">Файли</string>
-    <string name="followSystemSettings">Використовувати системні налаштування</string>
     <string name="forever">Завжди</string>
     <string name="from">Від:</string>
     <string name="fullScreenToggle">Увійти до повноекранного режиму</string>
@@ -572,16 +566,13 @@
     <string name="handlingConnectionCandidates">Опрацювання можливих з\'єднань</string>
     <string name="helpFAQ">Часті питання</string>
     <string name="helpHelpUsTranslateSession">Допоможіть нам перекласти {app_name}</string>
-    <string name="helpReportABug">Повідомити про помилку</string>
     <string name="helpReportABugDescription">Поділіться деякими деталями, щоб допомогти нам розв\'язати вашу проблему. Експортуйте свої журнали, а потім завантажте файл через службу підтримки {app_name}.</string>
     <string name="helpReportABugExportLogs">Експортувати журнали</string>
     <string name="helpReportABugExportLogsDescription">Експортуйте свої журналі, а потім завантажте файл через службу підтримки {app_name}.</string>
     <string name="helpReportABugExportLogsSaveToDesktop">Зберегти на робочий стіл</string>
-    <string name="helpReportABugExportLogsSaveToDesktopDescription">Збережіть цей файл на робочому столі, а потім розділіть його з розробниками {app_name}.</string>
     <string name="helpSupport">Служба підтримки</string>
     <string name="helpWedLoveYourFeedback">Будемо раді, якщо залишите нам відгук</string>
     <string name="hide">Приховати</string>
-    <string name="hideMenuBarDescription">Увімкнути або вимкнути видимість панелі меню</string>
     <string name="hideNoteToSelfDescription">Ви впевнені, що хочете приховати <b>Нотатку для себе</b> зі свого списку розмов?</string>
     <string name="hideOthers">Сховати інші</string>
     <string name="image">Зображення</string>
@@ -823,9 +814,7 @@
     <string name="passwordChangeDescription">Змінити пароль, необхідний для розблокування {app_name}.</string>
     <string name="passwordChangedDescription">Ваш пароль змінено. Будь ласка, збережіть його в безпеці.</string>
     <string name="passwordConfirm">Підтвердіть пароль</string>
-    <string name="passwordCreate">Створіть пароль</string>
     <string name="passwordCurrentIncorrect">Ваш поточний пароль невірний.</string>
-    <string name="passwordDescription">Вимагати пароль для розблокування {app_name}.</string>
     <string name="passwordEnter">Введіть пароль</string>
     <string name="passwordEnterCurrent">Будь ласка, введіть поточний пароль</string>
     <string name="passwordEnterNew">Будь ласка, введіть новий пароль</string>
@@ -834,10 +823,8 @@
     <string name="passwordFailed">Не вдалося встановити пароль</string>
     <string name="passwordIncorrect">Неправильний пароль</string>
     <string name="passwordRemove">Видалити пароль</string>
-    <string name="passwordRemoveDescription">Видалити пароль, який потрібен для розблокування {app_name}.</string>
     <string name="passwordRemovedDescription">Ваш пароль був видалений.</string>
     <string name="passwordSet">Встановити пароль</string>
-    <string name="passwordSetDescription">Ваш пароль встановлено. Будь ласка, збережіть його в безпеці.</string>
     <string name="paste">Вставити</string>
     <string name="permissionChange">Потрібна зміна дозволів</string>
     <string name="permissionMusicAudioDenied">{app_name} потребує доступу до музики та аудіо, щоб надсилати файли, музику та аудіо, але доступ було постійно відхилено. Натисніть Налаштування → Дозволи та увімкніть «Музика та аудіо».</string>
@@ -850,7 +837,6 @@
     <string name="permissionsCameraDescriptionIos">Дозвольте доступ до камери для відеодзвінків.</string>
     <string name="permissionsFaceId">Функція блокування екрана в {app_name} використовує Face ID.</string>
     <string name="permissionsKeepInSystemTray">Зберігати в системному треї</string>
-    <string name="permissionsKeepInSystemTrayDescription">{app_name} продовжує працювати у фоновому режимі, коли ви закриваєте вікно</string>
     <string name="permissionsLibrary">{app_name} потрібен доступ до фотогалереї для продовження. Ви можете надати дозвіл у налаштуваннях iOS.</string>
     <string name="permissionsLocalNetworkAccessRequiredCallsIos">Для здійснення дзвінків потрібен доступ до локальної мережі. Увімкніть дозвіл «Локальна мережа» в налаштуваннях для продовження.</string>
     <string name="permissionsLocalNetworkAccessRequiredIos">{app_name} потребує доступу до локальної мережі для здійснення голосових та відеодзвінків.</string>
@@ -941,7 +927,6 @@
     <string name="recommended">Рекомендовано</string>
     <string name="recoveryPasswordBannerDescription">Збережіть свій пароль для відновлення, щоб не втратити доступ до свого облікового запису.</string>
     <string name="recoveryPasswordBannerTitle">Збережіть свій пароль для відновлення</string>
-    <string name="recoveryPasswordDescription">Використовуйте свій пароль для відновлення, щоб завантажити свій обліковий запис на нових пристроях.\n\nВаш обліковий запис не може бути відновлений без вашого пароля для відновлення. Переконайтеся, що він зберігається десь у надійному місці та не передавайте його нікому.</string>
     <string name="recoveryPasswordEnter">Введіть свій пароль відновлення</string>
     <string name="recoveryPasswordErrorLoad">Під час завантаження пароля для відновлення сталася помилка.\n\nБудь ласка, експортуйте ваші журнали, а потім надішліть отриманий файл через Службу підтримки {app_name} для допомоги у розв\'язанні цієї проблеми.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Будь ласка, перевірте свій пароль для відновлення і повторіть спробу.</string>
@@ -951,7 +936,6 @@
     <string name="recoveryPasswordExplanation">Щоб завантажити ваш обліковий запис, введіть ваш пароль для відновлення.</string>
     <string name="recoveryPasswordHidePermanently">Приховати пароль відновлення назавжди</string>
     <string name="recoveryPasswordHidePermanentlyDescription1">Без вашого пароля для відновлення ви не зможете завантажити свій обліковий запис на нових пристроях.\n\nМи наполегливо рекомендуємо зберігати ваш пароль для відновлення у безпечному місці перед продовженням.</string>
-    <string name="recoveryPasswordHidePermanentlyDescription2">Ви впевнені, що хочете назавжди приховати пароль для відновлення на цьому пристрої? Це не можна буде скасувати.</string>
     <string name="recoveryPasswordHideRecoveryPassword">Приховати пароль відновлення</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Назавжди прибрати пароль відновлення на цьому пристрої.</string>
     <string name="recoveryPasswordRestoreDescription">Введіть свій пароль відновлення, щоб завантажити свій обліковий запис. Якщо ви його не зберегли, ви можете знайти його в налаштуваннях додатку.</string>
