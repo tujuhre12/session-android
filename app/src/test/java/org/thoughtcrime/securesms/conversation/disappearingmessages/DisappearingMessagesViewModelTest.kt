@@ -16,6 +16,7 @@ import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.recipients.ProStatus
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.BaseViewModelTest
@@ -51,7 +52,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
     fun `note to self, off, new config`() = runTest {
         val viewModel = createViewModel(Recipient(
             address = STANDARD_ADDRESS,
-            data = RecipientData.Self(name = "Myself", avatar = null, expiryMode = ExpiryMode.NONE, acceptsCommunityMessageRequests = false, priority = 1),
+            data = RecipientData.Self(name = "Myself", avatar = null, expiryMode = ExpiryMode.NONE, priority = 1, proStatus = ProStatus.Unknown,  profileUpdatedAt = null),
         ))
 
         advanceUntilIdle()
@@ -94,14 +95,20 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
         val recipient = Recipient(
             address = GROUP_ADDRESS,
             data = RecipientData.Group(
-                name = "Group Name",
-                avatar = null,
-                expiryMode = ExpiryMode.NONE,
-                approved = true,
-                priority = 1,
-                isAdmin = true,
-                destroyed = false,
-                kicked = false
+                partial = RecipientData.PartialGroup(
+                    name = "Group Name",
+                    avatar = null,
+                    expiryMode = ExpiryMode.NONE,
+                    approved = true,
+                    priority = 1,
+                    isAdmin = true,
+                    destroyed = false,
+                    kicked = false,
+                    proStatus = ProStatus.Unknown,
+                    members = listOf()
+                ),
+                firstMember = null,
+                secondMember = null,
             ),
         )
 
@@ -148,14 +155,20 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
         val recipient = Recipient(
             address = GROUP_ADDRESS,
             data = RecipientData.Group(
-                name = "Group Name",
-                avatar = null,
-                expiryMode = ExpiryMode.NONE,
-                approved = true,
-                priority = 1,
-                isAdmin = false,
-                destroyed = false,
-                kicked = false
+                partial = RecipientData.PartialGroup(
+                    name = "Group Name",
+                    avatar = null,
+                    expiryMode = ExpiryMode.NONE,
+                    approved = true,
+                    priority = 1,
+                    isAdmin = false,
+                    destroyed = false,
+                    kicked = false,
+                    proStatus = ProStatus.Unknown,
+                    members = listOf()
+                ),
+                firstMember = null,
+                secondMember = null,
             ),
         )
 
@@ -210,7 +223,9 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                 approvedMe = true,
                 blocked = false,
                 expiryMode = ExpiryMode.NONE,
-                priority = 1
+                priority = 1,
+                proStatus = ProStatus.Unknown,
+                profileUpdatedAt = null
             )
         )
         )
@@ -262,7 +277,9 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                 approvedMe = true,
                 blocked = false,
                 expiryMode = ExpiryMode.AfterSend(time.inWholeSeconds),
-                priority = 1
+                priority = 1,
+                proStatus = ProStatus.Unknown,
+                profileUpdatedAt = null
             )
         )
         )
@@ -321,7 +338,9 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                 approvedMe = true,
                 blocked = false,
                 expiryMode = ExpiryMode.AfterSend(time.inWholeSeconds),
-                priority = 1
+                priority = 1,
+                proStatus = ProStatus.Unknown,
+                profileUpdatedAt = null
             )
         )
         )
@@ -380,7 +399,9 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                 approvedMe = true,
                 blocked = false,
                 expiryMode = ExpiryMode.AfterRead(time.inWholeSeconds),
-                priority = 1
+                priority = 1,
+                proStatus = ProStatus.Unknown,
+                profileUpdatedAt = null
             )
         )
         )
@@ -441,7 +462,9 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                 approvedMe = true,
                 blocked = false,
                 expiryMode = ExpiryMode.AfterRead(time.inWholeSeconds),
-                priority = 1
+                priority = 1,
+                proStatus = ProStatus.Unknown,
+                profileUpdatedAt = null
             )
         )
         )

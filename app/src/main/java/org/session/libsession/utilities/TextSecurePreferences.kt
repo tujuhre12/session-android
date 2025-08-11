@@ -11,16 +11,19 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
@@ -51,6 +54,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CA
 import org.session.libsession.utilities.TextSecurePreferences.Companion._events
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.util.DateUtils.Companion.asEpochSeconds
 import java.io.IOException
 import java.time.ZonedDateTime
 import java.util.Arrays
@@ -162,12 +166,8 @@ interface TextSecurePreferences {
     fun setHasViewedSeed(hasViewedSeed: Boolean)
     fun setRestorationTime(time: Long)
     fun getRestorationTime(): Long
-    fun getLastProfilePictureUpload(): Long
-    fun setLastProfilePictureUpload(newValue: Long)
     fun getLastSnodePoolRefreshDate(): Long
     fun setLastSnodePoolRefreshDate(date: Date)
-    fun shouldUpdateProfile(profileUpdateTime: Long): Boolean
-    fun setLastProfileUpdateTime(profileUpdateTime: Long)
     fun getLastOpenTimeDate(): Long
     fun setLastOpenDate()
     fun hasSeenLinkPreviewSuggestionDialog(): Boolean
@@ -229,6 +229,9 @@ interface TextSecurePreferences {
     var selectedActivityAliasName: String?
 
     var inAppReviewState: String?
+
+    val lastProfileUpdated: StateFlow<ZonedDateTime?>
+    fun setLastProfileUpdated(time: ZonedDateTime)
 
     companion object {
         val TAG = TextSecurePreferences::class.simpleName
@@ -855,16 +858,6 @@ interface TextSecurePreferences {
         }
 
         @JvmStatic
-        fun getLastProfilePictureUpload(context: Context): Long {
-            return getLongPreference(context, "last_profile_picture_upload", 0)
-        }
-
-        @JvmStatic
-        fun setLastProfilePictureUpload(context: Context, newValue: Long) {
-            setLongPreference(context, "last_profile_picture_upload", newValue)
-        }
-
-        @JvmStatic
         fun getProfileExpiry(context: Context): Long{
             return getLongPreference(context, PROFILE_PIC_EXPIRY, 0)
         }
@@ -1462,28 +1455,12 @@ class AppTextSecurePreferences @Inject constructor(
         return getLongPreference("restoration_time", 0)
     }
 
-    override fun getLastProfilePictureUpload(): Long {
-        return getLongPreference("last_profile_picture_upload", 0)
-    }
-
-    override fun setLastProfilePictureUpload(newValue: Long) {
-        setLongPreference("last_profile_picture_upload", newValue)
-    }
-
     override fun getLastSnodePoolRefreshDate(): Long {
         return getLongPreference("last_snode_pool_refresh_date", 0)
     }
 
     override fun setLastSnodePoolRefreshDate(date: Date) {
         setLongPreference("last_snode_pool_refresh_date", date.time)
-    }
-
-    override fun shouldUpdateProfile(profileUpdateTime: Long): Boolean {
-        return profileUpdateTime > getLongPreference(TextSecurePreferences.LAST_PROFILE_UPDATE_TIME, 0)
-    }
-
-    override fun setLastProfileUpdateTime(profileUpdateTime: Long) {
-        setLongPreference(TextSecurePreferences.LAST_PROFILE_UPDATE_TIME, profileUpdateTime)
     }
 
     override fun getLastOpenTimeDate(): Long {
@@ -1764,6 +1741,18 @@ class AppTextSecurePreferences @Inject constructor(
                 setStringPreference(TextSecurePreferences.DEPRECATING_START_TIME_OVERRIDE, value.toString())
             }
         }
+
+    override val lastProfileUpdated: StateFlow<ZonedDateTime?> by lazy {
+        _events
+            .filter { it == TextSecurePreferences.LAST_PROFILE_UPDATE_TIME }
+            .map { getLongPreference(TextSecurePreferences.LAST_PROFILE_UPDATE_TIME, 0).asEpochSeconds() }
+            .stateIn(GlobalScope, SharingStarted.Eagerly, getLongPreference(TextSecurePreferences.LAST_PROFILE_UPDATE_TIME, 0).asEpochSeconds())
+    }
+
+    override fun setLastProfileUpdated(time: ZonedDateTime) {
+        setLongPreference(TextSecurePreferences.LAST_PROFILE_UPDATE_TIME, time.toEpochSecond())
+        _events.tryEmit(TextSecurePreferences.LAST_PROFILE_UPDATE_TIME)
+    }
 
     override fun getDebugMessageFeatures(): Set<ProStatusManager.MessageProFeature> {
         return getStringSetPreference( TextSecurePreferences.DEBUG_MESSAGE_FEATURES, emptySet())

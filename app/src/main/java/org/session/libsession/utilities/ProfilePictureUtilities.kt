@@ -106,7 +106,7 @@ object ProfilePictureUtilities {
             FileServerApi.upload(file = data, customHeaders = customHeaders)
         }.await()
 
-        TextSecurePreferences.setLastProfilePictureUpload(context, Date().time)
+//        TextSecurePreferences.setLastProfilePictureUpload(context, Date().time)
 //        TextSecurePreferences.setProfilePictureURL(context, url)
 
         // save the expiry for this profile picture, so that whe we periodically check if we should

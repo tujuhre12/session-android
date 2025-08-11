@@ -24,6 +24,7 @@ import com.bumptech.glide.module.AppGlideModule;
 
 import org.session.libsession.avatars.PlaceholderAvatarPhoto;
 import org.session.libsession.utilities.recipients.RemoteFile;
+import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.crypto.AttachmentSecret;
 import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider;
 import org.thoughtcrime.securesms.giph.model.ChunkedImageUrl;
@@ -69,7 +70,9 @@ public class SignalGlideModule extends AppGlideModule {
     registry.prepend(Bitmap.class, new EncryptedBitmapResourceEncoder(secret));
     registry.prepend(GifDrawable.class, new EncryptedGifDrawableResourceEncoder(secret));
 
-    registry.append(RemoteFile.class, InputStream.class, new RemoteFileLoader.Factory(context));
+    registry.append(RemoteFile.class, InputStream.class, new RemoteFileLoader.Factory(
+            ((ApplicationContext) (context.getApplicationContext())).getRemoteFileLoader()
+    ));
     registry.append(DecryptableUri.class, InputStream.class, new DecryptableStreamUriLoader.Factory(context));
     registry.append(AttachmentModel.class, InputStream.class, new AttachmentStreamUriLoader.Factory());
     registry.append(ChunkedImageUrl.class, InputStream.class, new ChunkedImageUrlLoader.Factory());

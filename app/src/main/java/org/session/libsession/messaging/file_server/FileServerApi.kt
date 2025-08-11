@@ -18,6 +18,8 @@ import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.toHexString
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.regex.Pattern
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -193,5 +195,14 @@ object FileServerApi {
     data class SendResponse(
         val body: ByteArraySlice,
         val headers: Map<String, String>?
-    )
+    ) {
+        /**
+         * The "expires" header's value if any
+         */
+        val expires: ZonedDateTime? by lazy {
+            headers?.get("expires")?.let {
+                 ZonedDateTime.parse(it, DateTimeFormatter.RFC_1123_DATE_TIME)
+            }
+        }
+    }
 }

@@ -21,6 +21,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.Address.Companion.toAddress
+import org.session.libsession.utilities.recipients.ProStatus
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.BaseViewModelTest
@@ -70,6 +71,8 @@ class ConversationViewModelTest: BaseViewModelTest() {
             blocked = false,
             expiryMode = ExpiryMode.NONE,
             1,
+            proStatus = ProStatus.Unknown,
+            profileUpdatedAt = null
         )
     )
 

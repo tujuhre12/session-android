@@ -86,20 +86,11 @@ class MentionViewModelTest : BaseViewModelTest() {
             },
             groupDatabase = mock {
             },
-            memberDatabase = mock {
-                on { getGroupMembersRoles(eq(openGroup.id), any()) } doAnswer {
-                    val memberIDs = it.arguments[1] as Collection<String>
-                    memberIDs.associateWith { id ->
-                        threadMembers.first { it.pubKey == id }.role
-                    }
-                }
-            },
             storage = mock {
                 on { getOpenGroup(threadID) } doReturn openGroup
                 on { getUserBlindedAccountId(any()) } doReturn myId
                 on { getUserPublicKey() } doReturn myId.hexString
             },
-            configFactory = mock(),
             application = InstrumentationRegistry.getInstrumentation().context as android.app.Application,
             mmsSmsDatabase = mock {
                 on { getRecentChatMemberAddresses(eq(threadID), any())} doAnswer {

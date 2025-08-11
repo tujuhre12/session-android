@@ -39,7 +39,7 @@ import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.ProStatus
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
-import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRecipientAvatar
+import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRemoteFile
 import org.session.libsession.utilities.toBlinded
 import org.session.libsession.utilities.toGroupString
 import org.session.libsession.utilities.userConfigsChanged
@@ -414,7 +414,7 @@ class RecipientRepository @Inject constructor(
                     configFactory.withUserConfigs { configs ->
                         RecipientData.Self(
                             name = configs.userProfile.getName().orEmpty(),
-                            avatar = configs.userProfile.getPic().toRecipientAvatar(),
+                            avatar = configs.userProfile.getPic().toRemoteFile(),
                             expiryMode = configs.userProfile.getNtsExpiry(),
                             priority = configs.userProfile.getNtsPriority(),
                             proStatus = if (proStatusManager.isCurrentUserPro()) ProStatus.ProVisible else ProStatus.Unknown,
@@ -429,7 +429,7 @@ class RecipientRepository @Inject constructor(
                         RecipientData.Contact(
                             name = contact.name,
                             nickname = contact.nickname.takeIf { it.isNotBlank() },
-                            avatar = contact.profilePicture.toRecipientAvatar(),
+                            avatar = contact.profilePicture.toRemoteFile(),
                             approved = contact.approved,
                             approvedMe = contact.approvedMe,
                             blocked = contact.blocked,
@@ -449,7 +449,7 @@ class RecipientRepository @Inject constructor(
                 val groupMemberComparator = GroupMemberComparator(AccountId(preferences.getLocalNumber()!!))
                 configFactory.withGroupConfigs(address.accountId) { configs ->
                     RecipientData.PartialGroup(
-                        avatar = configs.groupInfo.getProfilePic().toRecipientAvatar(),
+                        avatar = configs.groupInfo.getProfilePic().toRemoteFile(),
                         expiryMode = configs.groupInfo.expiryMode,
                         name = configs.groupInfo.getName() ?: groupInfo.name,
                         approved = !groupInfo.invited,
@@ -477,7 +477,7 @@ class RecipientRepository @Inject constructor(
 
                 RecipientData.BlindedContact(
                     displayName = contact.name,
-                    avatar = contact.profilePic.toRecipientAvatar(),
+                    avatar = contact.profilePic.toRemoteFile(),
                     priority = contact.priority,
                     proStatus = if (proStatusManager.isUserPro(address)) ProStatus.ProVisible else ProStatus.Unknown,
 
@@ -512,7 +512,7 @@ class RecipientRepository @Inject constructor(
             address = address,
             data = RecipientData.Generic(
                 displayName = settings.name?.takeIf { it.isNotBlank() } ?: groupMemberInfo?.name.orEmpty(),
-                avatar = settings.profilePic?.toRecipientAvatar() ?: groupMemberInfo?.profilePic?.toRecipientAvatar(),
+                avatar = settings.profilePic?.toRemoteFile() ?: groupMemberInfo?.profilePic?.toRemoteFile(),
                 proStatus = settings.proStatus,
                 acceptsCommunityMessageRequests = !settings.blocksCommunityMessagesRequests,
             ),

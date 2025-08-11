@@ -2,8 +2,8 @@ package org.thoughtcrime.securesms.glide
 
 import android.app.Application
 import androidx.work.await
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
@@ -17,10 +17,12 @@ import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.RemoteFile
+import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRemoteFile
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.database.GroupDatabase
+import org.thoughtcrime.securesms.attachments.RemoteFileDownloadWorker
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.dependencies.ManagerScope
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -31,10 +33,10 @@ class RecipientAvatarDownloadManager @Inject constructor(
     private val application: Application,
     private val prefs: TextSecurePreferences,
     private val configFactory: ConfigFactory,
-    private val groupDatabase: GroupDatabase,
+    @ManagerScope scope: CoroutineScope,
 ) {
     init {
-        GlobalScope.launch {
+        scope.launch {
             prefs.watchLocalNumber()
                 .map { it != null }
                 .flatMapLatest { isLoggedIn ->
@@ -51,42 +53,13 @@ class RecipientAvatarDownloadManager @Inject constructor(
                     val toDownload = newSet - acc.downloadedAvatar
                     for (file in toDownload) {
                         Log.d(TAG, "Downloading $file")
-                        when (file) {
-                            is AvatarFile.FileServer -> {
-                                EncryptedFileDownloadWorker.enqueue(
-                                    context = application,
-                                    fileId = file.fileId,
-                                    cacheFolderName = CACHE_FOLDER_NAME,
-                                )
-                            }
-                            is AvatarFile.Community -> {
-                                CommunityFileDownloadWorker.enqueue(
-                                    context = application,
-                                    file = file.avatar,
-                                )
-                            }
-                        }
+                        RemoteFileDownloadWorker.enqueue(application, file)
                     }
 
                     val toRemove = acc.downloadedAvatar - newSet
                     for (file in toRemove) {
                         Log.d(TAG, "Cancelling downloading of $file")
-                        when (file) {
-                            is AvatarFile.FileServer -> {
-                                EncryptedFileDownloadWorker.cancel(
-                                    context = application,
-                                    fileId = file.fileId,
-                                    cacheFolderName = CACHE_FOLDER_NAME,
-                                ).await()
-                            }
-
-                            is AvatarFile.Community -> {
-                                CommunityFileDownloadWorker.cancel(
-                                    context = application,
-                                    avatar = file.avatar,
-                                )
-                            }
-                        }
+                        RemoteFileDownloadWorker.cancel(application, file)
                     }
 
                     acc.copy(downloadedAvatar = newSet)
@@ -96,66 +69,56 @@ class RecipientAvatarDownloadManager @Inject constructor(
         }
     }
 
-    fun getAllAvatars(): Set<AvatarFile> {
+    fun getAllAvatars(): Set<RemoteFile> {
         val (contacts, groups) = configFactory.withUserConfigs { configs ->
             configs.contacts.all() to configs.userGroups.all()
         }
 
         val contactAvatars = contacts.asSequence()
-            .map { it.profilePicture.url }
+            .mapNotNull { it.profilePicture.toRemoteFile() }
 
         val groupsAvatars = groups.asSequence()
             .filterIsInstance<GroupInfo.ClosedGroupInfo>()
             .flatMap { it.getGroupAvatarUrls() }
 
-        val out = mutableSetOf<AvatarFile>()
+        return buildSet {
+            // Note that for contacts + groups avatars, contacts ones take precedence over groups,
+            // so their order in the set is important.
+            addAll(groupsAvatars)
+            addAll(contactAvatars)
 
-        // Note that for contacts + groups avatars, contacts ones take precedence over groups,
-        // so their order in the set is important.
-        (groupsAvatars + contactAvatars)
-            .mapNotNull { url -> FileServerApi.getFileIdFromUrl(url) }
-            .mapTo(out) { AvatarFile.FileServer(it) }
-
-
-        groups.asSequence()
-            .filterIsInstance<GroupInfo.CommunityGroupInfo>()
-            .flatMap { it.getCommunityAvatarFile() }
-            .mapTo(out) { it }
-
-        return out
+            addAll(groups.asSequence()
+                .filterIsInstance<GroupInfo.CommunityGroupInfo>()
+                .flatMap { it.getCommunityAvatarFile() })
+        }
     }
 
-    private fun GroupInfo.ClosedGroupInfo.getGroupAvatarUrls(): List<String> {
+    private fun GroupInfo.ClosedGroupInfo.getGroupAvatarUrls(): List<RemoteFile.Encrypted> {
         if (destroyed) {
             return emptyList()
         }
 
-        return configFactory.withGroupConfigs(AccountId(groupAccountId)) {
+        return configFactory.withGroupConfigs(AccountId(groupAccountId)) { configs ->
             buildList {
-                add(it.groupInfo.getProfilePic().url)
-                it.groupMembers.all().forEach { m ->
-                    m.profilePic()?.url?.let(::add)
-                }
+                configs.groupInfo.getProfilePic().toRemoteFile()?.let(::add)
+
+                configs.groupMembers.all()
+                    .asSequence()
+                    .mapNotNullTo(this) { it.profilePic()?.toRemoteFile() }
             }
         }
     }
 
-    private fun GroupInfo.CommunityGroupInfo.getCommunityAvatarFile(): Sequence<AvatarFile> {
+    private fun GroupInfo.CommunityGroupInfo.getCommunityAvatarFile(): Sequence<RemoteFile> {
         // Don't download avatars from community servers yet, future improvement
         return emptySequence()
     }
 
-    sealed interface AvatarFile {
-        data class FileServer(val fileId: String) : AvatarFile
-        data class Community(val avatar: RemoteFile.Community) : AvatarFile
-    }
-
     private data class State(
-        val downloadedAvatar: Set<AvatarFile>
+        val downloadedAvatar: Set<RemoteFile>
     )
 
     companion object {
-        const val CACHE_FOLDER_NAME = "recipient_avatars"
 
         private const val TAG = "RecipientAvatarDownloadManager"
     }

@@ -9,8 +9,9 @@ import network.loki.messenger.libsession_util.util.UserPic
 sealed interface RemoteFile {
     data class Encrypted(val url: String, val key: Bytes) : RemoteFile
     data class Community(val communityServerBaseUrl: String, val roomId: String, val fileId: String) : RemoteFile
+
     companion object {
-        fun UserPic.toRecipientAvatar(): Encrypted? {
+        fun UserPic.toRemoteFile(): Encrypted? {
             return when {
                 url.isBlank() -> null
                 else ->  Encrypted(

@@ -83,6 +83,7 @@ import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.dependencies.DatabaseModule.init
 import org.thoughtcrime.securesms.disguise.AppDisguiseManager
 import org.thoughtcrime.securesms.emoji.EmojiSource.Companion.refresh
+import org.thoughtcrime.securesms.glide.RemoteFileLoader
 import org.thoughtcrime.securesms.groups.ExpiredGroupManager
 import org.thoughtcrime.securesms.groups.GroupPollerManager
 import org.thoughtcrime.securesms.groups.handler.AdminStateSync
@@ -118,6 +119,7 @@ import java.util.Arrays
 import java.util.Timer
 import java.util.concurrent.Executors
 import javax.inject.Inject
+import javax.inject.Provider
 import kotlin.concurrent.Volatile
 
 /**
@@ -216,6 +218,11 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
 
     @Inject
     lateinit var profileUpdateHandler: Lazy<ProfileUpdateHandler>
+
+
+    // Exist purely because Glide doesn't support Hilt injection
+    @Inject
+    lateinit var remoteFileLoader: Provider<RemoteFileLoader>
 
     @Volatile
     var isAppVisible: Boolean = false

@@ -10,23 +10,31 @@ import com.bumptech.glide.load.data.DataFetcher
 import com.bumptech.glide.load.model.ModelLoader
 import com.bumptech.glide.load.model.ModelLoaderFactory
 import com.bumptech.glide.load.model.MultiModelLoaderFactory
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import org.session.libsession.messaging.file_server.FileServerApi
-import org.session.libsession.utilities.AESGCM
+import network.loki.messenger.libsession_util.encrypt.DecryptionStream
 import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.attachments.RemoteFileDownloadWorker
 import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider
-import java.io.ByteArrayInputStream
+import org.thoughtcrime.securesms.dependencies.ManagerScope
 import java.io.InputStream
 import java.security.MessageDigest
+import javax.inject.Inject
+import javax.inject.Provider
 
-class RemoteFileLoader(
-    private val context: Context,
+/**
+ * A Glide [ModelLoader] for [RemoteFile]s
+ */
+class RemoteFileLoader @Inject constructor(
+    @param:ApplicationContext private val context: Context,
+    private val codec: EncryptedFileCodec,
+    @param:ManagerScope private val scope: CoroutineScope,
 ) : ModelLoader<RemoteFile, InputStream> {
     override fun buildLoadData(
         model: RemoteFile,
@@ -48,49 +56,15 @@ class RemoteFileLoader(
             priority: Priority,
             callback: DataFetcher.DataCallback<in InputStream>
         ) {
-            job = GlobalScope.launch {
+            job = scope.launch {
                 try {
-                    val files: RemoteFileDownloadWorker.DownloadedFiles
-                    val encryptionKey: ByteArray
+                    val files = RemoteFileDownloadWorker.computeFileNames(context, file)
 
-                    when (file) {
-                        is RemoteFile.Encrypted -> {
-                            val fileId = requireNotNull(FileServerApi.getFileIdFromUrl(file.url)) {
-                                "Target URL is not supported, must be a session file server url but got: ${file.url}"
-                            }
-
-                            files = EncryptedFileDownloadWorker.getFileForUrl(
-                                context,
-                                RecipientAvatarDownloadManager.CACHE_FOLDER_NAME,
-                                fileId
-                            )
-
-                            if (!files.permanentErrorMarkerFile.exists() && !files.completedFile.exists()) {
-                                // Files not exists, enqueue a download
-                                EncryptedFileDownloadWorker.enqueue(
-                                    context = context,
-                                    fileId = fileId,
-                                    cacheFolderName = RecipientAvatarDownloadManager.CACHE_FOLDER_NAME
-                                ).first { it?.state == WorkInfo.State.FAILED || it?.state == WorkInfo.State.SUCCEEDED }
-                            }
-
-                            encryptionKey = file.key.data
-                        }
-
-                        is RemoteFile.Community -> {
-                            files = CommunityFileDownloadWorker.getFileForUrl(context, file)
-
-                            if (!files.permanentErrorMarkerFile.exists() && !files.completedFile.exists()) {
-                                // Files not exists, enqueue a download
-                                CommunityFileDownloadWorker.enqueue(context, file)
-                                    .first { it?.state == WorkInfo.State.FAILED || it?.state == WorkInfo.State.SUCCEEDED }
-                            }
-
-                            encryptionKey = AttachmentSecretProvider.getInstance(context)
-                                .orCreateAttachmentSecret.modernKey
-                        }
+                    if (!files.permanentErrorMarkerFile.exists() && !files.completedFile.exists()) {
+                        // Neither complete file nor error file exists, enqueue a download
+                        RemoteFileDownloadWorker.enqueue(context, file)
+                            .first { it?.state == WorkInfo.State.FAILED || it?.state == WorkInfo.State.SUCCEEDED }
                     }
-
 
                     if (files.permanentErrorMarkerFile.exists()) {
                         throw NonRetryableException("Requested file is marked as a permanent error:")
@@ -100,12 +74,10 @@ class RemoteFileLoader(
                         "File not downloaded but no reason is given. Most likely a bug in the download worker."
                     }
 
-                    val encrypted = files.completedFile.readBytes()
-                    Log.d(TAG, "About to decrypt file with size: ${encrypted.size} bytes")
-
                     callback.onDataReady(
-                        ByteArrayInputStream(
-                            AESGCM.decrypt(encrypted, symmetricKey = encryptionKey)
+                        DecryptionStream(
+                            inStream = codec.decodeStream(files.completedFile).second,
+                            key = AttachmentSecretProvider.getInstance(context).orCreateAttachmentSecret.modernKey,
                         )
                     )
 
@@ -151,9 +123,9 @@ class RemoteFileLoader(
 
     override fun handles(model: RemoteFile): Boolean = true
 
-    class Factory(private val context: Context) : ModelLoaderFactory<RemoteFile, InputStream> {
+    class Factory(private val loaderProvider: Provider<RemoteFileLoader>) : ModelLoaderFactory<RemoteFile, InputStream> {
         override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<RemoteFile, InputStream> {
-            return RemoteFileLoader(context)
+            return loaderProvider.get()
         }
 
         override fun teardown() {}

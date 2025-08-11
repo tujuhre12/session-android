@@ -14,13 +14,12 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.hexEncodedPublicKey
 import org.thoughtcrime.securesms.ApplicationContext
+import org.thoughtcrime.securesms.attachments.RemoteFileDownloadWorker
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.glide.CommunityFileDownloadWorker
-import org.thoughtcrime.securesms.glide.EncryptedFileDownloadWorker
 import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.logging.PersistentLogger
 import org.thoughtcrime.securesms.migration.DatabaseMigrationManager
@@ -56,8 +55,7 @@ class ClearDataUtils @Inject constructor(
             application.filesDir.deleteRecursively()
             configFactory.clearAll()
 
-            EncryptedFileDownloadWorker.cancelAll(application)
-            CommunityFileDownloadWorker.cancelAll(application)
+            RemoteFileDownloadWorker.cancelAll(application)
 
             persistentLogger.deleteAllLogs()
 
