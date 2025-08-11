@@ -61,7 +61,8 @@ class ProSettingsViewModel @Inject constructor(
     }
 
     data class UIState(
-       val isPro: Boolean
+        val isPro: Boolean,
+        val disabledHeader: Boolean = false,
     )
 
 

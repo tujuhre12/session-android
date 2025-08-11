@@ -923,8 +923,7 @@ fun SessionProSettingsHeader(
     modifier: Modifier = Modifier,
     color: Color = LocalColors.current.accent
 ){
-    // If we're displaying a filled / blurred shape underneath the token claim amount then use this colour
-    val accentColourWithLowAlpha = color.copy(alpha = 0.25f)
+    val accentColourWithLowAlpha = color.copy(alpha = 0.15f)
 
     Column(modifier = modifier) {
         // UI with radial gradient

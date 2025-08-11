@@ -2,10 +2,13 @@ package org.thoughtcrime.securesms.preferences.prosettings
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
@@ -21,10 +24,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.ui.SessionProSettingsHeader
 import org.thoughtcrime.securesms.ui.components.BackAppBar
+import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 
 
@@ -67,7 +74,7 @@ fun ProSettingsHome(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddings)
+                .padding(top = paddings.calculateTopPadding() - LocalDimensions.current.appBarHeight)
                 .consumeWindowInsets(paddings)
                 .padding(
                     horizontal = LocalDimensions.current.spacing,
@@ -75,7 +82,11 @@ fun ProSettingsHome(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = CenterHorizontally
         ) {
+            Spacer(Modifier.height(46.dp))
 
+            SessionProSettingsHeader(
+                color = if(data.disabledHeader) LocalColors.current.disabled else LocalColors.current.accent,
+            )
         }
     }
 }
