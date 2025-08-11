@@ -16,12 +16,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import network.loki.messenger.libsession_util.encrypt.DecryptionStream
 import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.attachments.LocalEncryptedFileInputStream
 import org.thoughtcrime.securesms.attachments.RemoteFileDownloadWorker
-import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import java.io.InputStream
 import java.security.MessageDigest
@@ -33,8 +32,8 @@ import javax.inject.Provider
  */
 class RemoteFileLoader @Inject constructor(
     @param:ApplicationContext private val context: Context,
-    private val codec: EncryptedFileCodec,
     @param:ManagerScope private val scope: CoroutineScope,
+    private val localEncryptedFileInputStreamFactory: LocalEncryptedFileInputStream.Factory,
 ) : ModelLoader<RemoteFile, InputStream> {
     override fun buildLoadData(
         model: RemoteFile,
@@ -75,10 +74,7 @@ class RemoteFileLoader @Inject constructor(
                     }
 
                     callback.onDataReady(
-                        DecryptionStream(
-                            inStream = codec.decodeStream(files.completedFile).second,
-                            key = AttachmentSecretProvider.getInstance(context).orCreateAttachmentSecret.modernKey,
-                        )
+                        localEncryptedFileInputStreamFactory.create(files.completedFile)
                     )
 
                 } catch (e: CancellationException) {

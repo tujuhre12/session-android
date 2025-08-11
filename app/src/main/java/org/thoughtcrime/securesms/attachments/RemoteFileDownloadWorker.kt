@@ -18,7 +18,6 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
-import network.loki.messenger.libsession_util.encrypt.EncryptionStream
 import network.loki.messenger.libsession_util.util.Bytes
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.messaging.open_groups.OpenGroupApi
@@ -32,20 +31,17 @@ import org.session.libsignal.utilities.ByteArraySlice.Companion.view
 import org.session.libsignal.utilities.ByteArraySlice.Companion.write
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.toHexString
-import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider
-import org.thoughtcrime.securesms.glide.EncryptedFileCodec
 import org.thoughtcrime.securesms.glide.EncryptedFileMeta
 import org.thoughtcrime.securesms.util.getRootCause
 import java.io.File
 import java.security.MessageDigest
 import java.time.Duration
-import javax.inject.Provider
 
 @HiltWorker
 class RemoteFileDownloadWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted params: WorkerParameters,
-    private val fileCodec: Provider<EncryptedFileCodec>,
+    private val localEncryptedFileOutputStreamFactory: LocalEncryptedFileOutputStream.Factory,
 ) : CoroutineWorker(context, params) {
     private val file: RemoteFile by lazy {
         when {
@@ -96,15 +92,8 @@ class RemoteFileDownloadWorker @AssistedInject constructor(
             val tmpFile = File.createTempFile("downloaded-", null, files.completedFile.parentFile)
                 .also { tmpFileToClean = it }
 
-            EncryptionStream(
-                out = fileCodec.get().encodeStream(
-                    meta = meta,
-                    outFile = tmpFile
-                ),
-                key = AttachmentSecretProvider.getInstance(context).orCreateAttachmentSecret.modernKey
-            ).use { fos ->
-                fos.write(bytes)
-            }
+            localEncryptedFileOutputStreamFactory.create(tmpFile, meta)
+                .use { fos -> fos.write(bytes) }
 
             // Once done, rename the temporary file to the final file name.
             check(tmpFile.renameTo(files.completedFile)) {
