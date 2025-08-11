@@ -89,6 +89,7 @@ import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowUrl
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowUsernameDialog
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.UpdateUsername
 import org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActivity
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsActivity
 import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
 import org.thoughtcrime.securesms.tokenpage.TokenPageActivity
 import org.thoughtcrime.securesms.ui.AccountIdHeader
@@ -474,7 +475,7 @@ fun Buttons(
                         modifier = Modifier.qaTag(R.string.qa_settings_item_pro),
                         colors = accentTextButtonColors()
                     ) {
-                        //todo PRO implement once available
+                        activity?.push<ProSettingsActivity>()
                     }
                     Divider()
                 }
