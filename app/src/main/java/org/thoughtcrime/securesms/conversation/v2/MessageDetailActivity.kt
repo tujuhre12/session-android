@@ -347,9 +347,12 @@ fun CellMetadata(
                                 )
 
                                 sender.text?.let {
+                                    val addressColor = if(state.senderIsBlinded) LocalColors.current.textSecondary else LocalColors.current.text
                                     Text(
                                         text = it,
-                                        style = LocalType.current.base.monospace()
+                                        style = LocalType.current.base.monospace().copy(
+                                            color = addressColor
+                                        )
                                     )
                                 }
                             }
