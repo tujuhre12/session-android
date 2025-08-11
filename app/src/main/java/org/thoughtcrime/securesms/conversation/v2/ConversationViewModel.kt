@@ -333,19 +333,6 @@ class ConversationViewModel(
         } else null // null when the call isn't in progress / incoming
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
 
-    private val threadRefresh: Flow<Unit> =
-        merge(
-            flowOf(Unit), // initial load
-            repository.recipientUpdateFlow(threadId).map { Unit },
-            recipientChangeSource.changes().map { Unit }
-        )
-
-    @Suppress("OPT_IN_USAGE")
-    val threadRecord: StateFlow<ThreadRecord?> =
-        threadRefresh
-            .mapLatest { withContext(Dispatchers.IO) { threadDb.getApprovedThreadRecord(threadId) } }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
-
     val lastSeenMessageId: Flow<MessageId?>
         get() = repository.getLastSentMessageID(threadId)
 

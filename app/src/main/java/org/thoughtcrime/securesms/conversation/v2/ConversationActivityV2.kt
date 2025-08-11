@@ -791,13 +791,22 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     // On the first load, check if there unread messages
                     if (unreadCount == 0 && adapter.itemCount > 0) {
                         // Get the last visible timestamp
-                        val lastPos = adapter.itemCount - 1
 
                         lifecycleScope.launch(Dispatchers.IO) {
-                            val thread = viewModel.threadRecord.filterNotNull().first() // one-shot
-                            val isUnread = configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(thread) }
-                            if (isUnread){
-                                storage.markConversationAsRead(viewModel.threadId, clock.currentTimeMills())
+                            viewModel.recipient?.let { recipient ->
+                                val isUnread = configFactory.withUserConfigs {
+                                    it.convoInfoVolatile.getConversationUnread(
+                                        recipient,
+                                        viewModel.threadId
+                                    )
+                                }
+
+                                if (isUnread) {
+                                    storage.markConversationAsRead(
+                                        viewModel.threadId,
+                                        clock.currentTimeMills()
+                                    )
+                                }
                             }
                         }
                     }

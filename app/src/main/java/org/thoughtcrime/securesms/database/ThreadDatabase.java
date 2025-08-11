@@ -530,25 +530,6 @@ public class ThreadDatabase extends Database {
     }
   }
 
-  // Return the ThreadRecord directly instead of a cursor
-  public @Nullable ThreadRecord getApprovedThreadRecord(long threadId) {
-    String approvedWhere =
-            "((" + HAS_SENT + " = 1 OR " + RecipientDatabase.APPROVED + " = 1 OR " +
-                    GroupDatabase.TABLE_NAME + "." + GROUP_ID + " LIKE '" + LEGACY_CLOSED_GROUP_PREFIX + "%') " +
-                    "OR " + GroupDatabase.TABLE_NAME + "." + GROUP_ID + " LIKE '" + COMMUNITY_PREFIX + "%') " +
-                    "AND " + ARCHIVED + " = 0 AND " + TABLE_NAME + "." + ID + " = ?";
-
-    String sql = createQuery(approvedWhere, 1);
-    try (Cursor c = getReadableDatabase().rawQuery(sql, new String[]{ String.valueOf(threadId) })) {
-      if (c != null && c.moveToFirst()) {
-        try (ThreadDatabase.Reader r = readerFor(c, true)) {
-          return r.getCurrent();
-        }
-      }
-    }
-    return null;
-  }
-
   private Cursor getConversationList(String where) {
     SQLiteDatabase db     = getReadableDatabase();
     String         query  = createQuery(where, 0);
