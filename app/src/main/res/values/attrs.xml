@@ -14,6 +14,8 @@
     <attr name="onLightCell" format="reference|color"/>
 
     <attr name="accentColor" format="reference|color"/>
+    <attr name="crown" format="reference|color"/>
+    <attr name="crownBg" format="reference|color"/>
     <attr name="onInvertedBackgroundPrimary" format="reference|color"/>
     <attr name="warning" format="reference|color"/>
     <attr name="danger" format="reference|color"/>
