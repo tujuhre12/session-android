@@ -451,7 +451,7 @@ fun CellButtons(
             }
 
             LargeItemButton(
-                R.string.copy,
+                R.string.messageCopy,
                 R.drawable.ic_copy,
                 onClick = onCopy
             )
