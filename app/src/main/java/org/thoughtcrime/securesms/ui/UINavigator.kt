@@ -1,23 +1,19 @@
-package org.thoughtcrime.securesms.conversation.v2.settings
+package org.thoughtcrime.securesms.ui
 
 import android.content.Intent
 import androidx.navigation.NavOptionsBuilder
 import dagger.hilt.android.scopes.ActivityRetainedScoped
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
-import javax.inject.Singleton
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.*
 import javax.inject.Inject
 
 @ActivityRetainedScoped
-class ConversationSettingsNavigator @Inject constructor(){
-    val startDestination: ConversationSettingsDestination = RouteConversationSettings
-
-    private val _navigationActions = Channel<NavigationAction>()
+class UINavigator<T> @Inject constructor() {
+    private val _navigationActions = Channel<NavigationAction<T>>()
     val navigationActions = _navigationActions.receiveAsFlow()
 
     suspend fun navigate(
-        destination: ConversationSettingsDestination,
+        destination: T,
         navOptions: NavOptionsBuilder.() -> Unit = {}
     ) {
         _navigationActions.send(NavigationAction.Navigate(
@@ -39,20 +35,20 @@ class ConversationSettingsNavigator @Inject constructor(){
     }
 }
 
-sealed interface NavigationAction {
-    data class Navigate(
-        val destination: ConversationSettingsDestination,
+sealed interface NavigationAction<out T> {
+    data class Navigate<T>(
+        val destination: T,
         val navOptions: NavOptionsBuilder.() -> Unit = {}
-    ): NavigationAction
+    ) : NavigationAction<T>
 
-    data object NavigateUp: NavigationAction
+    data object NavigateUp : NavigationAction<Nothing>
 
     data class NavigateToIntent(
         val intent: Intent
-    ): NavigationAction
+    ) : NavigationAction<Nothing>
 
     data class ReturnResult(
         val code: String,
         val value: Boolean
-    ): NavigationAction
+    ) : NavigationAction<Nothing>
 }

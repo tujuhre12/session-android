@@ -46,7 +46,6 @@ import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.ExpirationUtil
@@ -74,6 +73,7 @@ import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.ui.SimpleDialogData
+import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
@@ -93,7 +93,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private val storage: StorageProtocol,
     private val conversationRepository: ConversationRepository,
     private val textSecurePreferences: TextSecurePreferences,
-    private val navigator: ConversationSettingsNavigator,
+    private val navigator: UINavigator<ConversationSettingsDestination>,
     private val threadDb: ThreadDatabase,
     private val groupManagerV2: GroupManagerV2,
     private val prefs: TextSecurePreferences,

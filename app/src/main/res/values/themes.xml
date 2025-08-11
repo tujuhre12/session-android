@@ -227,6 +227,8 @@
         <item name="onInvertedBackgroundPrimary">?colorPrimary</item>
         <item name="prominentButtonColor">?colorAccent</item>
         <item name="elementBorderColor">@color/classic_dark_3</item>
+        <item name="crown">@color/black</item>
+        <item name="crownBg">@color/accent_yellow</item>
 
         <item name="lightCell">@color/white</item>
         <item name="onLightCell">@color/black</item>
@@ -310,6 +312,8 @@
         <item name="onInvertedBackgroundPrimary">?colorAccent</item>
         <item name="prominentButtonColor">?android:textColorPrimary</item>
         <item name="elementBorderColor">@color/classic_light_3</item>
+        <item name="crown">@color/accent_yellow</item>
+        <item name="crownBg">@color/black</item>
 
         <item name="lightCell">@color/classic_light_5</item>
         <item name="onLightCell">@color/black</item>
@@ -400,6 +404,8 @@
         <item name="onInvertedBackgroundPrimary">?colorPrimary</item>
         <item name="prominentButtonColor">?colorAccent</item>
         <item name="elementBorderColor">@color/ocean_dark_4</item>
+        <item name="crown">@color/black</item>
+        <item name="crownBg">@color/accent_yellow</item>
 
         <item name="lightCell">@color/white</item>
         <item name="onLightCell">@color/ocean_dark_2</item>
@@ -486,6 +492,8 @@
         <item name="onInvertedBackgroundPrimary">?colorAccent</item>
         <item name="prominentButtonColor">?android:textColorPrimary</item>
         <item name="elementBorderColor">@color/ocean_light_3</item>
+        <item name="crown">@color/accent_yellow</item>
+        <item name="crownBg">@color/black</item>
 
         <item name="lightCell">@color/ocean_light_6</item>
         <item name="onLightCell">@color/ocean_light_1</item>
@@ -547,6 +555,8 @@
         <item name="dividerHorizontal">?dividerVertical</item>
         <item name="colorAccent">@color/classic_accent</item>
         <item name="onInvertedBackgroundPrimary">?colorPrimary</item>
+        <item name="crown">@color/black</item>
+        <item name="crownBg">@color/accent_yellow</item>
 
         <item name="sessionLogoTint">@color/classic_dark_6</item>
         <item name="colorPrimary">@color/classic_dark_0</item>
