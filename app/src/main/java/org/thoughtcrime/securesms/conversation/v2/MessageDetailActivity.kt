@@ -89,6 +89,7 @@ import org.thoughtcrime.securesms.ui.LongMessageProCTA
 import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.ProCTAFeature
 import org.thoughtcrime.securesms.ui.TitledText
+import org.thoughtcrime.securesms.ui.UserProfileModal
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.setComposeContent
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -323,7 +324,11 @@ fun CellMetadata(
                 TitledErrorText(error)
                 senderInfo?.let { sender ->
                     TitledView(state.fromTitle) {
-                        Row {
+                        Row(
+                            modifier = Modifier.clickable{
+                                sendCommand(Commands.ShowUserProfileModal)
+                            }
+                        ) {
                             senderAvatarData?.let {
                                 Avatar(
                                     modifier = Modifier
@@ -708,5 +713,18 @@ fun MessageDetailDialogs(
             is ProBadgeCTA.AnimatedProfile ->
                 AnimatedProfilePicProCTA(onDismissRequest = {sendCommand(Commands.HideProBadgeCTA)})
         }
+    }
+
+    // user profile modal
+    if(state.userProfileModal != null){
+        UserProfileModal(
+            data = state.userProfileModal,
+            onDismissRequest = {
+                sendCommand(Commands.HideUserProfileModal)
+            },
+            sendCommand = {
+                sendCommand(Commands.HandleUserProfileCommand(it))
+            },
+        )
     }
 }

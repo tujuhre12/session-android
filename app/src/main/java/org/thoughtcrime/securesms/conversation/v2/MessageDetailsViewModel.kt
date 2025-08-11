@@ -10,6 +10,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,7 +25,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.getOrNull
-import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
@@ -40,7 +40,6 @@ import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
-import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
@@ -55,6 +54,9 @@ import org.thoughtcrime.securesms.ui.TitledText
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
+import org.thoughtcrime.securesms.util.UserProfileModalCommands
+import org.thoughtcrime.securesms.util.UserProfileModalData
+import org.thoughtcrime.securesms.util.UserProfileUtils
 import org.thoughtcrime.securesms.util.observeChanges
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -76,6 +78,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
     private val proStatusManager: ProStatusManager,
     private val openGroupManager: OpenGroupManager,
     private val configFactory: ConfigFactoryProtocol,
+    private val upmFactory: UserProfileUtils.UserProfileUtilsFactory,
     attachmentDownloadHandlerFactory: AttachmentDownloadHandler.Factory
 ) : ViewModel() {
     private val state = MutableStateFlow(MessageDetailsState())
@@ -88,6 +91,9 @@ class MessageDetailsViewModel @AssistedInject constructor(
     val dialogState: StateFlow<DialogsState> = _dialogState
 
     private val attachmentDownloadHandler = attachmentDownloadHandlerFactory.create(viewModelScope)
+
+    private var userProfileModalJob: Job? = null
+    private var userProfileModalUtils: UserProfileUtils? = null
 
     init {
         viewModelScope.launch {
@@ -164,6 +170,13 @@ class MessageDetailsViewModel @AssistedInject constructor(
                 // we don't want to display image attachments in the carousel if their state isn't done
                 val imageAttachments = attachments.filter { it.isDownloaded && it.hasImage }
 
+                // get the helper class for the selected user
+                userProfileModalUtils = upmFactory.create(
+                    recipient = sender,
+                    threadId = threadId,
+                    scope = viewModelScope
+                )
+
                 MessageDetailsState(
                     //todo: ATTACHMENT We should sort out the equals in DatabaseAttachment which is the reason the StateFlow think the objects are the same in spite of the transferState of an attachment being different. That way we could remove the timestamp below
                     timestamp = System.currentTimeMillis(), // used as a trick to force the state as  being marked aas different each time
@@ -224,6 +237,16 @@ class MessageDetailsViewModel @AssistedInject constructor(
             standardPublicKey,
             blindedPublicKey
         )
+    }
+
+    fun showUserProfileModal() {
+        // cancel previous job if any then listen in on the changes
+        userProfileModalJob?.cancel()
+        userProfileModalJob = viewModelScope.launch {
+            userProfileModalUtils?.userProfileModalData?.collect { upmData ->
+                _dialogState.update { it.copy(userProfileModal = upmData) }
+            }
+        }
     }
 
     private val Slide.details: List<TitledText>
@@ -303,6 +326,18 @@ class MessageDetailsViewModel @AssistedInject constructor(
             is Commands.HideProBadgeCTA -> {
                 _dialogState.update { it.copy(proBadgeCTA = null) }
             }
+
+            is Commands.ShowUserProfileModal -> {
+                showUserProfileModal()
+            }
+
+            is Commands.HideUserProfileModal -> {
+                _dialogState.update { it.copy(userProfileModal = null) }
+            }
+
+            is Commands.HandleUserProfileCommand -> {
+                userProfileModalUtils?.onCommand(command.upmCommand)
+            }
         }
     }
 
@@ -319,6 +354,12 @@ sealed interface Commands {
 
     object ShowProBadgeCTA: Commands
     object HideProBadgeCTA: Commands
+
+    object ShowUserProfileModal: Commands
+    data object HideUserProfileModal: Commands
+    data class HandleUserProfileCommand(
+        val upmCommand: UserProfileModalCommands
+    ): Commands
 }
 
 data class MessageDetailsState(
@@ -354,7 +395,8 @@ sealed interface ProBadgeCTA {
 }
 
 data class DialogsState(
-    val proBadgeCTA: ProBadgeCTA? = null
+    val proBadgeCTA: ProBadgeCTA? = null,
+    val userProfileModal: UserProfileModalData? = null,
 )
 
 data class Attachment(
