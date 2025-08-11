@@ -267,7 +267,9 @@ fun Settings(
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
             // Account ID
-            AccountIdHeader()
+            AccountIdHeader(
+                text = stringResource(R.string.accountIdYours)
+            )
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
