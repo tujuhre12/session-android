@@ -37,7 +37,8 @@ import dagger.hilt.EntryPoints
 import dagger.hilt.android.HiltAndroidApp
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.util.Logger.initLogger
+import network.loki.messenger.libsession_util.util.LogLevel
+import network.loki.messenger.libsession_util.util.Logger
 import nl.komponents.kovenant.android.startKovenant
 import nl.komponents.kovenant.android.stopKovenant
 import org.conscrypt.Conscrypt
@@ -46,14 +47,14 @@ import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.MessagingModuleConfiguration.Companion.configure
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
+import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
-import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGroupPollerV2
-import org.session.libsession.messaging.sending_receiving.pollers.Poller
+import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPollerManager
+import org.session.libsession.messaging.sending_receiving.pollers.PollerManager
 import org.session.libsession.snode.SnodeClock
-import org.session.libsession.snode.SnodeModule.Companion.configure
+import org.session.libsession.snode.SnodeModule
 import org.session.libsession.utilities.Device
-import org.session.libsession.utilities.Environment
 import org.session.libsession.utilities.ProfilePictureUtilities.resubmitProfilePictureIfNeeded
 import org.session.libsession.utilities.SSKEnvironment.Companion.configure
 import org.session.libsession.utilities.SSKEnvironment.ProfileManagerProtocol
@@ -64,23 +65,21 @@ import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.WindowDebouncer
 import org.session.libsignal.utilities.HTTP.isConnectedToNetwork
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.ThreadUtils.queue
-import org.signal.aesgcmprovider.AesGcmProvider
 import org.thoughtcrime.securesms.AppContext.configureKovenant
 import org.thoughtcrime.securesms.components.TypingStatusSender
 import org.thoughtcrime.securesms.configs.ConfigUploader
-import org.thoughtcrime.securesms.database.LastSentTimestampCache
+import org.thoughtcrime.securesms.database.EmojiSearchDatabase
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.Storage
+import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.dependencies.AppComponent
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.dependencies.DatabaseModule.init
+import org.thoughtcrime.securesms.disguise.AppDisguiseManager
 import org.thoughtcrime.securesms.groups.ExpiredGroupManager
 import org.thoughtcrime.securesms.groups.GroupPollerManager
-import org.thoughtcrime.securesms.groups.OpenGroupManager.startPolling
-import org.thoughtcrime.securesms.groups.OpenGroupManager.stopPolling
 import org.thoughtcrime.securesms.groups.handler.AdminStateSync
 import org.thoughtcrime.securesms.groups.handler.CleanupInvitationHandler
 import org.thoughtcrime.securesms.groups.handler.DestroyedGroupSync
@@ -89,16 +88,20 @@ import org.thoughtcrime.securesms.jobmanager.impl.NetworkConstraint
 import org.thoughtcrime.securesms.logging.AndroidLogger
 import org.thoughtcrime.securesms.logging.PersistentLogger
 import org.thoughtcrime.securesms.logging.UncaughtExceptionLogger
+import org.thoughtcrime.securesms.migration.DatabaseMigrationManager
 import org.thoughtcrime.securesms.notifications.BackgroundPollManager
 import org.thoughtcrime.securesms.notifications.NotificationChannels
 import org.thoughtcrime.securesms.notifications.PushRegistrationHandler
-import org.thoughtcrime.securesms.providers.BlobProvider
+import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.providers.BlobUtils
 import org.thoughtcrime.securesms.service.ExpiringMessageManager
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.sskenvironment.ReadReceiptManager
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
+import org.thoughtcrime.securesms.tokenpage.TokenDataManager
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.Broadcaster
+import org.thoughtcrime.securesms.util.CurrentActivityObserver
 import org.thoughtcrime.securesms.util.VersionDataFetcher
 import org.thoughtcrime.securesms.webrtc.CallMessageProcessor
 import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge
@@ -121,8 +124,6 @@ import kotlin.concurrent.Volatile
 @HiltAndroidApp
 class ApplicationContext : Application(), DefaultLifecycleObserver,
     Toaster, Configuration.Provider {
-    @JvmField
-    var poller: Poller? = null
     var broadcaster: Broadcaster? = null
     var conversationListDebouncer: WindowDebouncer? = null
         get() {
@@ -134,72 +135,85 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         private set
     private var conversationListHandlerThread: HandlerThread? = null
     private var conversationListHandler: Handler? = null
-    lateinit var persistentLogger: PersistentLogger
 
-    @Inject lateinit var workerFactory: HiltWorkerFactory
-    @Inject lateinit var lokiAPIDatabase: LokiAPIDatabase
-    @Inject lateinit var storage: Storage
-    @Inject lateinit var device: Device
-    @Inject lateinit var messageDataProvider: MessageDataProvider
-    @Inject lateinit var textSecurePreferences: TextSecurePreferences
-    @Inject lateinit var configFactory: ConfigFactory
-    @Inject lateinit var lastSentTimestampCache: LastSentTimestampCache
-    @Inject lateinit var versionDataFetcher: VersionDataFetcher
-    @Inject lateinit var pushRegistrationHandler: PushRegistrationHandler
-    @Inject lateinit var tokenFetcher: TokenFetcher
-    @Inject lateinit var groupManagerV2: GroupManagerV2
-    @Inject lateinit var profileManager: ProfileManagerProtocol
-    @Inject lateinit var callMessageProcessor: CallMessageProcessor
+    @Inject lateinit var workerFactory: Lazy<HiltWorkerFactory>
+    @Inject lateinit var lokiAPIDatabase: Lazy<LokiAPIDatabase>
+    @Inject lateinit var storage: Lazy<Storage>
+    @Inject lateinit var device: Lazy<Device>
+    @Inject lateinit var messageDataProvider: Lazy<MessageDataProvider>
+    @Inject lateinit var textSecurePreferences: Lazy<TextSecurePreferences>
+    @Inject lateinit var configFactory: Lazy<ConfigFactory>
+    @Inject lateinit var versionDataFetcher: Lazy<VersionDataFetcher>
+    @Inject lateinit var pushRegistrationHandler: Lazy<PushRegistrationHandler>
+    @Inject lateinit var tokenFetcher: Lazy<TokenFetcher>
+    @Inject lateinit var groupManagerV2: Lazy<GroupManagerV2>
+    @Inject lateinit var profileManager: Lazy<ProfileManagerProtocol>
+    @Inject lateinit var callMessageProcessor: Lazy<CallMessageProcessor>
     private var messagingModuleConfiguration: MessagingModuleConfiguration? = null
 
-    @Inject lateinit var configUploader: ConfigUploader
-    @Inject lateinit var adminStateSync: AdminStateSync
-    @Inject lateinit var destroyedGroupSync: DestroyedGroupSync
-    @Inject lateinit var removeGroupMemberHandler: RemoveGroupMemberHandler // Exists here only to start upon app starts
-    @Inject lateinit var snodeClock: SnodeClock
+    @Inject lateinit var configUploader: Lazy<ConfigUploader>
+    @Inject lateinit var adminStateSync: Lazy<AdminStateSync>
+    @Inject lateinit var destroyedGroupSync: Lazy<DestroyedGroupSync>
+    @Inject lateinit var removeGroupMemberHandler: Lazy<RemoveGroupMemberHandler> // Exists here only to start upon app starts
+    @Inject lateinit var tokenDataManager: Lazy<TokenDataManager> // Exists here only to start upon app starts
+    @Inject lateinit var snodeClock: Lazy<SnodeClock>
+    @Inject lateinit var migrationManager: Lazy<DatabaseMigrationManager>
+    @Inject lateinit var appDisguiseManager: Lazy<AppDisguiseManager>
+    @Inject lateinit var persistentLogger: Lazy<PersistentLogger>
+    @Inject lateinit var currentActivityObserver: Lazy<CurrentActivityObserver>
 
     @get:Deprecated(message = "Use proper DI to inject this component")
     @Inject
-    lateinit var expiringMessageManager: ExpiringMessageManager
+    lateinit var expiringMessageManager: Lazy<ExpiringMessageManager>
 
     @get:Deprecated(message = "Use proper DI to inject this component")
     @Inject
-    lateinit var typingStatusRepository: TypingStatusRepository
+    lateinit var typingStatusRepository: Lazy<TypingStatusRepository>
 
     @get:Deprecated(message = "Use proper DI to inject this component")
     @Inject
-    lateinit var typingStatusSender: TypingStatusSender
+    lateinit var typingStatusSender: Lazy<TypingStatusSender>
 
     @get:Deprecated(message = "Use proper DI to inject this component")
     @Inject
-    lateinit var readReceiptManager: ReadReceiptManager
+    lateinit var readReceiptManager: Lazy<ReadReceiptManager>
 
     @Inject lateinit var messageNotifierLazy: Lazy<MessageNotifier>
-    @Inject lateinit var apiDB: LokiAPIDatabase
-    @Inject lateinit var webRtcCallBridge: WebRtcCallBridge
-    @Inject lateinit var legacyClosedGroupPollerV2: LegacyClosedGroupPollerV2
-    @Inject lateinit var legacyGroupDeprecationManager: LegacyGroupDeprecationManager
-    @Inject lateinit var cleanupInvitationHandler: CleanupInvitationHandler
-    @Inject lateinit var usernameUtils: UsernameUtils
+    @Inject lateinit var apiDB: Lazy<LokiAPIDatabase>
+    @Inject lateinit var emojiSearchDb: Lazy<EmojiSearchDatabase>
+    @Inject lateinit var webRtcCallBridge: Lazy<WebRtcCallBridge>
+    @Inject lateinit var legacyGroupDeprecationManager: Lazy<LegacyGroupDeprecationManager>
+    @Inject lateinit var cleanupInvitationHandler: Lazy<CleanupInvitationHandler>
+    @Inject lateinit var usernameUtils: Lazy<UsernameUtils>
+    @Inject lateinit var pollerManager: Lazy<PollerManager>
+    @Inject lateinit var proStatusManager: Lazy<ProStatusManager>
+    @Inject lateinit var messageSendJobFactory: MessageSendJob.Factory
+
 
     @Inject
-    lateinit var backgroundPollManager: BackgroundPollManager // Exists here only to start upon app starts
+    lateinit var backgroundPollManager: Lazy<BackgroundPollManager> // Exists here only to start upon app starts
 
     @Inject
-    lateinit var appVisibilityManager: AppVisibilityManager // Exists here only to start upon app starts
+    lateinit var appVisibilityManager: Lazy<AppVisibilityManager> // Exists here only to start upon app starts
 
     @Inject
-    lateinit var groupPollerManager: GroupPollerManager // Exists here only to start upon app starts
+    lateinit var groupPollerManager: Lazy<GroupPollerManager> // Exists here only to start upon app starts
 
     @Inject
-    lateinit var expiredGroupManager: ExpiredGroupManager // Exists here only to start upon app starts
+    lateinit var expiredGroupManager: Lazy<ExpiredGroupManager> // Exists here only to start upon app starts
+
+    @Inject
+    lateinit var openGroupPollerManager: Lazy<OpenGroupPollerManager>
+
+    @Inject
+    lateinit var threadDatabase: Lazy<ThreadDatabase>
 
     @Volatile
     var isAppVisible: Boolean = false
 
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
-            .setWorkerFactory(workerFactory)
+            .setWorkerFactory(workerFactory.get())
             .build()
 
     override fun getSystemService(name: String): Any? {
@@ -264,20 +278,20 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         super<Application>.onCreate()
 
         messagingModuleConfiguration = MessagingModuleConfiguration(
-            this,
-            storage,
-            device,
-            messageDataProvider,
-            configFactory,
-            lastSentTimestampCache,
-            this,
-            tokenFetcher,
-            groupManagerV2,
-            snodeClock,
-            textSecurePreferences,
-            legacyClosedGroupPollerV2,
-            legacyGroupDeprecationManager,
-            usernameUtils
+            context = this,
+            storage = storage.get(),
+            device = device.get(),
+            messageDataProvider = messageDataProvider.get(),
+            configFactory = configFactory.get(),
+            toaster = this,
+            tokenFetcher = tokenFetcher.get(),
+            groupManagerV2 = groupManagerV2.get(),
+            clock = snodeClock.get(),
+            preferences = textSecurePreferences.get(),
+            deprecationManager = legacyGroupDeprecationManager.get(),
+            usernameUtils = usernameUtils.get(),
+            proStatusManager = proStatusManager.get(),
+            messageSendJobFactory = messageSendJobFactory,
         )
 
         startKovenant()
@@ -288,11 +302,15 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
         configureKovenant()
         broadcaster = Broadcaster(this)
-        val useTestNet = textSecurePreferences.getEnvironment() == Environment.TEST_NET
-        configure(apiDB, broadcaster!!, useTestNet)
+        SnodeModule.configure(
+            storage = apiDB.get(),
+            broadcaster = broadcaster!!,
+            environment = textSecurePreferences.get().getEnvironment()
+        )
+
         configure(
-            typingStatusRepository, readReceiptManager, profileManager,
-            messageNotifier, expiringMessageManager
+            typingStatusRepository.get(), readReceiptManager.get(), profileManager.get(),
+            messageNotifier, expiringMessageManager.get()
         )
         initializeWebRtc()
         initializeBlobProvider()
@@ -301,12 +319,16 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         val networkConstraint = NetworkConstraint.Factory(this).create()
         isConnectedToNetwork = { networkConstraint.isMet }
 
-        snodeClock.start()
-        pushRegistrationHandler.run()
-        configUploader.start()
-        destroyedGroupSync.start()
-        adminStateSync.start()
-        cleanupInvitationHandler.start()
+        snodeClock.get().start()
+        pushRegistrationHandler.get().run()
+        configUploader.get().start()
+        destroyedGroupSync.get().start()
+        adminStateSync.get().start()
+        cleanupInvitationHandler.get().start()
+        tokenDataManager.get().getTokenDataWhenLoggedIn()
+
+        // Start our migration process as early as possible so we can show the user a progress UI
+        migrationManager.get().requestMigration(fromRetry = false)
 
         // add our shortcut debug menu if we are not in a release build
         if (BuildConfig.BUILD_TYPE != "release") {
@@ -323,6 +345,50 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
 
             ShortcutManagerCompat.pushDynamicShortcut(this, shortcut)
         }
+
+
+        // Once we have done initialisation, access the lazy dependencies so we make sure
+        // they are initialised.
+        workerFactory.get()
+        lokiAPIDatabase.get()
+        storage.get()
+        device.get()
+        messageDataProvider.get()
+        textSecurePreferences.get()
+        configFactory.get()
+        versionDataFetcher.get()
+        pushRegistrationHandler.get()
+        tokenFetcher.get()
+        groupManagerV2.get()
+        profileManager.get()
+        callMessageProcessor.get()
+        configUploader.get()
+        adminStateSync.get()
+        destroyedGroupSync.get()
+        removeGroupMemberHandler.get()
+        snodeClock.get()
+        migrationManager.get()
+        appDisguiseManager.get()
+        expiringMessageManager.get()
+        typingStatusRepository.get()
+        typingStatusSender.get()
+        readReceiptManager.get()
+        messageNotifierLazy.get()
+        apiDB.get()
+        emojiSearchDb.get()
+        webRtcCallBridge.get()
+        pollerManager.get()
+        legacyGroupDeprecationManager.get()
+        cleanupInvitationHandler.get()
+        usernameUtils.get()
+        backgroundPollManager.get()
+        appVisibilityManager.get()
+        groupPollerManager.get()
+        expiredGroupManager.get()
+        openGroupPollerManager.get()
+        currentActivityObserver.get()
+
+        threadDatabase.get().onAppCreated()
     }
 
     override fun onStart(owner: LifecycleOwner) {
@@ -332,19 +398,12 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
 
         // If the user account hasn't been created or onboarding wasn't finished then don't start
         // the pollers
-        if (textSecurePreferences.getLocalNumber() == null) {
+        if (textSecurePreferences.get().getLocalNumber() == null) {
             return
         }
 
-        startPollingIfNeeded()
-
-        queue {
-            startPolling()
-            Unit
-        }
-
         // fetch last version data
-        versionDataFetcher.startTimedVersionCheck()
+        versionDataFetcher.get().startTimedVersionCheck()
     }
 
     override fun onStop(owner: LifecycleOwner) {
@@ -352,46 +411,20 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         Log.i(TAG, "App is no longer visible.")
         KeyCachingService.onAppBackgrounded(this)
         messageNotifier.setVisibleThread(-1)
-        if (poller != null) {
-            poller!!.stopIfNeeded()
-        }
-        legacyClosedGroupPollerV2.stopAll()
-        versionDataFetcher.stopTimedVersionCheck()
+        versionDataFetcher.get().stopTimedVersionCheck()
     }
 
     override fun onTerminate() {
         stopKovenant() // Loki
-        stopPolling()
-        versionDataFetcher.stopTimedVersionCheck()
+        versionDataFetcher.get().stopTimedVersionCheck()
         super.onTerminate()
     }
 
 
     // Loki
     private fun initializeSecurityProvider() {
-        try {
-            Class.forName("org.signal.aesgcmprovider.AesGcmCipher")
-        } catch (e: ClassNotFoundException) {
-            Log.e(TAG, "Failed to find AesGcmCipher class")
-            throw ProviderInitializationException()
-        }
-
-        val aesPosition = Security.insertProviderAt(AesGcmProvider(), 1)
-        Log.i(
-            TAG,
-            "Installed AesGcmProvider: $aesPosition"
-        )
-
-        if (aesPosition < 0) {
-            Log.e(TAG, "Failed to install AesGcmProvider()")
-            throw ProviderInitializationException()
-        }
-
-        val conscryptPosition = Security.insertProviderAt(Conscrypt.newProvider(), 2)
-        Log.i(
-            TAG,
-            "Installed Conscrypt provider: $conscryptPosition"
-        )
+        val conscryptPosition = Security.insertProviderAt(Conscrypt.newProvider(), 0)
+        Log.i(TAG, "Installed Conscrypt provider: $conscryptPosition")
 
         if (conscryptPosition < 0) {
             Log.w(TAG, "Did not install Conscrypt provider. May already be present.")
@@ -399,9 +432,22 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
     }
 
     private fun initializeLogging() {
-        persistentLogger = PersistentLogger(this)
-        Log.initialize(AndroidLogger(), persistentLogger)
-        initLogger()
+        Log.initialize(AndroidLogger(), persistentLogger.get())
+        Logger.addLogger(object : Logger {
+            private val tag = "LibSession"
+
+            override fun log(message: String, category: String, level: LogLevel) {
+                when (level) {
+                    Logger.LOG_LEVEL_INFO -> Log.i(tag, "$category: $message")
+                    Logger.LOG_LEVEL_DEBUG -> Log.d(tag, "$category: $message")
+                    Logger.LOG_LEVEL_WARN -> Log.w(tag, "$category: $message")
+                    Logger.LOG_LEVEL_ERROR -> Log.e(tag, "$category: $message")
+                    Logger.LOG_LEVEL_CRITICAL -> Log.wtf(tag, "$category: $message")
+                    Logger.LOG_LEVEL_OFF -> {}
+                    else -> Log.v(tag, "$category: $message")
+                }
+            }
+        })
     }
 
     private fun initializeCrashHandling() {
@@ -421,38 +467,13 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
 
     private fun initializeBlobProvider() {
         AsyncTask.THREAD_POOL_EXECUTOR.execute {
-            BlobProvider.getInstance().onSessionStart(this)
-        }
-    }
-
-    private class ProviderInitializationException : RuntimeException()
-
-    private fun setUpPollingIfNeeded() {
-        val userPublicKey = textSecurePreferences!!.getLocalNumber() ?: return
-        if (poller == null) {
-            poller = Poller(configFactory!!, storage!!, lokiAPIDatabase!!)
-        }
-    }
-
-    fun startPollingIfNeeded() {
-        setUpPollingIfNeeded()
-        if (poller != null) {
-            poller!!.startIfNeeded()
-        }
-        legacyClosedGroupPollerV2!!.start()
-    }
-
-    fun retrieveUserProfile() {
-        setUpPollingIfNeeded()
-        if (poller != null) {
-            poller!!.retrieveUserProfile()
+            BlobUtils.getInstance().onSessionStart(this)
         }
     }
 
     private fun resubmitProfilePictureIfNeeded() {
         resubmitProfilePictureIfNeeded(this)
     }
-    // endregion
 
     companion object {
         const val PREFERENCES_NAME: String = "SecureSMS-Preferences"

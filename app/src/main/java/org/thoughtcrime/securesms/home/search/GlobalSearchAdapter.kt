@@ -16,9 +16,12 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.search.model.MessageResult
 import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.util.DateUtils
 import java.security.InvalidParameterException
 
+
 class GlobalSearchAdapter(
+    private val dateUtils: DateUtils,
     private val onContactClicked: (Model) -> Unit,
     private val onContactLongPressed: (Model.Contact) -> Unit,
 ): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
@@ -35,10 +38,18 @@ class GlobalSearchAdapter(
     fun setNewData(data: Pair<String, List<Model>>) = setNewData(data.first, data.second)
 
     fun setNewData(query: String, newData: List<Model>) {
-        val diffResult = DiffUtil.calculateDiff(GlobalSearchDiff(this.query, query, data, newData))
         this.query = query
-        data = newData
-        diffResult.dispatchUpdatesTo(this)
+
+        if (this.data.size > 500 || newData.size > 500) {
+            // For big data sets, we won't use DiffUtil to calculate the difference as it could be slow
+            this.data = newData
+            notifyDataSetChanged()
+        } else {
+            val diffResult =
+                DiffUtil.calculateDiff(GlobalSearchDiff(this.query, query, data, newData), false)
+            data = newData
+            diffResult.dispatchUpdatesTo(this)
+        }
     }
 
     override fun getItemViewType(position: Int): Int =
@@ -59,10 +70,11 @@ class GlobalSearchAdapter(
                 LayoutInflater.from(parent.context).inflate(R.layout.view_global_search_subheader, parent, false)
             )
             else -> ContentView(
-                        LayoutInflater.from(parent.context).inflate(R.layout.view_global_search_result, parent, false),
-                        onContactClicked,
-                        onContactLongPressed
-                    )
+                LayoutInflater.from(parent.context).inflate(R.layout.view_global_search_result, parent, false),
+                dateUtils = dateUtils,
+                onContactClicked = onContactClicked,
+                onContactLongPressed = onContactLongPressed
+            )
         }
 
     override fun onBindViewHolder(
@@ -108,6 +120,7 @@ class GlobalSearchAdapter(
 
     class ContentView(
         view: View,
+        private val dateUtils: DateUtils,
         private val onContactClicked: (Model) -> Unit,
         private val onContactLongPressed: (Model.Contact) -> Unit,
     ) : RecyclerView.ViewHolder(view) {
@@ -122,9 +135,10 @@ class GlobalSearchAdapter(
             binding.searchResultProfilePicture.recycle()
             when (model) {
                 is Model.GroupConversation -> bindModel(query, model)
-                is Model.Contact           -> bindModel(query, model)
-                is Model.Message           -> bindModel(query, model)
-                is Model.SavedMessages     -> bindModel(model)
+                is Model.Contact -> bindModel(query, model)
+                is Model.Message -> bindModel(query, model, dateUtils)
+                is Model.SavedMessages -> bindModel(model)
+
                 else -> throw InvalidParameterException("Can't display as ContentView")
             }
             binding.root.setOnClickListener { onContactClicked(model) }
@@ -150,17 +164,18 @@ class GlobalSearchAdapter(
         }
 
         data class SavedMessages(val currentUserPublicKey: String): Model // Note: "Note to Self" counts as SavedMessages rather than a Contact where `isSelf` is true.
-        data class Contact(val contact: AccountId, val name: String, val isSelf: Boolean) : Model {
-            constructor(contact: org.session.libsession.messaging.contacts.Contact, isSelf: Boolean):
-                    this(AccountId(contact.accountID), contact.getSearchName(), isSelf)
+        data class Contact(val contact: AccountId, val name: String, val isSelf: Boolean, val showProBadge: Boolean) : Model {
+            constructor(contact: org.session.libsession.messaging.contacts.Contact, isSelf: Boolean, showProBadge: Boolean):
+                    this(AccountId(contact.accountID), contact.getSearchName(), isSelf, showProBadge)
         }
         data class GroupConversation(
             val isLegacy: Boolean,
             val groupId: String,
             val title: String,
             val legacyMembersString: String?,
+            val showProBadge: Boolean
         ) : Model {
-            constructor(context: Context, groupRecord: GroupRecord):
+            constructor(context: Context, groupRecord: GroupRecord, showProBadge: Boolean):
                     this(
                         isLegacy = groupRecord.isLegacyGroup,
                         groupId = groupRecord.encodedId,
@@ -170,9 +185,10 @@ class GlobalSearchAdapter(
                             recipients.joinToString(transform = Recipient::getSearchName)
                         } else {
                             null
-                        }
+                        },
+                        showProBadge = showProBadge
                     )
         }
-        data class Message(val messageResult: MessageResult, val unread: Int, val isSelf: Boolean) : Model
+        data class Message(val messageResult: MessageResult, val unread: Int, val isSelf: Boolean, val showProBadge: Boolean) : Model
     }
 }

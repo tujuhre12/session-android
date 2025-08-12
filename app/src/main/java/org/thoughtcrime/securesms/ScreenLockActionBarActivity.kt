@@ -10,12 +10,9 @@ import android.os.Bundle
 import androidx.annotation.IdRes
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import androidx.core.content.IntentCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import java.io.File
-import java.io.FileOutputStream
-import java.lang.Exception
-import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -23,12 +20,20 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocal
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isScreenLockEnabled
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.home.HomeActivity
+import org.thoughtcrime.securesms.migration.DatabaseMigrationManager
+import org.thoughtcrime.securesms.migration.DatabaseMigrationStateActivity
 import org.thoughtcrime.securesms.onboarding.landing.LandingActivity
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.util.FileProviderUtil
 import org.thoughtcrime.securesms.util.FilenameUtils
+import java.io.File
+import java.io.FileOutputStream
+import java.util.Locale
 
 abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
+
+    private val migrationManager: DatabaseMigrationManager
+        get() = (applicationContext as ApplicationContext).migrationManager.get()
 
     companion object {
         private val TAG = ScreenLockActionBarActivity::class.java.simpleName
@@ -39,6 +44,7 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
         private const val STATE_SCREEN_LOCKED     = 1
         private const val STATE_UPGRADE_DATABASE  = 2
         private const val STATE_WELCOME_SCREEN    = 3
+        private const val STATE_DATABASE_MIGRATE  = 4 // This is different from STATE_UPGRADE_DATABASE as it is used to migrate database in a whole rather than the internal db schema upgrades
 
         private fun getStateName(state: Int): String {
             return when (state) {
@@ -152,12 +158,15 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
             STATE_SCREEN_LOCKED    -> getScreenUnlockIntent() // Note: This is a suspend function
             STATE_UPGRADE_DATABASE -> getUpgradeDatabaseIntent()
             STATE_WELCOME_SCREEN   -> getWelcomeIntent()
+            STATE_DATABASE_MIGRATE -> getRoutedIntent(DatabaseMigrationStateActivity::class.java, getConversationListIntent())
             else -> null
         }
     }
 
     private fun getApplicationState(locked: Boolean): Int {
-        return if (getLocalNumber(this) == null) {
+        return if (migrationManager.migrationState.value.shouldShowUI) {
+            STATE_DATABASE_MIGRATE
+        } else if (getLocalNumber(this) == null) {
             STATE_WELCOME_SCREEN
         } else if (locked) {
             STATE_SCREEN_LOCKED
@@ -167,6 +176,9 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
             STATE_NORMAL
         }
     }
+
+    private val DatabaseMigrationManager.MigrationState.shouldShowUI: Boolean
+        get() = this is DatabaseMigrationManager.MigrationState.Migrating || this is DatabaseMigrationManager.MigrationState.Error
 
     private suspend fun getScreenUnlockIntent(): Intent {
         // If this is an attempt to externally share something while the app is locked then we need
@@ -215,15 +227,17 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
 
         // Clear original clipData
         rewrittenIntent.clipData = null
-
-        // If we couldn't find one then we have nothing to re-write and we'll just return the original intent
-        if (!rewrittenIntent.hasExtra(Intent.EXTRA_STREAM)) {
-            Log.i(TAG, "No stream to rewrite - returning original intent")
-            return@withContext originalIntent
-        }
+        rewrittenIntent.removeExtra(Intent.EXTRA_STREAM)
 
         // Grab and rewrite the original intent's clipData - adding it to our rewrittenIntent as we go
         val originalClipData = originalIntent.clipData
+            ?: IntentCompat.getParcelableExtra(originalIntent, Intent.EXTRA_STREAM, Uri::class.java)?.let { uri ->
+                // If the original intent has a single Uri in the Intent.EXTRA_STREAM extra, we create a ClipData
+                // with that Uri to mimic the original clipData structure.
+                ClipData.newUri(contentResolver, "Shared data", uri)
+            }
+
+
         originalClipData?.let { clipData ->
             var newClipData: ClipData? = null
             for (i in 0 until clipData.itemCount) {
@@ -256,10 +270,6 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
                 Log.i(TAG, "Adding newClipData to rewrittenIntent.")
                 rewrittenIntent.clipData = newClipData
                 rewrittenIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            } else {
-                // If no newClipData was created, clear it to prevent referencing the old inaccessible URIs
-                Log.i(TAG, "There was no newClipData - setting the clipData to null.")
-                rewrittenIntent.clipData = null
             }
         }
 
@@ -292,7 +302,7 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
             cachedIntentFiles.add(tempFile)
 
             // Return a FileProvider Uri that references this cached file
-            FileProvider.getUriForFile(this@ScreenLockActionBarActivity, FileProviderUtil.AUTHORITY, tempFile)
+            FileProviderUtil.getUriFor(this@ScreenLockActionBarActivity, tempFile)
         } catch (e: Exception) {
             Log.e(TAG, "Error copying file to cache", e)
             null

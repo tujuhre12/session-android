@@ -10,6 +10,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.core.view.isInvisible
 import androidx.preference.Preference
+import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsignal.utilities.Log
@@ -18,7 +19,11 @@ import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.ui.getSubbedCharSequence
 import org.thoughtcrime.securesms.ui.getSubbedString
 
+@AndroidEntryPoint
 class HelpSettingsActivity: ScreenLockActionBarActivity() {
+
+    override val applyDefaultWindowInsets: Boolean
+        get() = false
 
     override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
         super.onCreate(savedInstanceState, ready)
@@ -29,6 +34,7 @@ class HelpSettingsActivity: ScreenLockActionBarActivity() {
     }
 }
 
+@AndroidEntryPoint
 class HelpSettingsFragment: CorrectedPreferenceFragment() {
 
     companion object {

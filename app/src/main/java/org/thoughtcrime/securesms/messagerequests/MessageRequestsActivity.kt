@@ -3,25 +3,30 @@ package org.thoughtcrime.securesms.messagerequests
 import android.content.Intent
 import android.database.Cursor
 import android.os.Bundle
+import android.view.ViewGroup.MarginLayoutParams
 import androidx.activity.viewModels
 import androidx.core.view.isVisible
+import androidx.core.view.updateLayoutParams
+import androidx.core.view.updatePadding
 import androidx.loader.app.LoaderManager
 import androidx.loader.content.Loader
+import com.bumptech.glide.Glide
+import com.bumptech.glide.RequestManager
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityMessageRequestsBinding
-import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
-import com.bumptech.glide.Glide
-import com.bumptech.glide.RequestManager
 import org.thoughtcrime.securesms.showSessionDialog
+import org.thoughtcrime.securesms.util.DateUtils
+import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import org.thoughtcrime.securesms.util.push
 
 @AndroidEntryPoint
@@ -31,12 +36,16 @@ class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClick
     private lateinit var glide: RequestManager
 
     @Inject lateinit var threadDb: ThreadDatabase
+    @Inject lateinit var dateUtils: DateUtils
 
     private val viewModel: MessageRequestsViewModel by viewModels()
 
     private val adapter: MessageRequestsAdapter by lazy {
-        MessageRequestsAdapter(context = this, cursor = null, listener = this)
+        MessageRequestsAdapter(context = this, cursor = null, dateUtils = dateUtils, listener = this)
     }
+
+    override val applyDefaultWindowInsets: Boolean
+        get() = false
 
     override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
         super.onCreate(savedInstanceState, ready)
@@ -50,6 +59,10 @@ class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClick
         binding.recyclerView.adapter = adapter
 
         binding.clearAllMessageRequestsButton.setOnClickListener { deleteAll() }
+
+        binding.root.applySafeInsetsPaddings(
+            applyBottom = false,
+        )
     }
 
     override fun onResume() {
@@ -105,7 +118,7 @@ class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClick
 
         showSessionDialog {
             title(R.string.delete)
-            text(resources.getString(R.string.messageRequestsDelete))
+            text(resources.getString(R.string.messageRequestsContactDelete))
             dangerButton(R.string.delete) { doDecline() }
             button(R.string.cancel)
         }

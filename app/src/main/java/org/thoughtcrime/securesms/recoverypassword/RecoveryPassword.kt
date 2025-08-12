@@ -3,7 +3,6 @@ package org.thoughtcrime.securesms.recoverypassword
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -28,14 +27,14 @@ import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.Cell
-import org.thoughtcrime.securesms.ui.DialogButtonModel
+import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.SessionShieldIcon
+import org.thoughtcrime.securesms.ui.border
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
 import org.thoughtcrime.securesms.ui.components.SlimOutlineCopyButton
-import org.thoughtcrime.securesms.ui.components.border
-import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -54,7 +53,7 @@ internal fun RecoveryPasswordScreen(
     Column(
         verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing),
         modifier = Modifier
-            .contentDescription(R.string.AccessibilityId_sessionRecoveryPassword)
+            .qaTag(R.string.AccessibilityId_sessionRecoveryPassword)
             .verticalScroll(rememberScrollState())
             .padding(bottom = LocalDimensions.current.smallSpacing)
             .padding(horizontal = LocalDimensions.current.spacing)
@@ -84,7 +83,9 @@ private fun RecoveryPasswordCell(
                     style = LocalType.current.h8
                 )
                 Spacer(Modifier.width(LocalDimensions.current.xxsSpacing))
-                SessionShieldIcon()
+                SessionShieldIcon(
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                )
             }
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
@@ -106,8 +107,7 @@ private fun RecoveryPasswordCell(
                     seed,
                     modifier = Modifier
                         .padding(vertical = LocalDimensions.current.spacing)
-                        .contentDescription(R.string.AccessibilityId_qrCode),
-                    contentPadding = 10.dp,
+                        .qaTag(R.string.AccessibilityId_qrCode),
                     icon = R.drawable.ic_recovery_password_custom
                 )
             }
@@ -143,13 +143,13 @@ private fun RecoveryPassword(mnemonic: String) {
     Text(
         mnemonic,
         modifier = Modifier
-            .contentDescription(R.string.AccessibilityId_sessionRecoveryPasswordContainer)
+            .qaTag(R.string.AccessibilityId_sessionRecoveryPasswordContainer)
             .padding(vertical = LocalDimensions.current.spacing)
             .border()
             .padding(LocalDimensions.current.spacing),
         textAlign = TextAlign.Center,
         style = LocalType.current.extraSmall.monospace(),
-        color = LocalColors.current.run { if (isLight) text else primary },
+        color = LocalColors.current.run { if (isLight) text else accent },
     )
 }
 
@@ -182,7 +182,7 @@ private fun HideRecoveryPasswordCell(
                 modifier = Modifier
                     .wrapContentWidth()
                     .align(Alignment.CenterVertically)
-                    .contentDescription(R.string.AccessibilityId_recoveryPasswordHideRecoveryPassword),
+                    .qaTag(R.string.AccessibilityId_recoveryPasswordHideRecoveryPassword),
                 color = LocalColors.current.danger,
                 onClick = { showHideRecoveryDialog = true }
             )
@@ -196,12 +196,12 @@ private fun HideRecoveryPasswordCell(
             title = stringResource(R.string.recoveryPasswordHidePermanently),
             text = stringResource(R.string.recoveryPasswordHidePermanentlyDescription1),
             buttons = listOf(
-                DialogButtonModel(
+                DialogButtonData(
                     GetString(R.string.theContinue),
                     color = LocalColors.current.danger,
                     onClick = { showHideRecoveryConfirmationDialog = true }
                 ),
-                DialogButtonModel(GetString(android.R.string.cancel))
+                DialogButtonData(GetString(android.R.string.cancel))
             )
         )
     }
@@ -213,12 +213,12 @@ private fun HideRecoveryPasswordCell(
             title = stringResource(R.string.recoveryPasswordHidePermanently),
             text = stringResource(R.string.recoveryPasswordHidePermanentlyDescription2),
             buttons = listOf(
-                DialogButtonModel(
+                DialogButtonData(
                     GetString(R.string.yes),
                     color = LocalColors.current.danger,
                     onClick = confirmHideRecovery
                 ),
-                DialogButtonModel(GetString(android.R.string.cancel))
+                DialogButtonData(GetString(android.R.string.cancel))
             )
         )
     }

@@ -39,22 +39,22 @@ class MentionViewModelTest : BaseViewModelTest() {
     private data class MemberInfo(
         val name: String,
         val pubKey: String,
-        val roles: List<GroupMemberRole>,
+        val role: GroupMemberRole,
         val isMe: Boolean
     )
 
-    private val myId = AccountId.fromString(
+    private val myId = AccountId.fromStringOrNull(
         "151234567890123456789012345678901234567890123456789012345678901234"
     )!!
 
     private val threadMembers = listOf(
-        MemberInfo("You", myId.hexString, listOf(GroupMemberRole.STANDARD), isMe = true),
-        MemberInfo("Alice", "pubkey1", listOf(GroupMemberRole.ADMIN), isMe = false),
-        MemberInfo("Bob", "pubkey2", listOf(GroupMemberRole.STANDARD), isMe = false),
-        MemberInfo("Charlie", "pubkey3", listOf(GroupMemberRole.MODERATOR), isMe = false),
-        MemberInfo("David", "pubkey4", listOf(GroupMemberRole.HIDDEN_ADMIN), isMe = false),
-        MemberInfo("Eve", "pubkey5", listOf(GroupMemberRole.HIDDEN_MODERATOR), isMe = false),
-        MemberInfo("李云海", "pubkey6", listOf(GroupMemberRole.ZOOMBIE), isMe = false),
+        MemberInfo("You", myId.hexString, GroupMemberRole.STANDARD, isMe = true),
+        MemberInfo("Alice", "pubkey1", GroupMemberRole.ADMIN, isMe = false),
+        MemberInfo("Bob", "pubkey2", GroupMemberRole.STANDARD, isMe = false),
+        MemberInfo("Charlie", "pubkey3", GroupMemberRole.MODERATOR, isMe = false),
+        MemberInfo("David", "pubkey4", GroupMemberRole.HIDDEN_ADMIN, isMe = false),
+        MemberInfo("Eve", "pubkey5", GroupMemberRole.HIDDEN_MODERATOR, isMe = false),
+        MemberInfo("李云海", "pubkey6", GroupMemberRole.ZOOMBIE, isMe = false),
     )
 
     private val memberContacts = threadMembers.map { m ->
@@ -71,7 +71,8 @@ class MentionViewModelTest : BaseViewModelTest() {
         publicKey = "",
         imageId = null,
         infoUpdates = 0,
-        canWrite = true
+        canWrite = true,
+        description = ""
     )
 
     @Before
@@ -92,12 +93,6 @@ class MentionViewModelTest : BaseViewModelTest() {
             },
             groupDatabase = mock {
             },
-            mmsDatabase = mock {
-                on { getRecentChatMemberIDs(eq(threadID), any()) } doAnswer {
-                    val limit = it.arguments[1] as Int
-                    threadMembers.take(limit).map { m -> m.pubKey }
-                }
-            },
             contactDatabase = mock {
                 on { getContacts(any()) } doAnswer {
                     val ids = it.arguments[0] as Collection<String>
@@ -108,7 +103,7 @@ class MentionViewModelTest : BaseViewModelTest() {
                 on { getGroupMembersRoles(eq(openGroup.id), any()) } doAnswer {
                     val memberIDs = it.arguments[1] as Collection<String>
                     memberIDs.associateWith { id ->
-                        threadMembers.first { it.pubKey == id }.roles
+                        threadMembers.first { it.pubKey == id }.role
                     }
                 }
             },
@@ -119,7 +114,13 @@ class MentionViewModelTest : BaseViewModelTest() {
             dispatcher = StandardTestDispatcher(),
             configFactory = mock(),
             threadID = threadID,
-            application = InstrumentationRegistry.getInstrumentation().context as android.app.Application
+            application = InstrumentationRegistry.getInstrumentation().context as android.app.Application,
+            mmsSmsDatabase = mock {
+                on { getRecentChatMemberAddresses(eq(threadID), any())} doAnswer {
+                    val limit = it.arguments[1] as Int
+                    threadMembers.take(limit).map { m -> m.pubKey }
+                }
+            }
         )
     }
 
@@ -148,7 +149,7 @@ class MentionViewModelTest : BaseViewModelTest() {
                         memberContacts[index].displayName(Contact.ContactContext.OPEN_GROUP)
 
                     MentionViewModel.Candidate(
-                        MentionViewModel.Member(m.pubKey, name, m.roles.any { it.isModerator }, isMe = m.isMe),
+                        MentionViewModel.Member(m.pubKey, name, m.role.isModerator, isMe = m.isMe),
                         name,
                         0
                     )

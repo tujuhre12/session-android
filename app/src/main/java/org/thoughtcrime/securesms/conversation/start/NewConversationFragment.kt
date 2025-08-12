@@ -3,11 +3,13 @@ package org.thoughtcrime.securesms.conversation.start
 import android.app.Dialog
 import android.content.Intent
 import android.content.res.Resources
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.ViewGroup.LayoutParams
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import com.google.android.material.bottomsheet.BottomSheetBehavior
@@ -15,16 +17,15 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
+import network.loki.messenger.databinding.FragmentNewConversationBinding
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.modifyLayoutParams
 import org.thoughtcrime.securesms.conversation.start.home.StartConversationHomeFragment
 import org.thoughtcrime.securesms.conversation.start.invitefriend.InviteFriendFragment
 import org.thoughtcrime.securesms.conversation.start.newmessage.NewMessageFragment
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.groups.CreateGroupFragment
 import org.thoughtcrime.securesms.groups.JoinCommunityFragment
-import org.thoughtcrime.securesms.groups.legacy.CreateLegacyGroupFragment
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -34,10 +35,17 @@ class StartConversationFragment : BottomSheetDialogFragment(), StartConversation
         const val PEEK_RATIO = 0.94f
     }
 
-    private val defaultPeekHeight: Int by lazy { (Resources.getSystem().displayMetrics.heightPixels * PEEK_RATIO).toInt() }
-
     @Inject
     lateinit var deprecationManager: LegacyGroupDeprecationManager
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        replaceFragment(
+            fragment = StartConversationHomeFragment().also { it.delegate.value = this },
+            fragmentKey = StartConversationHomeFragment::class.java.simpleName
+        )
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -48,20 +56,32 @@ class StartConversationFragment : BottomSheetDialogFragment(), StartConversation
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        replaceFragment(
-            fragment = StartConversationHomeFragment().also { it.delegate.value = this },
-            fragmentKey = StartConversationHomeFragment::class.java.simpleName
-        )
+
+        val emptySpace = (Resources.getSystem().displayMetrics.heightPixels * (1 - PEEK_RATIO)).toInt()
+
+        val binding = FragmentNewConversationBinding.bind(view)
+
+        binding.newConversationFragmentContainer.verticalSpace = emptySpace
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
+            // From Android 15, given display metrics now include the window insets so we'll have to account for that space
+            binding.newConversationFragmentContainer.verticalSpace = emptySpace + insets.getInsets(WindowInsetsCompat.Type.systemBars()).top
+
+            WindowInsetsCompat.CONSUMED // We don't actually need our view to have any insets as we are in a dialog
+        }
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
-        BottomSheetDialog(requireContext(), R.style.Theme_Session_BottomSheet).apply {
-            setOnShowListener { _ ->
-                findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)?.apply {
-                    modifyLayoutParams<LayoutParams> { height = defaultPeekHeight }
-                }?.let { BottomSheetBehavior.from(it) }?.apply {
-                    skipCollapsed = true
-                    state = BottomSheetBehavior.STATE_EXPANDED
+        BottomSheetDialog(requireContext()).apply {
+            behavior.apply {
+                skipCollapsed = true
+                state = BottomSheetBehavior.STATE_EXPANDED
+            }
+
+            // Set transparent navigation bar on older android version otherwise it colors the  navbar
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                window?.apply {
+                    navigationBarColor = android.graphics.Color.TRANSPARENT
                 }
             }
         }
@@ -72,13 +92,7 @@ class StartConversationFragment : BottomSheetDialogFragment(), StartConversation
     }
 
     override fun onCreateGroupSelected() {
-        val fragment = if (deprecationManager.deprecationState.value == LegacyGroupDeprecationManager.DeprecationState.NOT_DEPRECATING) {
-            CreateLegacyGroupFragment()
-        } else {
-            CreateGroupFragment()
-        }
-
-        replaceFragment(fragment)
+        replaceFragment(CreateGroupFragment())
     }
 
     override fun onJoinCommunitySelected() {
@@ -108,8 +122,8 @@ class StartConversationFragment : BottomSheetDialogFragment(), StartConversation
         childFragmentManager.commit {
             setCustomAnimations(
                 R.anim.slide_from_right,
-                R.anim.fade_scale_out,
-                0,
+                R.anim.slide_to_left,
+                R.anim.slide_from_left,
                 R.anim.slide_to_right
             )
             replace(R.id.new_conversation_fragment_container, fragment)

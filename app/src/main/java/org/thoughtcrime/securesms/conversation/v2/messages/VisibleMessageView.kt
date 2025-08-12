@@ -20,10 +20,10 @@ import android.widget.FrameLayout
 import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
-import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
@@ -48,24 +48,29 @@ import org.session.libsession.utilities.modifyLayoutParams
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
+import org.thoughtcrime.securesms.conversation.v2.messages.QuoteView.Mode
 import org.thoughtcrime.securesms.database.GroupDatabase
-import org.thoughtcrime.securesms.database.LastSentTimestampCache
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.groups.OpenGroupManager
-import org.thoughtcrime.securesms.home.UserDetailsBottomSheet
+import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.ui.ProBadgeText
+import org.thoughtcrime.securesms.ui.setThemedContent
+import org.thoughtcrime.securesms.ui.theme.LocalColors
+import org.thoughtcrime.securesms.ui.theme.LocalType
+import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.disableClipping
 import org.thoughtcrime.securesms.util.toDp
 import org.thoughtcrime.securesms.util.toPx
 import java.util.Date
-import java.util.Locale
 import javax.inject.Inject
 import kotlin.math.abs
 import kotlin.math.min
@@ -84,9 +89,11 @@ class VisibleMessageView : FrameLayout {
     @Inject lateinit var mmsSmsDb: MmsSmsDatabase
     @Inject lateinit var smsDb: SmsDatabase
     @Inject lateinit var mmsDb: MmsDatabase
-    @Inject lateinit var lastSentTimestampCache: LastSentTimestampCache
+    @Inject lateinit var dateUtils: DateUtils
     @Inject lateinit var configFactory: ConfigFactoryProtocol
     @Inject lateinit var usernameUtils: UsernameUtils
+    @Inject lateinit var openGroupManager: OpenGroupManager
+    @Inject lateinit var proStatusManager: ProStatusManager
 
     private val binding = ViewVisibleMessageBinding.inflate(LayoutInflater.from(context), this, true)
 
@@ -166,9 +173,12 @@ class VisibleMessageView : FrameLayout {
         groupId: AccountId? = null,
         senderAccountID: String,
         lastSeen: Long,
+        lastSentMessageId: MessageId?,
         delegate: VisibleMessageViewDelegate? = null,
         downloadPendingAttachment: (DatabaseAttachment) -> Unit,
         retryFailedAttachments: (List<DatabaseAttachment>) -> Unit,
+        isTextExpanded: Boolean = false,
+        onTextExpanded: ((MessageId) -> Unit)? = null
     ) {
         clipToPadding = false
         clipChildren = false
@@ -206,19 +216,9 @@ class VisibleMessageView : FrameLayout {
                 binding.profilePictureView.publicKey = senderAccountID
                 binding.profilePictureView.update(message.individualRecipient)
                 binding.profilePictureView.setOnClickListener {
-                    if (thread.isCommunityRecipient) {
-                        val openGroup = lokiThreadDb.getOpenGroupChat(threadID)
-                        if (IdPrefix.fromValue(senderAccountID) == IdPrefix.BLINDED && openGroup?.canWrite == true) {
-                            // TODO: support v2 soon
-                            val intent = Intent(context, ConversationActivityV2::class.java)
-                            intent.putExtra(ConversationActivityV2.FROM_GROUP_THREAD_ID, threadID)
-                            intent.putExtra(ConversationActivityV2.ADDRESS, Address.fromSerialized(senderAccountID))
-                            context.startActivity(intent)
-                        }
-                    } else {
-                        maybeShowUserDetails(senderAccountID, threadID)
-                    }
+                    delegate?.showUserProfileModal(message.recipient)
                 }
+
                 if (thread.isCommunityRecipient) {
                     val openGroup = lokiThreadDb.getOpenGroupChat(threadID) ?: return
                     var standardPublicKey = ""
@@ -228,7 +228,11 @@ class VisibleMessageView : FrameLayout {
                     } else {
                         standardPublicKey = senderAccountID
                     }
-                    val isModerator = OpenGroupManager.isUserModerator(context, openGroup.groupId, standardPublicKey, blindedPublicKey)
+                    val isModerator = openGroupManager.isUserModerator(
+                        openGroup.groupId,
+                        standardPublicKey,
+                        blindedPublicKey
+                    )
                     binding.moderatorIconImageView.isVisible = isModerator
                 }
                 else if (thread.isLegacyGroupRecipient) { // legacy groups
@@ -246,15 +250,35 @@ class VisibleMessageView : FrameLayout {
                 }
             }
         }
-        binding.senderNameTextView.isVisible = !message.isOutgoing && (isStartOfMessageCluster && (isGroupThread || snIsSelected))
-        val contactContext =
-            if (thread.isCommunityRecipient) ContactContext.OPEN_GROUP else ContactContext.REGULAR
-        binding.senderNameTextView.text = usernameUtils.getContactNameWithAccountID(
-            contact = contact,
-            accountID = senderAccountID,
-            contactContext = contactContext,
-            groupId = groupId
-        )
+        if(!message.isOutgoing && (isStartOfMessageCluster && (isGroupThread || snIsSelected))){
+            binding.senderName.setOnClickListener {
+                delegate?.showUserProfileModal(message.recipient)
+            }
+
+            val contactContext =
+                if (thread.isCommunityRecipient) ContactContext.OPEN_GROUP else ContactContext.REGULAR
+
+            // set up message author
+            binding.senderName.apply {
+                setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+                setThemedContent {
+                    ProBadgeText(
+                        text = usernameUtils.getContactNameWithAccountID( //todo badge we need to rework te naming logic to get the name + account id separately - waiting on the Recipient refactor
+                            contact = contact,
+                            accountID = senderAccountID,
+                            contactContext = contactContext,
+                            groupId = groupId
+                        ),
+                        textStyle = LocalType.current.base.bold().copy(color = LocalColors.current.text),
+                        showBadge = proStatusManager.shouldShowProBadge(message.recipient.address),
+                    )
+                }
+            }
+
+            binding.senderName.isVisible = true
+        } else {
+            binding.senderName.isVisible = false
+        }
 
         // Unread marker
         val shouldShowUnreadMarker = lastSeen != -1L && message.timestamp > lastSeen && (previous == null || previous.timestamp <= lastSeen) && !message.isOutgoing
@@ -267,18 +291,20 @@ class VisibleMessageView : FrameLayout {
 
         // Date break
         val showDateBreak = isStartOfMessageCluster || snIsSelected
-        binding.dateBreakTextView.text = if (showDateBreak) DateUtils.getDisplayFormattedTimeSpanString(context, Locale.getDefault(), message.timestamp) else null
+        binding.dateBreakTextView.text = if (showDateBreak) dateUtils.getDisplayFormattedTimeSpanString(
+            message.timestamp
+        ) else null
         binding.dateBreakTextView.isVisible = showDateBreak
 
         // Update message status indicator
-        showStatusMessage(message)
+        showStatusMessage(message, lastSentMessageId)
 
         // Emoji Reactions
         if (!message.isDeleted && message.reactions.isNotEmpty()) {
             val capabilities = lokiThreadDb.getOpenGroupChat(threadID)?.server?.let { lokiApiDb.getServerCapabilities(it) }
             if (capabilities.isNullOrEmpty() || capabilities.contains(OpenGroupApi.Capability.REACTIONS.name.lowercase())) {
                 emojiReactionsBinding.value.root.let { root ->
-                    root.setReactions(message.id, message.reactions, message.isOutgoing, delegate)
+                    root.setReactions(message.messageId, message.reactions, message.isOutgoing, delegate)
                     root.isVisible = true
                     (root.layoutParams as ConstraintLayout.LayoutParams).apply {
                         horizontalBias = if (message.isOutgoing) 1f else 0f
@@ -302,7 +328,9 @@ class VisibleMessageView : FrameLayout {
             thread,
             searchQuery,
             downloadPendingAttachment = downloadPendingAttachment,
-            retryFailedAttachments = retryFailedAttachments
+            retryFailedAttachments = retryFailedAttachments,
+            isTextExpanded = isTextExpanded,
+            onTextExpanded = onTextExpanded
         )
         binding.messageContentView.root.delegate = delegate
         onDoubleTap = { binding.messageContentView.root.onContentDoubleTap?.invoke() }
@@ -312,7 +340,7 @@ class VisibleMessageView : FrameLayout {
     // Note: Although most commonly used to display the delivery status of a message, we also use the
     // message status area to display the disappearing messages state - so in this latter case we'll
     // be displaying either "Sent" or "Read" and the animating clock icon.
-    private fun showStatusMessage(message: MessageRecord) {
+    private fun showStatusMessage(message: MessageRecord, lastSentMessageId: MessageId?) {
         // We'll start by hiding everything and then only make visible what we need
         binding.messageStatusTextView.isVisible  = false
         binding.messageStatusImageView.isVisible = false
@@ -376,8 +404,7 @@ class VisibleMessageView : FrameLayout {
             } else {
                 // ..but if the message HAS been successfully sent or read then only display the delivery status
                 // text and image if this is the last sent message.
-                val lastSentTimestamp = lastSentTimestampCache.getTimestamp(message.threadId)
-                val isLastSent = lastSentTimestamp == message.timestamp
+                val isLastSent = lastSentMessageId != null && lastSentMessageId.id == message.id && lastSentMessageId.mms == message.isMms
                 binding.messageStatusTextView.isVisible  = isLastSent
                 binding.messageStatusImageView.isVisible = isLastSent
                 if (isLastSent) { binding.messageStatusImageView.bringToFront() }
@@ -404,14 +431,14 @@ class VisibleMessageView : FrameLayout {
     }
 
     private fun isStartOfMessageCluster(current: MessageRecord, previous: MessageRecord?, isGroupThread: Boolean): Boolean =
-        previous == null || previous.isControlMessage || !DateUtils.isSameHour(current.timestamp, previous.timestamp) || if (isGroupThread) {
+        previous == null || previous.isControlMessage || !dateUtils.isSameHour(current.timestamp, previous.timestamp) || if (isGroupThread) {
             current.recipient.address != previous.recipient.address
         } else {
             current.isOutgoing != previous.isOutgoing
         }
 
     private fun isEndOfMessageCluster(current: MessageRecord, next: MessageRecord?, isGroupThread: Boolean): Boolean =
-        next == null || next.isControlMessage || !DateUtils.isSameHour(current.timestamp, next.timestamp) || if (isGroupThread) {
+        next == null || next.isControlMessage || !dateUtils.isSameHour(current.timestamp, next.timestamp) || if (isGroupThread) {
             current.recipient.address != next.recipient.address
         } else {
             current.isOutgoing != next.isOutgoing
@@ -635,16 +662,6 @@ class VisibleMessageView : FrameLayout {
     }
 
     fun onContentClick(event: MotionEvent) = binding.messageContentView.root.onContentClick(event)
-
-    private fun maybeShowUserDetails(publicKey: String, threadID: Long) {
-        UserDetailsBottomSheet().apply {
-            arguments = bundleOf(
-                UserDetailsBottomSheet.ARGUMENT_PUBLIC_KEY to publicKey,
-                UserDetailsBottomSheet.ARGUMENT_THREAD_ID to threadID
-            )
-            show((this@VisibleMessageView.context as AppCompatActivity).supportFragmentManager, tag)
-        }
-    }
 
     fun playVoiceMessage() {
         binding.messageContentView.root.playVoiceMessage()

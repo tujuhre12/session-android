@@ -17,6 +17,7 @@ import java.util.List;
 
 import network.loki.messenger.R;
 
+
 final class ReactionRecipientsAdapter extends RecyclerView.Adapter<ReactionRecipientsAdapter.ViewHolder> {
 
   private static final int MAX_REACTORS = 5;
@@ -151,8 +152,7 @@ final class ReactionRecipientsAdapter extends RecyclerView.Adapter<ReactionRecip
 
     void bind(@NonNull ReactionDetails reaction) {
       this.remove.setOnClickListener((v) -> {
-        MessageId messageId = new MessageId(reaction.getLocalId(), reaction.isMms());
-        callback.onRemoveReaction(reaction.getBaseEmoji(), messageId, reaction.getTimestamp());
+        callback.onRemoveReaction(reaction.getBaseEmoji(), reaction.getLocalId(), reaction.getTimestamp());
       });
 
       this.avatar.update(reaction.getSender());

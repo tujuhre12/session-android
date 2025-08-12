@@ -4,9 +4,10 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
-import android.graphics.Color
 import android.graphics.Rect
+import android.text.Layout
 import android.text.Spannable
+import android.text.StaticLayout
 import android.text.style.BackgroundColorSpan
 import android.text.style.ForegroundColorSpan
 import android.text.style.URLSpan
@@ -15,6 +16,7 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewTreeObserver
 import android.widget.Toast
 import androidx.annotation.ColorInt
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -22,6 +24,9 @@ import androidx.core.graphics.ColorUtils
 import androidx.core.text.getSpans
 import androidx.core.text.toSpannable
 import androidx.core.view.children
+import androidx.core.view.doOnAttach
+import androidx.core.view.doOnLayout
+import androidx.core.view.doOnPreDraw
 import androidx.core.view.isVisible
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
@@ -33,6 +38,7 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.modifyLayoutParams
+import org.session.libsession.utilities.needsCollapsing
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView.AttachmentType.AUDIO
@@ -43,6 +49,7 @@ import org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.conversation.v2.utilities.ModalURLSpan
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.getIntersectedModalSpans
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.mms.PartAuthority
@@ -57,6 +64,8 @@ class VisibleMessageContentView : ConstraintLayout {
     var onContentDoubleTap: (() -> Unit)? = null
     var delegate: VisibleMessageViewDelegate? = null
     var indexInAdapter: Int = -1
+
+    private val MAX_COLLAPSED_LINE_COUNT = 25
 
     // region Lifecycle
     constructor(context: Context) : super(context)
@@ -74,7 +83,9 @@ class VisibleMessageContentView : ConstraintLayout {
         searchQuery: String? = null,
         downloadPendingAttachment: (DatabaseAttachment) -> Unit,
         retryFailedAttachments: (List<DatabaseAttachment>) -> Unit,
-        suppressThumbnails: Boolean = false
+        suppressThumbnails: Boolean = false,
+        isTextExpanded: Boolean = false,
+        onTextExpanded: ((MessageId) -> Unit)? = null
     ) {
         // Background
         val color = if (message.isOutgoing) context.getAccentColor()
@@ -84,10 +95,17 @@ class VisibleMessageContentView : ConstraintLayout {
         binding.voiceMessageView.root.backgroundTintList = ColorStateList.valueOf(color)
         binding.contentParent.cornerRadius = resources.getDimension(R.dimen.message_corner_radius)
 
-        val mediaDownloaded = message is MmsMessageRecord && message.slideDeck.asAttachments().all { it.isDone }
+        // we considered all media downloaded if all are done, barring potential 404s.
+        // Meaning if the one or all attachments are 404 we consider the overall attachment expired
+        // But in the case of random errors where one image in a set of many somehow reaches a 404 state
+        // we still want the rest of the images to show up as downloaded
+        val hasExpired = haveAttachmentsExpired(message)
+        val mediaDownloaded = !hasExpired && // it is not done if ALL attachments have expired
+                message is MmsMessageRecord &&
+                // we filter out potential expiry in the set, which would be rare errors, and consider the rest
+                message.slideDeck.asAttachments().filter { it.transferState != AttachmentState.EXPIRED.value }.all { it.isDone }
         val mediaInProgress = message is MmsMessageRecord && message.slideDeck.asAttachments().any { it.isInProgress }
         val hasFailed = message is MmsMessageRecord && message.slideDeck.asAttachments().any { it.isFailed }
-        val hasExpired = haveAttachmentsExpired(message)
         val overallAttachmentState = when {
             mediaDownloaded -> AttachmentState.DONE
             hasExpired -> AttachmentState.EXPIRED
@@ -108,6 +126,7 @@ class VisibleMessageContentView : ConstraintLayout {
             binding.deletedMessageView.root.isVisible = true
             binding.deletedMessageView.root.bind(message, getTextColor(context, message))
             binding.bodyTextView.isVisible = false
+            binding.readMore.isVisible = false
             binding.quoteView.root.isVisible = false
             binding.linkPreviewView.root.isVisible = false
             binding.voiceMessageView.root.isVisible = false
@@ -148,7 +167,7 @@ class VisibleMessageContentView : ConstraintLayout {
             } else {
                 quote.text
             }
-            binding.quoteView.root.bind(quote.author.toString(), quoteText, quote.attachment, thread,
+            binding.quoteView.root.bind(Recipient.from(context, quote.author, false), quoteText, quote.attachment, thread,
                 message.isOutgoing, message.isOpenGroupInvitation, message.threadId,
                 quote.isOriginalMissing, glide)
             onContentClick.add { event ->
@@ -317,6 +336,11 @@ class VisibleMessageContentView : ConstraintLayout {
         }
 
         binding.bodyTextView.isVisible = message.body.isNotEmpty() && !hideBody
+        // set a max lines
+        binding.bodyTextView.maxLines = if(isTextExpanded) Int.MAX_VALUE else MAX_COLLAPSED_LINE_COUNT
+
+        binding.readMore.isVisible = false
+
         binding.contentParent.apply { isVisible = children.any { it.isVisible } }
 
         if (message.body.isNotEmpty() && !hideBody) {
@@ -329,6 +353,30 @@ class VisibleMessageContentView : ConstraintLayout {
                 binding.bodyTextView.getIntersectedModalSpans(e).iterator().forEach { span ->
                     span.onClick(binding.bodyTextView)
                 }
+            }
+
+            // if the text was already manually expanded, we can skip this logic
+            if(!isTextExpanded && binding.bodyTextView.needsCollapsing(
+                    availableWidthPx = context.resources.getDimensionPixelSize(R.dimen.max_bubble_width),
+                    maxLines = MAX_COLLAPSED_LINE_COUNT)
+            ){
+                // show the "Read mode" button
+                binding.readMore.setTextColor(color)
+                binding.readMore.isVisible = true
+
+                // add read more click listener
+                val readMoreClickHandler: (MotionEvent) -> Unit = { event ->
+                    val r = Rect()
+                    binding.readMore.getGlobalVisibleRect(r)
+                    if (r.contains(event.rawX.roundToInt(), event.rawY.roundToInt())) {
+                        binding.bodyTextView.maxLines = Int.MAX_VALUE
+                        binding.readMore.isVisible = false
+                        onTextExpanded?.invoke(message.messageId) // Notify that text was expanded
+                    }
+                }
+                onContentClick.add(readMoreClickHandler)
+            } else {
+                binding.readMore.isVisible = false
             }
         }
 
@@ -396,7 +444,7 @@ class VisibleMessageContentView : ConstraintLayout {
     // expired attachments are for Mms records only
     message is MmsMessageRecord &&
             // with a state marked as expired
-            (message.slideDeck.asAttachments().any { it.transferState == AttachmentState.EXPIRED.value } ||
+            (message.slideDeck.asAttachments().all { it.transferState == AttachmentState.EXPIRED.value } ||
             // with a state marked as downloaded yet without a URI attached
             (!message.hasAttachmentUri() && message.slideDeck.asAttachments().all { it.isDone }))
 
@@ -430,10 +478,11 @@ class VisibleMessageContentView : ConstraintLayout {
     fun playHighlight() {
         // Show the highlight colour immediately then slowly fade out
         val targetColor = if (ThemeUtil.isDarkTheme(context)) context.getAccentColor() else resources.getColor(R.color.black, context.theme)
-        val clearTargetColor = ColorUtils.setAlphaComponent(targetColor, 0)
+        val startColor = ColorUtils.setAlphaComponent(targetColor, (0.5f * 255).toInt())
+        val endColor = ColorUtils.setAlphaComponent(targetColor, 0)
         binding.contentParent.numShadowRenders = if (ThemeUtil.isDarkTheme(context)) 3 else 1
         binding.contentParent.sessionShadowColor = targetColor
-        GlowViewUtilities.animateShadowColorChange(binding.contentParent, targetColor, clearTargetColor, 1600)
+        GlowViewUtilities.animateShadowColorChange(binding.contentParent, startColor, endColor, 1600)
     }
     // endregion
 
@@ -450,9 +499,13 @@ class VisibleMessageContentView : ConstraintLayout {
                 context = context
             )
             body = SearchUtil.getHighlightedSpan(Locale.getDefault(),
-                { BackgroundColorSpan(Color.WHITE) }, body, searchQuery)
+                {
+                    BackgroundColorSpan(context.getColorFromAttr(R.attr.colorPrimary))
+                }, body, searchQuery)
             body = SearchUtil.getHighlightedSpan(Locale.getDefault(),
-                { ForegroundColorSpan(Color.BLACK) }, body, searchQuery)
+                {
+                    ForegroundColorSpan(context.getColorFromAttr(android.R.attr.textColorPrimary))
+                }, body, searchQuery)
 
             Linkify.addLinks(body, Linkify.WEB_URLS)
 

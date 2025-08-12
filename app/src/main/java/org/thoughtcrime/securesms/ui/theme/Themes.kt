@@ -35,7 +35,7 @@ fun invalidateComposeThemeColors() {
 @Composable
 fun SessionMaterialTheme(
     preferences: TextSecurePreferences =
-        (LocalContext.current.applicationContext as ApplicationContext).textSecurePreferences,
+        (LocalContext.current.applicationContext as ApplicationContext).textSecurePreferences.get(),
     content: @Composable () -> Unit
 ) {
     val cachedColors = cachedColorsProvider ?: preferences.getColorsProvider().also { cachedColorsProvider = it }
@@ -74,8 +74,10 @@ val buttonShape = pillShape
 
 @Composable
 fun sessionShapes() = Shapes(
+    extraSmall = RoundedCornerShape(LocalDimensions.current.shapeExtraSmall),
     small = RoundedCornerShape(LocalDimensions.current.shapeSmall),
     medium = RoundedCornerShape(LocalDimensions.current.shapeMedium)
+
 )
 
 /**

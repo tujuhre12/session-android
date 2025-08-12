@@ -2,14 +2,19 @@ package org.thoughtcrime.securesms.database
 
 import android.content.Context
 import android.net.Uri
-import com.goterl.lazysodium.utils.KeyPair
+import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
+import network.loki.messenger.libsession_util.MutableConversationVolatileConfig
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
+import network.loki.messenger.libsession_util.util.BlindKeyAPI
+import network.loki.messenger.libsession_util.util.Bytes
+import network.loki.messenger.libsession_util.util.Conversation
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
+import network.loki.messenger.libsession_util.util.KeyPair
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.database.MessageDataProvider
@@ -21,12 +26,10 @@ import org.session.libsession.messaging.jobs.AttachmentUploadJob
 import org.session.libsession.messaging.jobs.GroupAvatarDownloadJob
 import org.session.libsession.messaging.jobs.Job
 import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.jobs.MessageReceiveJob
 import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.jobs.RetrieveProfileAvatarJob
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.Message
-import org.session.libsession.messaging.messages.control.ConfigurationMessage
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
 import org.session.libsession.messaging.messages.signal.IncomingEncryptedMessage
@@ -42,14 +45,12 @@ import org.session.libsession.messaging.messages.visible.Reaction
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.GroupMember
 import org.session.libsession.messaging.open_groups.OpenGroup
-import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
-import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.SnodeClock
@@ -63,10 +64,8 @@ import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.getGroup
-import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.Recipient.DisappearingState
-import org.session.libsession.utilities.recipients.getType
 import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
@@ -86,15 +85,17 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
 import org.thoughtcrime.securesms.groups.GroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
+import org.thoughtcrime.securesms.util.SessionMetaProtocol.clearReceivedMessages
 import java.security.MessageDigest
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
-import kotlin.collections.set
 import network.loki.messenger.libsession_util.util.Contact as LibSessionContact
 import network.loki.messenger.libsession_util.util.GroupMember as LibSessionGroupMember
 
@@ -103,7 +104,7 @@ private const val TAG = "Storage"
 @Singleton
 open class Storage @Inject constructor(
     @ApplicationContext context: Context,
-    helper: SQLCipherOpenHelper,
+    helper: Provider<SQLCipherOpenHelper>,
     private val configFactory: ConfigFactory,
     private val jobDatabase: SessionJobDatabase,
     private val threadDatabase: ThreadDatabase,
@@ -127,7 +128,8 @@ open class Storage @Inject constructor(
     private val messageExpirationManager: SSKEnvironment.MessageExpirationManagerProtocol,
     private val clock: SnodeClock,
     private val preferences: TextSecurePreferences,
-    private val usernameUtils: UsernameUtils
+    private val usernameUtils: UsernameUtils,
+    private val openGroupManager: Lazy<OpenGroupManager>,
 ) : Database(context, helper), StorageProtocol, ThreadDatabase.ConversationThreadUpdateListener {
 
     init {
@@ -171,7 +173,7 @@ open class Storage @Inject constructor(
 
             address.isContact -> {
                 // non-standard contact prefixes: 15, 00 etc shouldn't be stored in config
-                if (AccountId(address.toString()).prefix != IdPrefix.STANDARD) return
+                if (IdPrefix.fromValue(address.toString()) != IdPrefix.STANDARD) return
                 // don't update our own address into the contacts DB
                 if (getUserPublicKey() != address.toString()) {
                     configFactory.withMutableUserConfigs { configs ->
@@ -194,36 +196,6 @@ open class Storage @Inject constructor(
         }
     }
 
-    override fun threadDeleted(address: Address, threadId: Long) {
-        configFactory.withMutableUserConfigs { configs ->
-            if (address.isGroupOrCommunity) {
-                if (address.isLegacyGroup) {
-                    val accountId = GroupUtil.doubleDecodeGroupId(address.toString())
-                    configs.convoInfoVolatile.eraseLegacyClosedGroup(accountId)
-                    configs.userGroups.eraseLegacyGroup(accountId)
-                } else if (address.isCommunity) {
-                    // these should be removed in the group leave / handling new configs
-                    Log.w("Loki", "Thread delete called for open group address, expecting to be handled elsewhere")
-                } else if (address.isGroupV2) {
-                    Log.w("Loki", "Thread delete called for closed group address, expecting to be handled elsewhere")
-                }
-            } else {
-                // non-standard contact prefixes: 15, 00 etc shouldn't be stored in config
-                if (AccountId(address.toString()).prefix != IdPrefix.STANDARD) return@withMutableUserConfigs
-                configs.convoInfoVolatile.eraseOneToOne(address.toString())
-                if (getUserPublicKey() != address.toString()) {
-                    configs.contacts.upsertContact(address.toString()) {
-                        priority = PRIORITY_HIDDEN
-                    }
-                } else {
-                    configs.userProfile.setNtsPriority(PRIORITY_HIDDEN)
-                }
-            }
-
-            Unit
-        }
-    }
-
     override fun getUserPublicKey(): String? { return preferences.getLocalNumber() }
 
     override fun getUserX25519KeyPair(): ECKeyPair { return lokiAPIDatabase.getUserX25519KeyPair() }
@@ -234,7 +206,10 @@ open class Storage @Inject constructor(
         val userKeyPair = getUserED25519KeyPair() ?: return null
         return AccountId(
             IdPrefix.BLINDED,
-            SodiumUtilities.blindedKeyPair(serverPublicKey, userKeyPair)!!.publicKey.asBytes
+            BlindKeyAPI.blind15KeyPairOrNull(
+                ed25519SecretKey = userKeyPair.secretKey.data,
+                serverPubKey = Hex.fromStringCondensed(serverPublicKey),
+            )!!.pubKey.data
         )
     }
 
@@ -278,14 +253,8 @@ open class Storage @Inject constructor(
         return registrationID
     }
 
-    override fun persistAttachments(messageID: Long, attachments: List<Attachment>): List<Long> {
-        val database = attachmentDatabase
-        val databaseAttachments = attachments.mapNotNull { it.toSignalAttachment() }
-        return database.insertAttachments(messageID, databaseAttachments)
-    }
-
-    override fun getAttachmentsForMessage(messageID: Long): List<DatabaseAttachment> {
-        return attachmentDatabase.getAttachmentsForMessage(messageID)
+    override fun getAttachmentsForMessage(mmsMessageId: Long): List<DatabaseAttachment> {
+        return attachmentDatabase.getAttachmentsForMessage(mmsMessageId)
     }
 
     override fun getLastSeen(threadId: Long): Long {
@@ -307,7 +276,7 @@ open class Storage @Inject constructor(
 
     override fun deleteMessagesByHash(threadId: Long, hashes: List<String>) {
         for (info in lokiMessageDatabase.getSendersForHashes(threadId, hashes.toSet())) {
-            messageDataProvider.deleteMessage(info.messageId, info.isSms)
+            messageDataProvider.deleteMessage(info.messageId)
             if (!info.isOutgoing) {
                 notificationManager.updateNotification(context)
             }
@@ -325,37 +294,32 @@ open class Storage @Inject constructor(
         }
     }
 
+    override fun clearAllMessages(threadId: Long): List<String?> {
+        val messages = mmsSmsDatabase.getAllMessagesWithHash(threadId)
+        val (mmsMessages, smsMessages) = messages.partition { it.first.isMms }
+        if (mmsMessages.isNotEmpty()) {
+            messageDataProvider.deleteMessages(mmsMessages.map{ it.first.id }, threadId, isSms = false)
+        }
+        if (smsMessages.isNotEmpty()) {
+            messageDataProvider.deleteMessages(smsMessages.map{ it.first.id }, threadId, isSms = true)
+        }
+
+        return messages.map { it.second } // return the message hashes
+    }
+
     override fun markConversationAsRead(threadId: Long, lastSeenTime: Long, force: Boolean) {
         val threadDb = threadDatabase
         getRecipientForThread(threadId)?.let { recipient ->
             val currentLastRead = threadDb.getLastSeenAndHasSent(threadId).first()
             // don't set the last read in the volatile if we didn't set it in the DB
-            if (!threadDb.markAllAsRead(threadId, recipient.isGroupOrCommunityRecipient, lastSeenTime, force) && !force) return
+            if (!threadDb.markAllAsRead(threadId, lastSeenTime, force) && !force) return
 
             // don't process configs for inbox recipients
             if (recipient.isCommunityInboxRecipient) return
 
             configFactory.withMutableUserConfigs { configs ->
                 val config = configs.convoInfoVolatile
-                val convo = when {
-                    // recipient closed group
-                    recipient.isLegacyGroupRecipient -> config.getOrConstructLegacyGroup(GroupUtil.doubleDecodeGroupId(recipient.address.toString()))
-                    recipient.isGroupV2Recipient -> config.getOrConstructClosedGroup(recipient.address.toString())
-                    // recipient is open group
-                    recipient.isCommunityRecipient -> {
-                        val openGroupJoinUrl = getOpenGroup(threadId)?.joinURL ?: return@withMutableUserConfigs
-                        BaseCommunityInfo.parseFullUrl(openGroupJoinUrl)?.let { (base, room, pubKey) ->
-                            config.getOrConstructCommunity(base, room, pubKey)
-                        } ?: return@withMutableUserConfigs
-                    }
-                    // otherwise recipient is one to one
-                    recipient.isContactRecipient -> {
-                        // don't process non-standard account IDs though
-                        if (AccountId(recipient.address.toString()).prefix != IdPrefix.STANDARD) return@withMutableUserConfigs
-                        config.getOrConstructOneToOne(recipient.address.toString())
-                    }
-                    else -> throw NullPointerException("Weren't expecting to have a convo with address ${recipient.address.toString()}")
-                }
+                val convo = getConvo(threadId, recipient, config)  ?: return@withMutableUserConfigs
                 convo.lastRead = lastSeenTime
                 if (convo.unread) {
                     convo.unread = lastSeenTime <= currentLastRead
@@ -366,23 +330,72 @@ open class Storage @Inject constructor(
         }
     }
 
+    override fun markConversationAsUnread(threadId: Long) {
+        val threadDb = threadDatabase
+        getRecipientForThread(threadId)?.let { recipient ->
+
+            threadDb.updateReadStatus(threadId, false)
+            // don't process configs for inbox recipients
+            if (recipient.isCommunityInboxRecipient) return
+
+            configFactory.withMutableUserConfigs { configs ->
+                val config = configs.convoInfoVolatile
+                val convo = getConvo(threadId, recipient, config) ?: return@withMutableUserConfigs
+
+                convo.unread = true
+                notifyConversationListListeners()
+
+                config.set(convo)
+            }
+        }
+    }
+
+    private fun getConvo(threadId: Long, recipient : Recipient, config : MutableConversationVolatileConfig) : Conversation? {
+        return when {
+            // recipient closed group
+            recipient.isLegacyGroupRecipient -> config.getOrConstructLegacyGroup(GroupUtil.doubleDecodeGroupId(recipient.address.toString()))
+            recipient.isGroupV2Recipient -> config.getOrConstructClosedGroup(recipient.address.toString())
+            // recipient is open group
+            recipient.isCommunityRecipient -> {
+                val openGroupJoinUrl = getOpenGroup(threadId)?.joinURL ?: return null
+                BaseCommunityInfo.parseFullUrl(openGroupJoinUrl)?.let { (base, room, pubKey) ->
+                    config.getOrConstructCommunity(base, room, pubKey)
+                } ?: return null
+            }
+            // otherwise recipient is one to one
+            recipient.isContactRecipient -> {
+                // don't process non-standard account IDs though
+                if (IdPrefix.fromValue(recipient.address.toString()) != IdPrefix.STANDARD) return null
+                config.getOrConstructOneToOne(recipient.address.toString())
+            }
+            else -> throw NullPointerException("Weren't expecting to have a convo with address ${recipient.address.toString()}")
+        }
+    }
+
     override fun updateThread(threadId: Long, unarchive: Boolean) {
         val threadDb = threadDatabase
         threadDb.update(threadId, unarchive)
     }
 
-    override fun persist(message: VisibleMessage,
-                         quotes: QuoteModel?,
-                         linkPreview: List<LinkPreview?>,
-                         groupPublicKey: String?,
-                         openGroupID: String?,
-                         attachments: List<Attachment>,
-                         runThreadUpdate: Boolean): Long? {
-        var messageID: Long? = null
+    override fun persist(
+        message: VisibleMessage,
+        quotes: QuoteModel?,
+        linkPreview: List<LinkPreview?>,
+        groupPublicKey: String?,
+        openGroupID: String?,
+        attachments: List<Attachment>,
+        runThreadUpdate: Boolean): MessageId? {
+        val messageID: MessageId?
         val senderAddress = fromSerialized(message.sender!!)
         val isUserSender = (message.sender!! == getUserPublicKey())
         val isUserBlindedSender = message.threadID?.takeIf { it >= 0 }?.let(::getOpenGroup)?.publicKey
-            ?.let { SodiumUtilities.accountId(getUserPublicKey()!!, message.sender!!, it) } ?: false
+            ?.let {
+                BlindKeyAPI.sessionIdMatchesBlindedId(
+                    sessionId = getUserPublicKey()!!,
+                    blindedId = message.sender!!,
+                    serverPubKey = it
+                )
+            } ?: false
         val group: Optional<SignalServiceGroup> = when {
             openGroupID != null -> Optional.of(SignalServiceGroup(openGroupID.toByteArray(), SignalServiceGroup.GroupType.PUBLIC_CHAT))
             groupPublicKey != null && groupPublicKey.startsWith(IdPrefix.GROUP.value) -> {
@@ -411,10 +424,10 @@ open class Storage @Inject constructor(
         }
         val targetRecipient = Recipient.from(context, targetAddress, false)
         if (!targetRecipient.isGroupOrCommunityRecipient) {
-            if (isUserSender || isUserBlindedSender) {
+            if ((isUserSender || isUserBlindedSender) && !targetRecipient.isApproved) {
                 setRecipientApproved(targetRecipient, true)
-            } else {
-                setRecipientApprovedMe(targetRecipient, true)
+            } else if(!targetRecipient.hasApprovedMe()){
+                 setRecipientApprovedMe(targetRecipient, true)
             }
         }
         if (message.threadID == null && !targetRecipient.isCommunityRecipient) {
@@ -463,9 +476,9 @@ open class Storage @Inject constructor(
                 val mediaMessage = IncomingMediaMessage.from(message, senderAddress, expiresInMillis, expireStartedAt, group, signalServiceAttachments, quote, linkPreviews)
                 mmsDatabase.insertSecureDecryptedMessageInbox(mediaMessage, message.threadID!!, message.receivedTimestamp ?: 0, runThreadUpdate)
             }
-            if (insertResult.isPresent) {
-                messageID = insertResult.get().messageId
-            }
+
+            messageID = insertResult.orNull()?.messageId?.let { MessageId(it, mms = true) }
+
         } else {
             val isOpenGroupInvitation = (message.openGroupInvitation != null)
 
@@ -479,17 +492,12 @@ open class Storage @Inject constructor(
                 val encrypted = IncomingEncryptedMessage(textMessage, textMessage.messageBody)
                 smsDatabase.insertMessageInbox(encrypted, message.receivedTimestamp ?: 0, runThreadUpdate)
             }
-            insertResult.orNull()?.let { result ->
-                messageID = result.messageId
-            }
+            messageID = insertResult.orNull()?.messageId?.let { MessageId(it, mms = false) }
         }
+
         message.serverHash?.let { serverHash ->
             messageID?.let { id ->
-                // When a message with attachment is received, we don't immediately have
-                // attachments attached in the messages, but it's a mms from the db's perspective
-                // nonetheless.
-                val isMms = message.isMediaMessage() || attachments.isNotEmpty()
-                lokiMessageDatabase.setMessageServerHash(id, isMms, serverHash)
+                lokiMessageDatabase.setMessageServerHash(id, serverHash)
             }
         }
         return messageID
@@ -517,10 +525,6 @@ open class Storage @Inject constructor(
 
     override fun getMessageSendJob(messageSendJobID: String): MessageSendJob? {
         return jobDatabase.getMessageSendJob(messageSendJobID)
-    }
-
-    override fun getMessageReceiveJob(messageReceiveJobID: String): MessageReceiveJob? {
-        return jobDatabase.getMessageReceiveJob(messageReceiveJobID)
     }
 
     override fun getGroupAvatarDownloadJob(server: String, room: String, imageId: String?): GroupAvatarDownloadJob? {
@@ -589,7 +593,7 @@ open class Storage @Inject constructor(
 
     override fun getOpenGroup(threadId: Long): OpenGroup? {
         if (threadId.toInt() < 0) { return null }
-        val database = databaseHelper.readableDatabase
+        val database = readableDatabase
         return database.get(LokiThreadDatabase.publicChatTable, "${LokiThreadDatabase.threadID} = ?", arrayOf( threadId.toString() )) { cursor ->
             val publicChatAsJson = cursor.getString(LokiThreadDatabase.publicChat)
             OpenGroup.fromJSON(publicChatAsJson)
@@ -632,17 +636,13 @@ open class Storage @Inject constructor(
         lokiAPIDatabase.setUserCount(room, server, newValue)
     }
 
-    override fun setOpenGroupServerMessageID(messageID: Long, serverID: Long, threadID: Long, isSms: Boolean) {
-        lokiMessageDatabase.setServerID(messageID, serverID, isSms)
-        lokiMessageDatabase.setOriginalThreadID(messageID, serverID, threadID)
+    override fun setOpenGroupServerMessageID(messageID: MessageId, serverID: Long, threadID: Long) {
+        lokiMessageDatabase.setServerID(messageID, serverID)
+        lokiMessageDatabase.setOriginalThreadID(messageID.id, serverID, threadID)
     }
 
     override fun getOpenGroup(room: String, server: String): OpenGroup? {
         return getAllOpenGroups().values.firstOrNull { it.server == server && it.room == room }
-    }
-
-    override fun setGroupMemberRoles(members: List<GroupMember>) {
-        groupMemberDatabase.setGroupMembers(members)
     }
 
     override fun isDuplicateMessage(timestamp: Long): Boolean {
@@ -677,141 +677,52 @@ open class Storage @Inject constructor(
         SessionMetaProtocol.removeTimestamps(timestamps)
     }
 
-    override fun getMessageIdInDatabase(timestamp: Long, author: String): Pair<Long, Boolean>? {
+    override fun getMessageBy(timestamp: Long, author: String): MessageRecord? {
         val database = mmsSmsDatabase
         val address = fromSerialized(author)
-        return database.getMessageFor(timestamp, address)?.run { getId() to isMms }
-    }
-
-    override fun getMessageType(timestamp: Long, author: String): MessageType? {
-        val address = fromSerialized(author)
-        return mmsSmsDatabase.getMessageFor(timestamp, address)?.individualRecipient?.getType()
+        return database.getMessageFor(timestamp, address)
     }
 
     override fun updateSentTimestamp(
-        messageID: Long,
-        isMms: Boolean,
-        openGroupSentTimestamp: Long,
-        threadId: Long
+        messageId: MessageId,
+        newTimestamp: Long
     ) {
-        if (isMms) {
-            val mmsDb = mmsDatabase
-            mmsDb.updateSentTimestamp(messageID, openGroupSentTimestamp, threadId)
+        if (messageId.mms) {
+            mmsDatabase.updateSentTimestamp(messageId.id, newTimestamp)
         } else {
-            val smsDb = smsDatabase
-            smsDb.updateSentTimestamp(messageID, openGroupSentTimestamp, threadId)
+            smsDatabase.updateSentTimestamp(messageId.id, newTimestamp)
         }
     }
 
-    override fun markAsSent(timestamp: Long, author: String) {
-        val database = mmsSmsDatabase
-        val messageRecord = database.getSentMessageFor(timestamp, author)
-        if (messageRecord == null) {
-            Log.w(TAG, "Failed to retrieve local message record in Storage.markAsSent - aborting.")
-            return
-        }
-
-        if (messageRecord.isMms) {
-            mmsDatabase.markAsSent(messageRecord.getId(), true)
-        } else {
-            smsDatabase.markAsSent(messageRecord.getId(), true)
-        }
+    override fun markAsSent(messageId: MessageId) {
+        getMmsDatabaseElseSms(messageId.mms).markAsSent(messageId.id, true)
     }
 
-    // Method that marks a message as sent in Communities (only!) - where the server modifies the
-    // message timestamp and as such we cannot use that to identify the local message.
-    override fun markAsSentToCommunity(threadId: Long, messageID: Long) {
-        val database = mmsSmsDatabase
-        val message = database.getLastSentMessageRecordFromSender(threadId, preferences.getLocalNumber())
-
-        // Ensure we can find the local message..
-        if (message == null) {
-            Log.w(TAG, "Could not find local message in Storage.markAsSentToCommunity - aborting.")
-            return
-        }
-
-        // ..and mark as sent if found.
-        if (message.isMms) {
-            mmsDatabase.markAsSent(message.getId(), true)
-        } else {
-            smsDatabase.markAsSent(message.getId(), true)
-        }
-    }
-
-    override fun markAsSyncing(timestamp: Long, author: String) {
-        mmsSmsDatabase
-            .getMessageFor(timestamp, author)
-            ?.run { getMmsDatabaseElseSms(isMms).markAsSyncing(id) }
+    override fun markAsSyncing(messageId: MessageId) {
+        getMmsDatabaseElseSms(messageId.mms).markAsSyncing(messageId.id)
     }
 
     private fun getMmsDatabaseElseSms(isMms: Boolean) =
         if (isMms) mmsDatabase
         else smsDatabase
 
-    override fun markAsResyncing(timestamp: Long, author: String) {
-        mmsSmsDatabase
-            .getMessageFor(timestamp, author)
-            ?.run { getMmsDatabaseElseSms(isMms).markAsResyncing(id) }
+    override fun markAsResyncing(messageId: MessageId) {
+        getMmsDatabaseElseSms(messageId.mms).markAsResyncing(messageId.id)
     }
 
-    override fun markAsSending(timestamp: Long, author: String) {
-        val database = mmsSmsDatabase
-        val messageRecord = database.getMessageFor(timestamp, author) ?: return
-        if (messageRecord.isMms) {
-            val mmsDatabase = mmsDatabase
-            mmsDatabase.markAsSending(messageRecord.getId())
+    override fun markAsSending(messageId: MessageId) {
+        if (messageId.mms) {
+            mmsDatabase.markAsSending(messageId.id)
         } else {
-            val smsDatabase = smsDatabase
-            smsDatabase.markAsSending(messageRecord.getId())
-            messageRecord.isPending
+            smsDatabase.markAsSending(messageId.id)
         }
     }
 
-    override fun markUnidentified(timestamp: Long, author: String) {
-        val database = mmsSmsDatabase
-        val messageRecord = database.getMessageFor(timestamp, author)
-        if (messageRecord == null) {
-            Log.w(TAG, "Could not identify message with timestamp: $timestamp from author: $author")
-            return
-        }
-        if (messageRecord.isMms) {
-            val mmsDatabase = mmsDatabase
-            mmsDatabase.markUnidentified(messageRecord.getId(), true)
+    override fun markAsSentFailed(messageId: MessageId, error: Exception) {
+        if (messageId.mms) {
+            mmsDatabase.markAsSentFailed(messageId.id)
         } else {
-            val smsDatabase = smsDatabase
-            smsDatabase.markUnidentified(messageRecord.getId(), true)
-        }
-    }
-
-    // Method that marks a message as unidentified in Communities (only!) - where the server
-    // modifies the message timestamp and as such we cannot use that to identify the local message.
-    override fun markUnidentifiedInCommunity(threadId: Long, messageId: Long) {
-        val database = mmsSmsDatabase
-        val message = database.getLastSentMessageRecordFromSender(threadId, preferences.getLocalNumber())
-
-        // Check to ensure the message exists
-        if (message == null) {
-            Log.w(TAG, "Could not find local message in Storage.markUnidentifiedInCommunity - aborting.")
-            return
-        }
-
-        // Mark it as unidentified if we found the message successfully
-        if (message.isMms) {
-            mmsDatabase.markUnidentified(message.getId(), true)
-        } else {
-            smsDatabase.markUnidentified(message.getId(), true)
-        }
-    }
-
-    override fun markAsSentFailed(timestamp: Long, author: String, error: Exception) {
-        val database = mmsSmsDatabase
-        val messageRecord = database.getMessageFor(timestamp, author) ?: return
-        if (messageRecord.isMms) {
-            val mmsDatabase = mmsDatabase
-            mmsDatabase.markAsSentFailed(messageRecord.getId())
-        } else {
-            val smsDatabase = smsDatabase
-            smsDatabase.markAsSentFailed(messageRecord.getId())
+            smsDatabase.markAsSentFailed(messageId.id)
         }
         if (error.localizedMessage != null) {
             val message: String
@@ -820,18 +731,14 @@ open class Storage @Inject constructor(
             } else {
                 message = error.localizedMessage!!
             }
-            lokiMessageDatabase.setErrorMessage(messageRecord.getId(), message)
+            lokiMessageDatabase.setErrorMessage(messageId, message)
         } else {
-            lokiMessageDatabase.setErrorMessage(messageRecord.getId(), error.javaClass.simpleName)
+            lokiMessageDatabase.setErrorMessage(messageId, error.javaClass.simpleName)
         }
     }
 
-    override fun markAsSyncFailed(timestamp: Long, author: String, error: Exception) {
-        val database = mmsSmsDatabase
-        val messageRecord = database.getMessageFor(timestamp, author) ?: return
-
-        database.getMessageFor(timestamp, author)
-            ?.run { getMmsDatabaseElseSms(isMms).markAsSyncFailed(id) }
+    override fun markAsSyncFailed(messageId: MessageId, error: Exception) {
+        getMmsDatabaseElseSms(messageId.mms).markAsSyncFailed(messageId.id)
 
         if (error.localizedMessage != null) {
             val message: String
@@ -840,19 +747,18 @@ open class Storage @Inject constructor(
             } else {
                 message = error.localizedMessage!!
             }
-            lokiMessageDatabase.setErrorMessage(messageRecord.getId(), message)
+            lokiMessageDatabase.setErrorMessage(messageId, message)
         } else {
-            lokiMessageDatabase.setErrorMessage(messageRecord.getId(), error.javaClass.simpleName)
+            lokiMessageDatabase.setErrorMessage(messageId, error.javaClass.simpleName)
         }
     }
 
-    override fun clearErrorMessage(messageID: Long) {
-        val db = lokiMessageDatabase
-        db.clearErrorMessage(messageID)
+    override fun clearErrorMessage(messageID: MessageId) {
+        lokiMessageDatabase.clearErrorMessage(messageID)
     }
 
-    override fun setMessageServerHash(messageID: Long, mms: Boolean, serverHash: String) {
-        lokiMessageDatabase.setMessageServerHash(messageID, mms, serverHash)
+    override fun setMessageServerHash(messageId: MessageId, serverHash: String) {
+        lokiMessageDatabase.setMessageServerHash(messageId, serverHash)
     }
 
     override fun getGroup(groupID: String): GroupRecord? {
@@ -880,8 +786,8 @@ open class Storage @Inject constructor(
                 name = name,
                 members = members,
                 priority = PRIORITY_VISIBLE,
-                encPubKey = (encryptionKeyPair.publicKey as DjbECPublicKey).publicKey,  // 'serialize()' inserts an extra byte
-                encSecKey = encryptionKeyPair.privateKey.serialize(),
+                encPubKey = Bytes((encryptionKeyPair.publicKey as DjbECPublicKey).publicKey),  // 'serialize()' inserts an extra byte
+                encSecKey = Bytes(encryptionKeyPair.privateKey.serialize()),
                 disappearingTimer = expirationTimer.toLong(),
                 joinedAtSecs = (formationTimestamp / 1000L)
             )
@@ -912,8 +818,8 @@ open class Storage @Inject constructor(
             val groupInfo = userGroups.getOrConstructLegacyGroupInfo(groupPublicKey).copy(
                 name = name,
                 members = membersMap,
-                encPubKey = (latestKeyPair.publicKey as DjbECPublicKey).publicKey,  // 'serialize()' inserts an extra byte
-                encSecKey = latestKeyPair.privateKey.serialize(),
+                encPubKey = Bytes((latestKeyPair.publicKey as DjbECPublicKey).publicKey),  // 'serialize()' inserts an extra byte
+                encSecKey = Bytes(latestKeyPair.privateKey.serialize()),
                 priority = if (isPinned(threadID)) PRIORITY_PINNED else PRIORITY_VISIBLE,
                 disappearingTimer = getExpirationConfiguration(threadID)?.expiryMode?.expirySeconds ?: 0L,
                 joinedAtSecs = (existingGroup.formationTimestamp / 1000L)
@@ -965,14 +871,32 @@ open class Storage @Inject constructor(
         val userPublicKey = getUserPublicKey()!!
         val recipient = Recipient.from(context, fromSerialized(groupID), false)
         val updateData = UpdateMessageData.buildGroupUpdate(type, name, members)?.toJSON() ?: ""
-        val infoMessage = OutgoingGroupMediaMessage(recipient, updateData, groupID, null, sentTimestamp, 0, 0, true, null, listOf(), listOf())
+        val infoMessage = OutgoingGroupMediaMessage(
+            recipient,
+            updateData,
+            groupID,
+            null,
+            sentTimestamp,
+            0,
+            0,
+            true,
+            null,
+            listOf(),
+            listOf(),
+            null
+        )
         val mmsDB = mmsDatabase
         val mmsSmsDB = mmsSmsDatabase
         if (mmsSmsDB.getMessageFor(sentTimestamp, userPublicKey) != null) {
             Log.w(TAG, "Bailing from insertOutgoingInfoMessage because we believe the message has already been sent!")
             return null
         }
-        val infoMessageID = mmsDB.insertMessageOutbox(infoMessage, threadID, false, null, runThreadUpdate = true)
+        val infoMessageID = mmsDB.insertMessageOutbox(
+            infoMessage,
+            threadID,
+            false,
+            runThreadUpdate = true
+        )
         mmsDB.markAsSent(infoMessageID, true)
         return infoMessageID
     }
@@ -1015,10 +939,6 @@ open class Storage @Inject constructor(
         lokiAPIDatabase.removeAllClosedGroupEncryptionKeyPairs(groupPublicKey)
     }
 
-    override fun removeClosedGroupThread(threadID: Long) {
-        threadDatabase.deleteConversation(threadID)
-    }
-
     override fun updateFormationTimestamp(groupID: String, formationTimestamp: Long) {
         groupDatabase
             .updateFormationTimestamp(groupID, formationTimestamp)
@@ -1055,33 +975,33 @@ open class Storage @Inject constructor(
         }
     }
 
-    override fun insertGroupInfoChange(message: GroupUpdated, closedGroup: AccountId): Long? {
+    override fun insertGroupInfoChange(message: GroupUpdated, closedGroup: AccountId) {
         val sentTimestamp = message.sentTimestamp ?: clock.currentTimeMills()
         val senderPublicKey = message.sender
         val groupName = configFactory.withGroupConfigs(closedGroup) { it.groupInfo.getName() }
             ?: configFactory.getGroup(closedGroup)?.name
 
-        val updateData = UpdateMessageData.buildGroupUpdate(message, groupName.orEmpty()) ?: return null
+        val updateData = UpdateMessageData.buildGroupUpdate(message, groupName.orEmpty()) ?: return
 
-        return insertUpdateControlMessage(updateData, sentTimestamp, senderPublicKey, closedGroup)
+        insertUpdateControlMessage(updateData, sentTimestamp, senderPublicKey, closedGroup)
     }
 
-    override fun insertGroupInfoLeaving(closedGroup: AccountId): Long? {
+    override fun insertGroupInfoLeaving(closedGroup: AccountId) {
         val sentTimestamp = clock.currentTimeMills()
-        val senderPublicKey = getUserPublicKey() ?: return null
+        val senderPublicKey = getUserPublicKey() ?: return
         val updateData = UpdateMessageData.buildGroupLeaveUpdate(UpdateMessageData.Kind.GroupLeaving)
 
-        return insertUpdateControlMessage(updateData, sentTimestamp, senderPublicKey, closedGroup)
+        insertUpdateControlMessage(updateData, sentTimestamp, senderPublicKey, closedGroup)
     }
 
-    override fun insertGroupInfoErrorQuit(closedGroup: AccountId): Long? {
+    override fun insertGroupInfoErrorQuit(closedGroup: AccountId) {
         val sentTimestamp = clock.currentTimeMills()
-        val senderPublicKey = getUserPublicKey() ?: return null
+        val senderPublicKey = getUserPublicKey() ?: return
         val groupName = configFactory.withGroupConfigs(closedGroup) { it.groupInfo.getName() }
             ?: configFactory.getGroup(closedGroup)?.name
         val updateData = UpdateMessageData.buildGroupLeaveUpdate(UpdateMessageData.Kind.GroupErrorQuit(groupName.orEmpty()))
 
-        return insertUpdateControlMessage(updateData, sentTimestamp, senderPublicKey, closedGroup)
+        insertUpdateControlMessage(updateData, sentTimestamp, senderPublicKey, closedGroup)
     }
 
     override fun updateGroupInfoChange(messageId: Long, newType: UpdateMessageData.Kind) {
@@ -1094,17 +1014,17 @@ open class Storage @Inject constructor(
         mmsSmsDatabase.deleteGroupInfoMessage(groupId, kind)
     }
 
-    override fun insertGroupInviteControlMessage(sentTimestamp: Long, senderPublicKey: String, senderName: String?, closedGroup: AccountId, groupName: String): Long? {
+    override fun insertGroupInviteControlMessage(sentTimestamp: Long, senderPublicKey: String, senderName: String?, closedGroup: AccountId, groupName: String) {
         val updateData = UpdateMessageData(UpdateMessageData.Kind.GroupInvitation(
             groupAccountId = closedGroup.hexString,
             invitingAdminId = senderPublicKey,
             invitingAdminName = senderName,
             groupName = groupName
         ))
-        return insertUpdateControlMessage(updateData, sentTimestamp, senderPublicKey, closedGroup)
+        insertUpdateControlMessage(updateData, sentTimestamp, senderPublicKey, closedGroup)
     }
 
-    private fun insertUpdateControlMessage(updateData: UpdateMessageData, sentTimestamp: Long, senderPublicKey: String?, closedGroup: AccountId): Long? {
+    private fun insertUpdateControlMessage(updateData: UpdateMessageData, sentTimestamp: Long, senderPublicKey: String?, closedGroup: AccountId): MessageId? {
         val userPublicKey = getUserPublicKey()!!
         val recipient = Recipient.from(context, fromSerialized(closedGroup.hexString), false)
         val threadDb = threadDatabase
@@ -1128,22 +1048,28 @@ open class Storage @Inject constructor(
                 true,
                 null,
                 listOf(),
-                listOf()
+                listOf(),
+                null
             )
             val mmsDB = mmsDatabase
             val mmsSmsDB = mmsSmsDatabase
             // check for conflict here, not returning duplicate in case it's different
             if (mmsSmsDB.getMessageFor(sentTimestamp, userPublicKey) != null) return null
-            val infoMessageID = mmsDB.insertMessageOutbox(infoMessage, threadID, false, null, runThreadUpdate = true)
+            val infoMessageID = mmsDB.insertMessageOutbox(
+                infoMessage,
+                threadID,
+                false,
+                runThreadUpdate = true
+            )
             mmsDB.markAsSent(infoMessageID, true)
-            return infoMessageID
+            return MessageId(infoMessageID, mms = true)
         } else {
             val group = SignalServiceGroup(Hex.fromStringCondensed(closedGroup.hexString), SignalServiceGroup.GroupType.SIGNAL)
             val m = IncomingTextMessage(fromSerialized(senderPublicKey), 1, sentTimestamp, "", Optional.of(group), expiresInMillis, expireStartedAt, true, false)
             val infoMessage = IncomingGroupMessage(m, inviteJson, true)
             val smsDB = smsDatabase
             val insertResult = smsDB.insertMessageInbox(infoMessage,  true)
-            return insertResult.orNull()?.messageId
+            return insertResult.orNull()?.messageId?.let { MessageId(it, mms = false) }
         }
     }
 
@@ -1160,19 +1086,23 @@ open class Storage @Inject constructor(
     }
 
     override fun updateOpenGroup(openGroup: OpenGroup) {
-        OpenGroupManager.updateOpenGroup(openGroup, context)
+        openGroupManager.get().updateOpenGroup(openGroup, context)
+
+        groupDatabase.updateTitle(
+            groupID = GroupUtil.getEncodedOpenGroupID(openGroup.groupId.toByteArray()),
+            newValue = openGroup.name
+        )
     }
 
     override fun getAllGroups(includeInactive: Boolean): List<GroupRecord> {
         return groupDatabase.getAllGroups(includeInactive)
     }
 
-    override suspend fun addOpenGroup(urlAsString: String): OpenGroupApi.RoomInfo? {
-        return OpenGroupManager.addOpenGroup(urlAsString, context)
+    override suspend fun addOpenGroup(urlAsString: String) {
+        return openGroupManager.get().addOpenGroup(urlAsString, context)
     }
 
     override fun onOpenGroupAdded(server: String, room: String) {
-        OpenGroupManager.restartPollerForServer(server.removeSuffix("/"))
         configFactory.withMutableUserConfigs { configs ->
             val groups = configs.userGroups
             val volatileConfig = configs.convoInfoVolatile
@@ -1264,9 +1194,8 @@ open class Storage @Inject constructor(
         sessionContactDatabase.setContact(contact)
         val address = fromSerialized(contact.accountID)
         if (!getRecipientApproved(address)) return
-        val recipientHash = profileManager.contactUpdatedInternal(contact)
-        val recipient = Recipient.from(context, address, false)
-        setRecipientHash(recipient, recipientHash)
+        profileManager.contactUpdatedInternal(contact)
+        threadDatabase.notifyConversationListListeners()
     }
 
     override fun deleteContactAndSyncConfig(accountId: String) {
@@ -1323,9 +1252,8 @@ open class Storage @Inject constructor(
 
             if (contact.profilePicture != UserPic.DEFAULT) {
                 val (url, key) = contact.profilePicture
-                if (key.size != ProfileKeyUtil.PROFILE_KEY_BYTES) return@forEach
-                profileManager.setProfilePicture(context, recipient, url, key)
-                profileManager.setUnidentifiedAccessMode(context, recipient, Recipient.UnidentifiedAccessMode.UNKNOWN)
+                if (key.data.size != ProfileKeyUtil.PROFILE_KEY_BYTES) return@forEach
+                profileManager.setProfilePicture(context, recipient, url, key.data)
             } else {
                 profileManager.setProfilePicture(context, recipient, null, null)
             }
@@ -1346,59 +1274,22 @@ open class Storage @Inject constructor(
                     )
                 }
             }
-            setRecipientHash(recipient, contact.hashCode().toString())
         }
 
         // if we have contacts locally but that are missing from the config, remove their corresponding thread
         val currentUserKey = getUserPublicKey()
-        val removedContacts = getAllContacts().filter { localContact ->
-            localContact.accountID != currentUserKey && // we don't want to remove ourselves (ie, our Note to Self)
-            moreContacts.none { it.id == localContact.accountID } // we don't want to remove contacts that are present in the config
+
+        //NOTE: We used to cycle through all Contact here instead or all Recipients, but turns out a Contact isn't saved until we have a name, nickname or avatar
+        // which in the case of contacts we are messaging for the first time and who haven't yet approved us, it won't be the case
+        // But that person is saved in the Recipient db. We might need to investigate how to clean the relationship between Recipients, Contacts and config Contacts.
+        val removedContacts = recipientDatabase.allRecipients.filter { localContact ->
+            IdPrefix.fromValue(localContact.address.toString()) == IdPrefix.STANDARD && // only want standard address
+            localContact.is1on1 && // only for conversations
+            localContact.address.toString() != currentUserKey && // we don't want to remove ourselves (ie, our Note to Self)
+            moreContacts.none { it.id == localContact.address.toString() } // we don't want to remove contacts that are present in the config
         }
         removedContacts.forEach {
-            deleteContact(it.accountID)
-        }
-    }
-
-    override fun addContacts(contacts: List<ConfigurationMessage.Contact>) {
-        val recipientDatabase = recipientDatabase
-        val threadDatabase = threadDatabase
-        val mappingDb = blindedIdMappingDatabase
-        val moreContacts = contacts.filter { contact ->
-            val id = AccountId(contact.publicKey)
-            id.prefix != IdPrefix.BLINDED || mappingDb.getBlindedIdMapping(contact.publicKey).none { it.accountId != null }
-        }
-        for (contact in moreContacts) {
-            val address = fromSerialized(contact.publicKey)
-            val recipient = Recipient.from(context, address, true)
-            if (!contact.profilePicture.isNullOrEmpty()) {
-                recipientDatabase.setProfileAvatar(recipient, contact.profilePicture)
-            }
-            if (contact.profileKey?.isNotEmpty() == true) {
-                recipientDatabase.setProfileKey(recipient, contact.profileKey)
-            }
-            if (contact.name.isNotEmpty()) {
-                recipientDatabase.setProfileName(recipient, contact.name)
-            }
-            recipientDatabase.setProfileSharing(recipient, true)
-            recipientDatabase.setRegistered(recipient, Recipient.RegisteredState.REGISTERED)
-            // create Thread if needed
-            val threadId = threadDatabase.getThreadIdIfExistsFor(recipient)
-            if (contact.didApproveMe == true) {
-                recipientDatabase.setApprovedMe(recipient, true)
-            }
-            if (contact.isApproved == true && threadId != -1L) {
-                setRecipientApproved(recipient, true)
-                threadDatabase.setHasSent(threadId, true)
-            }
-
-            val contactIsBlocked: Boolean? = contact.isBlocked
-            if (contactIsBlocked != null && recipient.isBlocked != contactIsBlocked) {
-                setBlocked(listOf(recipient), contactIsBlocked, fromConfigUpdate = true)
-            }
-        }
-        if (contacts.isNotEmpty()) {
-            threadDatabase.notifyConversationListListeners()
+            deleteContact(it.address.toString())
         }
     }
 
@@ -1412,11 +1303,6 @@ open class Storage @Inject constructor(
     ) {
         val recipientDb = recipientDatabase
         recipientDb.setAutoDownloadAttachments(recipient, shouldAutoDownloadAttachments)
-    }
-
-    override fun setRecipientHash(recipient: Recipient, recipientHash: String?) {
-        val recipientDb = recipientDatabase
-        recipientDb.setRecipientHash(recipient, recipientHash)
     }
 
     override fun getLastUpdated(threadID: Long): Long {
@@ -1437,6 +1323,48 @@ open class Storage @Inject constructor(
     override fun getMessageCount(threadID: Long): Long {
         val mmsSmsDb = mmsSmsDatabase
         return mmsSmsDb.getConversationCount(threadID)
+    }
+
+    override fun getTotalPinned(): Int {
+        return configFactory.withUserConfigs {
+            var totalPins = 0
+
+            // check if the note to self is pinned
+            if (it.userProfile.getNtsPriority() == PRIORITY_PINNED) {
+                totalPins ++
+            }
+
+            // check for 1on1
+            it.contacts.all().forEach { contact ->
+                if (contact.priority == PRIORITY_PINNED) {
+                    totalPins ++
+                }
+            }
+
+            // check groups and communities
+            it.userGroups.all().forEach { group ->
+                when(group){
+                    is GroupInfo.ClosedGroupInfo -> {
+                        if (group.priority == PRIORITY_PINNED) {
+                            totalPins ++
+                        }
+                    }
+                    is GroupInfo.CommunityGroupInfo -> {
+                        if (group.priority == PRIORITY_PINNED) {
+                            totalPins ++
+                        }
+                    }
+
+                    is GroupInfo.LegacyGroupInfo -> {
+                        if (group.priority == PRIORITY_PINNED) {
+                            totalPins ++
+                        }
+                    }
+                }
+            }
+
+            totalPins
+        }
     }
 
     override fun setPinned(threadID: Long, isPinned: Boolean) {
@@ -1488,6 +1416,11 @@ open class Storage @Inject constructor(
         return threadDB.isPinned(threadID)
     }
 
+    override fun isRead(threadId: Long) : Boolean {
+        val threadDB = threadDatabase
+        return threadDB.isRead(threadId)
+    }
+
     override fun setThreadCreationDate(threadId: Long, newDate: Long) {
         val threadDb = threadDatabase
         threadDb.setCreationDate(threadId, newDate)
@@ -1504,28 +1437,51 @@ open class Storage @Inject constructor(
         val threadDB = threadDatabase
         val groupDB = groupDatabase
 
-        val recipient = getRecipientForThread(threadID)
+        val recipientAddress = getRecipientForThread(threadID)?.address
 
-        // Delete the conversation
-        threadDB.deleteConversation(threadID)
+        // Delete the conversation and its messages
+        smsDatabase.deleteThread(threadID)
+        mmsDatabase.deleteThread(threadID)
+        get(context).draftDatabase().clearDrafts(threadID)
+        lokiMessageDatabase.deleteThread(threadID)
+        threadDB.deleteThread(threadID)
+        notifyConversationListeners(threadID)
+        notifyConversationListListeners()
+        clearReceivedMessages()
 
-        // If this wasn't a group recipient then there's nothing further we need to do..
-        if (recipient == null || !recipient.isGroupRecipient) return
+        if (recipientAddress == null) return
 
-        // ..but if this IS a group recipient then we need to delete the group details.
         configFactory.withMutableUserConfigs { configs ->
-            val volatile = configs.convoInfoVolatile
-            val groups = configs.userGroups
-            val groupID = recipient.address.toGroupString()
-            val closedGroup = getGroup(groupID)
-            val groupPublicKey = GroupUtil.doubleDecodeGroupId(recipient.address.toString())
-            if (closedGroup != null) {
-                groupDB.delete(groupID)
-                volatile.eraseLegacyClosedGroup(groupPublicKey)
-                groups.eraseLegacyGroup(groupPublicKey)
+            if (recipientAddress.isGroupOrCommunity) {
+                if (recipientAddress.isLegacyGroup) {
+                    val accountId = GroupUtil.doubleDecodeGroupId(recipientAddress.toString())
+                    groupDB.delete(recipientAddress.toString())
+                    configs.convoInfoVolatile.eraseLegacyClosedGroup(accountId)
+                    configs.userGroups.eraseLegacyGroup(accountId)
+                } else if (recipientAddress.isCommunity) {
+                    // these should be removed in the group leave / handling new configs
+                    Log.w("Loki", "Thread delete called for open group address, expecting to be handled elsewhere")
+                } else if (recipientAddress.isGroupV2) {
+                    Log.w("Loki", "Thread delete called for closed group address, expecting to be handled elsewhere")
+                }
             } else {
-                Log.w("Loki-DBG", "Failed to find a closed group for ${groupPublicKey.take(4)}")
+                // non-standard contact prefixes: 15, 00 etc shouldn't be stored in config
+                if(!recipientAddress.toString().startsWith(IdPrefix.STANDARD.value)) return@withMutableUserConfigs
+                configs.convoInfoVolatile.eraseOneToOne(recipientAddress.toString())
+
+                if (getUserPublicKey() != recipientAddress.toString()) {
+                    // only update the priority if the contact exists in our config
+                    // (this helps for example when deleting a contact and we do not want to recreate one here only to mark it hidden)
+                    configs.contacts.get(recipientAddress.toString())?.let{
+                        it.priority = PRIORITY_HIDDEN
+                        configs.contacts.set(it)
+                    }
+                } else {
+                    configs.userProfile.setNtsPriority(PRIORITY_HIDDEN)
+                }
             }
+
+            Unit
         }
     }
 
@@ -1561,7 +1517,6 @@ open class Storage @Inject constructor(
     }
 
     override fun insertDataExtractionNotificationMessage(senderPublicKey: String, message: DataExtractionNotificationInfoMessage, sentTimestamp: Long) {
-        val database = mmsDatabase
         val address = fromSerialized(senderPublicKey)
         val recipient = Recipient.from(context, address, false)
 
@@ -1579,19 +1534,17 @@ open class Storage @Inject constructor(
             expireStartedAt,
             false,
             false,
-            false,
-            false,
             Optional.absent(),
             Optional.absent(),
             Optional.absent(),
+            null,
             Optional.absent(),
             Optional.absent(),
             Optional.absent(),
             Optional.of(message)
         )
 
-        database.insertSecureDecryptedMessageInbox(mediaMessage, threadId, runThreadUpdate = true)
-        messageExpirationManager.maybeStartExpiration(sentTimestamp, senderPublicKey, expiryMode)
+        mmsDatabase.insertSecureDecryptedMessageInbox(mediaMessage, threadId, runThreadUpdate = true)
     }
 
     /**
@@ -1631,10 +1584,9 @@ open class Storage @Inject constructor(
 
                 if ((profileKeyValid && profileKeyChanged) || (profileKeyValid && needsProfilePicture)) {
                     profileManager.setProfilePicture(context, sender, profile.profilePictureURL!!, newProfileKey!!)
-                    profileManager.setUnidentifiedAccessMode(context, sender, Recipient.UnidentifiedAccessMode.UNKNOWN)
                 }
             }
-            threadDatabase.setHasSent(threadId, true)
+
             val mappingDb = blindedIdMappingDatabase
             val mappings = mutableMapOf<String, BlindedIdMapping>()
             threadDatabase.readerFor(threadDatabase.conversationList).use { reader ->
@@ -1652,7 +1604,12 @@ open class Storage @Inject constructor(
                 }
             }
             for (mapping in mappings) {
-                if (!SodiumUtilities.accountId(senderPublicKey, mapping.value.blindedId, mapping.value.serverId)) {
+                if (!BlindKeyAPI.sessionIdMatchesBlindedId(
+                        sessionId = senderPublicKey,
+                        blindedId = mapping.value.blindedId,
+                        serverPubKey = mapping.value.serverId
+                    )
+                ) {
                     continue
                 }
                 mappingDb.addBlindedIdMapping(mapping.value.copy(accountId = senderPublicKey))
@@ -1660,7 +1617,7 @@ open class Storage @Inject constructor(
                 val blindedThreadId = threadDatabase.getOrCreateThreadIdFor(Recipient.from(context, fromSerialized(mapping.key), false))
                 mmsDatabase.updateThreadId(blindedThreadId, threadId)
                 smsDatabase.updateThreadId(blindedThreadId, threadId)
-                threadDatabase.deleteConversation(blindedThreadId)
+                deleteConversation(blindedThreadId)
             }
 
             var alreadyApprovedMe: Boolean = false
@@ -1669,7 +1626,6 @@ open class Storage @Inject constructor(
                 alreadyApprovedMe = it.contacts.get(sender.address.toString())?.approvedMe ?: false
             }
 
-            setRecipientApproved(sender, true)
             setRecipientApprovedMe(sender, true)
 
             // only show the message if wasn't already approvedMe before
@@ -1680,13 +1636,12 @@ open class Storage @Inject constructor(
                     -1,
                     0,
                     0,
-                    false,
-                    false,
                     true,
                     false,
                     Optional.absent(),
                     Optional.absent(),
                     Optional.absent(),
+                    null,
                     Optional.absent(),
                     Optional.absent(),
                     Optional.absent(),
@@ -1713,13 +1668,12 @@ open class Storage @Inject constructor(
             -1,
             0,
             0,
-            false,
-            false,
             true,
             false,
             Optional.absent(),
             Optional.absent(),
             Optional.absent(),
+            null,
             Optional.absent(),
             Optional.absent(),
             Optional.absent(),
@@ -1757,17 +1711,15 @@ open class Storage @Inject constructor(
     }
 
     override fun insertCallMessage(senderPublicKey: String, callMessageType: CallMessageType, sentTimestamp: Long) {
-        val database = smsDatabase
         val address = fromSerialized(senderPublicKey)
         val recipient = Recipient.from(context, address, false)
         val threadId = threadDatabase.getOrCreateThreadIdFor(recipient)
         val expirationConfig = getExpirationConfiguration(threadId)
         val expiryMode = expirationConfig?.expiryMode?.coerceSendToRead() ?: ExpiryMode.NONE
         val expiresInMillis = expiryMode.expiryMillis
-        val expireStartedAt = if (expiryMode is ExpiryMode.AfterSend) sentTimestamp else 0
+        val expireStartedAt = if (expiryMode != ExpiryMode.NONE) clock.currentTimeMills() else 0
         val callMessage = IncomingTextMessage.fromCallInfo(callMessageType, address, Optional.absent(), sentTimestamp, expiresInMillis, expireStartedAt)
-        database.insertCallMessage(callMessage)
-        messageExpirationManager.maybeStartExpiration(sentTimestamp, senderPublicKey, expiryMode)
+        smsDatabase.insertCallMessage(callMessage)
     }
 
     override fun conversationHasOutgoing(userPublicKey: String): Boolean {
@@ -1816,14 +1768,24 @@ open class Storage @Inject constructor(
         }
         getAllContacts().forEach { contact ->
             val accountId = AccountId(contact.accountID)
-            if (accountId.prefix == IdPrefix.STANDARD && SodiumUtilities.accountId(accountId.hexString, blindedId, serverPublicKey)) {
+            if (accountId.prefix == IdPrefix.STANDARD && BlindKeyAPI.sessionIdMatchesBlindedId(
+                    sessionId = accountId.hexString,
+                    blindedId = blindedId,
+                    serverPubKey = serverPublicKey
+                )
+            ) {
                 val contactMapping = mapping.copy(accountId = accountId.hexString)
                 db.addBlindedIdMapping(contactMapping)
                 return contactMapping
             }
         }
         db.getBlindedIdMappingsExceptFor(server).forEach {
-            if (SodiumUtilities.accountId(it.accountId!!, blindedId, serverPublicKey)) {
+            if (BlindKeyAPI.sessionIdMatchesBlindedId(
+                    sessionId = it.accountId!!,
+                    blindedId = blindedId,
+                    serverPubKey = serverPublicKey
+                )
+            ) {
                 val otherMapping = mapping.copy(accountId = it.accountId)
                 db.addBlindedIdMapping(otherMapping)
                 return otherMapping
@@ -1833,27 +1795,30 @@ open class Storage @Inject constructor(
         return mapping
     }
 
-    override fun addReaction(reaction: Reaction, messageSender: String, notifyUnread: Boolean) {
+    override fun addReaction(
+        threadId: Long,
+        reaction: Reaction,
+        messageSender: String,
+        notifyUnread: Boolean
+    ) {
         val timestamp = reaction.timestamp
-        val localId = reaction.localId
-        val isMms = reaction.isMms
 
-        val messageId = if (localId != null && localId > 0 && isMms != null) {
-            // bail early is the message is marked as deleted
-            val messagingDatabase: MessagingDatabase = if (isMms == true) mmsDatabase else smsDatabase
-            if(messagingDatabase.getMessageRecord(localId)?.isDeleted == true) return
-
-            MessageId(localId, isMms)
-        } else if (timestamp != null && timestamp > 0) {
-            val messageRecord = mmsSmsDatabase.getMessageForTimestamp(timestamp) ?: return
+        val messageId = if (timestamp != null && timestamp > 0) {
+            val messageRecord = mmsSmsDatabase.getMessageForTimestamp(threadId, timestamp) ?: return
             if (messageRecord.isDeleted) return
             MessageId(messageRecord.id, messageRecord.isMms)
-        } else return
+        } else {
+            Log.d(TAG, "Invalid reaction timestamp: $timestamp. Not adding")
+            return
+        }
+
+        addReaction(messageId, reaction, messageSender)
+    }
+
+    override fun addReaction(messageId: MessageId, reaction: Reaction, messageSender: String) {
         reactionDatabase.addReaction(
-            messageId,
             ReactionRecord(
-                messageId = messageId.id,
-                isMms = messageId.mms,
+                messageId = messageId,
                 author = messageSender,
                 emoji = reaction.emoji!!,
                 serverId = reaction.serverId!!,
@@ -1861,15 +1826,34 @@ open class Storage @Inject constructor(
                 sortId = reaction.index!!,
                 dateSent = reaction.dateSent!!,
                 dateReceived = reaction.dateReceived!!
-            ),
-            notifyUnread
+            )
         )
     }
 
-    override fun removeReaction(emoji: String, messageTimestamp: Long, author: String, notifyUnread: Boolean) {
-        val messageRecord = mmsSmsDatabase.getMessageForTimestamp(messageTimestamp) ?: return
-        val messageId = MessageId(messageRecord.id, messageRecord.isMms)
-        reactionDatabase.deleteReaction(emoji, messageId, author, notifyUnread)
+    override fun addReactions(
+        reactions: Map<MessageId, List<ReactionRecord>>,
+        replaceAll: Boolean,
+        notifyUnread: Boolean
+    ) {
+        reactionDatabase.addReactions(
+            reactionsByMessageId = reactions,
+            replaceAll = replaceAll
+        )
+    }
+
+    override fun removeReaction(
+        emoji: String,
+        messageTimestamp: Long,
+        threadId: Long,
+        author: String,
+        notifyUnread: Boolean
+    ) {
+        val messageRecord = mmsSmsDatabase.getMessageForTimestamp(threadId, messageTimestamp) ?: return
+        reactionDatabase.deleteReaction(
+            emoji,
+            MessageId(messageRecord.id, messageRecord.isMms),
+            author
+        )
     }
 
     override fun updateReactionIfNeeded(message: Message, sender: String, openGroupSentTimestamp: Long) {
@@ -1888,8 +1872,8 @@ open class Storage @Inject constructor(
         database.updateReaction(reaction)
     }
 
-    override fun deleteReactions(messageId: Long, mms: Boolean) {
-        reactionDatabase.deleteMessageReactions(MessageId(messageId, mms))
+    override fun deleteReactions(messageId: MessageId) {
+        reactionDatabase.deleteMessageReactions(messageId)
     }
 
     override fun deleteReactions(messageIds: List<Long>, mms: Boolean) {
@@ -1991,27 +1975,6 @@ open class Storage @Inject constructor(
         expirationDb.setExpirationConfiguration(
             config.run { copy(expiryMode = expiryMode) }
         )
-    }
-
-    override fun getExpiringMessages(messageIds: List<Long>): List<Pair<Long, Long>> {
-        val expiringMessages = mutableListOf<Pair<Long, Long>>()
-        val smsDb = smsDatabase
-        smsDb.readerFor(smsDb.expirationNotStartedMessages).use { reader ->
-            while (reader.next != null) {
-                if (messageIds.isEmpty() || reader.current.id in messageIds) {
-                    expiringMessages.add(reader.current.id to reader.current.expiresIn)
-                }
-            }
-        }
-        val mmsDb = mmsDatabase
-        mmsDb.expireNotStartedMessages.use { reader ->
-            while (reader.next != null) {
-                if (messageIds.isEmpty() || reader.current.id in messageIds) {
-                    expiringMessages.add(reader.current.id to reader.current.expiresIn)
-                }
-            }
-        }
-        return expiringMessages
     }
 
     override fun updateDisappearingState(
