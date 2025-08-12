@@ -321,20 +321,20 @@ open class Storage @Inject constructor(
                 val config = configs.convoInfoVolatile
                 val convo = getConvo(threadId, recipient, config)  ?: return@withMutableUserConfigs
                 convo.lastRead = lastSeenTime
-                if (convo.unread) {
-                    convo.unread = lastSeenTime <= currentLastRead
+
+                if(convo.unread){
+                    convo.unread = lastSeenTime < currentLastRead
                     notifyConversationListListeners()
                 }
+
                 config.set(convo)
             }
         }
     }
 
     override fun markConversationAsUnread(threadId: Long) {
-        val threadDb = threadDatabase
         getRecipientForThread(threadId)?.let { recipient ->
 
-            threadDb.updateReadStatus(threadId, false)
             // don't process configs for inbox recipients
             if (recipient.isCommunityInboxRecipient) return
 
