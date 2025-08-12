@@ -27,9 +27,10 @@ import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.toGroupString
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.UiState
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.toUiState
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsNavigator
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.database.Storage
 
 @HiltViewModel(assistedFactory = DisappearingMessagesViewModel.Factory::class)
 class DisappearingMessagesViewModel @AssistedInject constructor(
@@ -40,7 +41,8 @@ class DisappearingMessagesViewModel @AssistedInject constructor(
     private val textSecurePreferences: TextSecurePreferences,
     private val disappearingMessages: DisappearingMessages,
     private val groupDb: GroupDatabase,
-    private val navigator: ConversationSettingsNavigator,
+    private val storage: Storage,
+    private val navigator: UINavigator<ConversationSettingsDestination>,
     private val recipientRepository: RecipientRepository,
 ) : ViewModel() {
 

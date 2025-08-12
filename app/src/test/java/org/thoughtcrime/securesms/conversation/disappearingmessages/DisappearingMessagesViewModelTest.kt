@@ -23,10 +23,11 @@ import org.thoughtcrime.securesms.BaseViewModelTest
 import org.thoughtcrime.securesms.MainCoroutineRule
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.ExpiryRadioOption
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.UiState
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsNavigator
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OptionsCardData
+import org.thoughtcrime.securesms.ui.UINavigator
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
@@ -46,7 +47,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
     @Mock lateinit var textSecurePreferences: TextSecurePreferences
     @Mock lateinit var disappearingMessages: DisappearingMessages
     @Mock lateinit var groupDb: GroupDatabase
-    @Mock lateinit var navigator: ConversationSettingsNavigator
+    @Mock lateinit var navigator: UINavigator<ConversationSettingsDestination>
 
     @Test
     fun `note to self, off, new config`() = runTest {

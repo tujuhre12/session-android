@@ -28,6 +28,8 @@ import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.ProBadgeText
+import org.thoughtcrime.securesms.ui.proBadgeColorOutgoing
+import org.thoughtcrime.securesms.ui.proBadgeColorStandard
 import org.thoughtcrime.securesms.ui.setThemedContent
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -103,7 +105,8 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
                     text = authorDisplayName,
                     textStyle = LocalType.current.small.bold().copy(color = Color(textColor)),
                     showBadge = proStatusManager.shouldShowProBadge(authorRecipient.address),
-                    invertBadgeColor = isOutgoingMessage && mode == Mode.Regular
+                    badgeColors = if(isOutgoingMessage && mode == Mode.Regular) proBadgeColorOutgoing()
+                    else proBadgeColorStandard()
                 )
             }
         }

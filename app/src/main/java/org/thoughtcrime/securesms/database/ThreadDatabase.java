@@ -659,23 +659,6 @@ public class ThreadDatabase extends Database {
     return setLastSeen(threadId, lastSeenTime);
   }
 
-  public void updateReadStatus(long threadId, boolean isRead) {
-    // update the thread row
-    SQLiteDatabase db = getWritableDatabase();
-
-    int readStatus = 0;
-
-    if(isRead){
-      readStatus = 1;
-    }
-
-    ContentValues contentValues = new ContentValues();
-    contentValues.put(READ, readStatus); // mark the thread unread
-
-    db.update(TABLE_NAME, contentValues, ID + " = ?", new String[]{String.valueOf(threadId)});
-    notifyThreadUpdated(threadId);
-  }
-
   private @NonNull String getFormattedBodyFor(@NonNull MessageRecord messageRecord) {
     if (messageRecord.isMms()) {
       MmsMessageRecord record = (MmsMessageRecord) messageRecord;
