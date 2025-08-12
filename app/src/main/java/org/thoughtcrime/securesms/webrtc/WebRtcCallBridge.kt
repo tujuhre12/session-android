@@ -7,13 +7,12 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.media.AudioManager
-import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -24,8 +23,9 @@ import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.FutureTaskListener
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.database.RecipientRepository
-import org.thoughtcrime.securesms.database.Storage
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.notifications.BackgroundPollWorker
 import org.thoughtcrime.securesms.service.CallForegroundService
 import org.thoughtcrime.securesms.util.NetworkConnectivity
@@ -63,12 +63,13 @@ import org.thoughtcrime.securesms.webrtc.data.State as CallState
  */
 @Singleton
 class WebRtcCallBridge @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val callManager: CallManager,
     private val networkConnectivity: NetworkConnectivity,
     private val recipientRepository: RecipientRepository,
     private val storage: StorageProtocol,
-): CallManager.WebRtcListener  {
+    @ManagerScope scope: CoroutineScope,
+): CallManager.WebRtcListener, OnAppStartupComponent  {
 
     companion object {
 
@@ -107,7 +108,7 @@ class WebRtcCallBridge @Inject constructor(
         isNetworkAvailable = true
         registerWiredHeadsetStateReceiver()
 
-        GlobalScope.launch {
+        scope.launch {
             networkConnectivity.networkAvailable.collectLatest(::networkChange)
         }
     }

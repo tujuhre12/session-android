@@ -3,7 +3,7 @@ package org.thoughtcrime.securesms.service
 import android.content.Context
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -37,6 +37,8 @@ import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
+import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.mms.MmsException
 import org.thoughtcrime.securesms.util.observeChanges
 import java.io.IOException
@@ -64,10 +66,11 @@ class ExpiringMessageManager @Inject constructor(
     private val preferences: TextSecurePreferences,
     private val recipientRepository: RecipientRepository,
     private val threadDatabase: ThreadDatabase,
-) : MessageExpirationManagerProtocol {
+    @ManagerScope scope: CoroutineScope,
+) : MessageExpirationManagerProtocol, OnAppStartupComponent {
 
     init {
-        GlobalScope.launch {
+        scope.launch {
             listOf(
                 launch { processDatabase(smsDatabase) },
                 launch { processDatabase(mmsDatabase) }

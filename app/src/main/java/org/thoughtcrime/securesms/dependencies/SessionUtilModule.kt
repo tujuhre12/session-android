@@ -10,8 +10,6 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import org.session.libsession.messaging.groups.GroupScope
-import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
-import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.TextSecurePreferences
 import javax.inject.Named
 import javax.inject.Singleton
@@ -33,17 +31,5 @@ object SessionUtilModule {
 
     @Provides
     @Singleton
-    fun provideSnodeClock() = SnodeClock()
-
-    @Provides
-    @Singleton
     fun provideGroupScope() = GroupScope()
-
-
-    @Provides
-    @Singleton
-    fun provideLegacyGroupDeprecationManager(prefs: TextSecurePreferences): LegacyGroupDeprecationManager {
-        return LegacyGroupDeprecationManager(prefs)
-    }
-
 }
