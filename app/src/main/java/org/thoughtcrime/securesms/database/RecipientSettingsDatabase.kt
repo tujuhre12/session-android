@@ -17,6 +17,7 @@ import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.database.model.RecipientSettings
 import org.thoughtcrime.securesms.util.DateUtils.Companion.asEpochSeconds
+import org.thoughtcrime.securesms.util.asSequence
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
@@ -55,6 +56,21 @@ class RecipientSettingsDatabase @Inject constructor(
         )
 
         mutableChangeNotification.tryEmit(address)
+    }
+
+    /**
+     * This method finds recipients by their profile picture URL.
+     * This is currently only useful for migrating old profile pictures purposes, and shall
+     * be removed in the future.
+     */
+    fun findRecipientsForProfilePic(profilePicUrl: String): Set<Address> {
+        return readableDatabase.rawQuery(
+            "SELECT DISTINCT $COL_ADDRESS FROM $TABLE_NAME WHERE $COL_PROFILE_PIC_URL = ?",
+            profilePicUrl
+        ).use { cursor ->
+            cursor.asSequence()
+                .mapTo(hashSetOf()) { Address.fromSerialized(cursor.getString(0)) }
+        }
     }
 
     fun delete(address: Address) {
@@ -107,7 +123,7 @@ class RecipientSettingsDatabase @Inject constructor(
         // The time when the profile pic/name/is_pro was last updated, in epoch seconds.
         private const val COL_PROFILE_UPDATE_TIME = "profile_update_time"
 
-        const val MIGRATION_CREATE_TABLE = """
+        val MIGRATION_CREATE_TABLE = arrayOf("""
             CREATE TABLE recipient_settings (
                 $COL_ADDRESS TEXT NOT NULL PRIMARY KEY COLLATE NOCASE,
                 $COL_MUTE_UNTIL INTEGER NOT NULL DEFAULT 0,
@@ -120,7 +136,9 @@ class RecipientSettingsDatabase @Inject constructor(
                 $COL_PRO_STATUS TEXT DEFAULT NULL,
                 $COL_PROFILE_UPDATE_TIME INTEGER NOT NULL DEFAULT 0
             ) WITHOUT ROWID
-        """
+        """,
+            "CREATE INDEX recipient_settings_profile_pic ON recipient_settings ($COL_PROFILE_PIC_URL)",
+        )
 
         const val MIGRATE_MOVE_DATA_FROM_OLD_TABLE = """
            INSERT OR REPLACE INTO recipient_settings (

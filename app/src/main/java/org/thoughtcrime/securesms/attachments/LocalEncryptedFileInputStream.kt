@@ -6,15 +6,13 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import network.loki.messenger.libsession_util.encrypt.DecryptionStream
 import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider
-import org.thoughtcrime.securesms.glide.EncryptedFileCodec
-import org.thoughtcrime.securesms.glide.EncryptedFileMeta
 import java.io.File
 import java.io.InputStream
 
 /**
  * A class to handle reading the locally encrypted file content and metadata.
  *
- * It uses [org.thoughtcrime.securesms.glide.EncryptedFileCodec] to decode the file to grab the metadata, and uses
+ * It uses [EmbeddedMetadataCodec] to decode the file to grab the metadata, and uses
  * [network.loki.messenger.libsession_util.encrypt.DecryptionStream] to decrypt the file content.
  *
  * If there's problem reading the file, it will throw an exception on construction.
@@ -23,20 +21,15 @@ import java.io.InputStream
  */
 class LocalEncryptedFileInputStream @AssistedInject constructor(
     @Assisted file: File,
-    codec: EncryptedFileCodec,
+    codec: EmbeddedMetadataCodec,
     application: Application
-): InputStream() {
-    private val decoded = codec.decodeStream(file)
+) : InputStream() {
+    private val inputStream: InputStream = DecryptionStream(
+        inStream = file.inputStream(),
+        key = AttachmentSecretProvider.getInstance(application).orCreateAttachmentSecret.modernKey,
+    )
 
-    val meta: EncryptedFileMeta get() = decoded.first
-
-    private val inputStream: InputStream by lazy {
-        DecryptionStream(
-            inStream = decoded.second,
-            key = AttachmentSecretProvider.getInstance(application).orCreateAttachmentSecret.modernKey,
-            autoClose = false
-        )
-    }
+    val meta: FileMetadata = codec.decodeFromStream(inputStream)
 
     override fun read(): Int {
         return inputStream.read()
@@ -60,7 +53,7 @@ class LocalEncryptedFileInputStream @AssistedInject constructor(
 
     override fun close() {
         super.close()
-        decoded.second.close()
+        inputStream.close()
     }
 
     override fun reset() {

@@ -237,7 +237,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     db.execSQL(MmsDatabase.ADD_MESSAGE_CONTENT_COLUMN);
     db.execSQL(ThreadDatabase.ADD_SNIPPET_CONTENT_COLUMN);
 
-    db.execSQL(RecipientSettingsDatabase.MIGRATION_CREATE_TABLE);
+    executeStatements(db, RecipientSettingsDatabase.Companion.getMIGRATION_CREATE_TABLE());
     db.execSQL(RecipientSettingsDatabase.MIGRATE_DROP_OLD_TABLE);
     executeStatements(db, ReactionDatabase.MIGRATE_REACTION_TABLE_TO_USE_RECIPIENT_SETTINGS);
     db.execSQL(BlindedIdMappingDatabase.DROP_TABLE_COMMAND);
@@ -548,7 +548,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
       }
 
       if (oldVersion < lokiV52) {
-        db.execSQL(RecipientSettingsDatabase.MIGRATION_CREATE_TABLE);
+        executeStatements(db, RecipientSettingsDatabase.Companion.getMIGRATION_CREATE_TABLE());
         db.execSQL(RecipientSettingsDatabase.MIGRATE_MOVE_DATA_FROM_OLD_TABLE);
         db.execSQL(RecipientSettingsDatabase.MIGRATE_DROP_OLD_TABLE);
         executeStatements(db, ReactionDatabase.MIGRATE_REACTION_TABLE_TO_USE_RECIPIENT_SETTINGS);

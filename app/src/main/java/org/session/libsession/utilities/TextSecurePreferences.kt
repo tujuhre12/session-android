@@ -857,6 +857,7 @@ interface TextSecurePreferences {
             return getLongPreference(context, "restoration_time", 0)
         }
 
+        @Deprecated("We no longer keep the profile expiry in prefs, we write them in the file instead. Keeping it here for migration purposes")
         @JvmStatic
         fun getProfileExpiry(context: Context): Long{
             return getLongPreference(context, PROFILE_PIC_EXPIRY, 0)

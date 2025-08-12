@@ -57,25 +57,25 @@ class RemoteFileLoader @Inject constructor(
         ) {
             job = scope.launch {
                 try {
-                    val files = RemoteFileDownloadWorker.computeFileNames(context, file)
+                    val downloadedFile = RemoteFileDownloadWorker.computeFileName(context, file)
 
-                    if (!files.permanentErrorMarkerFile.exists() && !files.completedFile.exists()) {
-                        // Neither complete file nor error file exists, enqueue a download
+                    // Check if the file already exists in the local storage, otherwise enqueue a download and
+                    // wait for it to complete.
+                    if (!downloadedFile.exists()) {
                         RemoteFileDownloadWorker.enqueue(context, file)
                             .first { it?.state == WorkInfo.State.FAILED || it?.state == WorkInfo.State.SUCCEEDED }
                     }
 
-                    if (files.permanentErrorMarkerFile.exists()) {
-                        throw NonRetryableException("Requested file is marked as a permanent error:")
+                    val stream = localEncryptedFileInputStreamFactory.create(downloadedFile)
+
+                    if (stream.meta.hasPermanentDownloadError) {
+                        stream.close()
+                        throw NonRetryableException(
+                            "File download failed permanently for $file"
+                        )
                     }
 
-                    check(files.completedFile.exists()) {
-                        "File not downloaded but no reason is given. Most likely a bug in the download worker."
-                    }
-
-                    callback.onDataReady(
-                        localEncryptedFileInputStreamFactory.create(files.completedFile)
-                    )
+                    callback.onDataReady(stream)
 
                 } catch (e: CancellationException) {
                     Log.i(TAG, "Download cancelled for file: $file")

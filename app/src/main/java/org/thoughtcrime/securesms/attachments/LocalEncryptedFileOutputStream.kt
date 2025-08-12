@@ -6,32 +6,29 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import network.loki.messenger.libsession_util.encrypt.EncryptionStream
 import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider
-import org.thoughtcrime.securesms.glide.EncryptedFileCodec
-import org.thoughtcrime.securesms.glide.EncryptedFileMeta
 import java.io.File
 import java.io.OutputStream
 
 /**
  * A class to handle writing encrypted file content and metadata to a local file.
  *
- * It uses [EncryptedFileCodec] to encode the metadata and file content, and
+ * It uses [EmbeddedMetadataCodec] to encode the metadata and file content, and
  * [EncryptionStream] to encrypt the file content.
  *
  * This class is paired with [LocalEncryptedFileInputStream] for reading encrypted files.
  */
 class LocalEncryptedFileOutputStream @AssistedInject constructor(
     @Assisted file: File,
-    @Assisted meta: EncryptedFileMeta,
-    codec: EncryptedFileCodec,
+    @Assisted meta: FileMetadata,
+    codec: EmbeddedMetadataCodec,
     application: Application
 ): OutputStream() {
-    private val outputStream: OutputStream by lazy {
-        EncryptionStream(
-            out = codec.encodeStream(outFile = file, meta = meta),
-            key = AttachmentSecretProvider.getInstance(application).orCreateAttachmentSecret.modernKey,
-        )
+    private val outputStream = EncryptionStream(
+        out = file.outputStream(),
+        key = AttachmentSecretProvider.getInstance(application).orCreateAttachmentSecret.modernKey,
+    ).also {
+        codec.encodeToStream(meta, it)
     }
-
     override fun write(b: Int) {
         outputStream.write(b)
     }
@@ -56,6 +53,6 @@ class LocalEncryptedFileOutputStream @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(file: File, meta: EncryptedFileMeta): LocalEncryptedFileOutputStream
+        fun create(file: File, meta: FileMetadata): LocalEncryptedFileOutputStream
     }
 }
