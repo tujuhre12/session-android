@@ -271,5 +271,8 @@
     <string name="qa_blocked_banner">blocked-banner</string>
     <string name="qa_delete_message_device_only">delete-only-on-this-device</string>
     <string name="qa_delete_message_everyone">delete-for-everyone</string>
+    <string name="qa_pro_badge_component">pro-badge-component</string>
+    <string name="qa_pro_badge_text">pro-badge-text</string>
+    <string name="qa_pro_badge_icon">pro-badge-icon</string>
 
 </resources>
