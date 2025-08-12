@@ -31,6 +31,7 @@ import org.session.libsignal.streams.ProfileCipherOutputStreamFactory
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ProfileAvatarData
 import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.util.DateUtils.Companion.asEpochMillis
 import org.thoughtcrime.securesms.util.DateUtils.Companion.asEpochSeconds
 import java.io.ByteArrayInputStream
@@ -56,7 +57,7 @@ class AvatarUploadManager @Inject constructor(
     @ManagerScope scope: CoroutineScope,
     localEncryptedFileInputStreamFactory: LocalEncryptedFileInputStream.Factory,
     private val localEncryptedFileOutputStreamFactory: LocalEncryptedFileOutputStream.Factory
-) {
+) : OnAppStartupComponent {
     @OptIn(ExperimentalCoroutinesApi::class)
     val reuploadState: StateFlow<Unit> = prefs.watchLocalNumber()
         .map { it != null }

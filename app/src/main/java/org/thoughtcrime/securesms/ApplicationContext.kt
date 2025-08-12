@@ -43,11 +43,9 @@ import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.MessagingModuleConfiguration.Companion.configure
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.snode.SnodeModule
-import org.session.libsession.utilities.ProfilePictureUtilities.resubmitProfilePictureIfNeeded
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.pushSuffix
-import org.session.libsession.utilities.WindowDebouncer
 import org.session.libsignal.utilities.HTTP.isConnectedToNetwork
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.AppContext.configureKovenant
@@ -56,6 +54,7 @@ import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.dependencies.DatabaseModule.init
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponents
 import org.thoughtcrime.securesms.emoji.EmojiSource.Companion.refresh
+import org.thoughtcrime.securesms.glide.RemoteFileLoader
 import org.thoughtcrime.securesms.jobmanager.impl.NetworkConstraint
 import org.thoughtcrime.securesms.logging.AndroidLogger
 import org.thoughtcrime.securesms.logging.PersistentLogger
@@ -67,7 +66,6 @@ import org.thoughtcrime.securesms.service.KeyCachingService
 import org.webrtc.PeerConnectionFactory
 import org.webrtc.PeerConnectionFactory.InitializationOptions
 import java.security.Security
-import java.util.Timer
 import javax.inject.Inject
 import javax.inject.Provider
 import kotlin.concurrent.Volatile
@@ -83,17 +81,6 @@ import kotlin.concurrent.Volatile
  */
 @HiltAndroidApp
 class ApplicationContext : Application(), DefaultLifecycleObserver, Configuration.Provider {
-    var conversationListDebouncer: WindowDebouncer? = null
-        get() {
-            if (field == null) {
-                field = WindowDebouncer(1000, Timer())
-            }
-            return field
-        }
-        private set
-    private var conversationListHandlerThread: HandlerThread? = null
-    private var conversationListHandler: Handler? = null
-
     @Inject lateinit var messagingModuleConfiguration: Lazy<MessagingModuleConfiguration>
     @Inject lateinit var workerFactory: Lazy<HiltWorkerFactory>
     @Inject lateinit var snodeModule: Lazy<SnodeModule>
@@ -104,17 +91,12 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
     @Inject lateinit var textSecurePreferences: Lazy<TextSecurePreferences>
     @Inject lateinit var migrationManager: Lazy<DatabaseMigrationManager>
 
-    @Inject
-    lateinit var profileUpdateHandler: Lazy<ProfileUpdateHandler>
-
 
     // Exist purely because Glide doesn't support Hilt injection
     @Inject
     lateinit var remoteFileLoader: Provider<RemoteFileLoader>
 
 
-    @Inject
-    lateinit var avatarUploadManager: Lazy<AvatarUploadManager>
     @Volatile
     var isAppVisible: Boolean = false
 
@@ -140,19 +122,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
 
     @get:Deprecated(message = "Use proper DI to inject this component")
     @Inject lateinit var messageNotifier: MessageNotifier
-
-    val conversationListNotificationHandler: Handler
-        get() {
-            if (this.conversationListHandlerThread == null) {
-                conversationListHandlerThread = HandlerThread("ConversationListHandler")
-                conversationListHandlerThread!!.start()
-            }
-            if (this.conversationListHandler == null) {
-                conversationListHandler =
-                    Handler(conversationListHandlerThread!!.looper)
-            }
-            return conversationListHandler!!
-        }
 
 
     override fun onCreate() {
