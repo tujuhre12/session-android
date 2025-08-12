@@ -111,7 +111,7 @@ import java.util.UUID
 
 @HiltViewModel(assistedFactory = ConversationViewModel.Factory::class)
 class ConversationViewModel @AssistedInject constructor(
-    @Assisted val address: Address,
+    @Assisted val address: Address.Conversable,
     @Assisted val createThreadIfNotExists: Boolean,
     private val application: Application,
     private val repository: ConversationRepository,
@@ -1307,7 +1307,7 @@ class ConversationViewModel @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(address: Address, createThreadIfNotExists: Boolean): ConversationViewModel
+        fun create(address: Address.Conversable, createThreadIfNotExists: Boolean): ConversationViewModel
     }
 
     data class DialogsState(

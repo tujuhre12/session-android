@@ -135,6 +135,7 @@ open class Storage @Inject constructor(
                 displayName = configs.userProfile.getName(),
                 profilePictureURL = pic.url.takeIf { it.isNotBlank() },
                 profileKey = pic.key.data.takeIf { pic.url.isNotBlank() },
+                profileUpdated = preferences.lastProfileUpdated,
             )
         }
     }

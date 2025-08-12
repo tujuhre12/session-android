@@ -230,8 +230,7 @@ interface TextSecurePreferences {
 
     var inAppReviewState: String?
 
-    val lastProfileUpdated: StateFlow<ZonedDateTime?>
-    fun setLastProfileUpdated(time: ZonedDateTime)
+    var lastProfileUpdated: ZonedDateTime?
 
     companion object {
         val TAG = TextSecurePreferences::class.simpleName
@@ -1738,17 +1737,11 @@ class AppTextSecurePreferences @Inject constructor(
             }
         }
 
-    override val lastProfileUpdated: StateFlow<ZonedDateTime?> by lazy {
-        _events
-            .filter { it == TextSecurePreferences.LAST_PROFILE_UPDATE_TIME }
-            .map { getLongPreference(TextSecurePreferences.LAST_PROFILE_UPDATE_TIME, 0).asEpochSeconds() }
-            .stateIn(GlobalScope, SharingStarted.Eagerly, getLongPreference(TextSecurePreferences.LAST_PROFILE_UPDATE_TIME, 0).asEpochSeconds())
-    }
-
-    override fun setLastProfileUpdated(time: ZonedDateTime) {
-        setLongPreference(TextSecurePreferences.LAST_PROFILE_UPDATE_TIME, time.toEpochSecond())
-        _events.tryEmit(TextSecurePreferences.LAST_PROFILE_UPDATE_TIME)
-    }
+    override var lastProfileUpdated: ZonedDateTime?
+        get() = getLongPreference(TextSecurePreferences.LAST_PROFILE_UPDATE_TIME, 0).asEpochSeconds()
+        set(value) {
+            setLongPreference(TextSecurePreferences.LAST_PROFILE_UPDATE_TIME, value?.toEpochSecond() ?: 0L)
+        }
 
     override fun getDebugMessageFeatures(): Set<ProStatusManager.MessageProFeature> {
         return getStringSetPreference( TextSecurePreferences.DEBUG_MESSAGE_FEATURES, emptySet())

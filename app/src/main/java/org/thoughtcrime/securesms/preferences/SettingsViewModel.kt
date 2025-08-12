@@ -52,6 +52,7 @@ import org.thoughtcrime.securesms.util.NetworkConnectivity
 import org.thoughtcrime.securesms.util.mapToStateFlow
 import java.io.File
 import java.io.IOException
+import java.time.ZonedDateTime
 import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -305,6 +306,8 @@ class SettingsViewModel @Inject constructor(
                         it.userProfile.setPic(UserPic.DEFAULT)
                     }
 
+                    prefs.lastProfileUpdated = ZonedDateTime.now()
+
                     // update dialog state
                     _uiState.update { it.copy(avatarDialogState = AvatarDialogState.NoAvatar) }
                 } else {
@@ -429,6 +432,8 @@ class SettingsViewModel @Inject constructor(
         configFactory.withMutableUserConfigs {
             it.userProfile.setName(name)
         }
+
+        prefs.lastProfileUpdated = ZonedDateTime.now()
     }
 
     fun onCommand(command: Commands) {

@@ -279,8 +279,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             .get(LinkPreviewViewModel::class.java)
     }
 
-    private val address: Address by lazy {
-        requireNotNull(IntentCompat.getParcelableExtra<Address>(intent, ADDRESS, Address::class.java)) {
+    private val address: Address.Conversable by lazy {
+        requireNotNull(IntentCompat.getParcelableExtra(intent, ADDRESS, Address.Conversable::class.java)) {
             "Address must be provided in the intent extras"
         }
     }
@@ -793,23 +793,18 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
                     // On the first load, check if there unread messages
                     if (unreadCount == 0 && adapter.itemCount > 0) {
-                        // Get the last visible timestamp
+                        lifecycleScope.launch(Dispatchers.Default) {
+                            val isUnread = configFactory.withUserConfigs {
+                                it.convoInfoVolatile.getConversationUnread(
+                                    viewModel.address,
+                                )
+                            }
 
-                        lifecycleScope.launch(Dispatchers.IO) {
-                            viewModel.recipient?.let { recipient ->
-                                val isUnread = configFactory.withUserConfigs {
-                                    it.convoInfoVolatile.getConversationUnread(
-                                        recipient,
-                                        viewModel.threadId
-                                    )
-                                }
-
-                                if (isUnread) {
-                                    storage.markConversationAsRead(
-                                        viewModel.threadId,
-                                        clock.currentTimeMills()
-                                    )
-                                }
+                            if (isUnread) {
+                                storage.markConversationAsRead(
+                                    viewModel.threadId,
+                                    clock.currentTimeMills()
+                                )
                             }
                         }
                     }

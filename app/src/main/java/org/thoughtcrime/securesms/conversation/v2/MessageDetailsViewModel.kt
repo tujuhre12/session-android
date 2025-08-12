@@ -25,7 +25,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.getOrNull
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
@@ -33,23 +32,20 @@ import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.isLegacyGroup
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
-import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.MediaPreviewArgs
 import org.thoughtcrime.securesms.database.AttachmentDatabase
-import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
-import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
-import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.ImageSlide
 import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.pro.ProStatusManager
@@ -62,7 +58,6 @@ import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.UserProfileModalCommands
 import org.thoughtcrime.securesms.util.UserProfileModalData
 import org.thoughtcrime.securesms.util.UserProfileUtils
-import org.thoughtcrime.securesms.util.observeChanges
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.text.Typography.ellipsis
@@ -75,7 +70,6 @@ class MessageDetailsViewModel @AssistedInject constructor(
     private val lokiMessageDatabase: LokiMessageDatabase,
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val threadDb: ThreadDatabase,
-    private val lokiThreadDb: LokiThreadDatabase,
     private val deprecationManager: LegacyGroupDeprecationManager,
     private val context: ApplicationContext,
     private val avatarUtils: AvatarUtils,
@@ -159,25 +153,15 @@ class MessageDetailsViewModel @AssistedInject constructor(
 
                 val attachments = slides.map(::Attachment)
 
-                val isAdmin: Boolean =  when {
-                    // for Groups V2
-                    conversation.isGroupV2Recipient -> configFactory.withGroupConfigs(AccountId(conversation.address.toString())) {
-                        it.groupMembers.getOrNull(sender.address.toString())?.admin == true
-                    }
-
-                    // for communities the the `isUserModerator` field
-                    conversation.isCommunityRecipient -> checkCommunityAdmin(sender, threadId)
-
-                    // false in other cases
-                    else -> false
-                }
+                val shouldShowAdminCrown: Boolean = sender.address is Address.WithAccountId  &&
+                    (conversation.data as? RecipientData.GroupLike)?.shouldShowAdminCrown(sender.address.accountId) == true
 
                 // we don't want to display image attachments in the carousel if their state isn't done
                 val imageAttachments = attachments.filter { it.isDownloaded && it.hasImage }
 
                 // get the helper class for the selected user
                 userProfileModalUtils = upmFactory.create(
-                    recipient = sender,
+                    userAddress = sender.address,
                     threadId = threadId,
                     scope = viewModelScope
                 )
@@ -216,7 +200,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
                     },
                     senderAvatarData = avatarUtils.getUIDataFromRecipient(sender),
                     senderShowProBadge = proStatusManager.shouldShowProBadge(sender.address),
-                    senderIsAdmin = isAdmin,
+                    senderHasAdminCrown = shouldShowAdminCrown,
                     senderIsBlinded = IdPrefix.fromValue(sender.address.toString())?.isBlinded() ?: false,
                     thread = conversation,
                     readOnly = isDeprecatedLegacyGroup,
@@ -225,23 +209,6 @@ class MessageDetailsViewModel @AssistedInject constructor(
                 )
             }
         }
-    }
-
-    private fun checkCommunityAdmin(sender: Recipient, threadId: Long): Boolean {
-        val senderAccountID = sender.address.toString()
-        val openGroup = lokiThreadDb.getOpenGroupChat(threadId) ?: return false
-        var standardPublicKey = ""
-        var blindedPublicKey: String? = null
-        if (IdPrefix.fromValue(senderAccountID)?.isBlinded() == true) {
-            blindedPublicKey = senderAccountID
-        } else {
-            standardPublicKey = senderAccountID
-        }
-        return openGroupManager.isUserModerator(
-            openGroup.groupId,
-            standardPublicKey,
-            blindedPublicKey
-        )
     }
 
     fun showUserProfileModal() {
@@ -380,7 +347,7 @@ data class MessageDetailsState(
     val status: MessageStatus? = null,
     val senderInfo: TitledText? = null,
     val senderAvatarData: AvatarUIData? = null,
-    val senderIsAdmin: Boolean = false,
+    val senderHasAdminCrown: Boolean = false,
     val senderShowProBadge: Boolean = false,
     val senderIsBlinded: Boolean = false,
     val thread: Recipient? = null,

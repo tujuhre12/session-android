@@ -195,7 +195,7 @@ class AvatarUploadManager @Inject constructor(
             }
         }
 
-        prefs.setLastProfileUpdated(ZonedDateTime.now())
+        prefs.lastProfileUpdated = ZonedDateTime.now()
     }
 
     companion object {
