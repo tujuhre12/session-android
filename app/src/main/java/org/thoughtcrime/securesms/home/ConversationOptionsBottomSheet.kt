@@ -185,7 +185,7 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
 
         // We have three states for a conversation:
         // 1. The conversation has unread messages
-        // 2. The conversation is marked as unread (which is different from having unread messages)
+        // 2. The conversation is marked as unread from the config (which is different from having unread messages)
         // 3. The conversation is up to date
         // Case 1 and 2 should show the 'mark as read' button while case 3 should show 'mark as unread'
 
@@ -193,7 +193,7 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
         val hasUnreadMessages = thread.unreadCount > 0
 
         // case 2
-        val isMarkedAsUnread = configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(thread) } || !thread.isRead
+        val isMarkedAsUnread = configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(thread)}
 
         val showMarkAsReadButton = hasUnreadMessages || isMarkedAsUnread
 
