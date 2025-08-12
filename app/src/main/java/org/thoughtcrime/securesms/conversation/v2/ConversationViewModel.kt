@@ -59,7 +59,6 @@ import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.recipients.getType
-import org.session.libsession.utilities.recipients.toUserPic
 import org.session.libsession.utilities.toGroupString
 import org.session.libsession.utilities.upsertContact
 import org.session.libsession.utilities.userConfigsChanged

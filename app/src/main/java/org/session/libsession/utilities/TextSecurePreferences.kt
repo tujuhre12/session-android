@@ -863,11 +863,6 @@ interface TextSecurePreferences {
             return getLongPreference(context, PROFILE_PIC_EXPIRY, 0)
         }
 
-        @JvmStatic
-        fun setProfileExpiry(context: Context, newValue: Long){
-            setLongPreference(context, PROFILE_PIC_EXPIRY, newValue)
-        }
-
         fun getLastSnodePoolRefreshDate(context: Context?): Long {
             return getLongPreference(context!!, "last_snode_pool_refresh_date", 0)
         }

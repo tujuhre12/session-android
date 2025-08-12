@@ -7,14 +7,29 @@ import network.loki.messenger.libsession_util.util.UserPic
  * Represents a remote file that can be downloaded.
  */
 sealed interface RemoteFile {
-    data class Encrypted(val url: String, val key: Bytes) : RemoteFile
-    data class Community(val communityServerBaseUrl: String, val roomId: String, val fileId: String) : RemoteFile
+
+    fun toUserPic(): UserPic?
+    data class Encrypted(val url: String, val key: Bytes) : RemoteFile {
+        override fun toUserPic(): UserPic {
+            return UserPic(url, key)
+        }
+    }
+
+    data class Community(
+        val communityServerBaseUrl: String,
+        val roomId: String,
+        val fileId: String
+    ) : RemoteFile {
+        override fun toUserPic(): UserPic? {
+            return null
+        }
+    }
 
     companion object {
         fun UserPic.toRemoteFile(): Encrypted? {
             return when {
                 url.isBlank() -> null
-                else ->  Encrypted(
+                else -> Encrypted(
                     url = url,
                     key = key
                 )
@@ -28,12 +43,5 @@ sealed interface RemoteFile {
                 null
             }
         }
-    }
-}
-
-fun RemoteFile.toUserPic(): UserPic? {
-    return when (this) {
-        is RemoteFile.Encrypted -> UserPic(url, key)
-        is RemoteFile.Community -> null
     }
 }

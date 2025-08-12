@@ -21,7 +21,6 @@ import android.content.Intent
 import android.os.AsyncTask
 import android.os.Handler
 import android.os.HandlerThread
-import android.os.StrictMode
 import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.core.content.pm.ShortcutInfoCompat
@@ -51,14 +50,12 @@ import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.messages.ProfileUpdateHandler
 import org.session.libsession.messaging.notifications.TokenFetcher
-import org.session.libsession.messaging.sending_receiving.ReceivedMessageHandler
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPollerManager
 import org.session.libsession.messaging.sending_receiving.pollers.PollerManager
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.SnodeModule
 import org.session.libsession.utilities.Device
-import org.session.libsession.utilities.ProfilePictureUtilities.resubmitProfilePictureIfNeeded
 import org.session.libsession.utilities.SSKEnvironment.Companion.configure
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.pushSuffix
@@ -68,6 +65,7 @@ import org.session.libsignal.utilities.HTTP.isConnectedToNetwork
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.AppContext.configureKovenant
+import org.thoughtcrime.securesms.attachments.AvatarUploadManager
 import org.thoughtcrime.securesms.components.TypingStatusSender
 import org.thoughtcrime.securesms.configs.ConfigUploader
 import org.thoughtcrime.securesms.database.EmojiSearchDatabase
@@ -224,6 +222,9 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
     @Inject
     lateinit var remoteFileLoader: Provider<RemoteFileLoader>
 
+
+    @Inject
+    lateinit var avatarUploadManager: Lazy<AvatarUploadManager>
     @Volatile
     var isAppVisible: Boolean = false
 
@@ -333,7 +334,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         )
         initializeWebRtc()
         initializeBlobProvider()
-        resubmitProfilePictureIfNeeded()
         loadEmojiSearchIndexIfNeeded()
         refresh()
 
@@ -406,6 +406,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         expiredGroupManager.get()
         openGroupPollerManager.get()
         currentActivityObserver.get()
+        avatarUploadManager.get()
 
         threadDatabase.get().onAppCreated()
     }
@@ -489,11 +490,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
             BlobUtils.getInstance().onSessionStart(this)
         }
     }
-
-    private fun resubmitProfilePictureIfNeeded() {
-        resubmitProfilePictureIfNeeded(this)
-    }
-
     private fun loadEmojiSearchIndexIfNeeded() {
         Executors.newSingleThreadExecutor().execute {
             if (emojiSearchDb.get().query("face", 1).isEmpty()) {

@@ -76,7 +76,7 @@ class AttachmentUploadJob @AssistedInject constructor(
                 handleSuccess(dispatcherName, attachment, keyAndResult.first, keyAndResult.second)
             } else {
                 val keyAndResult = upload(attachment, FileServerApi.FILE_SERVER_URL, true) {
-                    FileServerApi.upload(it).map { it.id }
+                    FileServerApi.upload(it).map { it.fileId }
                 }
                 handleSuccess(dispatcherName, attachment, keyAndResult.first, keyAndResult.second)
             }

@@ -16,37 +16,26 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.UserPic
-import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.utilities.await
-import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.Address.Companion.toAddress
-import org.session.libsession.utilities.ProfileKeyUtil
-import org.session.libsession.utilities.ProfilePictureUtilities
-import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.StringSubstitutionConstants.VERSION_KEY
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.currentUserName
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.ExternalStorageUtil.getImageDir
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.NoExternalStorageException
-import org.session.libsignal.utilities.Util.SECURE_RANDOM
+import org.thoughtcrime.securesms.attachments.AvatarUploadManager
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
@@ -77,7 +66,8 @@ class SettingsViewModel @Inject constructor(
     private val proStatusManager: ProStatusManager,
     private val clearDataUtils: ClearDataUtils,
     private val storage: StorageProtocol,
-    private val inAppReviewManager: InAppReviewManager
+    private val inAppReviewManager: InAppReviewManager,
+    private val avatarUploadManager: AvatarUploadManager,
 ) : ViewModel() {
     private val TAG = "SettingsViewModel"
 
@@ -310,18 +300,6 @@ class SettingsViewModel @Inject constructor(
             _uiState.update { it.copy(showLoader = true) }
 
             try {
-                // Grab the profile key and kick of the promise to update the profile picture
-                val encodedProfileKey = ProfileKeyUtil.generateEncodedProfileKey()
-                val url = ProfilePictureUtilities.upload(profilePicture, encodedProfileKey, context)
-
-                // If the online portion of the update succeeded then update the local state
-                AvatarHelper.setAvatar(
-                    context,
-                    Address.fromSerialized(TextSecurePreferences.getLocalNumber(context)!!),
-                    profilePicture
-                )
-
-                // When removing the profile picture the supplied ByteArray is empty so we'll clear the local data
                 if (profilePicture.isEmpty()) {
                     configFactory.withMutableUserConfigs {
                         it.userProfile.setPic(UserPic.DEFAULT)
@@ -330,15 +308,13 @@ class SettingsViewModel @Inject constructor(
                     // update dialog state
                     _uiState.update { it.copy(avatarDialogState = AvatarDialogState.NoAvatar) }
                 } else {
-                    // If we have a URL and a profile key then set the user's profile picture
-                    if (url.isNotBlank() && encodedProfileKey.isNotBlank()) {
-                        configFactory.withMutableUserConfigs {
-                            it.userProfile.setPic(UserPic(url, ProfileKeyUtil.getProfileKeyFromEncodedString(encodedProfileKey)))
-                        }
-                    }
+                    avatarUploadManager.uploadAvatar(profilePicture)
+
+                    // We'll have to refetch the recipient to get the new avatar
+                    val selfRecipient = recipientRepository.getSelf()
 
                     // update dialog state
-                    _uiState.update { it.copy(avatarDialogState = AvatarDialogState.UserAvatar(avatarUtils.getUIDataFromRecipient(selfRecipient.value))) }
+                    _uiState.update { it.copy(avatarDialogState = AvatarDialogState.UserAvatar(avatarUtils.getUIDataFromRecipient(selfRecipient))) }
                 }
 
             } catch (e: Exception){ // If the sync failed then inform the user
