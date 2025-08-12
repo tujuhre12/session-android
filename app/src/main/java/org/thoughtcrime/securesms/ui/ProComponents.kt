@@ -160,7 +160,7 @@ fun ProBadgeText(
     onBadgeClick: (() -> Unit)? = null
 ) {
     Row(
-        modifier = modifier,
+        modifier = modifier.qaTag("PRO_BADGE_TEXT"),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(textStyle.lineHeight.value.dp * 0.2f)
     ) {
@@ -173,7 +173,8 @@ fun ProBadgeText(
                     }
                 }
                 ProBadge(
-                    modifier = proBadgeModifier.height(textStyle.lineHeight.value.dp * 0.8f),
+                    modifier = proBadgeModifier.height(textStyle.lineHeight.value.dp * 0.8f)
+                        .qaTag("PRO_BADGE_ICON"),
                     colors = badgeColors
                 )
             }
@@ -181,7 +182,8 @@ fun ProBadgeText(
 
         val textContent = @Composable {
             Text(
-                modifier = Modifier.weight(1f, fill = false),
+                modifier = Modifier.weight(1f, fill = false)
+                    .qaTag("PRO_BADGE_NAME"),
                 text = text,
                 style = textStyle,
                 maxLines = 1,
