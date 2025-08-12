@@ -109,12 +109,6 @@ class ConversationReactionOverlay : FrameLayout {
 
     private var job: Job? = null
 
-    private val iconMore by lazy {
-        val d = ContextCompat.getDrawable(context, R.drawable.ic_plus)
-        d?.setTint(context.getColorFromAttr(android.R.attr.textColor))
-        d
-    }
-
     private var systemInsets: Insets = Insets.NONE
 
     constructor(context: Context) : super(context)
@@ -323,9 +317,6 @@ class ConversationReactionOverlay : FrameLayout {
         foregroundView.x = scrubberX
         foregroundView.y = reactionBarBackgroundY + reactionBarHeight / 2f - foregroundView.height / 2f
 
-        backgroundView.x = scrubberX
-        backgroundView.y = reactionBarBackgroundY
-
         verticalScrubBoundary.update(reactionBarBackgroundY,
             lastSeenDownPoint.y + distanceFromTouchDownPointToBottomOfScrubberDeadZone)
         updateBoundsOnLayoutChanged()
@@ -338,7 +329,7 @@ class ConversationReactionOverlay : FrameLayout {
                 else -> scrubberX - contextMenu.getMaxWidth() - menuPadding
             }
             // Adjust Y position to account for insets
-            val adjustedY = minOf(backgroundView.y, (availableHeight - actualMenuHeight).toFloat()).toInt()
+            val adjustedY = minOf(foregroundView.y, (availableHeight - actualMenuHeight).toFloat()).toInt()
             contextMenu.show(offsetX.toInt(), adjustedY)
         } else {
             val contentX = if (isMessageOnLeft) scrubberHorizontalMargin.toFloat() else selectedConversationModel.bubbleX

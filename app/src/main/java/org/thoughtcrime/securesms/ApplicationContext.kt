@@ -68,7 +68,6 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.AppContext.configureKovenant
 import org.thoughtcrime.securesms.components.TypingStatusSender
 import org.thoughtcrime.securesms.configs.ConfigUploader
-import org.thoughtcrime.securesms.database.EmojiSearchDatabase
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -180,7 +179,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
 
     @Inject lateinit var messageNotifierLazy: Lazy<MessageNotifier>
     @Inject lateinit var apiDB: Lazy<LokiAPIDatabase>
-    @Inject lateinit var emojiSearchDb: Lazy<EmojiSearchDatabase>
     @Inject lateinit var webRtcCallBridge: Lazy<WebRtcCallBridge>
     @Inject lateinit var legacyGroupDeprecationManager: Lazy<LegacyGroupDeprecationManager>
     @Inject lateinit var cleanupInvitationHandler: Lazy<CleanupInvitationHandler>
@@ -375,7 +373,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         readReceiptManager.get()
         messageNotifierLazy.get()
         apiDB.get()
-        emojiSearchDb.get()
         webRtcCallBridge.get()
         pollerManager.get()
         legacyGroupDeprecationManager.get()
