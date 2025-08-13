@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -115,6 +116,7 @@ fun CreateGroup(
                 title = stringResource(id = R.string.groupCreate),
                 backgroundColor = LocalColors.current.backgroundSecondary,
                 onBack = onBack,
+                windowInsets = WindowInsets(0, 0, 0, 0), // Insets handled by the dialog
             )
         },
     ) { paddings ->

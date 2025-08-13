@@ -27,8 +27,8 @@ import org.thoughtcrime.securesms.preferences.sendInvitationToUseSession
 import org.thoughtcrime.securesms.ui.border
 import org.thoughtcrime.securesms.ui.components.AppBarCloseIcon
 import org.thoughtcrime.securesms.ui.components.BackAppBar
-import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
-import org.thoughtcrime.securesms.ui.components.SlimOutlineCopyButton
+import org.thoughtcrime.securesms.ui.components.OutlineButton
+import org.thoughtcrime.securesms.ui.components.OutlineCopyButton
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -85,7 +85,7 @@ internal fun InviteFriend(
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
             Row(horizontalArrangement = spacedBy(LocalDimensions.current.smallSpacing)) {
-                SlimOutlineButton(
+                OutlineButton(
                     stringResource(R.string.share),
                     modifier = Modifier
                         .weight(1f)
@@ -95,7 +95,7 @@ internal fun InviteFriend(
                     }
                 )
 
-                SlimOutlineCopyButton(
+                OutlineCopyButton(
                     modifier = Modifier.weight(1f),
                     onClick = {
                         context.copyPublicKey()
