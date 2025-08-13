@@ -1210,7 +1210,7 @@ open class Storage @Inject constructor(
         if (fromUser == null) {
             // this deletes all *from* thread, not deleting the actual thread
             smsDatabase.deleteThread(threadID)
-            mmsDatabase.deleteThread(threadID) // threadDB update called from within
+            mmsDatabase.deleteThread(threadID, updateThread = true) // threadDB update called from within
         } else {
             // this deletes all *from* thread, not deleting the actual thread
             smsDatabase.deleteMessagesFrom(threadID, fromUser.toString())

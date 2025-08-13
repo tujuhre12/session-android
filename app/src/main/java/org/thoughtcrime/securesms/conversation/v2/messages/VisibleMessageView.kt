@@ -119,7 +119,7 @@ class VisibleMessageView : FrameLayout {
     private var isOutgoing: Boolean = false
 
     var indexInAdapter: Int = -1
-    var snIsSelected = false
+    var isMessageSelected = false
         set(value) {
             field = value
             handleIsSelectedChanged()
@@ -231,7 +231,7 @@ class VisibleMessageView : FrameLayout {
                 }
             }
         }
-        if(!message.isOutgoing && (isStartOfMessageCluster && (isGroupThread || snIsSelected))){
+        if(!message.isOutgoing && (isStartOfMessageCluster && isGroupThread)){
             binding.senderName.setOnClickListener {
                 delegate?.showUserProfileModal(message.recipient)
             }
@@ -263,7 +263,7 @@ class VisibleMessageView : FrameLayout {
         }
 
         // Date break
-        val showDateBreak = isStartOfMessageCluster || snIsSelected
+        val showDateBreak = isStartOfMessageCluster
         binding.dateBreakTextView.text = if (showDateBreak) dateUtils.getDisplayFormattedTimeSpanString(
             message.timestamp
         ) else null
@@ -486,7 +486,7 @@ class VisibleMessageView : FrameLayout {
     }
 
     private fun handleIsSelectedChanged() {
-        background = if (snIsSelected) ColorDrawable(context.getColorFromAttr(R.attr.message_selected)) else null
+        background = if (isMessageSelected) ColorDrawable(context.getColorFromAttr(R.attr.message_selected)) else null
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -550,7 +550,7 @@ class VisibleMessageView : FrameLayout {
 
     private fun onMove(event: MotionEvent) {
         val translationX = toDp(event.rawX + dx, context.resources)
-        if (abs(translationX) < longPressMovementThreshold || snIsSelected) {
+        if (abs(translationX) < longPressMovementThreshold || isMessageSelected) {
             return
         } else {
             longPressCallback?.let { gestureHandler.removeCallbacks(it) }
