@@ -17,25 +17,40 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.fragment.app.viewModels
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
+import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
+import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.home.startconversation.group.CreateGroupScreen
 import org.thoughtcrime.securesms.home.startconversation.home.StartConversationScreen
 import org.thoughtcrime.securesms.home.startconversation.invitefriend.InviteFriend
+import org.thoughtcrime.securesms.home.startconversation.newmessage.NewMessage
+import org.thoughtcrime.securesms.home.startconversation.newmessage.NewMessageViewModel
+import org.thoughtcrime.securesms.home.startconversation.newmessage.State
+import org.thoughtcrime.securesms.openUrl
 import org.thoughtcrime.securesms.ui.NavigationAction
 import org.thoughtcrime.securesms.ui.ObserveAsEvents
 import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.components.BaseBottomSheet
 import org.thoughtcrime.securesms.ui.horizontalSlideComposable
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
+import kotlin.getValue
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -127,6 +142,8 @@ fun StartConversationNavHost(
         }
 
         val scope = rememberCoroutineScope()
+        val activity = LocalActivity.current
+        val context = LocalContext.current
 
         NavHost(navController = navController, startDestination = StartConversationDestination.Home) {
             // Home
@@ -141,11 +158,37 @@ fun StartConversationNavHost(
             }
 
             // New Message
+            horizontalSlideComposable<StartConversationDestination.NewMessage> {
+                val viewModel = hiltViewModel<NewMessageViewModel>()
+                val uiState by viewModel.state.collectAsState(State())
+
+                LaunchedEffect(Unit) {
+                    scope.launch {
+                        viewModel.success.collect {
+                            val recipient = Recipient.from(context, Address.fromSerialized(it.publicKey), false)
+                            Intent(context, ConversationActivityV2::class.java).apply {
+                                putExtra(ConversationActivityV2.ADDRESS, recipient.address)
+                                setDataAndType(activity?.intent?.data, activity?.intent?.type)
+                                putExtra(ConversationActivityV2.THREAD_ID, DatabaseComponent.get(context).threadDatabase().getThreadIdIfExistsFor(recipient))
+                            }.let(context::startActivity)
+
+                            onClose()
+                        }
+                    }
+                }
+
+                NewMessage(
+                    uiState,
+                    viewModel.qrErrors,
+                    viewModel,
+                    onBack = { scope.launch { navigator.navigateUp() }},
+                    onClose = onClose,
+                    onHelp = { activity?.openUrl("https://sessionapp.zendesk.com/hc/en-us/articles/4439132747033-How-do-Account-ID-usernames-work") }
+                )
+            }
 
             // Create Group
             horizontalSlideComposable<StartConversationDestination.CreateGroup> {
-                val activity = LocalActivity.current
-
                 CreateGroupScreen(
                     onNavigateToConversationScreen = { threadID ->
                         activity?.startActivity(
