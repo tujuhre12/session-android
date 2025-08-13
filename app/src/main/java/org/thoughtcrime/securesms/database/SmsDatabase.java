@@ -740,7 +740,7 @@ public class SmsDatabase extends MessagingDatabase {
     db.delete(TABLE_NAME, THREAD_ID + " = ?", new String[] {threadId+""});
   }
 
-  void deleteThreads(Set<Long> threadIds) {
+  public void deleteThreads(Set<Long> threadIds) {
     SQLiteDatabase db = getWritableDatabase();
     String where      = "";
 

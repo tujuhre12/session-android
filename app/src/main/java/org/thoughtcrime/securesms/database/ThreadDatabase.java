@@ -39,7 +39,6 @@ import org.session.libsession.utilities.AddressKt;
 import org.session.libsession.utilities.ConfigFactoryProtocol;
 import org.session.libsession.utilities.ConfigFactoryProtocolKt;
 import org.session.libsession.utilities.DistributionTypes;
-import org.session.libsession.utilities.GroupUtil;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.recipients.Recipient;
@@ -53,7 +52,6 @@ import org.thoughtcrime.securesms.database.model.MessageRecord;
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord;
 import org.thoughtcrime.securesms.database.model.ThreadRecord;
 import org.thoughtcrime.securesms.database.model.content.MessageContent;
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent;
 import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.SlideDeck;
@@ -63,9 +61,10 @@ import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -139,6 +138,13 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
 
   public static final String ADD_SNIPPET_CONTENT_COLUMN = "ALTER TABLE " + TABLE_NAME + " ADD COLUMN " + SNIPPET_CONTENT + " TEXT DEFAULT NULL;";
 
+  public static final String[] CREATE_ADDRESS_INDEX = {
+     // First remove duplicated addresses if any - this should not be the case as there's application level protection in place but just to make sure
+     "DELETE FROM " + TABLE_NAME + " WHERE " + ID + " NOT IN (SELECT " + ID + " FROM " + TABLE_NAME + " GROUP BY " + ADDRESS + ")",
+     // Then create an index on the address column
+     "CREATE UNIQUE INDEX thread_addresses ON " + TABLE_NAME + " (" + ADDRESS + ");"
+  };
+
   private static final String[] THREAD_PROJECTION = {
       ID, THREAD_CREATION_DATE, MESSAGE_COUNT, ADDRESS, SNIPPET, SNIPPET_CHARSET, READ, UNREAD_COUNT, UNREAD_MENTION_COUNT, DISTRIBUTION_TYPE, ERROR, SNIPPET_TYPE,
       SNIPPET_URI, ARCHIVED, STATUS, DELIVERY_RECEIPT_COUNT, EXPIRES_IN, LAST_SEEN, READ_RECEIPT_COUNT, IS_PINNED, SNIPPET_CONTENT,
@@ -153,8 +159,8 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
           Stream.concat(Stream.concat(Stream.of(TYPED_THREAD_PROJECTION),
                   Stream.of(GroupDatabase.TYPED_GROUP_PROJECTION)),
                   Stream.of(LokiMessageDatabase.groupInviteTable+"."+LokiMessageDatabase.invitingSessionId)
-          )
-                                                                                       .toList();
+          );
+
 
   public static String getCreatePinnedCommand() {
     return "ALTER TABLE "+ TABLE_NAME + " " +
@@ -225,16 +231,6 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
     }
   }
 
-  private long createThreadForRecipient(Address address) {
-    ContentValues contentValues = new ContentValues(2);
-
-    contentValues.put(ADDRESS, address.toString());
-    contentValues.put(MESSAGE_COUNT, 0);
-
-    SQLiteDatabase db = getWritableDatabase();
-    return db.insert(TABLE_NAME, null, contentValues);
-  }
-
   private void updateThread(long threadId, long count, String body, @Nullable Uri attachment, @Nullable MessageContent messageContent,
                             long date, int status, int deliveryReceiptCount, long type, boolean unarchive,
                             long expiresIn, int readReceiptCount)
@@ -275,6 +271,82 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
     if (db.delete(TABLE_NAME, ID_WHERE, new String[] {threadId + ""}) > 0) {
       notifyThreadUpdated(threadId);
     }
+  }
+
+  public static class EnsureThreadsResult {
+    @NonNull
+    public final List<Long> deletedThreadIDs;
+
+    @NonNull
+    public final Map<Address, Long> createdThreads;
+
+    public EnsureThreadsResult(@NonNull List<Long> deletedThreadIDs, @NonNull Map<Address, Long> createdThreads) {
+        this.deletedThreadIDs = deletedThreadIDs;
+        this.createdThreads = createdThreads;
+    }
+  }
+
+  /**
+   * This method ensures that the threads for the given addresses exist in the database, AND
+   * deletes any threads that are not in the given addresses.
+   *
+   * @return The list of thread IDs that were deleted.
+   */
+  @NonNull
+  public EnsureThreadsResult ensureThreads(@NonNull final Iterable<Address.Conversable> addresses) {
+    final SQLiteDatabase db = getWritableDatabase();
+
+    db.beginTransaction();
+
+    final List<Long> deletedThreads;
+    final Map<Address, Long> createdThreads;
+
+    try {
+      // First delete threads that are not in the given addresses
+      final String deletionSql = "DELETE FROM " + TABLE_NAME +
+              " WHERE " + ADDRESS + " NOT IN (SELECT value FROM json_each(?)) RETURNING " + ID;
+      final String addressListAsJson = new JSONArray(CollectionsKt.map(addresses, Address::getAddress)).toString();
+
+      try (final Cursor cursor = db.rawQuery(deletionSql, addressListAsJson)) {
+        deletedThreads = new ArrayList<>(cursor.getCount());
+        while (cursor.moveToNext()) {
+          long threadId = cursor.getLong(0);
+          deletedThreads.add(threadId);
+        }
+      }
+
+      // Second, ensure that threads for the given addresses exist
+      final String insertionSql = "INSERT OR IGNORE INTO " + TABLE_NAME + " (" + ADDRESS + ") " +
+              "SELECT value FROM json_each(?) " +
+              "RETURNING " + ID + ", " + ADDRESS;
+
+      try (final Cursor cursor = db.rawQuery(insertionSql, addressListAsJson)) {
+        createdThreads = new HashMap<>(cursor.getCount());
+        while (cursor.moveToNext()) {
+          createdThreads.put(
+                  Address.fromSerialized(cursor.getString(1)),
+                  cursor.getLong(0)
+          );
+        }
+      }
+
+      db.setTransactionSuccessful();
+    } finally {
+      db.endTransaction();
+    }
+
+    // Notify that the threads were deleted
+    for (final Long deletedThread : deletedThreads) {
+      notifyThreadUpdated(deletedThread);
+    }
+
+    // Notify that the threads were created
+    for (final Map.Entry<Address, Long> entry : createdThreads.entrySet()) {
+      final long threadId = entry.getValue();
+      notifyThreadUpdated(threadId);
+    }
+
+    return new EnsureThreadsResult(deletedThreads, createdThreads);
   }
 
   public void trimThreadBefore(long threadId, long timestamp) {
@@ -525,64 +597,45 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
     SQLiteDatabase db      = getReadableDatabase();
     String where           = ADDRESS + " = ?";
     String[] recipientsArg = new String[] {address};
-    Cursor cursor          = null;
 
-    try {
-      cursor = db.query(TABLE_NAME, new String[]{ID}, where, recipientsArg, null, null, null);
-
-      if (cursor != null && cursor.moveToFirst())
+    try (final Cursor cursor = db.query(TABLE_NAME, new String[]{ID}, where, recipientsArg, null, null, null)) {
+      if (cursor.moveToFirst())
         return cursor.getLong(cursor.getColumnIndexOrThrow(ID));
       else
         return -1L;
-    } finally {
-      if (cursor != null)
-        cursor.close();
     }
   }
 
   public long getThreadIdIfExistsFor(Address address) {
-    return getThreadIdIfExistsFor(address.toString());
+    return getThreadIdIfExistsFor(address.getAddress());
   }
 
   public long getOrCreateThreadIdFor(Address address) {
-    SQLiteDatabase db            = getReadableDatabase();
-    String         where         = ADDRESS + " = ?";
-    String[]       recipientsArg = new String[]{address.toString()};
-    Cursor         cursor        = null;
-
     boolean created = false;
 
-    try {
-        long threadId;
+    ContentValues contentValues = new ContentValues(1);
+    contentValues.put(ADDRESS, address.toString());
+    long threadId = getWritableDatabase().insertWithOnConflict(TABLE_NAME, null, contentValues, SQLiteDatabase.CONFLICT_IGNORE);
 
-        // The synchronization here makes sure we don't create two threads for the same recipient at the same time
-        synchronized (this) {
-            cursor = db.query(TABLE_NAME, new String[]{ID}, where, recipientsArg, null, null, null);
-            if (cursor != null && cursor.moveToFirst()) {
-              threadId = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
-            } else {
-              threadId = createThreadForRecipient(address);
-              created = true;
-            }
-        }
-
-        if (created) {
-          updateNotifications.tryEmit(threadId);
-        }
-
-      return threadId;
-    } finally {
-      if (cursor != null)
-        cursor.close();
+    if (threadId < 0) {
+      threadId = getThreadIdIfExistsFor(address);
+    } else {
+      created = true;
     }
+
+    if (created) {
+      updateNotifications.tryEmit(threadId);
+    }
+
+    return threadId;
   }
 
   public @Nullable Address getRecipientForThreadId(long threadId) {
     SQLiteDatabase db = getReadableDatabase();
 
-    try(final Cursor cursor = db.query(TABLE_NAME, null, ID + " = ?", new String[] {threadId+""}, null, null, null)) {
+    try (final Cursor cursor = db.query(TABLE_NAME, null, ID + " = ?", new String[] {threadId+""}, null, null, null)) {
       if (cursor != null && cursor.moveToFirst()) {
-        return Address.fromSerialized(cursor.getString(cursor.getColumnIndexOrThrow(ADDRESS)));
+        return Address.fromSerialized(cursor.getString(0));
       }
     }
 

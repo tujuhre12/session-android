@@ -5,6 +5,7 @@ import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPolle
 import org.session.libsession.messaging.sending_receiving.pollers.PollerManager
 import org.session.libsession.snode.SnodeClock
 import org.thoughtcrime.securesms.attachments.AvatarUploadManager
+import org.thoughtcrime.securesms.configs.ConfigToDatabaseSync
 import org.thoughtcrime.securesms.configs.ConfigUploader
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.disguise.AppDisguiseManager
@@ -64,6 +65,7 @@ class OnAppStartupComponents private constructor(
         threadDatabase: ThreadDatabase,
         emojiIndexLoader: EmojiIndexLoader,
         avatarUploadManager: AvatarUploadManager,
+        configToDatabaseSync: ConfigToDatabaseSync,
     ): this(
         components = listOf(
             configUploader,
@@ -93,6 +95,7 @@ class OnAppStartupComponents private constructor(
             threadDatabase,
             emojiIndexLoader,
             avatarUploadManager,
+            configToDatabaseSync,
         )
     )
 }

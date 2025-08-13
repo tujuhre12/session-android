@@ -65,6 +65,8 @@ interface ConversationRepository {
 
     fun getConversationList(approved: Boolean? = null): List<ThreadRecord>
 
+    fun getConversationListAddresses(approved: Boolean? = null): List<Address.Conversable>
+
     fun getConversationListAddresses(
         nts: (ReadableUserProfile) -> Boolean = { false },
         contactFilter: (Contact) -> Boolean = { false },
@@ -221,7 +223,7 @@ class DefaultConversationRepository @Inject constructor(
         get() = !invited
 
 
-    private fun getConversationListAddresses(approved: Boolean?) =  getConversationListAddresses(
+    override fun getConversationListAddresses(approved: Boolean?) = getConversationListAddresses(
         blindedContactFilter = { true },
         nts = { approved == null || approved },
         contactFilter = {

@@ -48,7 +48,7 @@ public class DraftDatabase extends Database {
     db.delete(TABLE_NAME, THREAD_ID + " = ?", new String[] {threadId+""});
   }
 
-  void clearDrafts(Set<Long> threadIds) {
+  public void clearDrafts(Set<Long> threadIds) {
     SQLiteDatabase db        = getWritableDatabase();
     StringBuilder  where     = new StringBuilder();
     List<String>   arguments = new LinkedList<>();

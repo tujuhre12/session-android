@@ -176,7 +176,6 @@ interface StorageProtocol {
     fun getTotalPinned(): Int
     fun setPinned(address: Address, isPinned: Boolean)
     fun isRead(threadId: Long) : Boolean
-    fun deleteConversation(threadID: Long)
     fun setThreadCreationDate(threadId: Long, newDate: Long)
     fun getLastLegacyRecipient(threadRecipient: String): String?
     fun setLastLegacyRecipient(threadRecipient: String, senderRecipient: String?)

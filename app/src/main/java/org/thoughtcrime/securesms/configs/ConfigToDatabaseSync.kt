@@ -2,8 +2,11 @@ package org.thoughtcrime.securesms.configs
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
@@ -24,6 +27,7 @@ import org.session.libsession.messaging.sending_receiving.notifications.PushRegi
 import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeClock
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.GroupUtil
@@ -31,17 +35,25 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.isGroupV2
+import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.database.DraftDatabase
+import org.thoughtcrime.securesms.database.LokiMessageDatabase
+import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
+import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.groups.ClosedGroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
+import org.thoughtcrime.securesms.util.SessionMetaProtocol
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -57,21 +69,57 @@ class ConfigToDatabaseSync @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val storage: StorageProtocol,
     private val threadDatabase: ThreadDatabase,
+    private val smsDatabase: SmsDatabase,
+    private val mmsDatabase: MmsDatabase,
+    private val draftDatabase: DraftDatabase,
     private val clock: SnodeClock,
     private val preferences: TextSecurePreferences,
     private val conversationRepository: ConversationRepository,
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val openGroupManager: OpenGroupManager,
-) {
+    private val lokiMessageDatabase: LokiMessageDatabase,
+    @param:ManagerScope private val scope: CoroutineScope,
+) : OnAppStartupComponent {
     init {
         if (!preferences.migratedToGroupV2Config) {
             preferences.migratedToGroupV2Config = true
 
-            GlobalScope.launch(Dispatchers.Default) {
+            scope.launch {
                 for (configType in UserConfigType.entries) {
                     syncUserConfigs(configType, null)
                 }
             }
+        }
+
+        // Sync conversations from config -> database
+        scope.launch {
+            configFactory.userConfigsChanged()
+                .onStart { emit(Unit) }
+                .map { conversationRepository.getConversationListAddresses() }
+                .collectLatest(::ensureConversations)
+        }
+    }
+
+    private fun ensureConversations(addresses: Iterable<Address.Conversable>) {
+        val result = threadDatabase.ensureThreads(addresses)
+
+        if (result.deletedThreadIDs.isNotEmpty()) {
+            val deletedThreadIDSet = result.deletedThreadIDs.toSet()
+            smsDatabase.deleteThreads(deletedThreadIDSet)
+            mmsDatabase.deleteThreads(deletedThreadIDSet)
+            draftDatabase.clearDrafts(deletedThreadIDSet)
+
+            for (threadId in deletedThreadIDSet) {
+                lokiMessageDatabase.deleteThread(threadId)
+            }
+
+            // Not sure why this is here but it was from the original code in Storage.
+            // If you can find out what it does, please remove it.
+            SessionMetaProtocol.clearReceivedMessages()
+        }
+
+        if (result.createdThreads.isNotEmpty()) {
+
         }
     }
 
@@ -176,7 +224,7 @@ class ConfigToDatabaseSync @Inject constructor(
                 } ?: return
 
                 // remove messages from swarm SnodeAPI.deleteMessage
-                GlobalScope.launch(Dispatchers.Default) {
+                scope.launch(Dispatchers.Default) {
                     val cleanedHashes: List<String> =
                         messages.asSequence().map { it.second }.filter { !it.isNullOrEmpty() }.filterNotNull().toList()
                     if (cleanedHashes.isNotEmpty()) SnodeAPI.deleteMessage(

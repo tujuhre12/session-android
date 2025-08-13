@@ -994,7 +994,7 @@ class MmsDatabase @Inject constructor(
     }
 
     fun deleteThread(threadId: Long) {
-        deleteThreads(setOf(threadId))
+        deleteThreads(setOf(threadId), true)
     }
 
     fun deleteMediaFor(threadId: Long, fromUser: String? = null) {
@@ -1194,7 +1194,7 @@ class MmsDatabase @Inject constructor(
         return false
     }
 
-    private fun deleteThreads(threadIds: Set<Long>) {
+    public fun deleteThreads(threadIds: Set<Long>) {
         val db = writableDatabase
         val where = StringBuilder()
         var cursor: Cursor? = null
@@ -1216,10 +1216,6 @@ class MmsDatabase @Inject constructor(
             }
         } finally {
             cursor?.close()
-        }
-        val threadDb = threadDatabase
-        for (threadId in threadIds) {
-            threadDb.update(threadId, false)
         }
         notifyStickerListeners()
         notifyStickerPackListeners()

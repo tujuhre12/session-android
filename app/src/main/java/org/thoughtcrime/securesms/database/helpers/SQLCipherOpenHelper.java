@@ -243,6 +243,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     db.execSQL(BlindedIdMappingDatabase.DROP_TABLE_COMMAND);
     db.execSQL(ExpirationConfigurationDatabase.DROP_TABLE_COMMAND);
     db.execSQL(SessionContactDatabase.getDropTableCommand());
+    executeStatements(db, ThreadDatabase.CREATE_ADDRESS_INDEX);
   }
 
   @Override
@@ -555,6 +556,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
         db.execSQL(BlindedIdMappingDatabase.DROP_TABLE_COMMAND);
         db.execSQL(ExpirationConfigurationDatabase.DROP_TABLE_COMMAND);
         db.execSQL(SessionContactDatabase.getDropTableCommand());
+        executeStatements(db, ThreadDatabase.CREATE_ADDRESS_INDEX);
       }
 
       db.setTransactionSuccessful();

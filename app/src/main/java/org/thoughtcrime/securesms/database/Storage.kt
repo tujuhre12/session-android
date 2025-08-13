@@ -1155,55 +1155,55 @@ open class Storage @Inject constructor(
         lokiAPIDatabase.setLastLegacySenderAddress(threadRecipient, senderRecipient)
     }
 
-    override fun deleteConversation(threadID: Long) {
-
-        // Delete the conversation and its messages
-        smsDatabase.deleteThread(threadID)
-        mmsDatabase.deleteThread(threadID)
-        draftDatabase.clearDrafts(threadID)
-        lokiMessageDatabase.deleteThread(threadID)
-        threadDatabase.deleteThread(threadID)
-        clearReceivedMessages()
-
-        val recipientAddress = getRecipientForThread(threadID) as? Address.Conversable
-        if (recipientAddress == null) return
-
-        configFactory.withMutableUserConfigs { configs ->
-            when (recipientAddress) {
-                is Address.LegacyGroup -> {
-                    val accountId = GroupUtil.doubleDecodeGroupId(recipientAddress.toString())
-                    groupDatabase.delete(recipientAddress.toString())
-                    configs.convoInfoVolatile.eraseLegacyClosedGroup(accountId)
-                    configs.userGroups.eraseLegacyGroup(accountId)
-                }
-
-                is Address.Community -> {
-                    // these should be removed in the group leave / handling new configs
-                    Log.w("Loki", "Thread delete called for open group address, expecting to be handled elsewhere")
-                }
-
-                is Address.Group -> {
-                    Log.w("Loki", "Thread delete called for closed group address, expecting to be handled elsewhere")
-                }
-
-                is Address.CommunityBlindedId -> {
-                    configs.contacts.eraseBlinded(
-                        communityServerUrl = recipientAddress.serverUrl,
-                        blindedId = recipientAddress.blindedId.accountId.hexString,
-                    )
-
-                    configs.convoInfoVolatile.eraseBlindedOneToOne(recipientAddress.blindedId.accountId.hexString)
-                }
-
-                is Address.Standard -> {
-                    configs.convoInfoVolatile.eraseOneToOne(recipientAddress.accountId.hexString)
-                    configs.contacts.erase(recipientAddress.accountId.hexString)
-                }
-            }
-
-            Unit
-        }
-    }
+//    override fun deleteConversation(threadID: Long) {
+//
+//        // Delete the conversation and its messages
+//        smsDatabase.deleteThread(threadID)
+//        mmsDatabase.deleteThread(threadID)
+//        draftDatabase.clearDrafts(threadID)
+//        lokiMessageDatabase.deleteThread(threadID)
+//        threadDatabase.deleteThread(threadID)
+//        clearReceivedMessages()
+//
+//        val recipientAddress = getRecipientForThread(threadID) as? Address.Conversable
+//        if (recipientAddress == null) return
+//
+//        configFactory.withMutableUserConfigs { configs ->
+//            when (recipientAddress) {
+//                is Address.LegacyGroup -> {
+//                    val accountId = GroupUtil.doubleDecodeGroupId(recipientAddress.toString())
+//                    groupDatabase.delete(recipientAddress.toString())
+//                    configs.convoInfoVolatile.eraseLegacyClosedGroup(accountId)
+//                    configs.userGroups.eraseLegacyGroup(accountId)
+//                }
+//
+//                is Address.Community -> {
+//                    // these should be removed in the group leave / handling new configs
+//                    Log.w("Loki", "Thread delete called for open group address, expecting to be handled elsewhere")
+//                }
+//
+//                is Address.Group -> {
+//                    Log.w("Loki", "Thread delete called for closed group address, expecting to be handled elsewhere")
+//                }
+//
+//                is Address.CommunityBlindedId -> {
+//                    configs.contacts.eraseBlinded(
+//                        communityServerUrl = recipientAddress.serverUrl,
+//                        blindedId = recipientAddress.blindedId.accountId.hexString,
+//                    )
+//
+//                    configs.convoInfoVolatile.eraseBlindedOneToOne(recipientAddress.blindedId.accountId.hexString)
+//                }
+//
+//                is Address.Standard -> {
+//                    configs.convoInfoVolatile.eraseOneToOne(recipientAddress.accountId.hexString)
+//                    configs.contacts.erase(recipientAddress.accountId.hexString)
+//                }
+//            }
+//
+//            Unit
+//        }
+//    }
 
     override fun clearMessages(threadID: Long, fromUser: Address?): Boolean {
         val threadDb = threadDatabase
