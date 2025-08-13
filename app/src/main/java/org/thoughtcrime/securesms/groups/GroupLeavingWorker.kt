@@ -24,7 +24,6 @@ import org.session.libsignal.protos.SignalServiceProtos.DataMessage
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateMessage
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 
@@ -35,7 +34,6 @@ class GroupLeavingWorker @AssistedInject constructor(
     private val storage: Storage,
     private val configFactory: ConfigFactory,
     private val groupScope: GroupScope,
-    private val lokiAPIDatabase: LokiAPIDatabase,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         val groupId = requireNotNull(inputData.getString(KEY_GROUP_ID)) {
@@ -99,11 +97,7 @@ class GroupLeavingWorker @AssistedInject constructor(
                 }
 
                 // Delete conversation and group configs
-                storage.getThreadId(Address.fromSerialized(groupId.hexString))
-                    ?.let(storage::deleteConversation)
                 configFactory.removeGroup(groupId)
-                lokiAPIDatabase.clearLastMessageHashes(groupId.hexString)
-                lokiAPIDatabase.clearReceivedMessageHashValues(groupId.hexString)
                 Log.d(TAG, "Group $groupId left successfully")
                 Result.success()
             } catch (e: CancellationException) {

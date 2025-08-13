@@ -4,7 +4,6 @@ import android.content.Context
 import android.net.Uri
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
-import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.MutableConversationVolatileConfig
@@ -19,7 +18,6 @@ import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.messaging.jobs.AttachmentUploadJob
-import org.session.libsession.messaging.jobs.GroupAvatarDownloadJob
 import org.session.libsession.messaging.jobs.Job
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageSendJob
@@ -80,11 +78,9 @@ import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
-import org.thoughtcrime.securesms.util.SessionMetaProtocol.clearReceivedMessages
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
-import network.loki.messenger.libsession_util.util.Contact as LibSessionContact
 import network.loki.messenger.libsession_util.util.GroupMember as LibSessionGroupMember
 
 private const val TAG = "Storage"
@@ -415,10 +411,6 @@ open class Storage @Inject constructor(
         return jobDatabase.getMessageSendJob(messageSendJobID)
     }
 
-    override fun getGroupAvatarDownloadJob(server: String, room: String, imageId: String?): GroupAvatarDownloadJob? {
-        return jobDatabase.getGroupAvatarDownloadJob(server, room, imageId)
-    }
-
     override fun resumeMessageSendJobIfNeeded(messageSendJobID: String) {
         val job = jobDatabase.getMessageSendJob(messageSendJobID) ?: return
         JobQueue.shared.resumePendingSendMessage(job)
@@ -472,10 +464,6 @@ open class Storage @Inject constructor(
         return lokiAPIDatabase.getOpenGroupPublicKey(server)
     }
 
-    override fun setOpenGroupPublicKey(server: String, newValue: String) {
-        lokiAPIDatabase.setOpenGroupPublicKey(server, newValue)
-    }
-
     override fun getLastMessageServerID(room: String, server: String): Long? {
         return lokiAPIDatabase.getLastMessageServerID(room, server)
     }
@@ -484,20 +472,12 @@ open class Storage @Inject constructor(
         lokiAPIDatabase.setLastMessageServerID(room, server, newValue)
     }
 
-    override fun removeLastMessageServerID(room: String, server: String) {
-        lokiAPIDatabase.removeLastMessageServerID(room, server)
-    }
-
     override fun getLastDeletionServerID(room: String, server: String): Long? {
         return lokiAPIDatabase.getLastDeletionServerID(room, server)
     }
 
     override fun setLastDeletionServerID(room: String, server: String, newValue: Long) {
         lokiAPIDatabase.setLastDeletionServerID(room, server, newValue)
-    }
-
-    override fun removeLastDeletionServerID(room: String, server: String) {
-        lokiAPIDatabase.removeLastDeletionServerID(room, server)
     }
 
     override fun setUserCount(room: String, server: String, newValue: Int) {
@@ -913,43 +893,12 @@ open class Storage @Inject constructor(
         return lokiThreadDatabase.getAllOpenGroups()
     }
 
-    override fun updateOpenGroup(openGroup: OpenGroup) {
-        openGroupManager.get().updateOpenGroup(openGroup, context)
-
-        groupDatabase.updateTitle(
-            groupID = GroupUtil.getEncodedOpenGroupID(openGroup.groupId.toByteArray()),
-            newValue = openGroup.name
-        )
-    }
-
     override fun getAllGroups(includeInactive: Boolean): List<GroupRecord> {
         return groupDatabase.getAllGroups(includeInactive)
     }
 
     override suspend fun addOpenGroup(urlAsString: String) {
-        return openGroupManager.get().addOpenGroup(urlAsString, context)
-    }
-
-    override fun onOpenGroupAdded(server: String, room: String) {
-        configFactory.withMutableUserConfigs { configs ->
-            val groups = configs.userGroups
-            val volatileConfig = configs.convoInfoVolatile
-            val openGroup = getOpenGroup(room, server) ?: return@withMutableUserConfigs
-            val (infoServer, infoRoom, pubKey) = BaseCommunityInfo.parseFullUrl(openGroup.joinURL) ?: return@withMutableUserConfigs
-            val pubKeyHex = Hex.toStringCondensed(pubKey)
-            val communityInfo = groups.getOrConstructCommunityInfo(infoServer, infoRoom, pubKeyHex)
-            groups.set(communityInfo)
-            val volatile = volatileConfig.getOrConstructCommunity(infoServer, infoRoom, pubKey)
-            if (volatile.lastRead != 0L) {
-                val threadId = getThreadId(openGroup) ?: return@withMutableUserConfigs
-                markConversationAsRead(threadId, volatile.lastRead, force = true)
-            }
-            volatileConfig.set(volatile)
-        }
-    }
-
-    override fun hasBackgroundGroupAddJob(groupJoinUrl: String): Boolean {
-        return jobDatabase.hasBackgroundGroupAddJob(groupJoinUrl)
+        return openGroupManager.get().addOpenGroup(urlAsString)
     }
 
     override fun getOrCreateThreadIdFor(address: Address): Long {
@@ -999,35 +948,9 @@ open class Storage @Inject constructor(
         return threadId ?: -1
     }
 
-    override fun deleteContactAndSyncConfig(accountId: String) {
-        recipientDatabase.delete(Address.fromSerialized(accountId))
-        val threadId: Long = threadDatabase.getThreadIdIfExistsFor(accountId)
-        if (threadId != -1L) {
-            deleteConversation(threadId)
-        }
-
-        // also handle the contact removal from the config's point of view
-        configFactory.removeContact(accountId)
-    }
-
     override fun getRecipientForThread(threadId: Long): Address? {
         return threadDatabase.getRecipientForThreadId(threadId)
     }
-
-    override fun syncLibSessionContacts(contacts: List<LibSessionContact>, timestamp: Long?) {
-        contacts.forEach { contact ->
-            val address = fromSerialized(contact.id)
-
-            if (contact.priority == PRIORITY_HIDDEN) {
-                getThreadId(address)?.let(::deleteConversation)
-            } else {
-                getOrCreateThreadIdFor(address).also {
-                    setThreadCreationDate(it, 0)
-                }
-            }
-        }
-    }
-
     override fun setAutoDownloadAttachments(
         recipient: Address,
         shouldAutoDownloadAttachments: Boolean
@@ -1318,20 +1241,12 @@ open class Storage @Inject constructor(
         lokiAPIDatabase.setLastInboxMessageId(server, messageId)
     }
 
-    override fun removeLastInboxMessageId(server: String) {
-        lokiAPIDatabase.removeLastInboxMessageId(server)
-    }
-
     override fun getLastOutboxMessageId(server: String): Long? {
         return lokiAPIDatabase.getLastOutboxMessageId(server)
     }
 
     override fun setLastOutboxMessageId(server: String, messageId: Long) {
         lokiAPIDatabase.setLastOutboxMessageId(server, messageId)
-    }
-
-    override fun removeLastOutboxMessageId(server: String) {
-        lokiAPIDatabase.removeLastOutboxMessageId(server)
     }
 
     override fun addReaction(

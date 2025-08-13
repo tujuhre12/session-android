@@ -18,6 +18,7 @@
 package org.thoughtcrime.securesms.database;
 
 import static org.thoughtcrime.securesms.database.GroupDatabase.GROUP_ID;
+import static org.thoughtcrime.securesms.database.GroupDatabase.TYPED_GROUP_PROJECTION;
 import static org.thoughtcrime.securesms.database.UtilKt.generatePlaceholders;
 
 import android.content.ContentValues;
@@ -58,6 +59,7 @@ import org.thoughtcrime.securesms.mms.SlideDeck;
 import org.thoughtcrime.securesms.notifications.MarkReadReceiver;
 
 import java.io.Closeable;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -155,11 +157,11 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
                                                                     .toList();
 
   private static final List<String> COMBINED_THREAD_RECIPIENT_GROUP_PROJECTION =
-          // wew
-          Stream.concat(Stream.concat(Stream.of(TYPED_THREAD_PROJECTION),
-                  Stream.of(GroupDatabase.TYPED_GROUP_PROJECTION)),
-                  Stream.of(LokiMessageDatabase.groupInviteTable+"."+LokiMessageDatabase.invitingSessionId)
-          );
+          CollectionsKt.plus(
+          CollectionsKt.plus(
+                  TYPED_THREAD_PROJECTION,
+                  TYPED_GROUP_PROJECTION
+          ), LokiMessageDatabase.groupInviteTable+"."+LokiMessageDatabase.invitingSessionId);
 
 
   public static String getCreatePinnedCommand() {
@@ -275,13 +277,13 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
 
   public static class EnsureThreadsResult {
     @NonNull
-    public final List<Long> deletedThreadIDs;
+    public final Map<Address, Long> deletedThreads;
 
     @NonNull
     public final Map<Address, Long> createdThreads;
 
-    public EnsureThreadsResult(@NonNull List<Long> deletedThreadIDs, @NonNull Map<Address, Long> createdThreads) {
-        this.deletedThreadIDs = deletedThreadIDs;
+    public EnsureThreadsResult(@NonNull Map<Address, Long> deletedThreads, @NonNull Map<Address, Long> createdThreads) {
+        this.deletedThreads = deletedThreads;
         this.createdThreads = createdThreads;
     }
   }
@@ -298,20 +300,22 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
 
     db.beginTransaction();
 
-    final List<Long> deletedThreads;
-    final Map<Address, Long> createdThreads;
+    final Map<Address, Long> deletedThreads, createdThreads;
 
     try {
       // First delete threads that are not in the given addresses
-      final String deletionSql = "DELETE FROM " + TABLE_NAME +
-              " WHERE " + ADDRESS + " NOT IN (SELECT value FROM json_each(?)) RETURNING " + ID;
+      final String deletionSql = "DELETE FROM " + TABLE_NAME + " " +
+              "WHERE " + ADDRESS + " NOT IN (SELECT value FROM json_each(?)) " +
+              "RETURNING " + ID + ", " + ADDRESS;
       final String addressListAsJson = new JSONArray(CollectionsKt.map(addresses, Address::getAddress)).toString();
 
       try (final Cursor cursor = db.rawQuery(deletionSql, addressListAsJson)) {
-        deletedThreads = new ArrayList<>(cursor.getCount());
+        deletedThreads = new HashMap<>(cursor.getCount());
         while (cursor.moveToNext()) {
-          long threadId = cursor.getLong(0);
-          deletedThreads.add(threadId);
+          deletedThreads.put(
+              Address.fromSerialized(cursor.getString(1)),
+              cursor.getLong(0)
+          );
         }
       }
 
@@ -324,8 +328,8 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
         createdThreads = new HashMap<>(cursor.getCount());
         while (cursor.moveToNext()) {
           createdThreads.put(
-                  Address.fromSerialized(cursor.getString(1)),
-                  cursor.getLong(0)
+              Address.fromSerialized(cursor.getString(1)),
+              cursor.getLong(0)
           );
         }
       }
@@ -336,14 +340,13 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
     }
 
     // Notify that the threads were deleted
-    for (final Long deletedThread : deletedThreads) {
+    for (final Long deletedThread : deletedThreads.values()) {
       notifyThreadUpdated(deletedThread);
     }
 
     // Notify that the threads were created
-    for (final Map.Entry<Address, Long> entry : createdThreads.entrySet()) {
-      final long threadId = entry.getValue();
-      notifyThreadUpdated(threadId);
+    for (final Long createdThread : createdThreads.values()) {
+      notifyThreadUpdated(createdThread);
     }
 
     return new EnsureThreadsResult(deletedThreads, createdThreads);
@@ -404,6 +407,29 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
     SQLiteDatabase db = getWritableDatabase();
     int updated = db.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {threadId+""});
     if (updated > 0) notifyThreadUpdated(threadId);
+  }
+
+  public void setCreationDates(@NonNull final Map<Long, ZonedDateTime> dates) {
+    if (dates.isEmpty()) return;
+
+    final SQLiteDatabase db = getWritableDatabase();
+    db.beginTransaction();
+
+    ContentValues contentValues = new ContentValues(1);
+
+    try {
+      for (Map.Entry<Long, ZonedDateTime> entry : dates.entrySet()) {
+        contentValues.put(THREAD_CREATION_DATE, entry.getValue().toInstant().toEpochMilli());
+        db.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {String.valueOf(entry.getKey())});
+      }
+      db.setTransactionSuccessful();
+    } finally {
+      db.endTransaction();
+    }
+
+    for (Long threadId : dates.keySet()) {
+      notifyThreadUpdated(threadId);
+    }
   }
 
   public int getDistributionType(long threadId) {

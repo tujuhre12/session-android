@@ -49,7 +49,7 @@ import kotlin.concurrent.write
 
 @Singleton
 class ConfigFactory @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val configDatabase: ConfigDatabase,
     private val threadDb: ThreadDatabase,
     private val lokiThreadDatabase: LokiThreadDatabase,
@@ -57,7 +57,7 @@ class ConfigFactory @Inject constructor(
     private val textSecurePreferences: TextSecurePreferences,
     private val clock: SnodeClock,
     private val configToDatabaseSync: Lazy<ConfigToDatabaseSync>,
-    @ManagerScope private val coroutineScope: CoroutineScope
+    @param:ManagerScope private val coroutineScope: CoroutineScope
 ) : ConfigFactoryProtocol {
     companion object {
         // This is a buffer period within which we will process messages which would result in a
@@ -109,9 +109,7 @@ class ConfigFactory @Inject constructor(
         val instance = ReentrantReadWriteLock() to UserConfigsImpl(
             userEd25519SecKey = requiresCurrentUserED25519SecKey(),
             userAccountId = userAccountId,
-            configDatabase = configDatabase,
-            storage = storage.get(),
-            threadDb = threadDb
+            configDatabase = configDatabase
         )
 
         return synchronized(userConfigs) {
@@ -217,8 +215,6 @@ class ConfigFactory @Inject constructor(
                 data = dump,
                 timestamp = timestamp
             )
-
-            configToDatabaseSync.get().syncUserConfigs(userConfigType, timestamp)
         }
     }
 
@@ -557,8 +553,6 @@ private class UserConfigsImpl(
     userEd25519SecKey: ByteArray,
     private val userAccountId: AccountId,
     private val configDatabase: ConfigDatabase,
-    storage: StorageProtocol,
-    threadDb: ThreadDatabase,
     contactsDump: ByteArray? = configDatabase.retrieveConfigAndHashes(
         ConfigDatabase.CONTACTS_VARIANT,
         userAccountId.hexString

@@ -72,7 +72,7 @@ import kotlin.math.min
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 @HiltViewModel(assistedFactory = ConversationSettingsViewModel.Factory::class)
 class ConversationSettingsViewModel @AssistedInject constructor(
-    @Assisted private val address: Address,
+    @Assisted private val address: Address.Conversable,
     @param:ApplicationContext private val context: Context,
     private val avatarUtils: AvatarUtils,
     private val repository: ConversationRepository,
@@ -894,13 +894,10 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     private fun deleteContact() {
-        val conversation = recipient ?: return
+        val contact = address as? Address.Standard ?: return
         viewModelScope.launch {
             showLoading()
-            withContext(Dispatchers.Default) {
-                storage.deleteContactAndSyncConfig(conversation.address.toString())
-            }
-
+            configFactory.removeContact(contact.accountId.hexString)
             hideLoading()
             goBackHome()
         }
@@ -927,12 +924,14 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
     private fun deleteConversation() {
         viewModelScope.launch {
-            showLoading()
-            withContext(Dispatchers.Default) {
-                storage.deleteConversation(threadId)
+            when (address) {
+                is Address.Community -> TODO()
+                is Address.CommunityBlindedId -> TODO()
+                is Address.Group -> TODO()
+                is Address.LegacyGroup -> TODO()
+                is Address.Standard -> TODO()
             }
 
-            hideLoading()
             goBackHome()
         }
     }
@@ -958,15 +957,11 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
     private fun leaveCommunity() {
         viewModelScope.launch {
-            showLoading()
-            withContext(Dispatchers.Default) {
-                val community = lokiThreadDatabase.getOpenGroupChat(threadId)
-                if (community != null) {
-                    openGroupManager.delete(community.server, community.room, context)
-                }
+            val address = requireNotNull(address as? Address.Community) {
+                "Address must be a Community address to leave a community"
             }
 
-            hideLoading()
+            openGroupManager.delete(address.serverUrl, address.room)
             goBackHome()
         }
     }
@@ -1426,7 +1421,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(address: Address): ConversationSettingsViewModel
+        fun create(address: Address.Conversable): ConversationSettingsViewModel
     }
 
     data class UIState(

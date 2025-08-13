@@ -16,7 +16,7 @@ class ConversationSettingsActivity: FullComposeScreenLockActivity() {
     companion object {
         const val THREAD_ADDRESS = "conversation_settings_thread_address"
 
-        fun createIntent(context: Context, address: Address): Intent {
+        fun createIntent(context: Context, address: Address.Conversable): Intent {
             return Intent(context, ConversationSettingsActivity::class.java).apply {
                 putExtra(THREAD_ADDRESS, address)
             }
@@ -29,7 +29,7 @@ class ConversationSettingsActivity: FullComposeScreenLockActivity() {
     @Composable
     override fun ComposeContent() {
         ConversationSettingsNavHost(
-            address =  requireNotNull(IntentCompat.getParcelableExtra(intent, THREAD_ADDRESS, Address::class.java)) {
+            address = requireNotNull(IntentCompat.getParcelableExtra(intent, THREAD_ADDRESS, Address.Conversable::class.java)) {
                 "ConversationSettingsActivity requires an Address to be passed in the intent."
             },
             navigator = navigator,

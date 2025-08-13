@@ -19,7 +19,6 @@ import kotlinx.coroutines.launch
 import nl.komponents.kovenant.functional.map
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
-import org.session.libsession.messaging.jobs.GroupAvatarDownloadJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageReceiveParameters
 import org.session.libsession.messaging.jobs.OpenGroupDeleteJob
@@ -37,6 +36,7 @@ import org.session.libsession.messaging.sending_receiving.ReceivedMessageHandler
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.AccountId
@@ -44,6 +44,8 @@ import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.GroupMemberDatabase
+import org.thoughtcrime.securesms.database.LokiThreadDatabase
+import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import java.util.concurrent.TimeUnit
 
@@ -64,6 +66,9 @@ class OpenGroupPoller @AssistedInject constructor(
     private val receivedMessageHandler: ReceivedMessageHandler,
     private val batchMessageJobFactory: BatchMessageReceiveJob.Factory,
     private val groupMemberDatabase: GroupMemberDatabase,
+    private val lokiThreadDatabase: LokiThreadDatabase,
+    private val configFactory: ConfigFactoryProtocol,
+    private val threadDatabase: ThreadDatabase,
     @Assisted private val server: String,
     @Assisted private val scope: CoroutineScope,
 ) {
@@ -72,101 +77,16 @@ class OpenGroupPoller @AssistedInject constructor(
 
     private val manualPollRequest = Channel<ManualPollRequestToken>()
 
+    private val mutableLastPolledRooms = MutableStateFlow(emptyList<String>())
+
+    val lastPolledRooms: StateFlow<List<String>> get() = mutableLastPolledRooms
+
     companion object {
         private const val POLL_INTERVAL_MILLS: Long = 4000L
         const val MAX_INACTIVITIY_PERIOD_MILLS = 14 * 24 * 60 * 60 * 1000L // 14 days
 
         private const val TAG = "OpenGroupPoller"
 
-        fun handleRoomPollInfo(
-            storage: StorageProtocol,
-            memberDb: GroupMemberDatabase,
-            server: String,
-            roomToken: String,
-            pollInfo: OpenGroupApi.RoomPollInfo,
-            createGroupIfMissingWithPublicKey: String? = null
-        ) {
-            val groupId = "$server.$roomToken"
-            val dbGroupId = GroupUtil.getEncodedOpenGroupID(groupId.toByteArray())
-            val existingOpenGroup = storage.getOpenGroup(roomToken, server)
-
-            // If we don't have an existing group and don't have a 'createGroupIfMissingWithPublicKey'
-            // value then don't process the poll info
-            val publicKey = existingOpenGroup?.publicKey ?: createGroupIfMissingWithPublicKey
-            val name = pollInfo.details?.name ?: existingOpenGroup?.name
-            val infoUpdates = pollInfo.details?.infoUpdates ?: existingOpenGroup?.infoUpdates
-
-            if (publicKey == null) return
-
-            val openGroup = OpenGroup(
-                server = server,
-                room = pollInfo.token,
-                name = name ?: "",
-                description = (pollInfo.details?.description ?: existingOpenGroup?.description),
-                publicKey = publicKey,
-                imageId = (pollInfo.details?.imageId ?: existingOpenGroup?.imageId),
-                canWrite = pollInfo.write,
-                infoUpdates = infoUpdates ?: 0,
-                isAdmin = pollInfo.admin,
-                isModerator = pollInfo.moderator,
-            )
-            // - Open Group changes
-            storage.updateOpenGroup(openGroup)
-
-            // - User Count
-            storage.setUserCount(roomToken, server, pollInfo.activeUsers)
-
-            val community = Address.Community(openGroup)
-
-            // - Moderators
-            pollInfo.details?.moderators?.let { list ->
-                memberDb.updateGroupMembers(
-                    community, GroupMemberRole.MODERATOR, list.map(::AccountId)
-                )
-            }
-            pollInfo.details?.hiddenModerators?.let { list ->
-                memberDb.updateGroupMembers(
-                    community, GroupMemberRole.HIDDEN_MODERATOR, list.map(::AccountId)
-                )
-            }
-            // - Admins
-            pollInfo.details?.admins?.let { list ->
-                memberDb.updateGroupMembers(
-                    community, GroupMemberRole.ADMIN, list.map(::AccountId)
-                )
-            }
-            pollInfo.details?.hiddenAdmins?.let { list ->
-                memberDb.updateGroupMembers(
-                    community, GroupMemberRole.HIDDEN_ADMIN, list.map(::AccountId)
-                )
-            }
-
-            // Update the group avatar
-            if (
-                (
-                    pollInfo.details != null &&
-                        pollInfo.details.imageId != null && (
-                        pollInfo.details.imageId != existingOpenGroup?.imageId ||
-                            !storage.hasDownloadedProfilePicture(dbGroupId)
-                        ) &&
-                        storage.getGroupAvatarDownloadJob(openGroup.server, openGroup.room, pollInfo.details.imageId) == null
-                    ) || (
-                    pollInfo.details == null &&
-                        existingOpenGroup?.imageId != null &&
-                        !storage.hasDownloadedProfilePicture(dbGroupId) &&
-                        storage.getGroupAvatarDownloadJob(openGroup.server, openGroup.room, existingOpenGroup.imageId) == null
-                    )
-            ) {
-                JobQueue.shared.add(GroupAvatarDownloadJob(server, roomToken, openGroup.imageId))
-            }
-            else if (
-                pollInfo.details != null &&
-                pollInfo.details.imageId == null &&
-                existingOpenGroup?.imageId != null
-            ) {
-                storage.removeProfilePicture(dbGroupId)
-            }
-        }
     }
 
     init {
@@ -192,8 +112,9 @@ class OpenGroupPoller @AssistedInject constructor(
                 var delayDuration = POLL_INTERVAL_MILLS
                 try {
                     Log.d(TAG, "Polling open group messages for server: $server")
-                    pollOnce()
+                    val polledRooms = pollOnce()
                     mutableIsCaughtUp.value = true
+                    mutableLastPolledRooms.value = polledRooms
                     token?.trySend(Result.success(Unit))
                     extraTokens.forEach { it.trySend(Result.success(Unit)) }
                 } catch (e: Exception) {
@@ -207,13 +128,77 @@ class OpenGroupPoller @AssistedInject constructor(
         }
     }
 
-    private suspend fun pollOnce(isPostCapabilitiesRetry: Boolean = false) {
-        val rooms = storage.getAllOpenGroups()
-            .values
-            .asSequence()
-            .filter { it.server == server }
-            .map { it.room }
-            .toList()
+    private fun handleRoomPollInfo(
+        roomToken: String,
+        pollInfo: OpenGroupApi.RoomPollInfo,
+        createGroupIfMissingWithPublicKey: String? = null
+    ) {
+        val existingOpenGroup = storage.getOpenGroup(roomToken, server)
+
+        // If we don't have an existing group and don't have a 'createGroupIfMissingWithPublicKey'
+        // value then don't process the poll info
+        val publicKey = existingOpenGroup?.publicKey ?: createGroupIfMissingWithPublicKey
+        val name = pollInfo.details?.name ?: existingOpenGroup?.name
+        val infoUpdates = pollInfo.details?.infoUpdates ?: existingOpenGroup?.infoUpdates
+
+        if (publicKey == null) return
+
+        val openGroup = OpenGroup(
+            server = server,
+            room = pollInfo.token,
+            name = name ?: "",
+            description = (pollInfo.details?.description ?: existingOpenGroup?.description),
+            publicKey = publicKey,
+            imageId = (pollInfo.details?.imageId ?: existingOpenGroup?.imageId),
+            canWrite = pollInfo.write,
+            infoUpdates = infoUpdates ?: 0,
+            isAdmin = pollInfo.admin,
+            isModerator = pollInfo.moderator,
+        )
+        // - Open Group changes
+        lokiThreadDatabase.setOpenGroupChat(
+            openGroup = openGroup,
+            threadID = threadDatabase.getThreadIdIfExistsFor(Address.Community(server, roomToken))
+        )
+
+        // - User Count
+        storage.setUserCount(roomToken, server, pollInfo.activeUsers)
+
+        val community = Address.Community(openGroup)
+
+        // - Moderators
+        pollInfo.details?.moderators?.let { list ->
+            groupMemberDatabase.updateGroupMembers(
+                community, GroupMemberRole.MODERATOR, list.map(::AccountId)
+            )
+        }
+        pollInfo.details?.hiddenModerators?.let { list ->
+            groupMemberDatabase.updateGroupMembers(
+                community, GroupMemberRole.HIDDEN_MODERATOR, list.map(::AccountId)
+            )
+        }
+        // - Admins
+        pollInfo.details?.admins?.let { list ->
+            groupMemberDatabase.updateGroupMembers(
+                community, GroupMemberRole.ADMIN, list.map(::AccountId)
+            )
+        }
+        pollInfo.details?.hiddenAdmins?.let { list ->
+            groupMemberDatabase.updateGroupMembers(
+                community, GroupMemberRole.HIDDEN_ADMIN, list.map(::AccountId)
+            )
+        }
+    }
+
+
+    /**
+     * Polls the open groups on the server once.
+     *
+     * @return A list of rooms that were polled.
+     */
+    private suspend fun pollOnce(isPostCapabilitiesRetry: Boolean = false): List<String> {
+        val rooms = configFactory.withUserConfigs { it.userGroups.allCommunityInfo() }
+            .mapNotNull { c -> c.community.takeIf { it.baseUrl == server }?.room }
 
         try {
             OpenGroupApi
@@ -227,7 +212,7 @@ class OpenGroupPoller @AssistedInject constructor(
                             handleCapabilities(server, response.body as OpenGroupApi.Capabilities)
                         }
                         is Endpoint.RoomPollInfo -> {
-                            handleRoomPollInfo(storage, groupMemberDatabase, server, response.endpoint.roomToken, response.body as OpenGroupApi.RoomPollInfo)
+                            handleRoomPollInfo(  response.endpoint.roomToken, response.body as OpenGroupApi.RoomPollInfo)
                         }
                         is Endpoint.RoomMessagesRecent -> {
                             handleMessages(server, response.endpoint.roomToken, response.body as List<OpenGroupApi.Message>)
@@ -244,6 +229,8 @@ class OpenGroupPoller @AssistedInject constructor(
                         else -> { /* We don't care about the result of any other calls (won't be polled for) */}
                     }
                 }
+
+            return rooms
         } catch (e: Exception) {
             if (e !is CancellationException) {
                 Log.e(TAG, "Error while polling open group messages", e)

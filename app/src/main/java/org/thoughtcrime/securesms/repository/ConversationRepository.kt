@@ -49,7 +49,6 @@ import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
-import org.thoughtcrime.securesms.database.SessionJobDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -85,7 +84,6 @@ interface ConversationRepository {
     fun markAsDeletedLocally(messages: Set<MessageRecord>, displayedMessage: String)
     fun deleteMessages(messages: Set<MessageRecord>, threadId: Long)
     fun deleteAllLocalMessagesInThreadFromSenderOfMessage(messageRecord: MessageRecord)
-    fun setApproved(recipient: Address.Standard, isApproved: Boolean)
     fun isGroupReadOnly(recipient: Recipient): Boolean
     fun getLastSentMessageID(threadId: Long): Flow<MessageId?>
 
@@ -109,11 +107,10 @@ interface ConversationRepository {
 
     suspend fun banUser(threadId: Long, recipient: Address): Result<Unit>
     suspend fun banAndDeleteAll(threadId: Long, recipient: Address): Result<Unit>
-    suspend fun deleteThread(threadId: Long): Result<Unit>
     suspend fun deleteMessageRequest(thread: ThreadRecord): Result<Unit>
     suspend fun clearAllMessageRequests(block: Boolean): Result<Unit>
-    suspend fun acceptMessageRequest(threadId: Long, recipient: Address.Standard): Result<Unit>
-    suspend fun declineMessageRequest(threadId: Long, recipient: Address.Standard): Result<Unit>
+    suspend fun acceptMessageRequest(threadId: Long, recipient: Address.Conversable): Result<Unit>
+    suspend fun declineMessageRequest(recipient: Address.Conversable): Result<Unit>
     fun hasReceived(threadId: Long): Boolean
     fun getInvitingAdmin(threadId: Long): Address?
 
@@ -139,7 +136,6 @@ class DefaultConversationRepository @Inject constructor(
     private val mmsSmsDb: MmsSmsDatabase,
     private val storage: Storage,
     private val lokiMessageDb: LokiMessageDatabase,
-    private val sessionJobDb: SessionJobDatabase,
     private val configFactory: ConfigFactory,
     private val groupManager: GroupManagerV2,
     private val clock: SnodeClock,
@@ -411,14 +407,6 @@ class DefaultConversationRepository @Inject constructor(
         }
     }
 
-    override fun setApproved(recipient: Address.Standard, isApproved: Boolean) {
-        configFactory.withMutableUserConfigs { configs ->
-            configs.contacts.upsertContact(recipient) {
-                approved = isApproved
-            }
-        }
-    }
-
     override suspend fun deleteCommunityMessagesRemotely(
         threadId: Long,
         messages: Set<MessageRecord>
@@ -534,24 +522,12 @@ class DefaultConversationRepository @Inject constructor(
         OpenGroupApi.banAndDeleteAll(recipient.toString(), openGroup.room, openGroup.server).await()
     }
 
-    override suspend fun deleteThread(threadId: Long) = runCatching {
-        withContext(Dispatchers.Default) {
-            sessionJobDb.cancelPendingMessageSendJobs(threadId)
-            storage.deleteConversation(threadId)
-        }
-    }
-
     override suspend fun deleteMessageRequest(thread: ThreadRecord): Result<Unit> {
-        val address = thread.recipient.address
+        val address = thread.recipient.address as? Address.Conversable ?: return Result.success(Unit)
 
-        return if (address is Address.Standard) {
-            declineMessageRequest(
-                thread.threadId,
-                address
-            )
-        } else {
-            Result.success(Unit)
-        }
+        return declineMessageRequest(
+            address
+        )
     }
 
     override suspend fun clearAllMessageRequests(block: Boolean) = runCatching {
@@ -581,37 +557,57 @@ class DefaultConversationRepository @Inject constructor(
         }
     }
 
-    override suspend fun acceptMessageRequest(threadId: Long, recipient: Address.Standard) = runCatching {
-        withContext(Dispatchers.Default) {
-            setApproved(recipient, true)
-            if (recipient.isGroupV2) {
-                groupManager.respondToInvitation(
-                    AccountId(recipient.toString()),
-                    approved = true
-                )
-            } else {
-                val message = MessageRequestResponse(true)
+    override suspend fun acceptMessageRequest(threadId: Long, recipient: Address.Conversable) = runCatching {
+        when (recipient) {
+            is Address.Standard -> {
+                configFactory.withMutableUserConfigs { configs ->
+                    configs.contacts.upsertContact(recipient) {
+                        approved = true
+                    }
+                }
 
-                MessageSender.send(message = message, address = recipient)
+                withContext(Dispatchers.Default) {
+                    MessageSender.send(message = MessageRequestResponse(true), address = recipient)
 
-                // add a control message for our user
-                storage.insertMessageRequestResponseFromYou(threadId)
+                    // add a control message for our user
+                    storage.insertMessageRequestResponseFromYou(threadId)
+                }
             }
 
-            threadDb.setHasSent(threadId, true)
+            is Address.Group -> {
+                groupManager.respondToInvitation(
+                    recipient.accountId,
+                    approved = true
+                )
+            }
+
+            is Address.Community,
+            is Address.CommunityBlindedId,
+            is Address.LegacyGroup -> {
+                // These addresses are not supported for message requests
+            }
         }
+
+        Unit
     }
 
-    override suspend fun declineMessageRequest(threadId: Long, recipient: Address.Standard): Result<Unit> = runCatching {
-        withContext(Dispatchers.Default) {
-            sessionJobDb.cancelPendingMessageSendJobs(threadId)
-            if (recipient.isGroupV2) {
+    override suspend fun declineMessageRequest(recipient: Address.Conversable): Result<Unit> = runCatching {
+        when (recipient) {
+            is Address.Standard -> {
+                configFactory.removeContact(recipient.accountId.hexString)
+            }
+
+            is Address.Group -> {
                 groupManager.respondToInvitation(
-                    AccountId(recipient.toString()),
+                    recipient.accountId,
                     approved = false
                 )
-            } else {
-                storage.deleteContactAndSyncConfig(recipient.toString())
+            }
+
+            is Address.Community,
+            is Address.CommunityBlindedId,
+            is Address.LegacyGroup -> {
+                // These addresses are not supported for message requests
             }
         }
     }

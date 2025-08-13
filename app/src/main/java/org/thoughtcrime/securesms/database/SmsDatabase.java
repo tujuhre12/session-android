@@ -746,8 +746,8 @@ public class SmsDatabase extends MessagingDatabase {
     doDeleteMessages(true, THREAD_ID + " = ?", threadId);
   }
 
-  void deleteThreads(@NonNull Collection<Long> threadIds) {
-    doDeleteMessages(true, THREAD_ID + " IN (SELECT value FROM json_each(?))",
+  public void deleteThreads(@NonNull Collection<Long> threadIds, boolean updateThreads) {
+    doDeleteMessages(updateThreads, THREAD_ID + " IN (SELECT value FROM json_each(?))",
             new JSONArray(threadIds).toString());
   }
 

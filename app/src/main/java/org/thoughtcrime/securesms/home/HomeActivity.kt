@@ -38,6 +38,7 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityHomeBinding
+import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
@@ -50,8 +51,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_K
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.displayName
-import org.session.libsession.utilities.userConfigsChanged
-import org.session.libsignal.utilities.AccountId
+import org.session.libsession.utilities.updateContact
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
@@ -124,7 +124,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
     @Inject lateinit var groupManagerV2: GroupManagerV2
     @Inject lateinit var deprecationManager: LegacyGroupDeprecationManager
     @Inject lateinit var lokiThreadDatabase: LokiThreadDatabase
-    @Inject lateinit var sessionJobDatabase: SessionJobDatabase
     @Inject lateinit var clock: SnodeClock
     @Inject lateinit var messageNotifier: MessageNotifier
     @Inject lateinit var dateUtils: DateUtils
@@ -694,19 +693,13 @@ class HomeActivity : ScreenLockActionBarActivity(),
         val threadID = thread.threadId
         val recipient = thread.recipient
 
-        if (recipient.isGroupV2Recipient) {
-            val accountId = AccountId(recipient.address.toString())
-            val group = configFactory.withUserConfigs { it.userGroups.getClosedGroup(accountId.hexString) } ?: return
-            val name = configFactory.withGroupConfigs(accountId) {
-                it.groupInfo.getName()
-            } ?: group.name
-
+        if (recipient.address is Address.Group) {
             confirmAndLeaveGroup(
-                dialogData = groupManagerV2.getLeaveGroupConfirmationDialogData(accountId, name),
+                dialogData = groupManagerV2.getLeaveGroupConfirmationDialogData(recipient.address.accountId, recipient.displayName()),
                 threadID = threadID,
                 storage = storage,
                 doLeave = {
-                    homeViewModel.leaveGroup(accountId)
+                    homeViewModel.leaveGroup(recipient.address.accountId)
                 }
             )
 
@@ -719,21 +712,50 @@ class HomeActivity : ScreenLockActionBarActivity(),
         val negativeButtonId: Int = R.string.cancel
 
         // default delete action
-        var deleteAction: ()->Unit = {
+        val deleteAction: () -> Unit = {
             lifecycleScope.launch(Dispatchers.Main) {
                 val context = this@HomeActivity
-                // Cancel any outstanding jobs
-                sessionJobDatabase.cancelPendingMessageSendJobs(threadID)
 
                 // Delete the conversation
-                val community = lokiThreadDatabase.getOpenGroupChat(threadID)
-                if (community != null) {
-                    openGroupManager.delete(community.server, community.room, context)
-                } else {
-                    lifecycleScope.launch(Dispatchers.Default) {
-                        storage.deleteConversation(threadID)
+                when (recipient.address) {
+                    is Address.Community -> {
+                        openGroupManager.delete(recipient.address.serverUrl, recipient.address.room)
+                    }
+
+                    is Address.Standard -> {
+                        configFactory.withMutableUserConfigs { configs ->
+                            if (recipient.isSelf) {
+                                configs.userProfile.setNtsPriority(PRIORITY_HIDDEN)
+                            } else {
+                                configs.contacts.updateContact(recipient.address) {
+                                    priority = PRIORITY_HIDDEN
+                                }
+                            }
+                        }
+                    }
+
+                    is Address.LegacyGroup -> {
+                        configFactory.withMutableUserConfigs { configs ->
+                            configs.userGroups.eraseLegacyGroup(recipient.address.groupPublicKeyHex)
+                        }
+                    }
+
+                    is Address.CommunityBlindedId -> {
+                        configFactory.withMutableUserConfigs { configs ->
+                            configs.contacts.eraseBlinded(
+                                communityServerUrl = recipient.address.serverUrl,
+                                blindedId = recipient.address.blindedId.blindedId.hexString
+                            )
+                        }
+                    }
+
+                    is Address.Blinded,
+                    is Address.Group,
+                    is Address.Unknown -> {
+                        error("Unexpected address to delete")
                     }
                 }
+
 
                 // Update the badge count
                 messageNotifier.updateNotification(context)
@@ -774,11 +796,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 title = getString(R.string.noteToSelfHide)
                 message = getText(R.string.hideNoteToSelfDescription)
                 positiveButtonId = R.string.hide
-
-                // change the action for Note To Self, as they should only be hidden and the messages should remain undeleted
-                deleteAction = {
-                    homeViewModel.hideNoteToSelf()
-                }
             }
             else { // If this is a 1-on-1 conversation
                 title = getString(R.string.conversationsDelete)
@@ -814,9 +831,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 contentDescriptionRes = dialogData.positiveQaTag ?: dialogData.positiveText
             ) {
                 GlobalScope.launch(Dispatchers.Default) {
-                    // Cancel any outstanding jobs
-                    storage.cancelPendingMessageSendJobs(threadID)
-
                     doLeave()
                 }
 

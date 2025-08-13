@@ -798,7 +798,6 @@ object OpenGroupApi {
 
     fun getDefaultServerCapabilities(): Promise<Capabilities, Exception> {
         val storage = MessagingModuleConfiguration.shared.storage
-        storage.setOpenGroupPublicKey(defaultServer, defaultServerPublicKey)
         return getCapabilities(defaultServer).map { capabilities ->
             storage.setServerCapabilities(defaultServer, capabilities.capabilities)
             capabilities

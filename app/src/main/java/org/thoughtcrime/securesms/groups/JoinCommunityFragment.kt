@@ -14,12 +14,9 @@ import com.google.android.material.tabs.TabLayoutMediator
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.databinding.FragmentJoinCommunityBinding
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.OpenGroupUrlParser
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsignal.utilities.Log
@@ -100,36 +97,26 @@ class JoinCommunityFragment : Fragment() {
 
                 showLoader()
 
-                withContext(Dispatchers.IO) {
-                    try {
-                        val sanitizedServer = openGroup.server.removeSuffix("/")
-                        val openGroupID = "$sanitizedServer.${openGroup.room}"
-                        openGroupManager.add(
-                            sanitizedServer,
-                            openGroup.room,
-                            openGroup.serverPublicKey,
-                            requireContext()
-                        )
-                        val storage = MessagingModuleConfiguration.shared.storage
-                        storage.onOpenGroupAdded(sanitizedServer, openGroup.room)
-                        val groupID = GroupUtil.getEncodedOpenGroupID(openGroupID.toByteArray())
+                try {
+                    val sanitizedServer = openGroup.server.removeSuffix("/")
+                    openGroupManager.add(
+                        sanitizedServer,
+                        openGroup.room,
+                        openGroup.serverPublicKey,
+                    )
+                    val address = Address.Community(
+                        serverUrl = sanitizedServer,
+                        room = openGroup.room
+                    )
 
-                        withContext(Dispatchers.Main) {
-                            openConversationActivity(
-                                requireContext(),
-                                Address.fromSerialized(groupID)
-                            )
-                            delegate.onDialogClosePressed()
-                        }
-                    } catch (e: Exception) {
-                        Log.e("Loki", "Couldn't join community.", e)
-                        withContext(Dispatchers.Main) {
-                            hideLoader()
-                            val txt = context?.getSubbedString(R.string.groupErrorJoin,
-                                GROUP_NAME_KEY to url)
-                            Toast.makeText(activity, txt, Toast.LENGTH_SHORT).show()
-                        }
-                    }
+                    openConversationActivity(requireContext(), address)
+                    delegate.onDialogClosePressed()
+                } catch (e: Exception) {
+                    Log.e("Loki", "Couldn't join community.", e)
+                    hideLoader()
+                    val txt = context?.getSubbedString(R.string.groupErrorJoin,
+                        GROUP_NAME_KEY to url)
+                    Toast.makeText(activity, txt, Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -149,9 +136,9 @@ class JoinCommunityFragment : Fragment() {
         mediator.attach()
     }
 
-    private fun openConversationActivity(context: Context, address: Address) {
+    private fun openConversationActivity(context: Context, address: Address.Community) {
         context.startActivity(
-            ConversationActivityV2.createIntent(context, address as Address.Conversable)
+            ConversationActivityV2.createIntent(context, address)
         )
     }
 

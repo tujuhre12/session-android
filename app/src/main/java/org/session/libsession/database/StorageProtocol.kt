@@ -53,7 +53,6 @@ interface StorageProtocol {
     fun getAllPendingJobs(vararg types: String): Map<String,Job?>
     fun getAttachmentUploadJob(attachmentID: Long): AttachmentUploadJob?
     fun getMessageSendJob(messageSendJobID: String): MessageSendJob?
-    fun getGroupAvatarDownloadJob(server: String, room: String, imageId: String?): Job?
     fun resumeMessageSendJobIfNeeded(messageSendJobID: String)
     fun isJobCanceled(job: Job): Boolean
     fun cancelPendingMessageSendJobs(threadID: Long)
@@ -69,18 +68,14 @@ interface StorageProtocol {
 
     // Open Groups
     fun getAllOpenGroups(): Map<Long, OpenGroup>
-    fun updateOpenGroup(openGroup: OpenGroup)
     fun getOpenGroup(threadId: Long): OpenGroup?
     fun getOpenGroup(address: Address): OpenGroup?
     suspend fun addOpenGroup(urlAsString: String)
-    fun onOpenGroupAdded(server: String, room: String)
-    fun hasBackgroundGroupAddJob(groupJoinUrl: String): Boolean
     fun setOpenGroupServerMessageID(messageID: MessageId, serverID: Long, threadID: Long)
     fun getOpenGroup(room: String, server: String): OpenGroup?
 
     // Open Group Public Keys
     fun getOpenGroupPublicKey(server: String): String?
-    fun setOpenGroupPublicKey(server: String, newValue: String)
 
     // Open Group Metadata
     fun updateTitle(groupID: String, newValue: String)
@@ -92,12 +87,10 @@ interface StorageProtocol {
     // Last Message Server ID
     fun getLastMessageServerID(room: String, server: String): Long?
     fun setLastMessageServerID(room: String, server: String, newValue: Long)
-    fun removeLastMessageServerID(room: String, server: String)
 
     // Last Deletion Server ID
     fun getLastDeletionServerID(room: String, server: String): Long?
     fun setLastDeletionServerID(room: String, server: String, newValue: Long)
-    fun removeLastDeletionServerID(room: String, server: String)
 
     // Message Handling
     fun isDuplicateMessage(timestamp: Long): Boolean
@@ -183,9 +176,7 @@ interface StorageProtocol {
     fun clearMedia(threadID: Long, fromUser: Address? = null): Boolean
 
     // Contacts
-    fun deleteContactAndSyncConfig(accountId: String)
     fun getRecipientForThread(threadId: Long): Address?
-    fun syncLibSessionContacts(contacts: List<LibSessionContact>, timestamp: Long?)
     fun setAutoDownloadAttachments(recipient: Address, shouldAutoDownloadAttachments: Boolean)
 
     // Attachments
@@ -213,12 +204,10 @@ interface StorageProtocol {
     // Last Inbox Message Id
     fun getLastInboxMessageId(server: String): Long?
     fun setLastInboxMessageId(server: String, messageId: Long)
-    fun removeLastInboxMessageId(server: String)
 
     // Last Outbox Message Id
     fun getLastOutboxMessageId(server: String): Long?
     fun setLastOutboxMessageId(server: String, messageId: Long)
-    fun removeLastOutboxMessageId(server: String)
 
     /**
      * Add reaction to a message that has the timestamp given by [reaction]. This is less than

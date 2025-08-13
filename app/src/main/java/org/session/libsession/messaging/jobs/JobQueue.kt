@@ -41,8 +41,6 @@ class JobQueue : JobDelegate {
                 is BatchMessageReceiveJob -> job.openGroupID
                 is OpenGroupDeleteJob -> job.openGroupId
                 is TrimThreadJob -> job.openGroupId
-                is BackgroundGroupAddJob -> job.openGroupId
-                is GroupAvatarDownloadJob -> "${job.server}.${job.room}"
                 else -> null
             }
             if (openGroupId.isNullOrEmpty()) {
@@ -131,8 +129,6 @@ class JobQueue : JobDelegate {
                     is AttachmentDownloadJob -> {
                         mediaQueue.send(job)
                     }
-                    is GroupAvatarDownloadJob,
-                    is BackgroundGroupAddJob,
                     is OpenGroupDeleteJob -> {
                         openGroupQueue.send(job)
                     }
@@ -228,8 +224,6 @@ class JobQueue : JobDelegate {
             MessageSendJob.KEY,
             NotifyPNServerJob.KEY,
             BatchMessageReceiveJob.KEY,
-            GroupAvatarDownloadJob.KEY,
-            BackgroundGroupAddJob.KEY,
             OpenGroupDeleteJob.KEY,
             InviteContactsJob.KEY,
         )

@@ -25,12 +25,10 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.currentUserName
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
@@ -168,13 +166,6 @@ class HomeViewModel @Inject constructor(
         data class MessageRequests(val count: Int) : Item
     }
 
-    fun hideNoteToSelf() {
-        configFactory.withMutableUserConfigs {
-            it.userProfile.setNtsPriority(PRIORITY_HIDDEN)
-        }
-    }
-
-    fun getCurrentUsername() = configFactory.currentUserName
 
     fun blockContact(accountId: String) {
         viewModelScope.launch(Dispatchers.Default) {
@@ -183,9 +174,7 @@ class HomeViewModel @Inject constructor(
     }
 
     fun deleteContact(accountId: String) {
-        viewModelScope.launch(Dispatchers.Default) {
-            storage.deleteContactAndSyncConfig(accountId)
-        }
+        configFactory.removeContact(accountId)
     }
 
     fun leaveGroup(accountId: AccountId) {

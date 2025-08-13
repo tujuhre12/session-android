@@ -160,7 +160,7 @@ class MessageRequestResponseHandler @Inject constructor(
 
         mmsDatabase.updateThreadId(fromThreadId, toThreadId)
         smsDatabase.updateThreadId(fromThreadId, toThreadId)
-        conversationRepository.deleteThread(fromThreadId)
+        threadDatabase.deleteThread(fromThreadId)
     }
 
     companion object {

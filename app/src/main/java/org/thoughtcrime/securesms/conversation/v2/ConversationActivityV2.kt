@@ -1238,7 +1238,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
 
         binding.messageRequestBar.messageRequestBlock.setOnClickListener {
-            block(deleteThread = true)
+            block()
         }
 
         binding.messageRequestBar.declineMessageRequestButton.setOnClickListener {
@@ -1532,7 +1532,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             .let(::startActivity)
     }
 
-    fun block(deleteThread: Boolean) {
+    fun block() {
         val recipient = viewModel.recipient
         val invitingAdmin = viewModel.invitingAdmin
 
@@ -1556,10 +1556,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 val txt = Phrase.from(context, R.string.blockBlockedUser).put(NAME_KEY, name).format().toString()
                 Toast.makeText(context, txt, Toast.LENGTH_LONG).show()
 
-                if (deleteThread) {
-                    viewModel.deleteThread()
-                    finish()
-                }
+                finish()
             }
             cancelButton()
         }

@@ -28,8 +28,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -83,7 +81,6 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.model.NotifyType
-import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.groups.ExpiredGroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
@@ -639,10 +636,6 @@ class ConversationViewModel @AssistedInject constructor(
         }
     }
 
-    fun deleteThread() = viewModelScope.launch {
-        repository.deleteThread(threadId)
-    }
-
     fun handleMessagesDeletion(messages: Set<MessageRecord>){
         viewModelScope.launch(Dispatchers.IO) {
             val allSentByCurrentUser = messages.all { it.isOutgoing }
@@ -1042,26 +1035,20 @@ class ConversationViewModel @AssistedInject constructor(
         val currentState = messageRequestState.value as? MessageRequestUiState.Visible
             ?: return@launch Log.w("Loki", "Current state was not visible for accept message request action")
 
-        if (address is Address.Standard) {
-            _acceptingMessageRequest.value = true
+        _acceptingMessageRequest.value = true
 
-            repository.acceptMessageRequest(threadId, address)
-                .onFailure {
-                    Log.w("Loki", "Couldn't accept message request due to error", it)
-                    _acceptingMessageRequest.value = false
-                }
-        }
+        repository.acceptMessageRequest(threadId, address)
+            .onFailure {
+                Log.w("Loki", "Couldn't accept message request due to error", it)
+                _acceptingMessageRequest.value = false
+            }
     }
 
     fun declineMessageRequest() = viewModelScope.launch {
-        if (address is Address.Standard) {
-            repository.declineMessageRequest(threadId, address)
-                .onFailure {
-                    Log.w("Loki", "Couldn't decline message request due to error", it)
-                }
-        } else {
-            Result.success(Unit)
-        }
+        repository.declineMessageRequest(address)
+            .onFailure {
+                Log.w("Loki", "Couldn't decline message request due to error", it)
+            }
     }
 
     private fun showMessage(message: String) {
@@ -1237,11 +1224,9 @@ class ConversationViewModel @AssistedInject constructor(
     }
 
     private fun showConversationSettings() {
-        recipient.let { convo ->
-            _uiEvents.tryEmit(ConversationUiEvent.ShowConversationSettings(
-                threadAddress = convo.address
-            ))
-        }
+        _uiEvents.tryEmit(ConversationUiEvent.ShowConversationSettings(
+            threadAddress = address
+        ))
     }
 
     private fun showNotificationSettings() {
@@ -1369,7 +1354,7 @@ sealed interface ConversationUiEvent {
     data class ShowDisappearingMessages(val address: Address) : ConversationUiEvent
     data class ShowNotificationSettings(val address: Address) : ConversationUiEvent
     data class ShowGroupMembers(val groupId: String) : ConversationUiEvent
-    data class ShowConversationSettings(val threadAddress: Address) : ConversationUiEvent
+    data class ShowConversationSettings(val threadAddress: Address.Conversable) : ConversationUiEvent
     data object ShowUnblockConfirmation : ConversationUiEvent
 }
 

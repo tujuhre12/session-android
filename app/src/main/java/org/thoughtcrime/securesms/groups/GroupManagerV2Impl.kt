@@ -606,7 +606,6 @@ class GroupManagerV2Impl @Inject constructor(
                     it.userGroups.eraseClosedGroup(groupId.hexString)
                     it.convoInfoVolatile.eraseClosedGroup(groupId.hexString)
                 }
-                storage.deleteConversation(threadId)
 
                 if (groupInviteMessageHash != null) {
                     val auth = requireNotNull(storage.userAuth)

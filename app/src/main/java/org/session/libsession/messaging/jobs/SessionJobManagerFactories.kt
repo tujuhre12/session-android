@@ -17,8 +17,6 @@ class SessionJobManagerFactories @Inject constructor(
             NotifyPNServerJob.KEY to NotifyPNServerJob.DeserializeFactory(),
             TrimThreadJob.KEY to TrimThreadJob.DeserializeFactory(),
             BatchMessageReceiveJob.KEY to BatchMessageReceiveJob.DeserializeFactory(batchFactory),
-            GroupAvatarDownloadJob.KEY to GroupAvatarDownloadJob.DeserializeFactory(),
-            BackgroundGroupAddJob.KEY to BackgroundGroupAddJob.DeserializeFactory(),
             OpenGroupDeleteJob.KEY to OpenGroupDeleteJob.DeserializeFactory(),
         )
     }

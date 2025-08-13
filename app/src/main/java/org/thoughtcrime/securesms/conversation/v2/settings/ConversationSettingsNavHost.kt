@@ -79,7 +79,7 @@ sealed interface ConversationSettingsDestination {
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun ConversationSettingsNavHost(
-    address: Address,
+    address: Address.Conversable,
     navigator: UINavigator<ConversationSettingsDestination>,
     returnResult: (String, Boolean) -> Unit,
     onBack: () -> Unit

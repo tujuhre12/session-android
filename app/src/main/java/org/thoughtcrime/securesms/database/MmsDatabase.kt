@@ -933,9 +933,8 @@ class MmsDatabase @Inject constructor(
         // Delete messages related data from other tables
         if (!deletedMessageIDs.isEmpty()) {
             attachmentDatabase.deleteAttachmentsForMessages(deletedMessageIDs)
-            groupRecipientDatabase.deleteRowsForMessages(deletedMessageIDs)
+            groupReceiptDatabase.deleteRowsForMessages(deletedMessageIDs)
 
-            notifyConversationListListeners()
             notifyStickerListeners()
             notifyStickerPackListeners()
         }
@@ -951,16 +950,16 @@ class MmsDatabase @Inject constructor(
 
     override fun getTypeColumn(): String = MESSAGE_BOX
 
-    override fun deleteMessage(messageId: Long): Boolean {
-        return doDeleteMessages(
+    override fun deleteMessage(messageId: Long) {
+        doDeleteMessages(
             updateThread = true,
             where = "$ID = ?",
             messageId
         )
     }
 
-    override fun deleteMessages(messageIds: Collection<Long>): Boolean {
-        return doDeleteMessages(
+    override fun deleteMessages(messageIds: Collection<Long>) {
+        doDeleteMessages(
             updateThread = true,
             where = "$ID IN (SELECT value FROM json_each(?))",
             JSONArray(messageIds).toString()
