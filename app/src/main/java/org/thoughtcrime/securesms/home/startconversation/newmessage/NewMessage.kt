@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.conversation.start.newmessage
+package org.thoughtcrime.securesms.home.startconversation.newmessage
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column

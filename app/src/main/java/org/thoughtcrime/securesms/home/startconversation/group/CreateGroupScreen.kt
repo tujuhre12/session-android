@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.groups.compose
+package org.thoughtcrime.securesms.home.startconversation.group
 
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -29,8 +29,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.thoughtcrime.securesms.groups.ContactItem
-import org.thoughtcrime.securesms.groups.CreateGroupEvent
-import org.thoughtcrime.securesms.groups.CreateGroupViewModel
+import org.thoughtcrime.securesms.groups.compose.GroupMinimumVersionBanner
+import org.thoughtcrime.securesms.groups.compose.multiSelectMemberList
 import org.thoughtcrime.securesms.ui.BottomFadingEdgeBox
 import org.thoughtcrime.securesms.ui.LoadingArcOr
 import org.thoughtcrime.securesms.ui.SearchBar

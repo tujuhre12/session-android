@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.groups
+package org.thoughtcrime.securesms.home.startconversation.community
 
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
@@ -25,8 +25,10 @@ import org.session.libsession.utilities.OpenGroupUrlParser
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.conversation.start.StartConversationDelegate
+import org.thoughtcrime.securesms.home.startconversation.StartConversationDelegate
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
+import org.thoughtcrime.securesms.groups.GroupManager
+import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.ui.getSubbedString
 import javax.inject.Inject
 

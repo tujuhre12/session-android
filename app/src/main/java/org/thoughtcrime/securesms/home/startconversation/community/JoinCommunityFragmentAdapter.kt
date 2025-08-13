@@ -1,7 +1,9 @@
-package org.thoughtcrime.securesms.groups
+package org.thoughtcrime.securesms.home.startconversation.community
 
 import androidx.fragment.app.Fragment
 import androidx.viewpager2.adapter.FragmentStateAdapter
+import org.thoughtcrime.securesms.groups.EnterCommunityUrlDelegate
+import org.thoughtcrime.securesms.groups.EnterCommunityUrlFragment
 import org.thoughtcrime.securesms.util.ScanQRCodeWrapperFragment
 import org.thoughtcrime.securesms.util.ScanQRCodeWrapperFragmentDelegate
 

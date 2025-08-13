@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.conversation.start
+package org.thoughtcrime.securesms.home.startconversation
 
 interface StartConversationDelegate {
     fun onNewMessageSelected()

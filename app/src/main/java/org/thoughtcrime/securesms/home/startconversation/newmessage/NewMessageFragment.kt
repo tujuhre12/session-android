@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.conversation.start.newmessage
+package org.thoughtcrime.securesms.home.startconversation.newmessage
 
 import android.content.Intent
 import android.os.Bundle
@@ -13,7 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
-import org.thoughtcrime.securesms.conversation.start.StartConversationDelegate
+import org.thoughtcrime.securesms.home.startconversation.StartConversationDelegate
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.openUrl
