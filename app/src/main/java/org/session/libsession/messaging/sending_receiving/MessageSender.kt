@@ -138,7 +138,7 @@ object MessageSender {
         }
 
         // Set the timestamp on the content so it can be verified against envelope timestamp
-        proto.setSigTimestamp(message.sentTimestamp!!)
+        proto.setSigTimestampMs(message.sentTimestamp!!)
 
         // Serialize the protobuf
         val plaintext = PushTransportDetails.getPaddedMessageBody(proto.build().toByteArray())
@@ -360,7 +360,7 @@ object MessageSender {
                 message.profile = storage.getUserProfile()
             }
             val content = message.toProto()!!.toBuilder()
-                .setSigTimestamp(message.sentTimestamp!!)
+                .setSigTimestampMs(message.sentTimestamp!!)
                 .build()
 
             when (destination) {

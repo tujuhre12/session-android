@@ -1102,7 +1102,7 @@ class GroupManagerV2Impl @Inject constructor(
     }
 
     override fun handleGroupInfoChange(message: GroupUpdated, groupId: AccountId) {
-        if (message.inner.hasInfoChangeMessage() && message.inner.infoChangeMessage.hasUpdatedExpiration()) {
+        if (message.inner.hasInfoChangeMessage() && message.inner.infoChangeMessage.hasUpdatedExpirationSeconds()) {
             // If we receive a disappearing message update, we need to remove the existing timer control message
             storage.deleteGroupInfoMessages(
                 groupId,
@@ -1140,7 +1140,7 @@ class GroupManagerV2Impl @Inject constructor(
                 .setInfoChangeMessage(
                     GroupUpdateInfoChangeMessage.newBuilder()
                         .setType(GroupUpdateInfoChangeMessage.Type.DISAPPEARING_MESSAGES)
-                        .setUpdatedExpiration(mode.expirySeconds.toInt())
+                        .setUpdatedExpirationSeconds(mode.expirySeconds.toInt())
                         .setAdminSignature(ByteString.copyFrom(signature))
 
                 )

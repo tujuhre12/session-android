@@ -56,7 +56,7 @@ abstract class Message {
     abstract fun shouldDiscardIfBlocked(): Boolean
 
     fun SignalServiceProtos.Content.Builder.applyExpiryMode() = apply {
-        expirationTimer = expiryMode.expirySeconds.toInt()
+        expirationTimerSeconds = expiryMode.expirySeconds.toInt()
         expirationType = when (expiryMode) {
             is ExpiryMode.AfterSend -> ExpirationType.DELETE_AFTER_SEND
             is ExpiryMode.AfterRead -> ExpirationType.DELETE_AFTER_READ
@@ -66,7 +66,7 @@ abstract class Message {
 }
 
 inline fun <reified M: Message> M.copyExpiration(proto: SignalServiceProtos.Content): M = apply {
-    (proto.takeIf { it.hasExpirationTimer() }?.expirationTimer ?: proto.dataMessage?.expireTimer)?.let { duration ->
+    (proto.takeIf { it.hasExpirationTimerSeconds() }?.expirationTimerSeconds ?: proto.dataMessage?.expireTimerSeconds)?.let { duration ->
         expiryMode = when (proto.expirationType.takeIf { duration > 0 }) {
             ExpirationType.DELETE_AFTER_SEND -> ExpiryMode.AfterSend(duration.toLong())
             ExpirationType.DELETE_AFTER_READ -> ExpiryMode.AfterRead(duration.toLong())
@@ -76,7 +76,7 @@ inline fun <reified M: Message> M.copyExpiration(proto: SignalServiceProtos.Cont
 }
 
 fun SignalServiceProtos.Content.expiryMode(): ExpiryMode =
-    (takeIf { it.hasExpirationTimer() }?.expirationTimer ?: dataMessage?.expireTimer)?.let { duration ->
+    (takeIf { it.hasExpirationTimerSeconds() }?.expirationTimerSeconds ?: dataMessage?.expireTimerSeconds)?.let { duration ->
         when (expirationType.takeIf { duration > 0 }) {
             ExpirationType.DELETE_AFTER_SEND -> ExpiryMode.AfterSend(duration.toLong())
             ExpirationType.DELETE_AFTER_READ -> ExpiryMode.AfterRead(duration.toLong())

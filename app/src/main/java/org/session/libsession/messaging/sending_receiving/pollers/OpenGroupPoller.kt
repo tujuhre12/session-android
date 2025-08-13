@@ -321,7 +321,7 @@ class OpenGroupPoller @AssistedInject constructor(
         sortedMessages.forEach {
             val encodedMessage = Base64.decode(it.message)
             val envelope = SignalServiceProtos.Envelope.newBuilder()
-                .setTimestamp(TimeUnit.SECONDS.toMillis(it.postedAt))
+                .setTimestampMs(TimeUnit.SECONDS.toMillis(it.postedAt))
                 .setType(SignalServiceProtos.Envelope.Type.SESSION_MESSAGE)
                 .setContent(ByteString.copyFrom(encodedMessage))
                 .setSource(it.sender)
@@ -370,7 +370,7 @@ class OpenGroupPoller @AssistedInject constructor(
                     .setSource(message.sender!!)
                     .setSourceDevice(1)
                     .setContent(message.toProto().toByteString())
-                    .setTimestamp(message.sentTimestamp)
+                    .setTimestampMs(message.sentTimestamp)
                     .build()
                 envelopes.add(Triple( message.serverID, envelope, message.reactions))
             }
