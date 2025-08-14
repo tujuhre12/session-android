@@ -38,11 +38,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
 import kotlinx.coroutines.flow.emptyFlow
 import network.loki.messenger.R
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.thoughtcrime.securesms.home.startconversation.community.JoinCommunityViewModel.Commands.OnQRScanned
-import org.thoughtcrime.securesms.ui.ByteArraySliceImage
 import org.thoughtcrime.securesms.ui.LoadingArcOr
 import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.AppBarCloseIcon
@@ -197,6 +198,7 @@ private fun CommunityScreen(
 
 }
 
+@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 private fun CommunityChip(
     modifier: Modifier = Modifier,
@@ -216,10 +218,11 @@ private fun CommunityChip(
         },
         leadingIcon = {
             if (group.image != null) {
-                ByteArraySliceImage(
+                GlideImage(
                     modifier = Modifier.size(AssistChipDefaults.IconSize)
                         .clip(CircleShape),
-                    slice = group.image
+                    model = group.image.copyToBytes(),
+                    contentDescription = null
                 )
             }
         },
