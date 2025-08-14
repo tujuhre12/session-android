@@ -97,7 +97,6 @@ fun StartConversationSheet(
 }
 
 // Destinations
-@Serializable
 sealed interface StartConversationDestination {
     @Serializable
     data object Home: StartConversationDestination
