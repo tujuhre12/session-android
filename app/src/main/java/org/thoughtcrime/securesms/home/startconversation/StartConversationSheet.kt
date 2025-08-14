@@ -37,6 +37,8 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
+import org.thoughtcrime.securesms.home.startconversation.community.JoinCommunityScreen
+import org.thoughtcrime.securesms.home.startconversation.community.JoinCommunityViewModel
 import org.thoughtcrime.securesms.home.startconversation.group.CreateGroupScreen
 import org.thoughtcrime.securesms.home.startconversation.home.StartConversationScreen
 import org.thoughtcrime.securesms.home.startconversation.invitefriend.InviteFriend
@@ -50,6 +52,7 @@ import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.components.BaseBottomSheet
 import org.thoughtcrime.securesms.ui.horizontalSlideComposable
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
+import org.thoughtcrime.securesms.util.push
 import kotlin.getValue
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -203,6 +206,32 @@ fun StartConversationNavHost(
             }
 
             // Join Community
+            horizontalSlideComposable<StartConversationDestination.JoinCommunity> {
+                val viewModel = hiltViewModel<JoinCommunityViewModel>()
+                val state by viewModel.state.collectAsState()
+
+                LaunchedEffect(Unit){
+                    scope.launch {
+                        viewModel.uiEvents.collect {
+                            when(it){
+                                is JoinCommunityViewModel.UiEvent.NavigateToConversation -> {
+                                    val intent = Intent(context, ConversationActivityV2::class.java)
+                                    intent.putExtra(ConversationActivityV2.THREAD_ID, it.threadId)
+                                    onClose()
+                                    activity?.startActivity(intent)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                JoinCommunityScreen(
+                    state = state,
+                    sendCommand = { viewModel.onCommand(it) },
+                    onBack = { scope.launch { navigator.navigateUp() }},
+                    onClose = onClose
+                )
+            }
 
             // Invite Friend
             horizontalSlideComposable<StartConversationDestination.InviteFriend> {

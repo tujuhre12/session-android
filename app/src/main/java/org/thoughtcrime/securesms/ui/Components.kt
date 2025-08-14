@@ -1,8 +1,8 @@
 package org.thoughtcrime.securesms.ui
 
+import android.graphics.BitmapFactory
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.appcompat.content.res.AppCompatResources
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearEasing
@@ -54,6 +54,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -68,14 +69,16 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -91,7 +94,10 @@ import androidx.compose.ui.unit.times
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.loki.messenger.R
+import org.session.libsignal.utilities.ByteArraySlice
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.TitledRadioButton
@@ -1142,4 +1148,39 @@ fun AnimatedGradientDrawable(
                 )
             }
     )
+}
+
+
+@Composable
+fun ByteArraySliceImage(
+    slice: ByteArraySlice,
+    modifier: Modifier = Modifier,
+    contentDescription: String? = null,
+    contentScale: ContentScale = ContentScale.Fit,
+    placeholder: @Composable (() -> Unit)? = null,
+    onError: ((Throwable) -> Unit)? = null
+) {
+    // Decode off the main thread; re-run if slice changes
+    val image: ImageBitmap? by produceState(initialValue = null, slice) {
+        value = withContext(Dispatchers.IO) {
+            try {
+                BitmapFactory.decodeByteArray(slice.data, slice.offset, slice.len)
+                    ?.asImageBitmap()
+            } catch (e: Exception) {
+                Log.w("", "Error trying to decode byte array image", e)
+                onError?.invoke(e)
+                null
+            }
+        }
+    }
+    if (image != null) {
+        Image(
+            bitmap = image!!,
+            contentDescription = contentDescription,
+            modifier = modifier,
+            contentScale = contentScale
+        )
+    } else {
+        placeholder?.invoke()
+    }
 }

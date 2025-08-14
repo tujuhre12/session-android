@@ -145,7 +145,6 @@ class JoinCommunityFragment : Fragment() {
         binding.viewPager.adapter = JoinCommunityFragmentAdapter(
             parentFragment = this,
             enterCommunityUrlDelegate = urlDelegate,
-            scanQrCodeDelegate = urlDelegate
         )
         val mediator = TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, pos ->
             tab.text = when (pos) {
