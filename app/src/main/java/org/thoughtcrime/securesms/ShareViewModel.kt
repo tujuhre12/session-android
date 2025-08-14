@@ -22,13 +22,11 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
-import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.home.search.searchName
 import org.thoughtcrime.securesms.mms.PartAuthority
@@ -65,7 +63,7 @@ class ShareViewModel @Inject constructor(
     // Output: the contact items to display and select from
     @OptIn(FlowPreview::class)
     val contacts: StateFlow<List<ConversationItem>> = combine(
-        conversationRepository.observeConversationList(approved = true),
+        conversationRepository.observeConversationList(),
          mutableSearchQuery.debounce(100L),
          ::filterContacts
     ).stateIn(viewModelScope, SharingStarted.Lazily, emptyList())

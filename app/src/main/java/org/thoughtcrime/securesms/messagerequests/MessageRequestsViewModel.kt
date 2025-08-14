@@ -28,8 +28,12 @@ class MessageRequestsViewModel @Inject constructor(
     val threads: StateFlow<List<ThreadRecord>> = reloadTrigger
         .onStart { emit(Unit) }
         .flatMapLatest {
-            repository.observeConversationList(approved = false)
-                .map { it.sortedWith(COMPARATOR) }
+            repository.observeConversationList()
+                .map { list ->
+                    val filtered = list.filterTo(arrayListOf()) { !it.recipient.approved }
+                    filtered.sortWith(COMPARATOR)
+                    filtered
+                }
         }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 

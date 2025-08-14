@@ -55,7 +55,7 @@ public class DirectShareService extends ChooserTargetService {
     List<ChooserTarget> results        = new ArrayList<>();
     ComponentName       componentName  = new ComponentName(this, ShareActivity.class);
 
-    List<ThreadRecord> records = conversationRepository.getConversationList(true);
+    List<ThreadRecord> records = conversationRepository.getConversationList();
 
     for (final ThreadRecord thread : records) {
         final Recipient recipient = thread.getRecipient();

@@ -89,13 +89,11 @@ class SearchRepository @Inject constructor(
     }
 
     private fun getBlockedContacts(): Set<String> {
-        return conversationRepository.getConversationListAddresses(
-            nts = { false },
-            contactFilter = { it.blocked },
-            groupFilter = { false },
-            communityFilter = { false },
-            legacyFilter = { false },
-        ).mapTo(hashSetOf()) { it.address }
+        return configFactory.withUserConfigs { configs ->
+            configs.contacts.all()
+        }.mapNotNullTo(hashSetOf()) { contact ->
+            contact.takeIf { it.blocked }?.id
+        }
     }
 
     fun queryContacts(searchName: String? = null): List<Recipient> {

@@ -66,24 +66,16 @@ data class Recipient(
         else -> ExpiryMode.NONE
     }
 
-    val approved: Boolean get() = when (data) {
-        is RecipientData.Contact -> data.approved
-        is RecipientData.Group -> data.partial.approved
-        else -> when (address) {
-            is Address.Community,
-            is Address.LegacyGroup,
-            is Address.CommunityBlindedId -> {
-                // For these addresses, they are always assumed to be approved
-                true
-            }
-            is Address.Blinded,
-            is Address.Group,
-            is Address.Standard,
-            is Address.Unknown -> {
-                // If we have approved these address they should appear in other branches.
-                false
-            }
-        }
+    val approved: Boolean get() = when {
+        isSelf ||
+            address is Address.Community ||
+            address is Address.LegacyGroup ||
+            address is Address.CommunityBlindedId -> true
+
+        data is RecipientData.Contact -> data.approved
+        data is RecipientData.Group -> data.partial.approved
+
+        else -> false
     }
 
     val proStatus: ProStatus get() = data.proStatus

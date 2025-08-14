@@ -255,7 +255,7 @@ class TokenPageViewModel @Inject constructor(
             var numGroupV2Convos = 0
 
             // Grab the database and reader details we need to count the conversations / groups
-            val convoList = conversationRepository.observeConversationList(approved = true).first()
+            val convoList = conversationRepository.observeConversationList().first()
             val result = mutableSetOf<Recipient>()
 
             // Look through the database to build up our conversation & group counts (still on Dispatchers.IO not the main thread)

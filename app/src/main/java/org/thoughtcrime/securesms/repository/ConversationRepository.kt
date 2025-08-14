@@ -14,9 +14,6 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withContext
-import network.loki.messenger.libsession_util.ReadableUserProfile
-import network.loki.messenger.libsession_util.util.BlindedContact
-import network.loki.messenger.libsession_util.util.Contact
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.database.MessageDataProvider
@@ -60,22 +57,17 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 interface ConversationRepository {
-    fun observeConversationList(approved: Boolean? = null): Flow<List<ThreadRecord>>
+    fun observeConversationList(): Flow<List<ThreadRecord>>
 
-    fun getConversationList(approved: Boolean? = null): List<ThreadRecord>
+    /**
+     * Returns a list of threads that are visible to the user. Note that this
+     * list includes both approved and unapproved threads.
+     */
 
-    fun getConversationListAddresses(approved: Boolean? = null): List<Address.Conversable>
+    fun getConversationList(): List<ThreadRecord>
 
-    fun getConversationListAddresses(
-        nts: (ReadableUserProfile) -> Boolean = { false },
-        contactFilter: (Contact) -> Boolean = { false },
-        blindedContactFilter: (BlindedContact) -> Boolean = { false },
-        groupFilter: (GroupInfo.ClosedGroupInfo) -> Boolean = { false },
-        legacyFilter: (GroupInfo.LegacyGroupInfo) -> Boolean = { false },
-        communityFilter: (GroupInfo.CommunityGroupInfo) -> Boolean = { false }
-    ): List<Address.Conversable>
+    fun getConversationListAddresses(): Set<Address.Conversable>
 
-    fun maybeGetRecipientForThreadId(threadId: Long): Address?
     fun saveDraft(threadId: Long, text: String)
     fun getDraft(threadId: Long): String?
     fun clearDrafts(threadId: Long)
@@ -139,98 +131,58 @@ class DefaultConversationRepository @Inject constructor(
     private val configFactory: ConfigFactory,
     private val groupManager: GroupManagerV2,
     private val clock: SnodeClock,
-    private val preferences: TextSecurePreferences,
     private val recipientDatabase: RecipientSettingsDatabase,
     private val recipientRepository: RecipientRepository,
 ) : ConversationRepository {
 
-    override fun getConversationListAddresses(
-        nts: (ReadableUserProfile) -> Boolean,
-        contactFilter: (Contact) -> Boolean,
-        blindedContactFilter: (BlindedContact) -> Boolean,
-        groupFilter: (GroupInfo.ClosedGroupInfo) -> Boolean,
-        legacyFilter: (GroupInfo.LegacyGroupInfo) -> Boolean,
-        communityFilter: (GroupInfo.CommunityGroupInfo) -> Boolean,
-    ): List<Address.Conversable> {
+    override fun getConversationListAddresses() = buildSet {
+        val myAddress = Address.Standard(AccountId(textSecurePreferences.getLocalNumber()!!))
 
-        val (shouldHaveNts, dataSeq) = configFactory.withUserConfigs { configs ->
-            (configs.userProfile.getNtsPriority() >= 0 && nts(configs.userProfile)) to
-                    (configs.contacts.all().asSequence() +
-                            configs.contacts.allBlinded().asSequence() +
-                            configs.userGroups.all().asSequence())
-        }
+        configFactory.withUserConfigs { configs ->
+            // Have NTS?
+            if (configs.userProfile.getNtsPriority() >= 0) {
+                add(myAddress)
+            }
 
-        val localNumber = preferences.getLocalNumber()
-
-        val ntsSequence: Sequence<Address.Conversable> = sequenceOf(
-            localNumber
-                ?.takeIf { shouldHaveNts }
-                ?.let(::AccountId)
-                ?.let(Address::Standard))
-            .filterNotNull()
-
-        return (ntsSequence + dataSeq
-            .mapNotNull { data ->
-                when (data) {
-                    is Contact -> if (data.priority >= 0 && contactFilter(data)) {
-                        Address.Standard(AccountId(data.id))
-                    } else {
-                        null
-                    }
-
-                    is BlindedContact -> if (blindedContactFilter(data)) {
-                        Address.CommunityBlindedId(
-                            serverUrl = data.communityServer,
-                            serverPubKey = data.communityServerPubKeyHex,
-                            blindedId = Address.Blinded(AccountId(data.id))
-                        )
-                    } else {
-                        null
-                    }
-
-                    is GroupInfo.ClosedGroupInfo -> if (data.priority >= 0 && groupFilter(data)) {
-                        Address.Group(AccountId(data.groupAccountId))
-                    } else {
-                        null
-                    }
-
-                    is GroupInfo.LegacyGroupInfo -> if (data.priority >= 0 && legacyFilter(data)) {
-                        Address.LegacyGroup(data.accountId)
-                    } else {
-                        null
-                    }
-
-                    is GroupInfo.CommunityGroupInfo -> if (communityFilter(data)) {
-                        Address.Community(
-                            serverUrl = data.community.baseUrl,
-                            room = data.community.room
-                        )
-                    } else {
-                        null
-                    }
-
-                    else -> error("Unknown data type: $data")
+            // Contacts
+            for (contact in configs.contacts.all()) {
+                if (contact.priority >= 0 && !contact.blocked) {
+                    add(Address.Standard(AccountId(contact.id)))
                 }
-            })
-            .toList()
+            }
+
+            // Blinded Contacts
+            for (blindedContact in configs.contacts.allBlinded()) {
+                if (blindedContact.priority >= 0) {
+                    add(Address.CommunityBlindedId(
+                        serverUrl = blindedContact.communityServer,
+                        serverPubKey = blindedContact.communityServerPubKeyHex,
+                        blindedId = Address.Blinded(AccountId(blindedContact.id))
+                    ))
+                }
+            }
+
+            // Groups
+            for (group in configs.userGroups.all()) {
+                when (group) {
+                    is GroupInfo.ClosedGroupInfo -> {
+                        add(Address.Group(AccountId(group.groupAccountId)))
+                    }
+
+                    is GroupInfo.LegacyGroupInfo -> {
+                        add(Address.LegacyGroup(group.accountId))
+                    }
+
+                    is GroupInfo.CommunityGroupInfo -> {
+                        add(Address.Community(
+                            serverUrl = group.community.baseUrl,
+                            room = group.community.room
+                        ))
+                    }
+                }
+            }
+        }
     }
-
-    private val GroupInfo.ClosedGroupInfo.approved: Boolean
-        get() = !invited
-
-
-    override fun getConversationListAddresses(approved: Boolean?) = getConversationListAddresses(
-        blindedContactFilter = { true },
-        nts = { approved == null || approved },
-        contactFilter = {
-            !it.blocked && (approved == null || it.approved == approved)
-        },
-        groupFilter = {
-            approved == null || it.approved == approved
-        },
-        legacyFilter = { approved != false }, // Legacy groups are always approved
-        communityFilter = { approved != false } // Communities are always approved
-    )
 
     private fun List<ThreadRecord>.filterThreadsForApprovalStatus(): List<ThreadRecord> {
         return this.filter { record ->
@@ -241,10 +193,10 @@ class DefaultConversationRepository @Inject constructor(
 
 
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
-    override fun observeConversationList(approved: Boolean?): Flow<List<ThreadRecord>> {
+    override fun observeConversationList(): Flow<List<ThreadRecord>> {
         return configFactory.userConfigsChanged(200)
             .onStart { emit(Unit) }
-            .map { getConversationListAddresses(approved) }
+            .map { getConversationListAddresses() }
             .distinctUntilChanged()
             .flatMapLatest { allAddresses ->
                 merge(
@@ -261,13 +213,9 @@ class DefaultConversationRepository @Inject constructor(
             }
     }
 
-    override fun getConversationList(approved: Boolean?): List<ThreadRecord> {
-        return threadDb.getThreads(getConversationListAddresses(approved))
+    override fun getConversationList(): List<ThreadRecord> {
+        return threadDb.getThreads(getConversationListAddresses())
             .filterThreadsForApprovalStatus()
-    }
-
-    override fun maybeGetRecipientForThreadId(threadId: Long): Address? {
-        return threadDb.getRecipientForThreadId(threadId)
     }
 
     override fun saveDraft(threadId: Long, text: String) {
@@ -531,7 +479,7 @@ class DefaultConversationRepository @Inject constructor(
     }
 
     override suspend fun clearAllMessageRequests(block: Boolean) = runCatching {
-        observeConversationList(approved = false)
+        observeConversationList()
             .first()
             .forEach { record ->
                 deleteMessageRequest(record)

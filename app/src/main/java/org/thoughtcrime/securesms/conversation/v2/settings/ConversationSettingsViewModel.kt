@@ -442,9 +442,9 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
 
         // account ID
-        val (accountId, accountIdHeader) = when{
-            conversation.is1on1 -> conversation.address.toString() to context.getString(R.string.accountId)
+        val (accountId, accountIdHeader) = when {
             conversation.isLocalNumber -> conversation.address.toString() to context.getString(R.string.accountIdYours)
+            conversation.address is Address.WithAccountId -> conversation.address.accountId.hexString to context.getString(R.string.accountId)
             else -> null to null
         }
 

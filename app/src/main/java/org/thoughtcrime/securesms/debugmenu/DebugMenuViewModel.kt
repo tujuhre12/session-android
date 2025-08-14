@@ -35,7 +35,6 @@ import org.session.libsignal.utilities.hexEncodedPublicKey
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
-import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.pro.ProStatusManager
@@ -340,7 +339,8 @@ class DebugMenuViewModel @Inject constructor(
 
         // clear trusted downloads for all recipients
         viewModelScope.launch {
-            val conversations: List<ThreadRecord> = conversationRepository.observeConversationList(approved = true).first()
+            val conversations: List<ThreadRecord> = conversationRepository.observeConversationList()
+                .first()
 
             conversations.filter { !it.recipient.isLocalNumber }.forEach {
                 recipientDatabase.save(it.recipient.address) {
