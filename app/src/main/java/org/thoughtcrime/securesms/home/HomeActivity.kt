@@ -50,6 +50,7 @@ import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.updateContact
 import org.session.libsignal.utilities.Log
@@ -63,7 +64,6 @@ import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
-import org.thoughtcrime.securesms.database.SessionJobDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
@@ -413,7 +413,10 @@ class HomeActivity : ScreenLockActionBarActivity(),
     }
 
     override fun onDeleteContact(accountId: String) {
-        homeViewModel.deleteContact(accountId)
+        val address = accountId.toAddress()
+        if (address is Address.WithAccountId) {
+            homeViewModel.deleteContact(address)
+        }
     }
 
     private val GlobalSearchResult.groupedContacts: List<GlobalSearchAdapter.Model> get() {
@@ -550,24 +553,22 @@ class HomeActivity : ScreenLockActionBarActivity(),
         val bottomSheet = ConversationOptionsBottomSheet(this)
         bottomSheet.publicKey = publicKey
         bottomSheet.thread = thread
-        bottomSheet.group = groupDatabase.getGroup(thread.recipient.address.toString()).orNull()
+        val threadRecipient = thread.recipient
+        bottomSheet.group = groupDatabase.getGroup(threadRecipient.address.toString()).orNull()
         bottomSheet.onViewDetailsTapped = {
             bottomSheet.dismiss()
             homeViewModel.showUserProfileModal(thread)
         }
         bottomSheet.onCopyConversationId = onCopyConversationId@{
             bottomSheet.dismiss()
-            if (!thread.recipient.isGroupOrCommunityRecipient && !thread.recipient.isLocalNumber) {
-                val clip = ClipData.newPlainText("Account ID", thread.recipient.address.toString())
+            if (threadRecipient.address is Address.WithAccountId && !threadRecipient.isSelf) {
+                val clip = ClipData.newPlainText("Account ID", threadRecipient.address.accountId.hexString)
                 val manager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
                 manager.setPrimaryClip(clip)
                 Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()
             }
-            else if (thread.recipient.isCommunityRecipient) {
-                val threadId = threadDb.getThreadIdIfExistsFor(thread.recipient.address)
-                val openGroup = lokiThreadDatabase.getOpenGroupChat(threadId) ?: return@onCopyConversationId Unit
-
-                val clip = ClipData.newPlainText("Community URL", openGroup.joinURL)
+            else if (threadRecipient.data is RecipientData.Community) {
+                val clip = ClipData.newPlainText("Community URL", threadRecipient.data.openGroup.joinURL)
                 val manager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
                 manager.setPrimaryClip(clip)
                 Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()
@@ -575,13 +576,13 @@ class HomeActivity : ScreenLockActionBarActivity(),
         }
         bottomSheet.onBlockTapped = {
             bottomSheet.dismiss()
-            if (!thread.recipient.blocked) {
+            if (!threadRecipient.blocked) {
                 blockConversation(thread)
             }
         }
         bottomSheet.onUnblockTapped = {
             bottomSheet.dismiss()
-            if (thread.recipient.blocked) {
+            if (threadRecipient.blocked) {
                 unblockConversation(thread)
             }
         }
@@ -593,17 +594,17 @@ class HomeActivity : ScreenLockActionBarActivity(),
             bottomSheet.dismiss()
             // go to the notification settings
             val intent = Intent(this, NotificationSettingsActivity::class.java).apply {
-                putExtra(NotificationSettingsActivity.ARG_ADDRESS, thread.recipient.address)
+                putExtra(NotificationSettingsActivity.ARG_ADDRESS, threadRecipient.address)
             }
             startActivity(intent)
         }
         bottomSheet.onPinTapped = {
             bottomSheet.dismiss()
-            setConversationPinned(thread.recipient.address, true)
+            setConversationPinned(threadRecipient.address, true)
         }
         bottomSheet.onUnpinTapped = {
             bottomSheet.dismiss()
-            setConversationPinned(thread.recipient.address, false)
+            setConversationPinned(threadRecipient.address, false)
         }
         bottomSheet.onMarkAllAsReadTapped = {
             bottomSheet.dismiss()
@@ -667,7 +668,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                     .format()
             )
             dangerButton(R.string.delete, R.string.qa_conversation_settings_dialog_delete_contact_confirm) {
-                homeViewModel.deleteContact(thread.recipient.address.toString())
+                homeViewModel.deleteContact(thread.recipient.address as Address.WithAccountId)
             }
             cancelButton()
         }

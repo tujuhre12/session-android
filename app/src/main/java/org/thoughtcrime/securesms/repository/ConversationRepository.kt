@@ -594,7 +594,7 @@ class DefaultConversationRepository @Inject constructor(
     override suspend fun declineMessageRequest(recipient: Address.Conversable): Result<Unit> = runCatching {
         when (recipient) {
             is Address.Standard -> {
-                configFactory.removeContact(recipient.accountId.hexString)
+                configFactory.removeContactOrBlindedContact(recipient)
             }
 
             is Address.Group -> {

@@ -21,6 +21,7 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.SwarmAuth
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigMessage
 import org.session.libsession.utilities.ConfigPushResult
@@ -293,11 +294,19 @@ class ConfigFactory @Inject constructor(
         }
     }
 
-    override fun removeContact(accountId: String) {
-        if(!accountId.startsWith(IdPrefix.STANDARD.value)) return
-
+    override fun removeContactOrBlindedContact(address: Address.WithAccountId) {
         withMutableUserConfigs {
-            it.contacts.erase(accountId)
+            when (address) {
+                is Address.CommunityBlindedId -> it.contacts.eraseBlinded(
+                    communityServerUrl = address.serverUrl,
+                    blindedId = address.blindedId.blindedId.hexString,
+                )
+
+                is Address.Standard -> it.contacts.erase(address.accountId.hexString)
+                else -> {
+                    throw IllegalArgumentException("Unsupported address type: ${address::class.java.simpleName}")
+                }
+            }
         }
     }
 

@@ -659,7 +659,7 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
   public @Nullable Address getRecipientForThreadId(long threadId) {
     SQLiteDatabase db = getReadableDatabase();
 
-    try (final Cursor cursor = db.query(TABLE_NAME, null, ID + " = ?", new String[] {threadId+""}, null, null, null)) {
+    try (final Cursor cursor = db.query(TABLE_NAME, new String[] { ADDRESS }, ID + " = ?", new String[] { String.valueOf(threadId )}, null, null, null)) {
       if (cursor != null && cursor.moveToFirst()) {
         return Address.fromSerialized(cursor.getString(0));
       }

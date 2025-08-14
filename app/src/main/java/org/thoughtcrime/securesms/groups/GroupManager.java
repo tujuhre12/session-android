@@ -7,11 +7,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.session.libsession.utilities.Address;
-import org.session.libsession.utilities.DistributionTypes;
 import org.session.libsession.utilities.GroupUtil;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.thoughtcrime.securesms.database.GroupDatabase;
-import org.thoughtcrime.securesms.database.ThreadDatabase;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.util.BitmapUtil;
 
@@ -58,21 +56,6 @@ public class GroupManager {
     long threadID = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(
             groupRecipient);
     return new GroupActionResult(groupRecipient, threadID);
-  }
-
-  public static boolean deleteGroup(@NonNull String  groupId,
-                                    @NonNull Context context)
-  {
-    final GroupDatabase  groupDatabase  = DatabaseComponent.get(context).groupDatabase();
-    final ThreadDatabase threadDatabase = DatabaseComponent.get(context).threadDatabase();
-    final Address groupRecipient = Address.fromSerialized(groupId);
-
-    long threadId = threadDatabase.getThreadIdIfExistsFor(groupRecipient);
-    if (threadId != -1L) {
-      DatabaseComponent.get(context).storage().deleteConversation(threadId);
-    }
-
-    return groupDatabase.delete(groupId);
   }
 
   public static class GroupActionResult {

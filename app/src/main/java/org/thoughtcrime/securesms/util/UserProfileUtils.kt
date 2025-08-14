@@ -59,7 +59,7 @@ class UserProfileUtils @AssistedInject constructor(
     private suspend fun getDefaultProfileData(): UserProfileModalData {
         // An address that would
         val resolvedAddress = userAddress.toBlinded()
-            ?.let { blindedIdMappingRepository.findMappings(it).firstOrNull()?.second }
+            ?.let { blindedIdMappingRepository.findMappings(it).firstOrNull()?.second ?: it }
             ?: userAddress
 
         val recipient = recipientRepository.getRecipient(resolvedAddress)

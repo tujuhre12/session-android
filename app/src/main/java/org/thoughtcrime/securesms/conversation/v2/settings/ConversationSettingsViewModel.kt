@@ -894,10 +894,10 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     private fun deleteContact() {
-        val contact = address as? Address.Standard ?: return
+        val contact = address as? Address.WithAccountId ?: return
         viewModelScope.launch {
             showLoading()
-            configFactory.removeContact(contact.accountId.hexString)
+            configFactory.removeContactOrBlindedContact(contact)
             hideLoading()
             goBackHome()
         }

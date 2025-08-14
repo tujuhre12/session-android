@@ -173,8 +173,8 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun deleteContact(accountId: String) {
-        configFactory.removeContact(accountId)
+    fun deleteContact(address: Address.WithAccountId) {
+        configFactory.removeContactOrBlindedContact(address)
     }
 
     fun leaveGroup(accountId: AccountId) {
