@@ -118,7 +118,7 @@ class OpenGroupPoller @AssistedInject constructor(
                     token?.trySend(Result.success(Unit))
                     extraTokens.forEach { it.trySend(Result.success(Unit)) }
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error while polling open group messages", e)
+                    Log.e(TAG, "Error while polling open group messages for $server", e)
                     delayDuration = 2000L
                     token?.trySend(Result.failure(e))
                 }

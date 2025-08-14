@@ -20,6 +20,7 @@ import kotlinx.coroutines.supervisorScope
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
@@ -50,9 +51,8 @@ class OpenGroupPollerManager @Inject constructor(
             .distinctUntilChanged()
             .flatMapLatest { loggedIn ->
                 if (loggedIn) {
-                    (configFactory
-                        .configUpdateNotifications
-                        .filter { it is ConfigUpdateNotification.UserConfigsMerged || it == ConfigUpdateNotification.UserConfigsModified } as Flow<*>)
+                    configFactory
+                        .userConfigsChanged()
                         .onStart { emit(Unit) }
                         .map {
                             configFactory.withUserConfigs { configs ->

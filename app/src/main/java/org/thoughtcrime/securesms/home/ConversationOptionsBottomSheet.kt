@@ -12,6 +12,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.FragmentConversationBottomSheetBinding
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.AccountId
@@ -200,10 +201,14 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
 
         binding.markAllAsReadTextView.isVisible = showMarkAsReadButton && !isDeprecatedLegacyGroup
         binding.markAllAsReadTextView.setOnClickListener(this)
-        binding.markAsUnreadTextView.isVisible = !showMarkAsReadButton  && !isDeprecatedLegacyGroup
+        binding.markAsUnreadTextView.isVisible = !showMarkAsReadButton
+                && !isDeprecatedLegacyGroup
+                && recipient.address !is Address.CommunityBlindedId
         binding.markAsUnreadTextView.setOnClickListener(this)
         binding.pinTextView.isVisible = !thread.isPinned && !isDeprecatedLegacyGroup
+                && recipient.address !is Address.CommunityBlindedId
         binding.unpinTextView.isVisible = thread.isPinned
+                && recipient.address !is Address.CommunityBlindedId
         binding.pinTextView.setOnClickListener(this)
         binding.unpinTextView.setOnClickListener(this)
     }

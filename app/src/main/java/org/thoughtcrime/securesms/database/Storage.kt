@@ -248,12 +248,15 @@ open class Storage @Inject constructor(
             is Address.Group -> config.getOrConstructClosedGroup(recipient.address.accountId.hexString)
             // recipient is open group
             is Address.Community -> {
-                val og = recipient.data as RecipientData.Community
+                val og = recipient.data as? RecipientData.Community ?: return null
                 config.getOrConstructCommunity(
                     baseUrl = og.openGroup.server,
                     room = og.openGroup.room,
                     pubKeyHex = og.openGroup.publicKey,
                 )
+            }
+            is Address.CommunityBlindedId -> {
+                config.getOrConstructedBlindedOneToOne(recipient.address.blindedId.blindedId.hexString)
             }
             // otherwise recipient is one to one
             is Address.Standard -> {

@@ -484,11 +484,9 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
             TABLE_NAME + "." + ADDRESS + " IN (SELECT value FROM json_each(?))"
     );
 
-    final String[] selectionArgs = new String[] {
-        new JSONArray(CollectionsKt.map(addresses, Address::getAddress)).toString()
-    };
+    final String selectionArg = new JSONArray(CollectionsKt.map(addresses, Address::getAddress)).toString();
 
-    try (final Cursor cursor = getReadableDatabase().rawQuery(query, selectionArgs)) {
+    try (final Cursor cursor = getReadableDatabase().rawQuery(query, selectionArg)) {
       final ArrayList<ThreadRecord> threads = new ArrayList<>(cursor.getCount());
       final Reader reader = new Reader(cursor);
       ThreadRecord thread;

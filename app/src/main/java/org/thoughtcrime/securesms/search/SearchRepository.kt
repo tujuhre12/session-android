@@ -4,9 +4,14 @@ import android.content.Context
 import android.database.Cursor
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.session.libsession.utilities.Address.Companion.fromSerialized
+import org.session.libsession.utilities.Address.Companion.toAddress
+import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.GroupRecord
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.concurrent.SignalExecutors
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientData
+import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.toGroupString
 import org.thoughtcrime.securesms.contacts.ContactAccessor
 import org.thoughtcrime.securesms.database.CursorList
@@ -32,6 +37,8 @@ class SearchRepository @Inject constructor(
     private val contactAccessor: ContactAccessor,
     private val recipientRepository: RecipientRepository,
     private val conversationRepository: ConversationRepository,
+    private val configFactory: ConfigFactoryProtocol,
+    private val prefs: TextSecurePreferences,
 ) {
     private val executor = SignalExecutors.SERIAL
 
@@ -92,19 +99,27 @@ class SearchRepository @Inject constructor(
     }
 
     fun queryContacts(searchName: String? = null): List<Recipient> {
-        return conversationRepository.getConversationListAddresses(
-            nts = { false },
-            contactFilter = {
-                !it.blocked &&
-                        it.approved &&
-                        (searchName == null ||
-                                it.name.contains(searchName, ignoreCase = true) ||
-                                it.nickname.contains(searchName, ignoreCase = true))
-            },
-            groupFilter = { false },
-            communityFilter = { false },
-            legacyFilter = { false },
-        ).map(recipientRepository::getRecipientSync)
+        val self = prefs.getLocalNumber()
+
+        return configFactory.withUserConfigs { configs ->
+            configs.contacts.all()
+        }.asSequence()
+            .filter { !it.blocked && it.id != self }
+            .map { it.id.toAddress() }
+            .map(recipientRepository::getRecipientSync)
+            .filter {
+                searchName == null ||
+                    when (it.data) {
+                        // Search contacts by both nickname and name
+                        is RecipientData.Contact -> {
+                            it.data.nickname?.contains(searchName, ignoreCase = true) == true ||
+                                    it.data.name.contains(searchName, ignoreCase = true)
+                        }
+
+                        else -> error("We should only get contacts data here but got ${it.data.javaClass}")
+                    }
+            }
+            .toList()
     }
 
     private fun queryConversations(

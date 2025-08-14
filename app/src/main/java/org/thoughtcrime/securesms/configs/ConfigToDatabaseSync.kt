@@ -6,6 +6,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
@@ -23,7 +25,6 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
@@ -71,7 +72,6 @@ class ConfigToDatabaseSync @Inject constructor(
     private val preferences: TextSecurePreferences,
     private val conversationRepository: ConversationRepository,
     private val mmsSmsDatabase: MmsSmsDatabase,
-    private val openGroupManager: OpenGroupManager,
     private val lokiMessageDatabase: LokiMessageDatabase,
     private val messageNotifier: MessageNotifier,
     @param:ManagerScope private val scope: CoroutineScope,
@@ -80,25 +80,21 @@ class ConfigToDatabaseSync @Inject constructor(
         // Sync conversations from config -> database
         scope.launch {
             configFactory.userConfigsChanged()
-                .onStart { emit(Unit) }
-                .map { conversationRepository.getConversationListAddresses() }
-                .collectLatest {
+                .onStart {
+                    preferences.watchLocalNumber().filterNotNull().first()
+                    emit(Unit)
+                }
+                .map {
+                    conversationRepository.getConversationListAddresses() to configFactory.withUserConfigs { it.convoInfoVolatile.all() }
+                }
+                .distinctUntilChanged()
+                .collectLatest { (conversations, convoInfo) ->
                     try {
-                        ensureConversations(it)
+                        ensureConversations(conversations)
+                        updateConvoVolatile(convoInfo)
                     } catch (e: Exception) {
                         Log.e(TAG, "Error updating conversations from config", e)
                     }
-                }
-        }
-
-        // Sync convo volatile data from config -> database
-        scope.launch {
-            configFactory.userConfigsChanged()
-                .onStart { emit(Unit) }
-                .map { configFactory.withUserConfigs { it.convoInfoVolatile.all() } }
-                .distinctUntilChanged()
-                .collectLatest {
-                    updateConvoVolatile(it)
                 }
         }
     }
