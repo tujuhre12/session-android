@@ -12,23 +12,17 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
+import nl.komponents.kovenant.functional.map
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.open_groups.OpenGroupApi
-import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.OpenGroupUrlParser
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.groups.DefaultGroups
 import org.thoughtcrime.securesms.groups.GroupManager
-import org.thoughtcrime.securesms.groups.GroupState
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.State
@@ -41,39 +35,35 @@ class JoinCommunityViewModel @Inject constructor(
     private val storage: StorageProtocol
 ): ViewModel() {
 
-    val defaultRooms = OpenGroupApi.defaultRooms.map<DefaultGroups, GroupState> {
-        State.Success(it)
-    }.onStart {
-        emit(State.Loading)
-    }
-
     private val _state = MutableStateFlow(JoinCommunityState(defaultCommunities = State.Loading))
     val state: StateFlow<JoinCommunityState> = _state
 
     private val _uiEvents = MutableSharedFlow<UiEvent>(extraBufferCapacity = 1)
     val uiEvents: SharedFlow<UiEvent> get() = _uiEvents
 
-    private var lastUrl: String? = null
+    private var lasQrScan: Long = 0L
+    private val qrDebounceTime = 3000L
 
     init {
+        OpenGroupApi.getDefaultServerCapabilities().map {
+            OpenGroupApi.getDefaultRoomsIfNeeded()
+        }
+
         viewModelScope.launch(Dispatchers.Default) {
-            defaultRooms.collect { defaultCommunities ->
-                _state.update { it.copy(defaultCommunities = defaultCommunities) }
+            OpenGroupApi.defaultRooms.collect { defaultCommunities ->
+                _state.update { it.copy(defaultCommunities = State.Success(defaultCommunities)) }
             }
         }
     }
 
-    //todo NEWCONVO delete JoinCommunityUriFragment, its layout, DefaultGroupsViewModel, JoinCOmmunityFragmentAdatpter, JoinCommunityFragment, its layout, default_group_chip
-
     private fun joinCommunityIfPossible(url: String) {
-        //todo NEWCONVO test when there is an error, can we retry?
-        if(lastUrl == url) return
-        lastUrl = url
-
         viewModelScope.launch(Dispatchers.Default) {
+            _state.update { it.copy(loading = true) }
+
             val openGroup = try {
                 OpenGroupUrlParser.parseUrl(url)
             } catch (e: OpenGroupUrlParser.Error) {
+                _state.update { it.copy(loading = false) }
                 when (e) {
                     is OpenGroupUrlParser.Error.MalformedURL, OpenGroupUrlParser.Error.NoRoom -> {
                         withContext(Dispatchers.Main) {
@@ -98,8 +88,6 @@ class JoinCommunityViewModel @Inject constructor(
                     }
                 }
             }
-
-            _state.update { it.copy(loading = true) }
 
             try {
                 val sanitizedServer = openGroup.server.removeSuffix("/")
@@ -132,16 +120,18 @@ class JoinCommunityViewModel @Inject constructor(
         }
     }
 
-    //todo NEWCONVO clear loading on error
-
     fun onCommand(command: Commands) {
         when (command) {
             is Commands.OnQRScanned -> {
-                joinCommunityIfPossible(command.qr)
+                val currentTime = System.currentTimeMillis()
+                if (currentTime - lasQrScan > qrDebounceTime) {
+                    lasQrScan = currentTime
+                    joinCommunityIfPossible(command.qr)
+                }
             }
 
-            Commands.JoinCommunity -> {
-                joinCommunityIfPossible(_state.value.communityUrl.trim())
+            is Commands.JoinCommunity -> {
+                joinCommunityIfPossible(command.url)
             }
 
             is Commands.OnUrlChanged -> {
@@ -164,7 +154,7 @@ class JoinCommunityViewModel @Inject constructor(
 
     sealed interface Commands {
         data class OnQRScanned(val qr: String) : Commands
-        data object JoinCommunity: Commands
+        data class JoinCommunity(val url: String): Commands
         data class OnUrlChanged(val url: String): Commands
     }
 

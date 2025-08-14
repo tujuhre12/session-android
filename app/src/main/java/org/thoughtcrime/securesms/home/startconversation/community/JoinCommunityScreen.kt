@@ -2,17 +2,23 @@ package org.thoughtcrime.securesms.home.startconversation.community
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
@@ -23,10 +29,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
@@ -42,6 +50,7 @@ import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.QRScannerScreen
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
+import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -49,6 +58,7 @@ import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
+import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.util.State
 
 private val TITLES = listOf(R.string.communityUrl, R.string.qrScan)
@@ -62,8 +72,6 @@ internal fun JoinCommunityScreen(
     onBack: () -> Unit = {},
 ) {
     val pagerState = rememberPagerState { TITLES.size }
-
-    //todo NEWCONVO display an overall loader for the state.loading
 
     Column(modifier = Modifier.background(
         LocalColors.current.backgroundSecondary,
@@ -116,12 +124,50 @@ private fun CommunityScreen(
                         sendCommand(JoinCommunityViewModel.Commands.OnUrlChanged(it))
                     },
                     onContinue = {
-                        sendCommand(JoinCommunityViewModel.Commands.JoinCommunity)
+                        sendCommand(JoinCommunityViewModel.Commands.JoinCommunity(state.communityUrl))
                     },
-                    error = null, //todo NEWCONVO add
-                    isTextErrorColor = false //todo NEWCONVO add
+                    error = null,
+                    isTextErrorColor = false
                 )
 
+            }
+
+            Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
+
+            when(state.defaultCommunities){
+                is State.Loading -> {
+                    SmallCircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                }
+
+                is State.Success -> {
+                    Text(
+                        modifier = Modifier.fillMaxWidth()
+                            .padding(horizontal = LocalDimensions.current.spacing),
+                        text = stringResource(R.string.communityJoinOfficial),
+                        style = LocalType.current.h7.bold()
+                    )
+
+                    Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
+
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth()
+                            .padding(horizontal = LocalDimensions.current.spacing),
+                        horizontalArrangement = Arrangement.SpaceAround
+                    ) {
+                        state.defaultCommunities.value.forEach {
+                            CommunityChip(
+                                group = it,
+                                onClick = {
+                                    sendCommand(JoinCommunityViewModel.Commands.OnUrlChanged(it.joinURL))
+                                }
+                            )
+                        }
+                    }
+                }
+
+                else -> {}
             }
 
             Spacer(Modifier
@@ -137,7 +183,9 @@ private fun CommunityScreen(
                     .qaTag(R.string.AccessibilityId_communityJoin),
                 enabled = state.isJoinButtonEnabled,
                 onClick = {
-                    sendCommand(JoinCommunityViewModel.Commands.JoinCommunity)
+                    sendCommand(JoinCommunityViewModel.Commands.JoinCommunity(
+                        state.communityUrl
+                    ))
                 }
             ) {
                 LoadingArcOr(state.loading) {
@@ -156,17 +204,21 @@ private fun CommunityChip(
     onClick: () -> Unit
 ){
     AssistChip(
-        modifier = modifier,
+        modifier = modifier.widthIn(max = 200.dp),
         onClick = onClick,
         label = {
             Text(
                 text = group.name,
                 style = LocalType.current.base,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         },
         leadingIcon = {
             if (group.image != null) {
                 ByteArraySliceImage(
+                    modifier = Modifier.size(AssistChipDefaults.IconSize)
+                        .clip(CircleShape),
                     slice = group.image
                 )
             }
