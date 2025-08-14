@@ -23,6 +23,7 @@ import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
@@ -98,8 +99,10 @@ class ConfigToDatabaseSync @Inject constructor(
         }
     }
 
-    private fun ensureConversations(addresses: Iterable<Address.Conversable>) {
-        val result = threadDatabase.ensureThreads(addresses)
+    private fun ensureConversations(addresses: Set<Address.Conversable>) {
+        val myAddress = Address.Standard(AccountId(preferences.getLocalNumber()!!))
+        val ensureAddresses = if (myAddress in addresses) addresses else addresses + myAddress
+        val result = threadDatabase.ensureThreads(ensureAddresses) // Always include NTS so it doesn't get deleted
 
         if (result.deletedThreads.isNotEmpty()) {
             val deletedThreadIDs = result.deletedThreads.values
