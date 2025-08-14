@@ -867,8 +867,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     // called from onCreate
     private fun setUpToolBar() {
-        binding.conversationAppBar.applySafeInsetsPaddings(WindowInsetsCompat.Type.statusBars())
-
         binding.conversationAppBar.setThemedContent {
            val data by viewModel.appBarData.collectAsState()
             val query by searchViewModel.searchQuery.collectAsState()
@@ -886,7 +884,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                    settingsLauncher.launch(intent)
                }
            )
-       }
+        }
     }
 
     // called from onCreate

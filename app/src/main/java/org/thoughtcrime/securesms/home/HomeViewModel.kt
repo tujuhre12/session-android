@@ -214,6 +214,18 @@ class HomeViewModel @Inject constructor(
             is Commands.HandleUserProfileCommand -> {
                 userProfileModalUtils?.onCommand(command.upmCommand)
             }
+
+            is Commands.ShowStartConversationSheet -> {
+                _dialogsState.update { it.copy(showStartConversationSheet =
+                    StartConversationSheetData(
+                        accountId = prefs.getLocalNumber()!!
+                    )
+                ) }
+            }
+
+            is Commands.HideStartConversationSheet -> {
+                _dialogsState.update { it.copy(showStartConversationSheet = null) }
+            }
         }
     }
 
@@ -240,11 +252,16 @@ class HomeViewModel @Inject constructor(
 
     data class DialogsState(
         val pinCTA: PinProCTA? = null,
-        val userProfileModal: UserProfileModalData? = null
+        val userProfileModal: UserProfileModalData? = null,
+        val showStartConversationSheet: StartConversationSheetData? = null
     )
 
     data class PinProCTA(
         val overTheLimit: Boolean
+    )
+
+    data class StartConversationSheetData(
+        val accountId: String
     )
 
     sealed interface Commands {
@@ -253,6 +270,9 @@ class HomeViewModel @Inject constructor(
         data class HandleUserProfileCommand(
             val upmCommand: UserProfileModalCommands
         ) : Commands
+
+        data object ShowStartConversationSheet : Commands
+        data object HideStartConversationSheet : Commands
     }
 
     companion object {
