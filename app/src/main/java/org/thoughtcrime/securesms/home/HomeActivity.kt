@@ -892,7 +892,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
     }
 
     private fun showStartConversation() {
-       // StartConversationFragment().show(supportFragmentManager, "StartConversationFragment")
         homeViewModel.onCommand(HomeViewModel.Commands.ShowStartConversationSheet)
     }
 }
