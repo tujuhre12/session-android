@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.tabs.TabLayoutMediator
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
@@ -113,10 +114,15 @@ class JoinCommunityFragment : Fragment() {
                     delegate.onDialogClosePressed()
                 } catch (e: Exception) {
                     Log.e("Loki", "Couldn't join community.", e)
-                    hideLoader()
-                    val txt = context?.getSubbedString(R.string.groupErrorJoin,
-                        GROUP_NAME_KEY to url)
-                    Toast.makeText(activity, txt, Toast.LENGTH_SHORT).show()
+
+                    if (e !is CancellationException) {
+                        hideLoader()
+                        val txt = context?.getSubbedString(
+                            R.string.groupErrorJoin,
+                            GROUP_NAME_KEY to url
+                        )
+                        Toast.makeText(activity, txt, Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
         }

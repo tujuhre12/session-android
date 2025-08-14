@@ -562,11 +562,11 @@ class LokiAPIDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) :
         database.insertOrUpdate(serverCapabilitiesTable, row, "$server = ?", wrap(serverName))
     }
 
-    fun getServerCapabilities(serverName: String): List<String> {
+    fun getServerCapabilities(serverName: String): List<String>? {
         val database = readableDatabase
         return database.get(serverCapabilitiesTable, "$server = ?", wrap(serverName)) { cursor ->
             cursor.getString(capabilities)
-        }?.split(",") ?: emptyList()
+        }?.split(",")
     }
 
     fun setLastInboxMessageId(serverName: String, newValue: Long) {

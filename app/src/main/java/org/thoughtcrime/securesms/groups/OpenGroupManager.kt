@@ -19,11 +19,13 @@ class OpenGroupManager @Inject constructor(
 ) {
     suspend fun add(server: String, room: String, publicKey: String) {
         configFactory.withMutableUserConfigs { configs ->
-            configs.userGroups.getOrConstructCommunityInfo(
+            val community = configs.userGroups.getOrConstructCommunityInfo(
                 baseUrl = server,
                 room = room,
                 pubKeyHex = publicKey,
             )
+
+            configs.userGroups.set(community)
         }
 
         // Wait until we have a poller for the server

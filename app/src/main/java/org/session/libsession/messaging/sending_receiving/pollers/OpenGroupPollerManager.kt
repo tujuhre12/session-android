@@ -63,6 +63,7 @@ class OpenGroupPollerManager @Inject constructor(
                     flowOf(emptySet())
                 }
             }
+            .distinctUntilChanged()
             .scan(emptyMap<String, PollerHandle>()) { acc, value ->
                 if (acc.keys == value) {
                     acc // No change, return the same map

@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import nl.komponents.kovenant.functional.map
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.JobQueue
@@ -33,8 +32,6 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.open_groups.OpenGroupMessage
 import org.session.libsession.messaging.sending_receiving.MessageReceiver
 import org.session.libsession.messaging.sending_receiving.ReceivedMessageHandler
-import org.session.libsession.snode.OnionRequestAPI
-import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.GroupUtil
@@ -131,17 +128,15 @@ class OpenGroupPoller @AssistedInject constructor(
     private fun handleRoomPollInfo(
         roomToken: String,
         pollInfo: OpenGroupApi.RoomPollInfo,
-        createGroupIfMissingWithPublicKey: String? = null
+        publicKey: String
     ) {
         val existingOpenGroup = storage.getOpenGroup(roomToken, server)
 
         // If we don't have an existing group and don't have a 'createGroupIfMissingWithPublicKey'
         // value then don't process the poll info
-        val publicKey = existingOpenGroup?.publicKey ?: createGroupIfMissingWithPublicKey
+        val publicKey = existingOpenGroup?.publicKey ?: publicKey
         val name = pollInfo.details?.name ?: existingOpenGroup?.name
         val infoUpdates = pollInfo.details?.infoUpdates ?: existingOpenGroup?.infoUpdates
-
-        if (publicKey == null) return
 
         val openGroup = OpenGroup(
             server = server,
@@ -196,23 +191,28 @@ class OpenGroupPoller @AssistedInject constructor(
      *
      * @return A list of rooms that were polled.
      */
-    private suspend fun pollOnce(isPostCapabilitiesRetry: Boolean = false): List<String> {
-        val rooms = configFactory.withUserConfigs { it.userGroups.allCommunityInfo() }
+    private suspend fun pollOnce(): List<String> {
+        val allCommunities = configFactory.withUserConfigs { it.userGroups.allCommunityInfo() }
+
+        val rooms = allCommunities
             .mapNotNull { c -> c.community.takeIf { it.baseUrl == server }?.room }
+
+        if (rooms.isEmpty()) {
+            return emptyList()
+        }
+
+        val publicKey = allCommunities.first { it.community.baseUrl == server }.community.pubKeyHex
+
 
         try {
             OpenGroupApi
                 .poll(rooms, server)
-                .await()
                 .asSequence()
                 .filterNot { it.body == null }
                 .forEach { response ->
                     when (response.endpoint) {
-                        is Endpoint.Capabilities -> {
-                            handleCapabilities(server, response.body as OpenGroupApi.Capabilities)
-                        }
                         is Endpoint.RoomPollInfo -> {
-                            handleRoomPollInfo(  response.endpoint.roomToken, response.body as OpenGroupApi.RoomPollInfo)
+                            handleRoomPollInfo(  response.endpoint.roomToken, response.body as OpenGroupApi.RoomPollInfo, publicKey)
                         }
                         is Endpoint.RoomMessagesRecent -> {
                             handleMessages(server, response.endpoint.roomToken, response.body as List<OpenGroupApi.Message>)
@@ -234,7 +234,6 @@ class OpenGroupPoller @AssistedInject constructor(
         } catch (e: Exception) {
             if (e !is CancellationException) {
                 Log.e(TAG, "Error while polling open group messages", e)
-                updateCapabilitiesIfNeeded(isPostCapabilitiesRetry, e)
             }
 
             throw e
@@ -253,20 +252,6 @@ class OpenGroupPoller @AssistedInject constructor(
         }
     }
 
-    private fun updateCapabilitiesIfNeeded(isPostCapabilitiesRetry: Boolean, exception: Exception) {
-        if (exception is OnionRequestAPI.HTTPRequestFailedBlindingRequiredException) {
-            if (!isPostCapabilitiesRetry) {
-                OpenGroupApi.getCapabilities(server).map {
-                    handleCapabilities(server, it)
-                }
-            }
-        }
-    }
-
-    private fun handleCapabilities(server: String, capabilities: OpenGroupApi.Capabilities) {
-        storage.setServerCapabilities(server, capabilities.capabilities)
-    }
-    
     private fun handleMessages(
         server: String,
         roomToken: String,

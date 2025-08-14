@@ -317,7 +317,7 @@ object MessageSender {
         var blindedPublicKey: ByteArray? = null
         when(destination) {
             is Destination.OpenGroup -> {
-                serverCapabilities = storage.getServerCapabilities(destination.server)
+                serverCapabilities = storage.getServerCapabilities(destination.server).orEmpty()
                 storage.getOpenGroup(destination.roomToken, destination.server)?.let {
                     blindedPublicKey = BlindKeyAPI.blind15KeyPairOrNull(
                         ed25519SecretKey = userEdKeyPair.secretKey.data,
@@ -326,14 +326,14 @@ object MessageSender {
                 }
             }
             is Destination.OpenGroupInbox -> {
-                serverCapabilities = storage.getServerCapabilities(destination.server)
+                serverCapabilities = storage.getServerCapabilities(destination.server).orEmpty()
                 blindedPublicKey = BlindKeyAPI.blind15KeyPairOrNull(
                     ed25519SecretKey = userEdKeyPair.secretKey.data,
                     serverPubKey = Hex.fromStringCondensed(destination.serverPublicKey),
                 )?.pubKey?.data
             }
             is Destination.LegacyOpenGroup -> {
-                serverCapabilities = storage.getServerCapabilities(destination.server)
+                serverCapabilities = storage.getServerCapabilities(destination.server).orEmpty()
                 storage.getOpenGroup(destination.roomToken, destination.server)?.let {
                     blindedPublicKey = BlindKeyAPI.blind15KeyPairOrNull(
                         ed25519SecretKey = userEdKeyPair.secretKey.data,
@@ -344,7 +344,7 @@ object MessageSender {
             else -> {}
         }
         val messageSender = if (serverCapabilities.contains(Capability.BLIND.name.lowercase()) && blindedPublicKey != null) {
-            AccountId(IdPrefix.BLINDED, blindedPublicKey!!).hexString
+            AccountId(IdPrefix.BLINDED, blindedPublicKey).hexString
         } else {
             AccountId(IdPrefix.UN_BLINDED, userEdKeyPair.pubKey.data).hexString
         }

@@ -888,7 +888,7 @@ open class Storage @Inject constructor(
         return lokiAPIDatabase.setServerCapabilities(server, capabilities)
     }
 
-    override fun getServerCapabilities(server: String): List<String> {
+    override fun getServerCapabilities(server: String): List<String>? {
         return lokiAPIDatabase.getServerCapabilities(server)
     }
 

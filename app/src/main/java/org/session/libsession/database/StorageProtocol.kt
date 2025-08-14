@@ -64,7 +64,7 @@ interface StorageProtocol {
 
     // Servers
     fun setServerCapabilities(server: String, capabilities: List<String>)
-    fun getServerCapabilities(server: String): List<String>
+    fun getServerCapabilities(server: String): List<String>?
 
     // Open Groups
     fun getAllOpenGroups(): Map<Long, OpenGroup>
