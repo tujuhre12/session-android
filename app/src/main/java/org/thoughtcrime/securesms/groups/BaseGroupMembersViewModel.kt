@@ -34,7 +34,7 @@ import org.thoughtcrime.securesms.util.AvatarUtils
 import java.util.EnumSet
 
 abstract class BaseGroupMembersViewModel(
-    private val groupId: AccountId,
+    groupAddress: Address.Group,
     @param:ApplicationContext private val context: Context,
     private val storage: StorageProtocol,
     private val configFactory: ConfigFactoryProtocol,
@@ -42,6 +42,8 @@ abstract class BaseGroupMembersViewModel(
     private val recipientRepository: RecipientRepository,
     private val proStatusManager: ProStatusManager,
 ) : ViewModel() {
+    private val groupId = groupAddress.accountId
+
     // Output: the source-of-truth group information. Other states are derived from this.
     protected val groupInfo: StateFlow<Pair<GroupDisplayInfo, List<GroupMemberState>>?> =
         (configFactory.configUpdateNotifications

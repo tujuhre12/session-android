@@ -465,11 +465,13 @@ class ConversationViewModel @AssistedInject constructor(
                 }
                 application.resources.getQuantityString(R.plurals.members, userCount, userCount)
             }
+
             pagerData += ConversationAppBarPagerData(
                 title = title,
                 action = {
-                    if(conversation.isCommunityRecipient) showConversationSettings()
-                    else showGroupMembers(conversation)
+                    // This pager title no longer actionable for legacy groups
+                    if (conversation.isCommunityRecipient) showConversationSettings()
+                    else if (conversation.address is Address.Group) showGroupMembers(conversation.address)
                 },
             )
         }
@@ -1217,10 +1219,8 @@ class ConversationViewModel @AssistedInject constructor(
         }
     }
 
-    private fun showGroupMembers(recipient: Recipient) {
-        recipient.let { convo ->
-            _uiEvents.tryEmit(ConversationUiEvent.ShowGroupMembers(convo.address.toString()))
-        }
+    private fun showGroupMembers(address: Address.Group) {
+        _uiEvents.tryEmit(ConversationUiEvent.ShowGroupMembers(address))
     }
 
     private fun showConversationSettings() {
@@ -1353,7 +1353,7 @@ sealed interface ConversationUiEvent {
     data class NavigateToConversation(val address: Address.Conversable) : ConversationUiEvent
     data class ShowDisappearingMessages(val address: Address) : ConversationUiEvent
     data class ShowNotificationSettings(val address: Address) : ConversationUiEvent
-    data class ShowGroupMembers(val groupId: String) : ConversationUiEvent
+    data class ShowGroupMembers(val groupAddress: Address.Group) : ConversationUiEvent
     data class ShowConversationSettings(val threadAddress: Address.Conversable) : ConversationUiEvent
     data object ShowUnblockConfirmation : ConversationUiEvent
 }

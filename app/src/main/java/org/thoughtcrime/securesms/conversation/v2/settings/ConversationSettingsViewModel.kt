@@ -259,9 +259,11 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             icon = R.drawable.ic_users_round,
             qaTag = R.string.qa_conversation_settings_group_members,
             onClick = {
-                navigateTo(ConversationSettingsDestination.RouteGroupMembers(
-                    groupId = groupV2?.groupAccountId ?: "")
-                )
+                groupV2?.let {
+                    navigateTo(ConversationSettingsDestination.RouteGroupMembers(
+                        Address.Group(AccountId(it.groupAccountId))
+                    ))
+                }
             }
         )
     }
@@ -285,9 +287,11 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             icon = R.drawable.ic_user_round_pen,
             qaTag = R.string.qa_conversation_settings_manage_members,
             onClick = {
-                navigateTo(ConversationSettingsDestination.RouteManageMembers(
-                    groupId = groupV2?.groupAccountId ?: "")
-                )
+                groupV2?.let {
+                    navigateTo(ConversationSettingsDestination.RouteManageMembers(
+                        Address.Group(AccountId(it.groupAccountId))
+                    ))
+                }
             }
         )
     }
@@ -382,7 +386,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
     }
 
-    private suspend fun getStateFromRecipient(conversation: Recipient){
+    private fun getStateFromRecipient(conversation: Recipient){
         val configContact = configFactory.withUserConfigs { configs ->
             configs.contacts.get(conversation.address.toString())
         }

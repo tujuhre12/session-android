@@ -685,9 +685,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     }
 
                     is ConversationUiEvent.ShowGroupMembers -> {
-                        val intent = Intent(this@ConversationActivityV2, GroupMembersActivity::class.java).apply {
-                            putExtra(GroupMembersActivity.GROUP_ID, event.groupId)
-                        }
+                        val intent = GroupMembersActivity.createIntent(this@ConversationActivityV2, event.groupAddress)
                         startActivity(intent)
                     }
 

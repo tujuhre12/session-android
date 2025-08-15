@@ -2,12 +2,14 @@ package org.session.libsession.utilities
 
 import android.os.Parcel
 import android.os.Parcelable
+import kotlinx.serialization.Serializable
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Util
 import java.util.LinkedList
 
+@Serializable(with = AddressSerializer::class)
 sealed class Address : Parcelable, Comparable<Address> {
     /**
      * The serialized form of the address.
@@ -21,6 +23,7 @@ sealed class Address : Parcelable, Comparable<Address> {
 
     override fun compareTo(other: Address) = address.compareTo(other.address)
 
+    @Serializable(with = GroupAddressSerializer::class)
     data class Group(override val accountId: AccountId) : Conversable(), WithAccountId {
         override val address: String
             get() = accountId.hexString
@@ -37,6 +40,7 @@ sealed class Address : Parcelable, Comparable<Address> {
         override fun toString(): String = address
     }
 
+    @Serializable(with = StandardAddressSerializer::class)
     data class Standard(override val accountId: AccountId) : Conversable(), WithAccountId {
         override val address: String
             get() = accountId.hexString
@@ -130,6 +134,7 @@ sealed class Address : Parcelable, Comparable<Address> {
     /**
      * A marker interface for addresses that can be used to start a conversation
      */
+    @Serializable(with = ConversableAddressSerializer::class)
     sealed class Conversable : Address()
     sealed interface WithAccountId {
         val accountId: AccountId
@@ -256,6 +261,7 @@ fun Address.toBlinded(): Address.Blinded? {
         ?: (this as? Address.CommunityBlindedId)?.blindedId
 }
 
+@Deprecated("This is a legacy way of getting a confusing term: groupString. Use the explicit address subclasses to state your intent.")
 fun Address.toGroupString(): String {
     return when (this) {
         is Address.LegacyGroup, is Address.Community, is Address.Group -> address

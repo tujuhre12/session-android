@@ -24,29 +24,27 @@ import org.thoughtcrime.securesms.util.AvatarUtils
 
 @HiltViewModel(assistedFactory = GroupMembersViewModel.Factory::class)
 class GroupMembersViewModel @AssistedInject constructor(
-    @Assisted private val groupId: AccountId,
+    @Assisted private val address: Address.Group,
     @param:ApplicationContext private val context: Context,
     storage: StorageProtocol,
     configFactory: ConfigFactoryProtocol,
     proStatusManager: ProStatusManager,
     avatarUtils: AvatarUtils,
     recipientRepository: RecipientRepository,
-) : BaseGroupMembersViewModel(groupId, context, storage, configFactory, avatarUtils, recipientRepository, proStatusManager) {
+) : BaseGroupMembersViewModel(address, context, storage, configFactory, avatarUtils, recipientRepository, proStatusManager) {
 
     private val _navigationActions = Channel<Intent>()
     val navigationActions get() = _navigationActions.receiveAsFlow()
 
     @AssistedFactory
     interface Factory {
-        fun create(groupId: AccountId): GroupMembersViewModel
+        fun create(address: Address.Group): GroupMembersViewModel
     }
 
     fun onMemberClicked(accountId: AccountId) {
         viewModelScope.launch(Dispatchers.Default) {
-            val address = Address.fromSerialized(accountId.hexString)
-
             _navigationActions.send(ConversationActivityV2.createIntent(
-                context, address as Address.Conversable
+                context, Address.Standard(accountId)
             ))
         }
     }

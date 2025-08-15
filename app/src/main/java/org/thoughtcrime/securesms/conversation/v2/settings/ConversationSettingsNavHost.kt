@@ -45,17 +45,17 @@ sealed interface ConversationSettingsDestination {
 
     @Serializable
     data class RouteGroupMembers(
-        val groupId: String
+        val groupAddress: Address.Group
     ): ConversationSettingsDestination
 
     @Serializable
     data class RouteManageMembers(
-        val groupId: String
+        val groupAddress: Address.Group
     ): ConversationSettingsDestination
 
     @Serializable
     data class RouteInviteToGroup(
-        val groupId: String,
+        val groupAddress: Address.Group,
         val excludingAccountIDs: List<String>
     ): ConversationSettingsDestination
 
@@ -135,7 +135,7 @@ fun ConversationSettingsNavHost(
 
                 val viewModel =
                     hiltViewModel<GroupMembersViewModel, GroupMembersViewModel.Factory> { factory ->
-                        factory.create(AccountId(data.groupId))
+                        factory.create(data.groupAddress)
                     }
 
                 GroupMembersScreen(
@@ -151,7 +151,7 @@ fun ConversationSettingsNavHost(
 
                 val viewModel =
                     hiltViewModel<EditGroupViewModel, EditGroupViewModel.Factory> { factory ->
-                        factory.create(AccountId(data.groupId))
+                        factory.create(data.groupAddress)
                     }
 
                 EditGroupScreen(
@@ -159,7 +159,7 @@ fun ConversationSettingsNavHost(
                     navigateToInviteContact = {
                         navController.navigate(
                             RouteInviteToGroup(
-                                groupId = data.groupId,
+                                groupAddress = data.groupAddress,
                                 excludingAccountIDs = viewModel.excludingAccountIDsFromContactSelection.toList()
                             )
                         )
@@ -184,7 +184,7 @@ fun ConversationSettingsNavHost(
                 // grab a hold of manage group's VM
                 val parentEntry = remember(backStackEntry) {
                     navController.getBackStackEntry(
-                        RouteManageMembers(data.groupId)
+                        RouteManageMembers(data.groupAddress)
                     )
                 }
                 val editGroupViewModel: EditGroupViewModel = hiltViewModel(parentEntry)

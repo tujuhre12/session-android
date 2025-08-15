@@ -31,7 +31,7 @@ import org.thoughtcrime.securesms.util.AvatarUtils
 
 @HiltViewModel(assistedFactory = EditGroupViewModel.Factory::class)
 class EditGroupViewModel @AssistedInject constructor(
-    @Assisted private val groupId: AccountId,
+    @Assisted private val groupAddress: Address.Group,
     @param:ApplicationContext private val context: Context,
     storage: StorageProtocol,
     private val configFactory: ConfigFactoryProtocol,
@@ -39,7 +39,8 @@ class EditGroupViewModel @AssistedInject constructor(
     private val recipientRepository: RecipientRepository,
     avatarUtils: AvatarUtils,
     proStatusManager: ProStatusManager,
-) : BaseGroupMembersViewModel(groupId, context, storage, configFactory, avatarUtils, recipientRepository, proStatusManager) {
+) : BaseGroupMembersViewModel(groupAddress, context, storage, configFactory, avatarUtils, recipientRepository, proStatusManager) {
+    private val groupId = groupAddress.accountId
 
     // Output: The name of the group. This is the current name of the group, not the name being edited.
     val groupName: StateFlow<String> = groupInfo
@@ -187,6 +188,6 @@ class EditGroupViewModel @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(groupId: AccountId): EditGroupViewModel
+        fun create(groupAddress: Address.Group): EditGroupViewModel
     }
 }
