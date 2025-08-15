@@ -228,6 +228,9 @@ interface TextSecurePreferences {
     fun  getDebugMessageFeatures(): Set<ProStatusManager.MessageProFeature>
     fun  setDebugMessageFeatures(features: Set<ProStatusManager.MessageProFeature>)
 
+    fun setSubscriptionProvider(provider: String)
+    fun getSubscriptionProvider(): String?
+
     var deprecationStateOverride: String?
     var deprecatedTimeOverride: ZonedDateTime?
     var deprecatingStartTimeOverride: ZonedDateTime?
@@ -387,6 +390,8 @@ interface TextSecurePreferences {
         const val IN_APP_REVIEW_STATE = "in_app_review_state"
 
         const val DEBUG_MESSAGE_FEATURES = "debug_message_features"
+
+        const val SUBSCRIPTION_PROVIDER = "session_subscription_provider"
 
         @JvmStatic
         fun getConfigurationMessageSynced(context: Context): Boolean {
@@ -1871,5 +1876,13 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setDebugMessageFeatures(features: Set<ProStatusManager.MessageProFeature>) {
         setStringSetPreference(TextSecurePreferences.DEBUG_MESSAGE_FEATURES, features.map { it.name }.toSet())
+    }
+
+    override fun getSubscriptionProvider(): String? {
+        return getStringPreference(TextSecurePreferences.SUBSCRIPTION_PROVIDER, null)
+    }
+
+    override fun setSubscriptionProvider(provider: String) {
+        setStringPreference(TextSecurePreferences.SUBSCRIPTION_PROVIDER, provider)
     }
 }
