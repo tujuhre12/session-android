@@ -46,6 +46,7 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
+import org.session.libsession.utilities.updateContact
 import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
@@ -924,12 +925,12 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
     private fun deleteConversation() {
         viewModelScope.launch {
-            when (address) {
-                is Address.Community -> TODO()
-                is Address.CommunityBlindedId -> TODO()
-                is Address.Group -> TODO()
-                is Address.LegacyGroup -> TODO()
-                is Address.Standard -> TODO()
+            if (address is Address.Standard) {
+                configFactory.withMutableUserConfigs { configs ->
+                    configs.contacts.updateContact(address) {
+                        priority = PRIORITY_HIDDEN
+                    }
+                }
             }
 
             goBackHome()
