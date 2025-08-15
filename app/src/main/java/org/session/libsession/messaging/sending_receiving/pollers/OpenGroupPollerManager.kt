@@ -3,11 +3,9 @@ package org.session.libsession.messaging.sending_receiving.pollers
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -18,7 +16,6 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.Log
@@ -92,7 +89,9 @@ class OpenGroupPollerManager @Inject constructor(
             .stateIn(scope, SharingStarted.Eagerly, emptyMap())
 
     val isAllCaughtUp: Boolean
-        get() = pollers.value.values.all { it.poller.isCaughtUp.value }
+        get() = pollers.value.values.all {
+            (it.poller.pollState.value as? OpenGroupPoller.PollState.Idle)?.lastPolled != null
+        }
 
 
     suspend fun pollAllOpenGroupsOnce() {
@@ -101,7 +100,7 @@ class OpenGroupPollerManager @Inject constructor(
             pollers.value.map { (server, handle) ->
                 handle.pollerScope.launch {
                     runCatching {
-                        handle.poller.requestPollOnceAndWait()
+                        handle.poller.requestPollAndAwait()
                     }.onFailure {
                         Log.e(TAG, "Error polling open group ${server}", it)
                     }

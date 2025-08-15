@@ -6,16 +6,20 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.selects.onTimeout
+import kotlinx.coroutines.selects.select
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.JobQueue
@@ -46,7 +50,7 @@ import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import java.util.concurrent.TimeUnit
 
-private typealias ManualPollRequestToken = Channel<Result<Unit>>
+private typealias PollRequestToken = Channel<Result<List<String>>>
 
 /**
  * A [OpenGroupPoller] is responsible for polling all communities on a particular server.
@@ -69,60 +73,66 @@ class OpenGroupPoller @AssistedInject constructor(
     @Assisted private val server: String,
     @Assisted private val scope: CoroutineScope,
 ) {
-    private val mutableIsCaughtUp = MutableStateFlow(false)
-    val isCaughtUp: StateFlow<Boolean> get() = mutableIsCaughtUp
-
-    private val manualPollRequest = Channel<ManualPollRequestToken>()
-
-    private val mutableLastPolledRooms = MutableStateFlow(emptyList<String>())
-
-    val lastPolledRooms: StateFlow<List<String>> get() = mutableLastPolledRooms
-
     companion object {
         private const val POLL_INTERVAL_MILLS: Long = 4000L
         const val MAX_INACTIVITIY_PERIOD_MILLS = 14 * 24 * 60 * 60 * 1000L // 14 days
 
         private const val TAG = "OpenGroupPoller"
-
     }
 
-    init {
-        scope.launch {
-            while (true) {
-                // Wait until the app is visible before starting the polling,
-                // or when we receive a manual poll request
-                val token = merge(
-                    appVisibilityManager.isAppVisible.filter { it }.map { null },
-                    manualPollRequest.receiveAsFlow()
-                ).first()
+    private val pendingPollRequest = Channel<PollRequestToken>()
 
-                // We might have more than one manual poll request, collect them all now so
-                // they don't trigger unnecessary pollings
-                val extraTokens = buildList {
-                    while (true) {
-                        val nexToken = manualPollRequest.tryReceive().getOrNull() ?: break
-                        add(nexToken)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val pollState: StateFlow<PollState> = flow {
+        val tokens = arrayListOf<PollRequestToken>()
+
+        while (true) {
+            // Wait for next request(s) to come in
+            tokens.clear()
+            tokens.add(pendingPollRequest.receive())
+            tokens.addAll(generateSequence { pendingPollRequest.tryReceive().getOrNull() })
+
+            Log.d(TAG, "Polling open group messages for server: $server")
+            emit(PollState.Polling)
+            val pollResult = runCatching { pollOnce() }
+            tokens.forEach { it.trySend(pollResult) }
+            emit(PollState.Idle(pollResult))
+
+            pollResult.exceptionOrNull()?.let {
+                Log.e(TAG, "Error while polling open groups for $server", it)
+            }
+
+        }
+    }.stateIn(scope, SharingStarted.Eagerly, PollState.Idle(null))
+
+    init {
+        // Start a periodic polling request when the app becomes visible
+        scope.launch {
+            appVisibilityManager.isAppVisible
+                .collectLatest { visible ->
+                    if (visible) {
+                        while (true) {
+                            val r = requestPollAndAwait()
+                            if (r.isSuccess) {
+                                delay(POLL_INTERVAL_MILLS)
+                            } else {
+                                delay(2000L)
+                            }
+                        }
                     }
                 }
-
-                mutableIsCaughtUp.value = false
-                var delayDuration = POLL_INTERVAL_MILLS
-                try {
-                    Log.d(TAG, "Polling open group messages for server: $server")
-                    val polledRooms = pollOnce()
-                    mutableIsCaughtUp.value = true
-                    mutableLastPolledRooms.value = polledRooms
-                    token?.trySend(Result.success(Unit))
-                    extraTokens.forEach { it.trySend(Result.success(Unit)) }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error while polling open group messages for $server", e)
-                    delayDuration = 2000L
-                    token?.trySend(Result.failure(e))
-                }
-
-                delay(delayDuration)
-            }
         }
+    }
+
+    /**
+     * Requests a poll and await for the result.
+     *
+     * The result will be a list of room tokens that were polled.
+     */
+    suspend fun requestPollAndAwait(): Result<List<String>> {
+        val token: PollRequestToken = Channel()
+        pendingPollRequest.send(token)
+        return token.receive()
     }
 
     private fun handleRoomPollInfo(
@@ -203,53 +213,32 @@ class OpenGroupPoller @AssistedInject constructor(
 
         val publicKey = allCommunities.first { it.community.baseUrl == server }.community.pubKeyHex
 
-
-        try {
-            OpenGroupApi
-                .poll(rooms, server)
-                .asSequence()
-                .filterNot { it.body == null }
-                .forEach { response ->
-                    when (response.endpoint) {
-                        is Endpoint.RoomPollInfo -> {
-                            handleRoomPollInfo(  response.endpoint.roomToken, response.body as OpenGroupApi.RoomPollInfo, publicKey)
-                        }
-                        is Endpoint.RoomMessagesRecent -> {
-                            handleMessages(server, response.endpoint.roomToken, response.body as List<OpenGroupApi.Message>)
-                        }
-                        is Endpoint.RoomMessagesSince  -> {
-                            handleMessages(server, response.endpoint.roomToken, response.body as List<OpenGroupApi.Message>)
-                        }
-                        is Endpoint.Inbox, is Endpoint.InboxSince -> {
-                            handleDirectMessages(server, false, response.body as List<OpenGroupApi.DirectMessage>)
-                        }
-                        is Endpoint.Outbox, is Endpoint.OutboxSince -> {
-                            handleDirectMessages(server, true, response.body as List<OpenGroupApi.DirectMessage>)
-                        }
-                        else -> { /* We don't care about the result of any other calls (won't be polled for) */}
+        OpenGroupApi
+            .poll(rooms, server)
+            .asSequence()
+            .filterNot { it.body == null }
+            .forEach { response ->
+                when (response.endpoint) {
+                    is Endpoint.RoomPollInfo -> {
+                        handleRoomPollInfo(  response.endpoint.roomToken, response.body as OpenGroupApi.RoomPollInfo, publicKey)
                     }
+                    is Endpoint.RoomMessagesRecent -> {
+                        handleMessages(server, response.endpoint.roomToken, response.body as List<OpenGroupApi.Message>)
+                    }
+                    is Endpoint.RoomMessagesSince  -> {
+                        handleMessages(server, response.endpoint.roomToken, response.body as List<OpenGroupApi.Message>)
+                    }
+                    is Endpoint.Inbox, is Endpoint.InboxSince -> {
+                        handleDirectMessages(server, false, response.body as List<OpenGroupApi.DirectMessage>)
+                    }
+                    is Endpoint.Outbox, is Endpoint.OutboxSince -> {
+                        handleDirectMessages(server, true, response.body as List<OpenGroupApi.DirectMessage>)
+                    }
+                    else -> { /* We don't care about the result of any other calls (won't be polled for) */}
                 }
-
-            return rooms
-        } catch (e: Exception) {
-            if (e !is CancellationException) {
-                Log.e(TAG, "Error while polling open group messages", e)
             }
 
-            throw e
-        }
-    }
-
-    suspend fun requestPollOnceAndWait() {
-        val token = Channel<Result<Unit>>()
-        manualPollRequest.send(token)
-        token.receive().getOrThrow()
-    }
-
-    fun requestPollOnce() {
-        scope.launch {
-            manualPollRequest.send(Channel())
-        }
+        return rooms
     }
 
     private fun handleMessages(
@@ -369,6 +358,11 @@ class OpenGroupPoller @AssistedInject constructor(
             val deleteJob = OpenGroupDeleteJob(serverIds.toLongArray(), threadID, openGroupId)
             JobQueue.shared.add(deleteJob)
         }
+    }
+
+    sealed interface PollState {
+        data class Idle(val lastPolled: Result<List<String>>?) : PollState
+        data object Polling : PollState
     }
 
     @AssistedFactory
