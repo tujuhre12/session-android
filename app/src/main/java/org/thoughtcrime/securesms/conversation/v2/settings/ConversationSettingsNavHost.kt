@@ -44,20 +44,33 @@ sealed interface ConversationSettingsDestination {
     data object RouteConversationSettings: ConversationSettingsDestination
 
     @Serializable
-    data class RouteGroupMembers(
-        val groupAddress: Address.Group
-    ): ConversationSettingsDestination
+    data class RouteGroupMembers private constructor(
+        private val address: String
+    ): ConversationSettingsDestination {
+        constructor(groupAddress: Address.Group): this(groupAddress.address)
+
+        val groupAddress: Address.Group get() = Address.Group(AccountId(address))
+    }
 
     @Serializable
-    data class RouteManageMembers(
-        val groupAddress: Address.Group
-    ): ConversationSettingsDestination
+    data class RouteManageMembers private constructor(
+        private val address: String
+    ): ConversationSettingsDestination {
+        constructor(groupAddress: Address.Group): this(groupAddress.address)
+
+        val groupAddress: Address.Group get() = Address.Group(AccountId(address))
+    }
 
     @Serializable
-    data class RouteInviteToGroup(
-        val groupAddress: Address.Group,
+    data class RouteInviteToGroup private constructor(
+        private val address: String,
         val excludingAccountIDs: List<String>
-    ): ConversationSettingsDestination
+    ): ConversationSettingsDestination {
+        constructor(groupAddress: Address.Group, excludingAccountIDs: List<String>)
+            : this(groupAddress.address, excludingAccountIDs)
+
+        val groupAddress: Address.Group get() = Address.Group(AccountId(address))
+    }
 
     @Serializable
     data object RouteDisappearingMessages: ConversationSettingsDestination
