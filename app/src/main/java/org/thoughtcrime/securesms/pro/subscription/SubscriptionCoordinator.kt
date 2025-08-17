@@ -2,6 +2,8 @@ package org.thoughtcrime.securesms.pro.subscription
 
 import jakarta.inject.Inject
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 
 /**
  * Helper class to handle the selection and management of our available subscription providers
@@ -9,11 +11,11 @@ import org.session.libsession.utilities.TextSecurePreferences
 class SubscriptionCoordinator @Inject constructor(
     private val availableManagers: Set<@JvmSuppressWildcards SubscriptionManager>,
     private val prefs: TextSecurePreferences
-) {
+): OnAppStartupComponent {
 
     private var currentManager: SubscriptionManager? = null
 
-    suspend fun initializeSubscriptions() {
+    fun initializeSubscriptions() {
         val managers = availableManagers.toList()
 
         when {
@@ -29,6 +31,8 @@ class SubscriptionCoordinator @Inject constructor(
                 // If null, user needs to choose
             }
         }
+
+        Log.w("SubscriptionCoordinator", "Initialised subscription manager: $currentManager")
     }
 
     fun getAvailableProviders(): List<SubscriptionManager> = availableManagers.toList()
@@ -48,5 +52,9 @@ class SubscriptionCoordinator @Inject constructor(
 
     fun needsProviderSelection(): Boolean {
         return availableManagers.size > 1 && currentManager == null
+    }
+
+    override fun onPostAppStarted() {
+        initializeSubscriptions()
     }
 }
