@@ -1,7 +1,8 @@
 package org.thoughtcrime.securesms.glide
 
 import kotlinx.serialization.json.Json
-import org.junit.Assert.*
+import org.junit.Assert.assertArrayEquals
+import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.thoughtcrime.securesms.attachments.EmbeddedMetadataCodec
 import org.thoughtcrime.securesms.attachments.FileMetadata
@@ -22,17 +23,19 @@ class EncryptedFileCodecTest {
 
         // Encode the metadata to a temporary file
         val tempFile = File.createTempFile("encrypted-file", ".tmp")
-        codec.encodeToStream(expectMeta, tempFile).use {
-            it.write(expectContent)
+        tempFile.outputStream().use { outputStream ->
+            codec.encodeToStream(expectMeta, outputStream)
+            outputStream.write(expectContent)
         }
 
         // Decode the metadata from the temporary file
-        val (actualMeta, fis) = codec.decodeFromStream(tempFile)
-        val actualByte = fis.use { it.readAllBytes() }
+        val (actualMeta, actualBytes) = tempFile.inputStream().use {
+            codec.decodeFromStream(it) to it.readAllBytes()
+        }
 
         // Verify the metadata and content
         assertEquals(expectMeta, actualMeta)
-        assertArrayEquals(expectContent, actualByte)
+        assertArrayEquals(expectContent, actualBytes)
 
         tempFile.delete()
     }

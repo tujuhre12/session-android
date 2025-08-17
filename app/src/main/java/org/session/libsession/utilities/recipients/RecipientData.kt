@@ -85,10 +85,7 @@ sealed interface RecipientData {
         }
 
         override fun shouldShowAdminCrown(user: AccountId): Boolean {
-            return roles[user] in EnumSet.of(
-                GroupMemberRole.ADMIN,
-                GroupMemberRole.MODERATOR,
-            )
+            return roles[user]?.shouldShowAdminCrown == true
         }
 
         override val proStatus: ProStatus
@@ -206,10 +203,7 @@ sealed interface RecipientData {
         }
 
         override fun shouldShowAdminCrown(user: AccountId): Boolean {
-            return members[user] in EnumSet.of(
-                GroupMemberRole.ADMIN,
-                GroupMemberRole.MODERATOR,
-            )
+            return members[user]?.shouldShowAdminCrown == true
         }
 
         override val profileUpdatedAt: ZonedDateTime?

@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.conversation.v2
 import android.app.Application
 import android.content.ContentResolver
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.hamcrest.CoreMatchers.equalTo
@@ -20,6 +21,7 @@ import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.recipients.ProStatus
 import org.session.libsession.utilities.recipients.RecipientData
@@ -86,6 +88,9 @@ class ConversationViewModelTest: BaseViewModelTest() {
             threadDb = mock {
                 on { getOrCreateThreadIdFor(recipient.address) } doReturn threadId
                 on { getThreadIdIfExistsFor(recipient.address) } doReturn threadId
+                on { updateNotifications } doAnswer {
+                    emptyFlow()
+                }
             },
             textSecurePreferences = mock(),
             lokiMessageDb = mock(),
@@ -106,7 +111,7 @@ class ConversationViewModelTest: BaseViewModelTest() {
             upmFactory = mock(),
             lokiThreadDatabase = mock(),
             blindMappingRepository = mock(),
-            address = recipient.address,
+            address = recipient.address as Address.Conversable,
             recipientRepository = mock {
                 on { getRecipientSync(recipient.address) } doReturn recipient
                 on { observeRecipient(recipient.address) } doAnswer {

@@ -7,11 +7,11 @@ data class GroupMemberAndRole(
     val role: GroupMemberRole
 )
 
-enum class GroupMemberRole(val canModerate: Boolean = false) {
+enum class GroupMemberRole(val canModerate: Boolean = false, val shouldShowAdminCrown: Boolean = false) {
     STANDARD,
     ZOOMBIE,
-    MODERATOR(true),
-    ADMIN(true),
-    HIDDEN_MODERATOR(true),
-    HIDDEN_ADMIN(true),
+    MODERATOR(canModerate = true, shouldShowAdminCrown = true),
+    ADMIN(canModerate = true, shouldShowAdminCrown = true),
+    HIDDEN_MODERATOR(canModerate = true, shouldShowAdminCrown = false),
+    HIDDEN_ADMIN(canModerate = true, shouldShowAdminCrown = false),
 }

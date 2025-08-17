@@ -7,6 +7,7 @@ import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -73,7 +74,7 @@ class MentionViewModelTest : BaseViewModelTest() {
 
     private val communityRecipient = Recipient(
         address = Address.Community(openGroup),
-        data = RecipientData.Generic()
+        data = RecipientData.Community(openGroup = openGroup, priority = PRIORITY_VISIBLE, roles = threadMembers.associate { AccountId(it.pubKey) to it.role })
     )
 
     @Before
@@ -146,7 +147,7 @@ class MentionViewModelTest : BaseViewModelTest() {
                     val name = if (m.isMe) "You" else "${m.name} (${truncateIdForDisplay(m.pubKey)})"
 
                     MentionViewModel.Candidate(
-                        MentionViewModel.Member(m.pubKey, name, m.role.canModerate, isMe = m.isMe),
+                        MentionViewModel.Member(m.pubKey, name, m.role.shouldShowAdminCrown, isMe = m.isMe),
                         name,
                         0
                     )
