@@ -817,7 +817,6 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
       long               lastSeen             = cursor.getLong(cursor.getColumnIndexOrThrow(ThreadDatabase.LAST_SEEN));
       String             invitingAdmin       = cursor.getString(cursor.getColumnIndexOrThrow(LokiMessageDatabase.invitingSessionId));
       String messageContentJson = cursor.getString(cursor.getColumnIndexOrThrow(ThreadDatabase.SNIPPET_CONTENT));
-      boolean isReadFlag = cursor.getInt(cursor.getColumnIndexOrThrow(ThreadDatabase.READ)) != 0;
 
       if (!TextSecurePreferences.isReadReceiptsEnabled(context)) {
         readReceiptCount = 0;
@@ -859,7 +858,7 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
 
       return new ThreadRecord(body, lastMessage, recipient, date, count,
                               unreadCount, unreadMentionCount, threadId, deliveryReceiptCount, status, type,
-              lastSeen, readReceiptCount, invitingAdmin, groupThreadStatus, messageContent, isReadFlag);
+              lastSeen, readReceiptCount, invitingAdmin, groupThreadStatus, messageContent);
     }
 
     @Override
