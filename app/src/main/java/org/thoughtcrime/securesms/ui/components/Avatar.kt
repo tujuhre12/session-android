@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -27,8 +28,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
-import com.bumptech.glide.integration.compose.placeholder
+import com.bumptech.glide.integration.compose.GlideSubcomposition
+import com.bumptech.glide.integration.compose.RequestState
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -149,52 +150,81 @@ private fun AvatarElement(
             )
             .clip(clip),
     ) {
+
+
+
         // first attempt to display the custom image if there is one
         if(data.contactPhoto != null){
             val maxSizePx = with(LocalDensity.current) { maxSizeLoad.toPx().toInt() }
-            GlideImage(
+
+            GlideSubcomposition(
                 model = data.contactPhoto,
                 modifier = Modifier.fillMaxSize(),
-                contentDescription = null,
-                loading = placeholder(R.drawable.ic_user_filled_custom_padded),
                 requestBuilderTransform = {
                     it.avatarOptions(sizePx = maxSizePx, freezeFrame = data.freezeFrame)
                 }
-            )
-        } // second attempt to use the custom icon if there is one
-        else if(data.icon != null){
-            Image(
-                modifier = Modifier.fillMaxSize().padding(size * 0.2f),
-                painter = painterResource(id = data.icon),
-                colorFilter = ColorFilter.tint(Color.White),
-                contentDescription = null,
-            )
-        } // third, try to use the name if there is one
-        else if(!data.name.isNullOrEmpty()){
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                BasicText(
-                    modifier = Modifier.padding(size * 0.2f),
-                    autoSize = TextAutoSize.StepBased(
-                        minFontSize = 6.sp
-                    ),
-                    text = data.name,
-                    style = LocalType.current.base.copy(
-                        color = Color.White,
-                        textAlign = TextAlign.Center,
-                    ),
-                    maxLines = 1
-                )
+            ){
+                when (state) {
+                    is RequestState.Success -> {
+                        Image(
+                            modifier = Modifier.fillMaxWidth(),
+                            painter = painter,
+                            contentDescription = null,
+                        )
+                    }
+
+                    is RequestState.Failure,
+                         is RequestState.Loading -> {
+                        FallbackIcon(size = size, data = data)
+                    }
+                }
             }
-        } else { // no name nor image data > show the default unknown icon
-            Image(
-                modifier = Modifier.fillMaxSize().padding(size * 0.2f),
-                painter = painterResource(id = R.drawable.ic_user_filled_custom),
-                contentDescription = null,
+        } else { // second attempt to use the custom icon if there is one
+            FallbackIcon(size = size, data = data)
+        }
+    }
+}
+
+/**
+ * Fallback image for teh avatar in case there is no custom file for it
+ */
+@Composable
+private fun FallbackIcon(
+    size: Dp,
+    data: AvatarUIElement,
+) {
+    if(data.icon != null){
+        Image(
+            modifier = Modifier.fillMaxSize().padding(size * 0.2f),
+            painter = painterResource(id = data.icon),
+            colorFilter = ColorFilter.tint(Color.White),
+            contentDescription = null,
+        )
+    } // third, try to use the name if there is one
+    else if(!data.name.isNullOrEmpty()){
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            BasicText(
+                modifier = Modifier.padding(size * 0.2f),
+                autoSize = TextAutoSize.StepBased(
+                    minFontSize = 6.sp
+                ),
+                text = data.name,
+                style = LocalType.current.base.copy(
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                ),
+                maxLines = 1
             )
         }
+    } else { // no name nor image data > show the default unknown icon
+        Image(
+            modifier = Modifier.fillMaxSize().padding(size * 0.2f),
+            painter = painterResource(id = R.drawable.ic_user_filled_custom),
+            contentDescription = null,
+        )
     }
 }
 
