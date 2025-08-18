@@ -52,11 +52,8 @@ import org.thoughtcrime.securesms.groups.GroupMemberComparator
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.util.DateUtils.Companion.asEpochSeconds
 import java.lang.ref.WeakReference
-import java.util.concurrent.locks.ReentrantReadWriteLock
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.concurrent.read
-import kotlin.concurrent.write
 
 /**
  * This repository is responsible for observing and retrieving recipient data from different sources.
@@ -81,30 +78,18 @@ class RecipientRepository @Inject constructor(
     @param:ManagerScope private val managerScope: CoroutineScope,
 ) {
     private val recipientFlowCache = LruCache<Address, WeakReference<SharedFlow<Recipient>>>(512)
-    private val recipientFlowCacheLock = ReentrantReadWriteLock()
 
     fun observeRecipient(address: Address): Flow<Recipient> {
-        recipientFlowCacheLock.read {
-            val cache = recipientFlowCache[address]?.get()
-            if (cache != null) {
-                return cache
-            }
+        val cache = recipientFlowCache[address]?.get()
+        if (cache != null) {
+            return cache
         }
 
-        // If the cache is not found, we need to create a new flow for this address.
-        recipientFlowCacheLock.write {
-            // Double check the cache in case another thread has created it while we were waiting for the lock.
-            val cached = recipientFlowCache[address]?.get()
-            if (cached != null) {
-                return cached
-            }
-
-            // Create a new flow and put it in the cache.
-            Log.d(TAG, "Creating new recipient flow for ${address.debugString}")
-            val newFlow = createRecipientFlow(address)
-            recipientFlowCache.put(address, WeakReference(newFlow))
-            return newFlow
-        }
+        // Create a new flow and put it in the cache.
+        Log.d(TAG, "Creating new recipient flow for ${address.debugString}")
+        val newFlow = createRecipientFlow(address)
+        recipientFlowCache.put(address, WeakReference(newFlow))
+        return newFlow
     }
 
     fun observeSelf(): Flow<Recipient> {
@@ -149,7 +134,7 @@ class RecipientRepository @Inject constructor(
 
         }.shareIn(
             managerScope,
-            // replay must be cleared one when no one is subscribed, so that if no one is subscribed,
+            // replay must be cleared at once when no one is subscribed, so that if no one is subscribed,
             // we will always fetch the latest data. The cache is only valid while there is at least one subscriber.
             SharingStarted.WhileSubscribed(replayExpirationMillis = 0L), replay = 1
         )
@@ -384,11 +369,9 @@ class RecipientRepository @Inject constructor(
     @DelicateCoroutinesApi
     fun getRecipientSync(address: Address): Recipient {
         // If we have a cached flow, we can try to grab its current value.
-        recipientFlowCacheLock.read {
-            val cached = recipientFlowCache[address]?.get()?.replayCache?.firstOrNull()
-            if (cached != null) {
-                return cached
-            }
+        val cached = recipientFlowCache[address]?.get()?.replayCache?.firstOrNull()
+        if (cached != null) {
+            return cached
         }
 
         // Otherwise, we might have to go to the database to get the recipient..
