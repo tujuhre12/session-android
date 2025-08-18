@@ -3,7 +3,6 @@ package org.thoughtcrime.securesms.preferences.prosettings
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dagger.assisted.AssistedFactory
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -63,8 +62,15 @@ class ProSettingsViewModel @Inject constructor(
     data class UIState(
         val isPro: Boolean,
         val disabledHeader: Boolean = false,
+        val proStats: ProStats = ProStats()
     )
 
+    data class ProStats(
+        val groupsUpdated: Int = 0,
+        val pinnedConversations: Int = 0,
+        val proBadges: Int = 0,
+        val longMessages: Int = 0
+    )
 
     data class DialogsState(
         val openLinkDialogUrl: String? = null,

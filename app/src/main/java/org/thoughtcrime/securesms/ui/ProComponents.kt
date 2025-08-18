@@ -989,6 +989,7 @@ fun SessionProSettingsHeader(
                     Image(
                         painter = painterResource(R.drawable.ic_session),
                         contentDescription = null,
+                        colorFilter = ColorFilter.tint(LocalColors.current.text)
                     )
 
                     Spacer(Modifier.width(LocalDimensions.current.xxxsSpacing))

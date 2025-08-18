@@ -14,6 +14,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -90,6 +91,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsSubCategory
 import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.TitledRadioButton
@@ -612,6 +614,46 @@ fun getCellBottomShape() = RoundedCornerShape(
     bottomEnd = LocalDimensions.current.shapeSmall,
     bottomStart = LocalDimensions.current.shapeSmall
 )
+
+@Composable
+fun CategoryCell(
+    modifier: Modifier = Modifier,
+    title: String? = null,
+    titleIcon: @Composable (() -> Unit)? = null,
+    content: @Composable () -> Unit,
+
+){
+    Column(
+        modifier = modifier.fillMaxWidth()
+    ) {
+        if(!title.isNullOrEmpty() || titleIcon != null) {
+            Row(
+                modifier = Modifier.padding(
+                    start = LocalDimensions.current.smallSpacing,
+                    bottom = LocalDimensions.current.smallSpacing
+                ),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
+            ) {
+                if (!title.isNullOrEmpty()) {
+                    Text(
+                        text = title,
+                        style = LocalType.current.base,
+                        color = LocalColors.current.textSecondary
+                    )
+                }
+
+                titleIcon?.invoke()
+            }
+        }
+
+       Cell(
+           modifier = Modifier.fillMaxWidth()
+       ){
+            content()
+       }
+    }
+}
 
 @Composable
 fun BottomFadingEdgeBox(
