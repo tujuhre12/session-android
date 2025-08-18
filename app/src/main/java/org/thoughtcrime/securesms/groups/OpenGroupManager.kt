@@ -25,6 +25,11 @@ class OpenGroupManager @Inject constructor(
     private val lokiAPIDatabase: LokiAPIDatabase,
 ) {
     suspend fun add(server: String, room: String, publicKey: String) {
+        // Need to ensure the public key is stored in the db:
+        // Note that in the future, we shouldn't have such implicit requirement on the OpenGroupApi.
+        // TODO: Once the OpenGroupApi is refactored to be explicit, this should be removed.
+        lokiAPIDatabase.setOpenGroupPublicKey(server, publicKey)
+
         // Fetch the server's capabilities upfront to see if this server is actually running
         // Note: this process is not essential to adding a community, just a nice to have test
         // for the user to see if the server they are adding is reachable.

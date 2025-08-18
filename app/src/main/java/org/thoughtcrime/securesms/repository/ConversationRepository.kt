@@ -184,13 +184,6 @@ class DefaultConversationRepository @Inject constructor(
         }
     }
 
-    private fun List<ThreadRecord>.filterThreadsForApprovalStatus(): List<ThreadRecord> {
-        return this.filter { record ->
-            // We don't actually want to show unapproved threads without any messages.
-            record.recipient.approved || record.lastMessage != null
-        }
-    }
-
 
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     override fun observeConversationList(): Flow<List<ThreadRecord>> {
@@ -207,7 +200,7 @@ class DefaultConversationRepository @Inject constructor(
                     .onStart { emit(Unit) }
                     .mapLatest {
                         withContext(Dispatchers.Default) {
-                            threadDb.getThreads(allAddresses).filterThreadsForApprovalStatus()
+                            threadDb.getThreads(allAddresses)
                         }
                     }
             }
@@ -215,7 +208,6 @@ class DefaultConversationRepository @Inject constructor(
 
     override fun getConversationList(): List<ThreadRecord> {
         return threadDb.getThreads(getConversationListAddresses())
-            .filterThreadsForApprovalStatus()
     }
 
     override fun saveDraft(threadId: Long, text: String) {
