@@ -19,7 +19,6 @@ package org.thoughtcrime.securesms.database;
 
 import static org.thoughtcrime.securesms.database.GroupDatabase.GROUP_ID;
 import static org.thoughtcrime.securesms.database.GroupDatabase.TYPED_GROUP_PROJECTION;
-import static org.thoughtcrime.securesms.database.UtilKt.generatePlaceholders;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -67,7 +66,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -446,33 +444,6 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
       if (cursor != null) cursor.close();
     }
 
-  }
-
-  public Cursor searchConversationAddresses(String addressQuery, Set<String> excludeAddresses) {
-    if (addressQuery == null || addressQuery.isEmpty()) {
-      return null;
-    }
-
-    SQLiteDatabase db = getReadableDatabase();
-    StringBuilder selection = new StringBuilder(TABLE_NAME + "." + ADDRESS + " LIKE ?");
-
-    List<String> selectionArgs = new ArrayList<>();
-    selectionArgs.add(addressQuery + "%");
-
-    // Add exclusion for blocked contacts
-    if (excludeAddresses != null && !excludeAddresses.isEmpty()) {
-      selection.append(" AND ").append(TABLE_NAME).append(".").append(ADDRESS).append(" NOT IN (");
-
-      // Use the helper method to generate placeholders
-      selection.append(generatePlaceholders(excludeAddresses.size()));
-      selection.append(")");
-
-      // Add all exclusion addresses to selection args
-      selectionArgs.addAll(excludeAddresses);
-    }
-
-    String query = createQuery(selection.toString());
-    return db.rawQuery(query, selectionArgs.toArray(new String[0]));
   }
 
   @NonNull
