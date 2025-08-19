@@ -44,6 +44,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
+import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.updateContact
@@ -449,7 +450,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         // account ID
         val (accountId, accountIdHeader) = when {
             conversation.isLocalNumber -> conversation.address.toString() to context.getString(R.string.accountIdYours)
-            conversation.address is Address.WithAccountId -> conversation.address.accountId.hexString to context.getString(R.string.accountId)
+            conversation.address is Address.WithAccountId &&
+                    !conversation.address.isGroupOrCommunity -> conversation.address.accountId.hexString to context.getString(R.string.accountId)
             else -> null to null
         }
 
