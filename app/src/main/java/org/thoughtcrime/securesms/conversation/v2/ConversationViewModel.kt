@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
@@ -75,6 +76,7 @@ import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.ReactionDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.GroupThreadStatus
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -118,7 +120,6 @@ class ConversationViewModel @AssistedInject constructor(
     private val reactionDb: ReactionDatabase,
     private val lokiMessageDb: LokiMessageDatabase,
     private val lokiAPIDb: LokiAPIDatabase,
-    private val textSecurePreferences: TextSecurePreferences,
     private val configFactory: ConfigFactory,
     private val groupManagerV2: GroupManagerV2,
     private val callManager: CallManager,
@@ -126,9 +127,9 @@ class ConversationViewModel @AssistedInject constructor(
     val dateUtils: DateUtils,
     private val expiredGroupManager: ExpiredGroupManager,
     private val avatarUtils: AvatarUtils,
-    private val openGroupManager: OpenGroupManager,
     private val proStatusManager: ProStatusManager,
     private val recipientRepository: RecipientRepository,
+    private val recipientSettingsDatabase: RecipientSettingsDatabase,
     private val lokiThreadDatabase: LokiThreadDatabase,
     private val blindMappingRepository: BlindMappingRepository,
     private val upmFactory: UserProfileUtils.UserProfileUtilsFactory,
@@ -159,9 +160,10 @@ class ConversationViewModel @AssistedInject constructor(
     // We normally don't need to do this but as we are transitioning to using more flow based approach,
     // the conversation is still using a cursor loader, so we need an alternative way to trigger a reload
     // than the traditional Uri change.
-    val conversationReloadNotification: SharedFlow<*> = threadDb.updateNotifications
-        .filter { it == threadId }
-        .shareIn(viewModelScope, SharingStarted.Eagerly)
+    val conversationReloadNotification: SharedFlow<*> = merge(
+        threadDb.updateNotifications.filter { it == threadId },
+        recipientSettingsDatabase.changeNotification.filter { it == address }
+    ).shareIn(viewModelScope, SharingStarted.Eagerly)
 
 
     val showSendAfterApprovalText: Flow<Boolean> get() = recipientFlow.map { r ->
