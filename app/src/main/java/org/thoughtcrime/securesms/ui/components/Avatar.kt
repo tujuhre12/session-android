@@ -12,6 +12,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,6 +34,9 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideSubcomposition
 import com.bumptech.glide.integration.compose.RequestState
@@ -143,8 +152,21 @@ private fun AvatarElement(
     clip: Shape = CircleShape,
     maxSizeLoad: Dp = LocalDimensions.current.iconLarge,
 ){
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var resumeTick by remember { mutableIntStateOf(0) }
+
+    // Bump a key when the app returns to foreground so Glide restarts the request.
+    DisposableEffect(lifecycleOwner) {
+        val obs = LifecycleEventObserver { _, e ->
+            if (e == Lifecycle.Event.ON_START) resumeTick++
+        }
+        lifecycleOwner.lifecycle.addObserver(obs)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(obs) }
+    }
+
     Box(
-        modifier = modifier.size(size)
+        modifier = modifier
+            .size(size)
             .background(
                 color = data.color ?: classicDark3,
                 shape = clip,
@@ -152,32 +174,32 @@ private fun AvatarElement(
             .clip(clip),
     ) {
 
-
-
         // first attempt to display the custom image if there is one
         if(data.contactPhoto != null){
             val maxSizePx = with(LocalDensity.current) { maxSizeLoad.toPx().toInt() }
 
-            GlideSubcomposition(
-                model = data.contactPhoto,
-                modifier = Modifier.fillMaxSize(),
-                requestBuilderTransform = {
-                    it.avatarOptions(sizePx = maxSizePx, freezeFrame = data.freezeFrame)
-                }
-            ){
-                when (state) {
-                    is RequestState.Success -> {
-                        Image(
-                            modifier = Modifier.fillMaxWidth(),
-                            painter = painter,
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop
-                        )
+            key(resumeTick, data) {
+                GlideSubcomposition(
+                    model = data.contactPhoto,
+                    modifier = Modifier.fillMaxSize(),
+                    requestBuilderTransform = {
+                        it.avatarOptions(sizePx = maxSizePx, freezeFrame = data.freezeFrame)
                     }
+                ) {
+                    when (state) {
+                        is RequestState.Success -> {
+                            Image(
+                                modifier = Modifier.fillMaxWidth(),
+                                painter = painter,
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop
+                            )
+                        }
 
-                    is RequestState.Failure,
-                         is RequestState.Loading -> {
-                        FallbackIcon(size = size, data = data)
+                        is RequestState.Failure,
+                        is RequestState.Loading -> {
+                            FallbackIcon(size = size, data = data)
+                        }
                     }
                 }
             }
@@ -197,7 +219,9 @@ private fun FallbackIcon(
 ) {
     if(data.icon != null){
         Image(
-            modifier = Modifier.fillMaxSize().padding(size * 0.2f),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(size * 0.2f),
             painter = painterResource(id = data.icon),
             colorFilter = ColorFilter.tint(Color.White),
             contentDescription = null,
@@ -223,7 +247,9 @@ private fun FallbackIcon(
         }
     } else { // no name nor image data > show the default unknown icon
         Image(
-            modifier = Modifier.fillMaxSize().padding(size * 0.2f),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(size * 0.2f),
             painter = painterResource(id = R.drawable.ic_user_filled_custom),
             contentDescription = null,
         )

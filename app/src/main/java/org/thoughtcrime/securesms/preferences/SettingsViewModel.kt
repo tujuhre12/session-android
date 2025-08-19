@@ -16,6 +16,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -130,8 +132,10 @@ class SettingsViewModel @Inject constructor(
 
         viewModelScope.launch {
             selfRecipient
-                .collectLatest { r ->
-                    _uiState.update { it.copy(avatarData = avatarUtils.getUIDataFromRecipient(r)) }
+                .map(avatarUtils::getUIDataFromRecipient)
+                .distinctUntilChanged()
+                .collectLatest { data ->
+                    _uiState.update { it.copy(avatarData = data) }
                 }
         }
     }
@@ -143,7 +147,7 @@ class SettingsViewModel @Inject constructor(
         return Phrase.from(context, R.string.updateVersion).put(VERSION_KEY, versionDetails).format()
     }
 
-    fun hasAvatar() = configFactory.withUserConfigs { it.userProfile.getPic().url.isNotBlank() }
+    fun hasAvatar() = selfRecipient.value.avatar != null
 
     fun createTempFile(): File? {
         try {
@@ -232,7 +236,7 @@ class SettingsViewModel @Inject constructor(
             ) } }
     }
 
-    private suspend fun getDefaultAvatarDialogState() = if (hasAvatar()) AvatarDialogState.UserAvatar(
+    private fun getDefaultAvatarDialogState() = if (hasAvatar()) AvatarDialogState.UserAvatar(
         avatarUtils.getUIDataFromRecipient(selfRecipient.value)
     )
     else AvatarDialogState.NoAvatar
@@ -297,7 +301,7 @@ class SettingsViewModel @Inject constructor(
 
     // Helper method used by updateProfilePicture and removeProfilePicture to sync it online
     private fun syncProfilePicture(profilePicture: ByteArray, onFail: () -> Unit) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             _uiState.update { it.copy(showLoader = true) }
 
             try {
@@ -321,10 +325,8 @@ class SettingsViewModel @Inject constructor(
                 }
 
             } catch (e: Exception){ // If the sync failed then inform the user
-                Log.d(TAG, "Error syncing avatar: $e")
-                withContext(Dispatchers.Main) {
-                    onFail()
-                }
+                Log.d(TAG, "Error syncing avatar", e)
+                onFail()
             }
 
             // And remove the loader animation after we've waited for the attempt to succeed or fail

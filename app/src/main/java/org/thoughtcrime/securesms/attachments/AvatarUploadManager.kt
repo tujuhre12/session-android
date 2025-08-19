@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.attachments
 import android.app.Application
 import android.os.FileObserver
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.util.Bytes
 import okio.Buffer
 import org.session.libsession.messaging.file_server.FileServerApi
@@ -134,7 +136,7 @@ class AvatarUploadManager @Inject constructor(
 
     suspend fun uploadAvatar(
         pictureData: ByteArray
-    ) {
+    ) = withContext(Dispatchers.IO) {
         check(pictureData.isNotEmpty()) {
             "Should not upload an empty avatar"
         }

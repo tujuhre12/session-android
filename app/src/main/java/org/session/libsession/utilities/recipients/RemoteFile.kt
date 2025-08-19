@@ -9,9 +9,14 @@ import network.loki.messenger.libsession_util.util.UserPic
 sealed interface RemoteFile {
 
     fun toUserPic(): UserPic?
+
     data class Encrypted(val url: String, val key: Bytes) : RemoteFile {
         override fun toUserPic(): UserPic {
             return UserPic(url, key)
+        }
+
+        override fun toString(): String {
+            return "Encrypted($url)"
         }
     }
 

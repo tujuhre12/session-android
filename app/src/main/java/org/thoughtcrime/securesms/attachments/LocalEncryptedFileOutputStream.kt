@@ -7,6 +7,7 @@ import dagger.assisted.AssistedInject
 import network.loki.messenger.libsession_util.encrypt.EncryptionStream
 import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider
 import java.io.File
+import java.io.FileOutputStream
 import java.io.OutputStream
 
 /**
@@ -24,7 +25,9 @@ class LocalEncryptedFileOutputStream @AssistedInject constructor(
     application: Application
 ): OutputStream() {
     private val outputStream = EncryptionStream(
-        out = file.outputStream(),
+        out = FileOutputStream(file.also {
+            it.parentFile!!.mkdirs() // Make sure the parent directory exists
+        }),
         key = AttachmentSecretProvider.getInstance(application).orCreateAttachmentSecret.modernKey,
     ).also {
         codec.encodeToStream(meta, it)
