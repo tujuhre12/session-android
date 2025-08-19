@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.onboarding.manager
 
 import android.app.Application
+import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import org.session.libsession.snode.SnodeModule
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
@@ -40,7 +41,10 @@ class CreateAccountManager @Inject constructor(
         prefs.setLocalNumber(userHexEncodedPublicKey)
         prefs.setRestorationTime(0)
 
-        configFactory.withMutableUserConfigs { it.userProfile.setName(displayName) }
+        configFactory.withMutableUserConfigs {
+            it.userProfile.setName(displayName)
+            it.userProfile.setNtsPriority(PRIORITY_HIDDEN)
+        }
 
         versionDataFetcher.startTimedVersionCheck()
     }
