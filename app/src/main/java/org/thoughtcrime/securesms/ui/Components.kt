@@ -112,6 +112,11 @@ import kotlin.math.roundToInt
 fun AccountIdHeader(
     modifier: Modifier = Modifier,
     text: String = stringResource(R.string.accountId),
+    textStyle: TextStyle = LocalType.current.base,
+    textPaddingValues: PaddingValues = PaddingValues(
+        horizontal = LocalDimensions.current.contentSpacing,
+        vertical = LocalDimensions.current.xxsSpacing
+    )
 ){
     Row(
         modifier = modifier,
@@ -126,14 +131,13 @@ fun AccountIdHeader(
 
         Text(
             modifier = Modifier
-                .border()
-                .padding(
-                    horizontal = LocalDimensions.current.smallSpacing,
-                    vertical = LocalDimensions.current.xxxsSpacing
+                .border(
+                    shape = MaterialTheme.shapes.large
                 )
+                .padding(textPaddingValues)
             ,
             text = text,
-            style = LocalType.current.small.copy(color = LocalColors.current.textSecondary)
+            style = textStyle.copy(color = LocalColors.current.textSecondary)
         )
 
         Box(
