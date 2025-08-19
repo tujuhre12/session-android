@@ -5,6 +5,7 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -104,7 +105,12 @@ fun UserProfileModal(
 
             // account ID
             AccountIdHeader(
-                text = if(data.isBlinded) stringResource(R.string.blindedId) else stringResource(R.string.accountId)
+                text = if(data.isBlinded) stringResource(R.string.blindedId) else stringResource(R.string.accountId),
+                textStyle = LocalType.current.small,
+                textPaddingValues = PaddingValues(
+                    horizontal = LocalDimensions.current.smallSpacing,
+                    vertical = LocalDimensions.current.xxxsSpacing
+                )
             )
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))

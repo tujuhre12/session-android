@@ -216,8 +216,8 @@ fun StartConversationNavHost(
                                 is JoinCommunityViewModel.UiEvent.NavigateToConversation -> {
                                     val intent = Intent(context, ConversationActivityV2::class.java)
                                     intent.putExtra(ConversationActivityV2.THREAD_ID, it.threadId)
-                                    onClose()
                                     activity?.startActivity(intent)
+                                    onClose()
                                 }
                             }
                         }

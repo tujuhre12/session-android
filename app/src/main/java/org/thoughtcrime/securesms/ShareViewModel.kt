@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -76,6 +77,11 @@ class ShareViewModel @Inject constructor(
          mutableSearchQuery.debounce(100L),
          ::filterContacts
     ).stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    val hasAnyConversations: StateFlow<Boolean> =
+        getConversations()
+            .map { it.isNotEmpty() }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     private val _uiEvents = MutableSharedFlow<ShareUIEvent>(extraBufferCapacity = 1)
     val uiEvents: SharedFlow<ShareUIEvent> get() = _uiEvents
