@@ -102,7 +102,7 @@ class SearchRepository @Inject constructor(
         return configFactory.withUserConfigs { configs ->
             configs.contacts.all()
         }.asSequence()
-            .filter { !it.blocked && it.id != self }
+            .filter { !it.blocked && it.id != self && it.approved }
             .map { it.id.toAddress() }
             .map(recipientRepository::getRecipientSync)
             .filter {
