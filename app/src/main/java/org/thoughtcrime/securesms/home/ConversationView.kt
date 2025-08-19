@@ -84,18 +84,10 @@ class ConversationView : LinearLayout {
 
         val senderDisplayName = getTitle(thread.recipient)
 
-        // set up thread name
-        binding.conversationViewDisplayName.apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-            setThemedContent {
-                ProBadgeText(
-                    text = senderDisplayName,
-                    textStyle = LocalType.current.h8.bold().copy(color = LocalColors.current.text),
-                    showBadge = proStatusManager.shouldShowProBadge(thread.recipient.address)
-                            && !thread.recipient.isLocalNumber,
-                )
-            }
-        }
+        // Thread name and pro badge
+        binding.conversationViewDisplayName.text = senderDisplayName
+        binding.iconPro.isVisible = proStatusManager.shouldShowProBadge(thread.recipient.address)
+                && !thread.recipient.isLocalNumber
 
         binding.timestampTextView.text = thread.date.takeIf { it != 0L }?.let { dateUtils.getDisplayFormattedTimeSpanString(
             it
