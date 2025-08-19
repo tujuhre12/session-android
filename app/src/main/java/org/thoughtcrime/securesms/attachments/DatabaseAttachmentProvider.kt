@@ -142,7 +142,10 @@ class DatabaseAttachmentProvider(context: Context, helper: Provider<SQLCipherOpe
     override fun handleSuccessfulAttachmentUpload(attachmentId: Long, attachmentStream: SignalServiceAttachmentStream, attachmentKey: ByteArray, uploadResult: UploadResult) {
         val database = DatabaseComponent.get(context).attachmentDatabase()
         val databaseAttachment = getDatabaseAttachment(attachmentId) ?: return
-        val attachmentPointer = SignalServiceAttachmentPointer(uploadResult.id,
+        val attachmentPointer = SignalServiceAttachmentPointer(
+            // The ID will be non-numeric in the future so we will do our best to convert it to a long,
+            // as some old clients still use this value (we should use the url instead).
+            uploadResult.id.toLongOrNull() ?: 0L,
             attachmentStream.contentType,
             attachmentKey,
             Optional.of(Util.toIntExact(attachmentStream.length)),

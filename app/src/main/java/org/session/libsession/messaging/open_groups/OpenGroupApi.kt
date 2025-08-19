@@ -438,7 +438,7 @@ object OpenGroupApi {
     }
 
     // region Upload/Download
-    fun upload(file: ByteArray, room: String, server: String): Promise<Long, Exception> {
+    fun upload(file: ByteArray, room: String, server: String): Promise<String, Exception> {
         val request = Request(
             verb = POST,
             room = room,
@@ -451,7 +451,7 @@ object OpenGroupApi {
             )
         )
         return getResponseBodyJson(request, signRequest = true).map { json ->
-            (json["id"] as? Number)?.toLong() ?: throw Error.ParsingFailed
+            json["id"]?.toString() ?: throw Error.ParsingFailed
         }
     }
 

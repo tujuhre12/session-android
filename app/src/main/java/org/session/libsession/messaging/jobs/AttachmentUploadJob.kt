@@ -89,7 +89,7 @@ class AttachmentUploadJob @AssistedInject constructor(
         }
     }
 
-    private suspend fun upload(attachment: SignalServiceAttachmentStream, server: String, encrypt: Boolean, upload: (ByteArray) -> Promise<Long, Exception>): Pair<ByteArray, UploadResult> {
+    private suspend fun upload(attachment: SignalServiceAttachmentStream, server: String, encrypt: Boolean, upload: (ByteArray) -> Promise<String, Exception>): Pair<ByteArray, UploadResult> {
         // Key
         val key = if (encrypt) Util.getSecretBytes(64) else ByteArray(0)
         // Length
@@ -151,7 +151,7 @@ class AttachmentUploadJob @AssistedInject constructor(
                     destination.server,
                     destination.whisperTo,
                     destination.whisperMods,
-                    destination.fileIds + uploadResult.id.toString()
+                    destination.fileIds + uploadResult.id
                 ),
                 statusCallback = it.statusCallback
             )

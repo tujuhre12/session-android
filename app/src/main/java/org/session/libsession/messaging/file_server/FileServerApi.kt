@@ -33,7 +33,7 @@ object FileServerApi {
     val fileServerUrl: HttpUrl by lazy { FILE_SERVER_URL.toHttpUrl() }
 
     val FILE_SERVER_FILE_URL_PATTERN: Pattern by lazy {
-        Pattern.compile("^https?://filev2\\.getsession\\.org/files?/([a-zA-Z0-9]+)$", Pattern.CASE_INSENSITIVE)
+        Pattern.compile("^https?://filev2\\.getsession\\.org/files?/(.+)$", Pattern.CASE_INSENSITIVE)
     }
 
     sealed class Error(message: String) : Exception(message) {
@@ -133,7 +133,7 @@ object FileServerApi {
             val expiresEpochSeconds = (json.getOrDefault("expires", null) as? Number)?.toLong()
 
             UploadResult(
-                fileId = id.toLong(),
+                fileId = id,
                 fileUrl = fileServerUrl.newBuilder()
                     .addPathSegment("file")
                     .addPathSegments(id)
@@ -196,7 +196,7 @@ object FileServerApi {
     }
 
     data class UploadResult(
-        val fileId: Long,
+        val fileId: String,
         val fileUrl: String,
         val expires: ZonedDateTime?
     )
