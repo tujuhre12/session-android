@@ -11,7 +11,7 @@ biometricVersion = "1.1.0"
 cameraCamera2Version = "1.4.2"
 cardviewVersion = "1.0.0"
 composeBomVersion = "2025.08.00"
-composeVersion = "1.0.0-beta01"
+glideComposeVersion = "1.0.0-beta01"
 conscryptAndroidVersion = "2.5.3"
 conscryptJavaVersion = "2.5.2"
 constraintlayoutVersion = "2.2.1"
@@ -40,7 +40,7 @@ coreVersion = "1.16.0"
 coroutinesVersion = "1.10.2"
 daggerHiltVersion = "2.57"
 androidxHiltVersion  = "1.2.0"
-glideVersion = "4.16.0"
+glideVersion = "5.0.0-rc01"
 jacksonDatabindVersion = "2.9.8"
 junitVersion = "4.13.2"
 kotlinxJsonVersion = "1.9.0"
@@ -136,7 +136,7 @@ androidx-media3-ui = { module = "androidx.media3:media3-ui", version.ref = "medi
 androidx-preference-ktx = { module = "androidx.preference:preference-ktx", version.ref = "preferenceVersion" }
 androidx-recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "recyclerviewVersion" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtxVersion" }
-compose = { module = "com.github.bumptech.glide:compose", version.ref = "composeVersion" }
+compose = { module = "com.github.bumptech.glide:compose", version.ref = "glideComposeVersion" }
 conscrypt-android = { module = "org.conscrypt:conscrypt-android", version.ref = "conscryptAndroidVersion" }
 firebase-messaging = { module = "com.google.firebase:firebase-messaging", version.ref = "firebaseMessagingVersion" }
 flexbox = { module = "com.google.android.flexbox:flexbox", version.ref = "flexboxVersion" }

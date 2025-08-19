@@ -867,7 +867,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private fun setUpToolBar() {
         binding.conversationAppBar.setThemedContent {
            val data by viewModel.appBarData.collectAsState()
-            val query by searchViewModel.searchQuery.collectAsState()
+           val query by searchViewModel.searchQuery.collectAsState()
 
            ConversationAppBar(
                data = data,

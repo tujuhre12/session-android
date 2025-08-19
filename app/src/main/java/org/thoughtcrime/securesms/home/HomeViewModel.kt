@@ -94,7 +94,9 @@ class HomeViewModel @Inject constructor(
             }
             .map { convos ->
                 val (approved, unapproved) = convos.partition { it.recipient.approved }
-                unapproved.size to approved.sortedWith(CONVERSATION_COMPARATOR)
+                val unreadUnapproved = unapproved
+                    .count { it.unreadCount > 0 || it.unreadMentionCount > 0 }
+                unreadUnapproved to approved.sortedWith(CONVERSATION_COMPARATOR)
             },
 
         // Second flow: typing status of threads

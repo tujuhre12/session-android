@@ -61,9 +61,6 @@ public class ThreadRecord extends DisplayRecord {
   private           final long    lastSeen;
   private           final String invitingAdminId;
 
-    @NonNull
-  private           final boolean isRead;
-
   @NonNull
   private           final GroupThreadStatus groupThreadStatus;
 
@@ -73,8 +70,7 @@ public class ThreadRecord extends DisplayRecord {
                       long snippetType,
                       long lastSeen, int readReceiptCount, String invitingAdminId,
                       @NonNull GroupThreadStatus groupThreadStatus,
-                      @Nullable MessageContent messageContent,
-                      boolean isRead)
+                      @Nullable MessageContent messageContent)
   {
     super(body, recipient, date, date, threadId, status, deliveryReceiptCount, snippetType, readReceiptCount, messageContent);
     this.lastMessage        = lastMessage;
@@ -84,7 +80,6 @@ public class ThreadRecord extends DisplayRecord {
     this.lastSeen           = lastSeen;
     this.invitingAdminId    = invitingAdminId;
     this.groupThreadStatus  = groupThreadStatus;
-    this.isRead             = isRead;
   }
 
     private String getName() {
@@ -236,9 +231,5 @@ public class ThreadRecord extends DisplayRecord {
 
     public String getInvitingAdminId() {
         return invitingAdminId;
-    }
-
-    public boolean isRead() {
-        return isRead;
     }
 }
