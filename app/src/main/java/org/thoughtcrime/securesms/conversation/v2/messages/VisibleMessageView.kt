@@ -20,6 +20,10 @@ import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -39,6 +43,7 @@ import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ThemeUtil.getThemedColor
 import org.session.libsession.utilities.ViewUtil
 import org.session.libsession.utilities.getColorFromAttr
+import org.session.libsession.utilities.isBlinded
 import org.session.libsession.utilities.modifyLayoutParams
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
@@ -240,11 +245,23 @@ class VisibleMessageView : FrameLayout {
             binding.senderName.apply {
                 setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
                 setThemedContent {
-                    ProBadgeText(
-                        text = sender.displayName(attachesBlindedId = false),
-                        textStyle = LocalType.current.base.bold().copy(color = LocalColors.current.text),
-                        showBadge = proStatusManager.shouldShowProBadge(message.recipient.address),
-                    )
+                    Row {
+                        ProBadgeText(
+                            text = sender.displayName(),
+                            textStyle = LocalType.current.base.bold()
+                                .copy(color = LocalColors.current.text),
+                            showBadge = proStatusManager.shouldShowProBadge(message.recipient.address),
+                        )
+
+                        if(sender.address.isBlinded) {
+                            Spacer(Modifier.width(LocalDimensions.current.xxxsSpacing))
+
+                            Text(
+                                text = "(${(sender.address as Address.Blinded).blindedId})",
+                                style = LocalType.current.base
+                            )
+                        }
+                    }
                 }
             }
 
