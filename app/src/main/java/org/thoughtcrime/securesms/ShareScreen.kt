@@ -102,7 +102,7 @@ fun ShareList(
                         query = searchQuery,
                         onValueChanged = onSearchQueryChanged,
                         onClear = onSearchQueryClear,
-                        placeholder = stringResource(R.string.searchContacts),
+                        placeholder = stringResource(R.string.search),
                         modifier = Modifier
                             .padding(horizontal = LocalDimensions.current.smallSpacing)
                             .qaTag(R.string.AccessibilityId_groupNameSearch),
