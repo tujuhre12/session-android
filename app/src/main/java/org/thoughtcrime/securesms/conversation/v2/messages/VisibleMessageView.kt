@@ -47,6 +47,7 @@ import org.session.libsession.utilities.isBlinded
 import org.session.libsession.utilities.modifyLayoutParams
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
+import org.session.libsession.utilities.truncatedForDisplay
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
@@ -253,11 +254,11 @@ class VisibleMessageView : FrameLayout {
                             showBadge = proStatusManager.shouldShowProBadge(message.recipient.address),
                         )
 
-                        if(sender.address.isBlinded) {
+                        if (sender.address is Address.Blinded) {
                             Spacer(Modifier.width(LocalDimensions.current.xxxsSpacing))
 
                             Text(
-                                text = "(${(sender.address as Address.Blinded).blindedId})",
+                                text = "(${sender.address.blindedId.truncatedForDisplay()})",
                                 style = LocalType.current.base
                             )
                         }
