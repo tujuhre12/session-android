@@ -4,7 +4,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -12,12 +11,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,6 +23,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
@@ -34,12 +32,15 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideSubcomposition
-import com.bumptech.glide.integration.compose.RequestState
+import coil3.compose.AsyncImagePainter
+import coil3.compose.SubcomposeAsyncImage
+import coil3.compose.SubcomposeAsyncImageContent
+import coil3.request.ImageRequest
+import coil3.request.allowRgb565
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.transform
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -143,7 +144,6 @@ fun Avatar(
     )
 }
 
-@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 private fun AvatarElement(
     size: Dp,
@@ -152,18 +152,70 @@ private fun AvatarElement(
     clip: Shape = CircleShape,
     maxSizeLoad: Dp = LocalDimensions.current.iconLarge,
 ){
-    val lifecycleOwner = LocalLifecycleOwner.current
-    var resumeTick by remember { mutableIntStateOf(0) }
-
-    // Bump a key when the app returns to foreground so Glide restarts the request.
-    DisposableEffect(lifecycleOwner) {
-        val obs = LifecycleEventObserver { _, e ->
-            if (e == Lifecycle.Event.ON_START) resumeTick++
+    // first attempt to display the custom image if there is one
+    if (data.contactPhoto != null){
+        val maxSizePx = with(LocalDensity.current) {
+            maxSizeLoad.toPx().toInt().coerceAtLeast(size.toPx().toInt())
         }
-        lifecycleOwner.lifecycle.addObserver(obs)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(obs) }
-    }
 
+        SubcomposeAsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(data.contactPhoto)
+                .allowRgb565(true)
+                .avatarOptions(maxSizePx, freezeFrame = data.freezeFrame)
+                .build(),
+            modifier = modifier.size(size).clip(clip),
+            contentDescription = null,
+            contentScale = ContentScale.Crop
+        ) {
+            val scope = rememberCoroutineScope()
+
+            val painterState = remember(painter.state) {
+                painter.state
+                    .transform { value ->
+                        if (value is AsyncImagePainter.State.Loading) {
+                            delay(200L) // Delay to avoid flickering when loading
+                        }
+
+                        emit(value)
+                    }
+                    .stateIn(scope, SharingStarted.Eagerly, painter.state.value)
+            }
+
+            val state by painterState.collectAsState()
+
+            when (state) {
+                is AsyncImagePainter.State.Success -> {
+                    SubcomposeAsyncImageContent()
+                }
+
+                AsyncImagePainter.State.Empty -> {
+                    // We should not show the fallback just in case we can
+                    // load the image very soon so we don't need to see the fallback
+                }
+
+                is AsyncImagePainter.State.Error,
+                is AsyncImagePainter.State.Loading -> {
+                    FallbackIcon(modifier = Modifier.fillMaxSize(), clip = clip, size = size, data = data)
+                }
+            }
+        }
+    } else { // second attempt to use the custom icon if there is one
+        FallbackIcon(modifier = modifier, clip = clip, size = size, data = data)
+
+    }
+}
+
+/**
+ * Fallback image for teh avatar in case there is no custom file for it
+ */
+@Composable
+private fun FallbackIcon(
+    modifier: Modifier,
+    size: Dp,
+    clip: Shape,
+    data: AvatarUIElement,
+) {
     Box(
         modifier = modifier
             .size(size)
@@ -173,86 +225,43 @@ private fun AvatarElement(
             )
             .clip(clip),
     ) {
-
-        // first attempt to display the custom image if there is one
-        if(data.contactPhoto != null){
-            val maxSizePx = with(LocalDensity.current) { maxSizeLoad.toPx().toInt() }
-
-            key(resumeTick, data) {
-                GlideSubcomposition(
-                    model = data.contactPhoto,
-                    modifier = Modifier.fillMaxSize(),
-                    requestBuilderTransform = {
-                        it.avatarOptions(sizePx = maxSizePx, freezeFrame = data.freezeFrame)
-                    }
-                ) {
-                    when (state) {
-                        is RequestState.Success -> {
-                            Image(
-                                modifier = Modifier.fillMaxWidth(),
-                                painter = painter,
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop
-                            )
-                        }
-
-                        is RequestState.Failure,
-                        is RequestState.Loading -> {
-                            FallbackIcon(size = size, data = data)
-                        }
-                    }
-                }
+        if (data.icon != null) {
+            Image(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(size * 0.2f),
+                painter = painterResource(id = data.icon),
+                colorFilter = ColorFilter.tint(Color.White),
+                contentDescription = null,
+            )
+        } // third, try to use the name if there is one
+        else if (!data.name.isNullOrEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                BasicText(
+                    modifier = Modifier.padding(size * 0.2f),
+                    autoSize = TextAutoSize.StepBased(
+                        minFontSize = 6.sp
+                    ),
+                    text = data.name,
+                    style = LocalType.current.base.copy(
+                        color = Color.White,
+                        textAlign = TextAlign.Center,
+                    ),
+                    maxLines = 1
+                )
             }
-        } else { // second attempt to use the custom icon if there is one
-            FallbackIcon(size = size, data = data)
-        }
-    }
-}
-
-/**
- * Fallback image for teh avatar in case there is no custom file for it
- */
-@Composable
-private fun FallbackIcon(
-    size: Dp,
-    data: AvatarUIElement,
-) {
-    if(data.icon != null){
-        Image(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(size * 0.2f),
-            painter = painterResource(id = data.icon),
-            colorFilter = ColorFilter.tint(Color.White),
-            contentDescription = null,
-        )
-    } // third, try to use the name if there is one
-    else if(!data.name.isNullOrEmpty()){
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            BasicText(
-                modifier = Modifier.padding(size * 0.2f),
-                autoSize = TextAutoSize.StepBased(
-                    minFontSize = 6.sp
-                ),
-                text = data.name,
-                style = LocalType.current.base.copy(
-                    color = Color.White,
-                    textAlign = TextAlign.Center,
-                ),
-                maxLines = 1
+        } else { // no name nor image data > show the default unknown icon
+            Image(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(size * 0.2f),
+                painter = painterResource(id = R.drawable.ic_user_filled_custom),
+                contentDescription = null,
             )
         }
-    } else { // no name nor image data > show the default unknown icon
-        Image(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(size * 0.2f),
-            painter = painterResource(id = R.drawable.ic_user_filled_custom),
-            contentDescription = null,
-        )
     }
 }
 
