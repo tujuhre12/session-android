@@ -29,14 +29,14 @@ import javax.inject.Inject
 @HiltViewModel
 class NewMessageViewModel @Inject constructor(
     private val application: Application,
-    private val configFactory: ConfigFactoryProtocol
+    private val configFactory: ConfigFactoryProtocol,
 ): ViewModel(), Callbacks {
 
     private val _state = MutableStateFlow(State())
     val state = _state.asStateFlow()
 
     private val _success = MutableSharedFlow<Success>()
-    val success get() = _success.asSharedFlow()
+    val success get() = _success
 
     private val _qrErrors = MutableSharedFlow<String>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     val qrErrors = _qrErrors.asSharedFlow()
@@ -109,6 +109,13 @@ class NewMessageViewModel @Inject constructor(
 
         val address = publicKey.toAddress()
         if (address is Address.Standard) {
+            // Add this person to our contact and approve them immediately
+            configFactory.withMutableUserConfigs { configs ->
+                configs.contacts.upsertContact(address) {
+                    approved = true
+                }
+            }
+
             viewModelScope.launch { _success.emit(Success(address)) }
         }
 

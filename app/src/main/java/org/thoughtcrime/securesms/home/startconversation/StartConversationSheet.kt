@@ -155,10 +155,10 @@ fun StartConversationNavHost(
                 LaunchedEffect(Unit) {
                     scope.launch {
                         viewModel.success.collect {
-                            ConversationActivityV2.createIntent(
+                            context.startActivity(ConversationActivityV2.createIntent(
                                 context,
                                 address = it.address
-                            )
+                            ))
 
                             onClose()
                         }
