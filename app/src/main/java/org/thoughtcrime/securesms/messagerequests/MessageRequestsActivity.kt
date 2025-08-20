@@ -31,9 +31,7 @@ import javax.inject.Inject
 class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClickListener {
 
     private lateinit var binding: ActivityMessageRequestsBinding
-    private lateinit var glide: RequestManager
 
-    @Inject lateinit var threadDb: ThreadDatabase
     @Inject lateinit var dateUtils: DateUtils
 
     private val viewModel: MessageRequestsViewModel by viewModels()
@@ -49,8 +47,6 @@ class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClick
         super.onCreate(savedInstanceState, ready)
         binding = ActivityMessageRequestsBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        glide = Glide.with(this)
 
         adapter.setHasStableIds(true)
         binding.recyclerView.adapter = adapter

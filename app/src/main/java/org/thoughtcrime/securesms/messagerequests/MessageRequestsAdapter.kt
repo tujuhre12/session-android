@@ -57,6 +57,10 @@ class MessageRequestsAdapter(
         holder.view.recycle()
     }
 
+    override fun getItemId(position: Int): Long {
+        return conversations[position].threadId
+    }
+
     private fun showPopupMenu(view: MessageRequestView, legacyOrCommunityGroup: Boolean, invitingAdmin: String?) {
         val popupMenu = PopupMenu(ContextThemeWrapper(view.context, R.style.PopupMenu_MessageRequests), view)
         // still show the block option if we have an inviting admin for the group
