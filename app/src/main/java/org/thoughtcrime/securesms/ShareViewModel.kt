@@ -155,10 +155,12 @@ class ShareViewModel @Inject constructor(
     }
 
     private fun handleResolvedMedia(intent: Intent) {
-        val address = IntentCompat.getParcelableExtra<Address>(intent, ShareActivity.EXTRA_ADDRESS, Address::class.java)
+        val address = IntentCompat.getParcelableExtra(intent, ShareActivity.EXTRA_ADDRESS, Address::class.java)
 
-         if (address is Address.Conversable) {
+        if (address is Address.Conversable) {
             createConversation(address)
+        } else {
+            _uiState.update { it.copy(showLoader = false) }
         }
     }
 
