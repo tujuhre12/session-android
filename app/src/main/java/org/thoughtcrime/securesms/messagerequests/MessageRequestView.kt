@@ -67,8 +67,10 @@ class MessageRequestView : LinearLayout {
             visibility = if(isUnread) View.VISIBLE else View.INVISIBLE
         }
 
-        binding.unreadCountTextView.text = UnreadStylingHelper.formatUnreadCount(unreadCount)
-        binding.unreadCountIndicator.isVisible =  isUnread
+        binding.unreadCountTextView.apply{
+            text = UnreadStylingHelper.formatUnreadCount(unreadCount)
+            isVisible =  isUnread
+        }
 
         binding.displayName.apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)

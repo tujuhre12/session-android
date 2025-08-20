@@ -44,4 +44,5 @@ data class Dimensions(
     val shapeMedium: Dp = 16.dp,
 
     val maxContentWidth: Dp = 410.dp,
+    val maxTooltipWidth: Dp = 280.dp,
 )

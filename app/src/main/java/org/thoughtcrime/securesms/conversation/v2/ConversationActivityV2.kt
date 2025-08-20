@@ -230,6 +230,7 @@ import kotlin.math.sqrt
 import kotlin.time.Duration.Companion.minutes
 
 private const val TAG = "ConversationActivityV2"
+private const val TAG_REACTION_FRAGMENT = "ReactionsDialog"
 
 // Some things that seemingly belong to the input bar (e.g. the voice message recording UI) are actually
 // part of the conversation activity layout. This is just because it makes the layout a lot simpler. The
@@ -550,7 +551,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     dialogsState = dialogsState,
                     inputBarDialogsState = inputBarDialogState,
                     sendCommand = viewModel::onCommand,
-                    sendInputBarCommand = viewModel::onInputBarCommand
+                    sendInputBarCommand = viewModel::onInputBarCommand,
+                    onPostUserProfileModalAction = {
+                        // this function is to perform logic once an action
+                        // has been taken in the UPM, like messaging a user
+                        // in this case we want to make sure the reaction dialog is dismissed
+                        dismissReactionsDialog()
+                    }
                 )
             }
         }
@@ -1857,6 +1864,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         sendEmojiRemoval(emoji, message)
     }
 
+    override fun onEmojiReactionUserTapped(recipient: Recipient) {
+        showUserProfileModal(recipient)
+    }
+
     // Called when the user is attempting to clear all instance of a specific emoji
     override fun onClearAll(emoji: String, messageId: MessageId) = viewModel.onEmojiClear(emoji, messageId)
 
@@ -1988,8 +1999,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         if (viewModel.recipient.isGroupOrCommunityRecipient) {
             val isUserCommunityModerator = viewModel.recipient.takeIf { it.isCommunityRecipient }?.currentUserRole?.canModerate == true
             val fragment = ReactionsDialogFragment.create(messageId, isUserCommunityModerator, emoji, viewModel.canRemoveReaction)
-            fragment.show(supportFragmentManager, null)
+            fragment.show(supportFragmentManager, TAG_REACTION_FRAGMENT)
         }
+    }
+
+    private fun dismissReactionsDialog() {
+        val fragment = supportFragmentManager.findFragmentByTag(TAG_REACTION_FRAGMENT) as? ReactionsDialogFragment
+        fragment?.dismissAllowingStateLoss()
     }
 
     override fun playVoiceMessageAtIndexIfPossible(indexInAdapter: Int) {
