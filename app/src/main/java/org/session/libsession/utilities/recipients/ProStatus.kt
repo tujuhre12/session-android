@@ -3,9 +3,8 @@ package org.session.libsession.utilities.recipients
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonClassDiscriminator
-import org.jetbrains.annotations.Contract
-import org.session.libsession.utilities.serializable.ZonedDateTimeMillsSerializer
-import java.time.ZonedDateTime
+import org.session.libsession.utilities.serializable.InstantAsMillisSerializer
+import java.time.Instant
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
@@ -21,18 +20,18 @@ sealed interface ProStatus {
         /**
          * The validity of the Pro status, if null, it means the Pro status is permanent.
          */
-        @Serializable(with = ZonedDateTimeMillsSerializer::class)
-        val validUntil: ZonedDateTime? = null,
+        @Serializable(with = InstantAsMillisSerializer::class)
+        val validUntil: Instant? = null,
     ) : ProStatus
 
     @Serializable
     data object None : ProStatus
 }
 
-fun ProStatus.isPro(now: ZonedDateTime = ZonedDateTime.now()): Boolean {
+fun ProStatus.isPro(now: Instant = Instant.now()): Boolean {
     return this is ProStatus.Pro && (validUntil == null || validUntil.isAfter(now))
 }
 
-fun ProStatus.shouldShowProBadge(now: ZonedDateTime = ZonedDateTime.now()): Boolean {
+fun ProStatus.shouldShowProBadge(now: Instant = Instant.now()): Boolean {
     return isPro(now) && (this as ProStatus.Pro).visible
 }

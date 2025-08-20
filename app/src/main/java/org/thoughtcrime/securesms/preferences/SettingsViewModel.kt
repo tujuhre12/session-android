@@ -54,6 +54,7 @@ import org.thoughtcrime.securesms.util.NetworkConnectivity
 import org.thoughtcrime.securesms.util.mapToStateFlow
 import java.io.File
 import java.io.IOException
+import java.time.Instant
 import java.time.ZonedDateTime
 import javax.inject.Inject
 
@@ -310,7 +311,7 @@ class SettingsViewModel @Inject constructor(
                         it.userProfile.setPic(UserPic.DEFAULT)
                     }
 
-                    prefs.lastProfileUpdated = ZonedDateTime.now()
+                    prefs.lastProfileUpdated = Instant.now()
 
                     // update dialog state
                     _uiState.update { it.copy(avatarDialogState = AvatarDialogState.NoAvatar) }
@@ -435,7 +436,7 @@ class SettingsViewModel @Inject constructor(
             it.userProfile.setName(name)
         }
 
-        prefs.lastProfileUpdated = ZonedDateTime.now()
+        prefs.lastProfileUpdated = Instant.now()
     }
 
     fun onCommand(command: Commands) {

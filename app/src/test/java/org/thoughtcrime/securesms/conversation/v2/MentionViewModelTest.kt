@@ -8,6 +8,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
+import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -22,6 +23,7 @@ import org.session.libsession.messaging.open_groups.GroupMemberRole
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
+import org.session.libsession.utilities.recipients.ProStatus
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.truncateIdForDisplay
@@ -29,6 +31,7 @@ import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.BaseViewModelTest
 import org.thoughtcrime.securesms.MainCoroutineRule
 import org.thoughtcrime.securesms.conversation.v2.mention.MentionViewModel
+import org.thoughtcrime.securesms.util.AvatarUIData
 
 @RunWith(RobolectricTestRunner::class)
 class MentionViewModelTest : BaseViewModelTest() {
@@ -119,6 +122,21 @@ class MentionViewModelTest : BaseViewModelTest() {
                 on { observeRecipient(communityRecipient.address) } doAnswer {
                     flowOf(communityRecipient)
                 }
+                on { getSelf() } doReturn Recipient(
+                    address = myId.toAddress(),
+                    data = RecipientData.Self(
+                        name = "Myself",
+                        avatar = null,
+                        expiryMode = ExpiryMode.NONE,
+                        priority = 0,
+                        proStatus = ProStatus.None,
+                        profileUpdatedAt = null,
+                    )
+                )
+            },
+            avatarUtils = mock {
+                on { getUIDataFromRecipient(any<Recipient>()) } doReturn AvatarUIData(emptyList())
+                onBlocking { getUIDataFromAccountId(any()) } doReturn AvatarUIData(emptyList())
             }
         )
     }
@@ -147,7 +165,13 @@ class MentionViewModelTest : BaseViewModelTest() {
                     val name = if (m.isMe) "You" else "${m.name} (${truncateIdForDisplay(m.pubKey)})"
 
                     MentionViewModel.Candidate(
-                        MentionViewModel.Member(m.pubKey, name, m.role.shouldShowAdminCrown, isMe = m.isMe),
+                        MentionViewModel.Member(
+                            publicKey = m.pubKey,
+                            name = name,
+                            showAdminCrown = m.role.shouldShowAdminCrown,
+                            isMe = m.isMe,
+                            avatarData = AvatarUIData(emptyList())
+                        ),
                         name,
                         0
                     )

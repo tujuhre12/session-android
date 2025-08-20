@@ -6,14 +6,14 @@ import org.session.libsession.messaging.messages.visible.Profile
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
-import org.thoughtcrime.securesms.util.DateUtils.Companion.asEpochSeconds
-import java.time.ZonedDateTime
+import org.thoughtcrime.securesms.util.DateUtils.Companion.secondsToInstant
+import org.thoughtcrime.securesms.util.DateUtils.Companion.toEpochSeconds
+import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -57,14 +57,14 @@ class ProfileUpdateHandler @Inject constructor(
             configFactory.withMutableUserConfigs { configs ->
                 configs.contacts.get(standardSender.accountId.hexString)?.let { existingContact ->
                     if (shouldUpdateProfile(
-                        lastUpdated = existingContact.profileUpdatedEpochSeconds.asEpochSeconds(),
+                        lastUpdated = existingContact.profileUpdatedEpochSeconds.secondsToInstant(),
                         newUpdateTime = updates.profileUpdateTime
                     )) {
                         configs.contacts.set(
                             existingContact.copy(
                                 name = updates.name ?: existingContact.name,
                                 profilePicture = updates.pic ?: existingContact.profilePicture,
-                                profileUpdatedEpochSeconds = updates.profileUpdateTime?.toEpochSecond() ?: 0L,
+                                profileUpdatedEpochSeconds = updates.profileUpdateTime?.toEpochSeconds() ?: 0L,
                             )
                         )
                     } else {
@@ -79,7 +79,7 @@ class ProfileUpdateHandler @Inject constructor(
             configFactory.withMutableUserConfigs { configs ->
                 configs.contacts.getBlinded(senderAddress.blindedId.hexString)?.let { c ->
                     if (shouldUpdateProfile(
-                        lastUpdated = c.profileUpdatedEpochSeconds.asEpochSeconds(),
+                        lastUpdated = c.profileUpdatedEpochSeconds.secondsToInstant(),
                         newUpdateTime = updates.profileUpdateTime
                     )) {
                         if (updates.pic != null) {
@@ -127,8 +127,8 @@ class ProfileUpdateHandler @Inject constructor(
      * where the updated time is not set.
      */
     private fun shouldUpdateProfile(
-        lastUpdated: ZonedDateTime?,
-        newUpdateTime: ZonedDateTime?
+        lastUpdated: Instant?,
+        newUpdateTime: Instant?
     ): Boolean {
         return (lastUpdated == null && newUpdateTime == null) ||
                 (lastUpdated == null) ||
@@ -139,7 +139,7 @@ class ProfileUpdateHandler @Inject constructor(
         val name: String? = null,
         val pic: UserPic? = null,
         val blocksCommunityMessageRequests: Boolean? = null,
-        val profileUpdateTime: ZonedDateTime?,
+        val profileUpdateTime: Instant?,
     ) {
         companion object {
             fun create(
@@ -148,7 +148,7 @@ class ProfileUpdateHandler @Inject constructor(
                 picKey: ByteArray?,
                 blocksCommunityMessageRequests: Boolean? = null,
                 proStatus: Boolean? = null,
-                profileUpdateTime: ZonedDateTime?
+                profileUpdateTime: Instant?
             ): Updates? {
                 val hasNameUpdate = !name.isNullOrBlank()
                 val pic = when {

@@ -8,6 +8,7 @@ import org.session.libsession.messaging.open_groups.GroupMemberRole
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.AccountId
+import java.time.Instant
 import java.time.ZonedDateTime
 
 /**
@@ -16,7 +17,7 @@ import java.time.ZonedDateTime
 sealed interface RecipientData {
     val avatar: RemoteFile?
     val priority: Long
-    val profileUpdatedAt: ZonedDateTime?
+    val profileUpdatedAt: Instant?
 
     val proStatus: ProStatus
 
@@ -50,7 +51,7 @@ sealed interface RecipientData {
         override val priority: Long = PRIORITY_VISIBLE,
         override val proStatus: ProStatus = ProStatus.None,
         val acceptsCommunityMessageRequests: Boolean = false,
-        override val profileUpdatedAt: ZonedDateTime? = null,
+        override val profileUpdatedAt: Instant? = null,
     ) : RecipientData
 
     data class BlindedContact(
@@ -59,7 +60,7 @@ sealed interface RecipientData {
         override val priority: Long,
         override val proStatus: ProStatus,
         val acceptsCommunityMessageRequests: Boolean,
-        override val profileUpdatedAt: ZonedDateTime?
+        override val profileUpdatedAt: Instant?
     ) : ConfigBased, RecipientData
 
     data class Community(
@@ -76,7 +77,7 @@ sealed interface RecipientData {
         override val secondMember: Recipient?
             get() = null
 
-        override val profileUpdatedAt: ZonedDateTime?
+        override val profileUpdatedAt: Instant?
             get() = null
 
         override fun hasAdmin(user: AccountId): Boolean {
@@ -100,7 +101,7 @@ sealed interface RecipientData {
         val expiryMode: ExpiryMode,
         override val priority: Long,
         override val proStatus: ProStatus,
-        override val profileUpdatedAt: ZonedDateTime?
+        override val profileUpdatedAt: Instant?
     ) : ConfigBased, RecipientData
 
     /**
@@ -116,7 +117,7 @@ sealed interface RecipientData {
         val expiryMode: ExpiryMode,
         override val priority: Long,
         override val proStatus: ProStatus,
-        override val profileUpdatedAt: ZonedDateTime?,
+        override val profileUpdatedAt: Instant?,
     ) : ConfigBased, RecipientData {
         val displayName: String
             get() = nickname?.takeIf { it.isNotBlank() } ?: name
@@ -171,7 +172,7 @@ sealed interface RecipientData {
         override val proStatus: ProStatus
             get() = partial.proStatus
 
-        override val profileUpdatedAt: ZonedDateTime?
+        override val profileUpdatedAt: Instant?
             get() = null
 
         override fun hasAdmin(user: AccountId): Boolean {
@@ -205,7 +206,7 @@ sealed interface RecipientData {
             return members[user]?.shouldShowAdminCrown == true
         }
 
-        override val profileUpdatedAt: ZonedDateTime?
+        override val profileUpdatedAt: Instant?
             get() = null
     }
 }

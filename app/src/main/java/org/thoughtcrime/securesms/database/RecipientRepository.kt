@@ -50,7 +50,7 @@ import org.thoughtcrime.securesms.database.model.RecipientSettings
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.groups.GroupMemberComparator
 import org.thoughtcrime.securesms.pro.ProStatusManager
-import org.thoughtcrime.securesms.util.DateUtils.Companion.asEpochSeconds
+import org.thoughtcrime.securesms.util.DateUtils.Companion.secondsToInstant
 import java.lang.ref.WeakReference
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -419,7 +419,7 @@ class RecipientRepository @Inject constructor(
                             expiryMode = contact.expiryMode,
                             priority = contact.priority,
                             proStatus = if (proStatusManager.isUserPro(address)) ProStatus.Pro() else ProStatus.None,
-                            profileUpdatedAt = contact.profileUpdatedEpochSeconds.asEpochSeconds(),
+                            profileUpdatedAt = contact.profileUpdatedEpochSeconds.secondsToInstant(),
                         )
                     }
                 }
@@ -468,7 +468,7 @@ class RecipientRepository @Inject constructor(
                     // if you already have this person as blinded contact, you would have been
                     // able to send them a message before.
                     acceptsCommunityMessageRequests = true,
-                    profileUpdatedAt = contact.profileUpdatedEpochSeconds.asEpochSeconds()
+                    profileUpdatedAt = contact.profileUpdatedEpochSeconds.secondsToInstant()
                 )
             }
 

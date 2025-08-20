@@ -100,6 +100,7 @@ import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
+import org.thoughtcrime.securesms.util.DateUtils.Companion.toEpochSeconds
 import org.thoughtcrime.securesms.util.UserProfileModalCommands
 import org.thoughtcrime.securesms.util.UserProfileModalData
 import org.thoughtcrime.securesms.util.UserProfileUtils
@@ -1289,7 +1290,7 @@ class ConversationViewModel @AssistedInject constructor(
                                 name = recipient.displayName(attachesBlindedId = false),
                                 createdEpochSeconds = ZonedDateTime.now().toEpochSecond(),
                                 profilePic = recipient.data.avatar?.toUserPic() ?: UserPic.DEFAULT,
-                                profileUpdatedEpochSeconds = recipient.data.profileUpdatedAt?.toEpochSecond() ?: 0L,
+                                profileUpdatedEpochSeconds = recipient.data.profileUpdatedAt?.toEpochSeconds() ?: 0L,
                                 priority = PRIORITY_VISIBLE
                             )
                         )

@@ -34,16 +34,15 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ProfileAvatarData
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
-import org.thoughtcrime.securesms.util.DateUtils.Companion.asEpochMillis
-import org.thoughtcrime.securesms.util.DateUtils.Companion.asEpochSeconds
+import org.thoughtcrime.securesms.util.DateUtils.Companion.millsToInstant
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.security.SecureRandom
+import java.time.Instant
 import java.time.ZonedDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
-import kotlin.math.exp
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.seconds
@@ -85,12 +84,12 @@ class AvatarUploadManager @Inject constructor(
                                 .use { it.meta.expiryTime }
                         }.onFailure {
                             Log.w(TAG, "Failed to read expiry time from $localFile", it)
-                        }.getOrNull() ?: (localFile.lastModified() + DEFAULT_AVATAR_TTL.inWholeMilliseconds).asEpochMillis()!!
+                        }.getOrNull() ?: (localFile.lastModified() + DEFAULT_AVATAR_TTL.inWholeMilliseconds).millsToInstant()!!
 
                         Log.d(TAG, "Avatar expiring at $expiringIn")
-                        val now = ZonedDateTime.now()
+                        val now = Instant.now()
                         if (expiringIn.isAfter(now)) {
-                            delay((expiringIn.toEpochSecond() - now.toEpochSecond()) * 1000L)
+                            delay(expiringIn.toEpochMilli() - now.toEpochMilli())
                         }
 
                         Log.d(TAG, "Avatar expired, re-uploading")
@@ -176,7 +175,7 @@ class AvatarUploadManager @Inject constructor(
         // To save us from downloading this avatar again, we store the data as it would be downloaded
         localEncryptedFileOutputStreamFactory.create(
             file = RemoteFileDownloadWorker.computeFileName(application, remoteFile),
-            meta = FileMetadata(expiryTime = uploadResult.expires)
+            meta = FileMetadata(expiryTime = uploadResult.expires?.toInstant())
         ).use {
             it.write(pictureData)
         }
@@ -199,7 +198,7 @@ class AvatarUploadManager @Inject constructor(
             }
         }
 
-        prefs.lastProfileUpdated = ZonedDateTime.now()
+        prefs.lastProfileUpdated = Instant.now()
     }
 
     companion object {

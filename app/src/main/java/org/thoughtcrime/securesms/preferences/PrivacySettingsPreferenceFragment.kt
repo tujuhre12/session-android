@@ -26,6 +26,7 @@ import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.areNotificationsEnabled
 import org.thoughtcrime.securesms.util.IntentUtils
+import java.time.Instant
 import java.time.ZonedDateTime
 
 @AndroidEntryPoint
@@ -68,7 +69,7 @@ class PrivacySettingsPreferenceFragment : CorrectedPreferenceFragment() {
                                 it.userProfile.setCommunityMessageRequests(value)
                             }
 
-                            textSecurePreferences.lastProfileUpdated = ZonedDateTime.now()
+                            textSecurePreferences.lastProfileUpdated = Instant.now()
                             return
                         }
                         super.putBoolean(key, value)

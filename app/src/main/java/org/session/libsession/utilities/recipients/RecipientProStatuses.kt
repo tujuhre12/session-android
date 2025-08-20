@@ -14,7 +14,7 @@ fun Flow<Recipient>.repeatedWithEffectiveProStatusChange(): Flow<Recipient> {
         if (r.proStatus is ProStatus.Pro) {
             val validUntil = (r.proStatus as ProStatus.Pro).validUntil
             if (validUntil != null) {
-                val expirationTime = validUntil.toInstant().toEpochMilli() - System.currentTimeMillis()
+                val expirationTime = validUntil.toEpochMilli() - System.currentTimeMillis()
                 delay(expirationTime)
             }
         }

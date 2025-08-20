@@ -4,7 +4,6 @@ import android.content.Context
 import android.text.format.DateFormat
 import  android.text.format.DateUtils as AndroidxDateUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
-import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -229,10 +228,26 @@ class DateUtils @Inject constructor(
             return Instant.ofEpochSecond(this).atZone(ZoneId.of("UTC"))
         }
 
+        fun Long.secondsToInstant(): Instant? {
+            if (this <= 0) return null
+
+            return Instant.ofEpochSecond(this)
+        }
+
+        fun Long.millsToInstant(): Instant? {
+            if (this <= 0) return null
+
+            return Instant.ofEpochMilli(this)
+        }
+
         fun Long.asEpochMillis(): ZonedDateTime? {
             if (this <= 0) return null
 
             return Instant.ofEpochMilli(this).atZone(ZoneId.of("UTC"))
+        }
+
+        fun Instant.toEpochSeconds(): Long {
+            return this.toEpochMilli() / 1000
         }
     }
 }

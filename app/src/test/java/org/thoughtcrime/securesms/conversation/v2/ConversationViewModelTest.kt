@@ -25,8 +25,8 @@ import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.recipients.ProStatus
-import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientData
 import org.thoughtcrime.securesms.BaseViewModelTest
 import org.thoughtcrime.securesms.MainCoroutineRule
 import org.thoughtcrime.securesms.database.Storage
@@ -75,7 +75,7 @@ class ConversationViewModelTest : BaseViewModelTest() {
             blocked = false,
             expiryMode = ExpiryMode.NONE,
             1,
-            proStatus = ProStatus.Unknown,
+            proStatus = ProStatus.None,
             profileUpdatedAt = null
         )
     )
@@ -96,7 +96,9 @@ class ConversationViewModelTest : BaseViewModelTest() {
             },
             lokiMessageDb = mock(),
             application = application,
-            reactionDb = mock(),
+            reactionDb = mock {
+                on { changeNotification } doReturn MutableSharedFlow()
+            },
             configFactory = mock(),
             groupManagerV2 = mock(),
             callManager = mock(),

@@ -6,13 +6,15 @@ import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfile
 import org.thoughtcrime.securesms.util.DateUtils.Companion.asEpochMillis
 import org.thoughtcrime.securesms.util.DateUtils.Companion.asEpochSeconds
+import org.thoughtcrime.securesms.util.DateUtils.Companion.millsToInstant
+import java.time.Instant
 import java.time.ZonedDateTime
 
 class Profile(
     var displayName: String? = null,
     var profileKey: ByteArray? = null,
     var profilePictureURL: String? = null,
-    var profileUpdated: ZonedDateTime? = null
+    var profileUpdated: Instant? = null
 ) {
 
     companion object {
@@ -25,7 +27,7 @@ class Profile(
             val profilePictureURL = profileProto.profilePicture
             val profileUpdated = profileProto.lastProfileUpdateMs.takeIf {
                 profileProto.hasLastProfileUpdateMs()
-            }?.asEpochMillis()
+            }?.millsToInstant()
 
             if (profileKey != null && profilePictureURL != null) {
                 return Profile(displayName, profileKey.toByteArray(), profilePictureURL, profileUpdated = profileUpdated)
@@ -46,7 +48,7 @@ class Profile(
         profileProto.displayName = displayName
         profileKey?.let { dataMessageProto.profileKey = ByteString.copyFrom(it) }
         profilePictureURL?.let { profileProto.profilePicture = it }
-        profileUpdated?.let { profileProto.lastProfileUpdateMs = it.toInstant().toEpochMilli() }
+        profileUpdated?.let { profileProto.lastProfileUpdateMs = it.toEpochMilli() }
         // Build
         try {
             dataMessageProto.profile = profileProto.build()

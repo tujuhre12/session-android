@@ -17,7 +17,7 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.database.model.RecipientSettings
-import org.thoughtcrime.securesms.util.DateUtils.Companion.asEpochSeconds
+import org.thoughtcrime.securesms.util.DateUtils.Companion.millsToInstant
 import org.thoughtcrime.securesms.util.asSequence
 import javax.inject.Inject
 import javax.inject.Provider
@@ -109,7 +109,7 @@ class RecipientSettingsDatabase @Inject constructor(
 
     private fun Cursor.toRecipientSettings(): RecipientSettings {
         return RecipientSettings(
-            muteUntil = getLong(getColumnIndexOrThrow(COL_MUTE_UNTIL)).asEpochSeconds(),
+            muteUntil = getLong(getColumnIndexOrThrow(COL_MUTE_UNTIL)).millsToInstant(),
             notifyType = readNotifyType(getString(getColumnIndexOrThrow(COL_NOTIFY_TYPE))),
             autoDownloadAttachments = getInt(getColumnIndexOrThrow(COL_AUTO_DOWNLOAD_ATTACHMENTS)) == 1,
             profilePic = readUserProfile(
@@ -125,20 +125,21 @@ class RecipientSettingsDatabase @Inject constructor(
                     }.getOrNull()
                 }
                 ?: ProStatus.None,
-            profileUpdated = getLong(getColumnIndexOrThrow(COL_PROFILE_UPDATE_TIME)).asEpochSeconds(),
+            profileUpdated = getLong(getColumnIndexOrThrow(COL_PROFILE_UPDATE_TIME)).millsToInstant(),
         )
     }
 
     private fun RecipientSettings.toContentValues(): ContentValues {
         return ContentValues().apply {
             put(COL_NAME, name)
-            put(COL_MUTE_UNTIL, muteUntil?.toEpochSecond() ?: 0L)
+            put(COL_MUTE_UNTIL, muteUntil?.toEpochMilli() ?: 0L)
             put(COL_NOTIFY_TYPE, notifyType.name)
             put(COL_AUTO_DOWNLOAD_ATTACHMENTS, autoDownloadAttachments)
             put(COL_PROFILE_PIC_KEY, profilePic?.key?.data?.let(Base64::encodeBytes))
             put(COL_PROFILE_PIC_URL, profilePic?.url)
             put(COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS, blocksCommunityMessagesRequests)
             put(COL_PRO_STATUS, json.get().encodeToString(proStatus))
+            put(COL_PROFILE_UPDATE_TIME, profileUpdated?.toEpochMilli() ?: 0L)
         }
     }
 

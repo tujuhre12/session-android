@@ -11,19 +11,11 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
@@ -54,8 +46,10 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CA
 import org.session.libsession.utilities.TextSecurePreferences.Companion._events
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.pro.ProStatusManager
-import org.thoughtcrime.securesms.util.DateUtils.Companion.asEpochSeconds
+import org.thoughtcrime.securesms.util.DateUtils.Companion.secondsToInstant
+import org.thoughtcrime.securesms.util.DateUtils.Companion.toEpochSeconds
 import java.io.IOException
+import java.time.Instant
 import java.time.ZonedDateTime
 import java.util.Arrays
 import java.util.Date
@@ -230,7 +224,7 @@ interface TextSecurePreferences {
 
     var inAppReviewState: String?
 
-    var lastProfileUpdated: ZonedDateTime?
+    var lastProfileUpdated: Instant?
 
     companion object {
         val TAG = TextSecurePreferences::class.simpleName
@@ -1737,10 +1731,10 @@ class AppTextSecurePreferences @Inject constructor(
             }
         }
 
-    override var lastProfileUpdated: ZonedDateTime?
-        get() = getLongPreference(TextSecurePreferences.LAST_PROFILE_UPDATE_TIME, 0).asEpochSeconds()
+    override var lastProfileUpdated: Instant?
+        get() = getLongPreference(TextSecurePreferences.LAST_PROFILE_UPDATE_TIME, 0).secondsToInstant()
         set(value) {
-            setLongPreference(TextSecurePreferences.LAST_PROFILE_UPDATE_TIME, value?.toEpochSecond() ?: 0L)
+            setLongPreference(TextSecurePreferences.LAST_PROFILE_UPDATE_TIME, value?.toEpochSeconds() ?: 0L)
         }
 
     override fun getDebugMessageFeatures(): Set<ProStatusManager.MessageProFeature> {

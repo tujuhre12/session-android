@@ -11,15 +11,14 @@ import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.isGroupV2
 import org.session.libsession.utilities.isLegacyGroup
 import org.session.libsession.utilities.isStandard
-import org.session.libsession.utilities.truncateIdForDisplay
-import org.session.libsession.utilities.truncatedForDisplay
 import org.thoughtcrime.securesms.database.model.NotifyType
+import java.time.Instant
 import java.time.ZonedDateTime
 
 data class Recipient(
     val address: Address,
     val data: RecipientData,
-    val mutedUntil: ZonedDateTime? = null,
+    val mutedUntil: Instant? = null,
     val autoDownloadAttachments: Boolean? = null,
     val notifyType: NotifyType = NotifyType.ALL,
 ) {
@@ -104,7 +103,7 @@ data class Recipient(
     val isPinned: Boolean get() = priority == PRIORITY_PINNED
 
     @JvmOverloads
-    fun isMuted(now: ZonedDateTime = ZonedDateTime.now()): Boolean {
+    fun isMuted(now: Instant = Instant.now()): Boolean {
         return mutedUntil?.isAfter(now) == true
     }
 
@@ -112,7 +111,7 @@ data class Recipient(
         get() = !isGroupOrCommunityRecipient && approvedMe && approved
 
     val mutedUntilMills: Long?
-        get() = mutedUntil?.toInstant()?.toEpochMilli()
+        get() = mutedUntil?.toEpochMilli()
 
     val acceptsCommunityMessageRequests: Boolean
         get() = when (data) {

@@ -15,16 +15,14 @@ import org.mockito.junit.MockitoJUnitRunner
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.session.libsession.utilities.Address.Companion.toAddress
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.ProStatus
-import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientData
 import org.thoughtcrime.securesms.BaseViewModelTest
 import org.thoughtcrime.securesms.MainCoroutineRule
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.ExpiryRadioOption
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.UiState
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination
-import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OptionsCardData
 import org.thoughtcrime.securesms.ui.UINavigator
@@ -44,16 +42,14 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
     var mainCoroutineRule = MainCoroutineRule()
 
     @Mock lateinit var application: Application
-    @Mock lateinit var textSecurePreferences: TextSecurePreferences
     @Mock lateinit var disappearingMessages: DisappearingMessages
-    @Mock lateinit var groupDb: GroupDatabase
     @Mock lateinit var navigator: UINavigator<ConversationSettingsDestination>
 
     @Test
     fun `note to self, off, new config`() = runTest {
         val viewModel = createViewModel(Recipient(
             address = STANDARD_ADDRESS,
-            data = RecipientData.Self(name = "Myself", avatar = null, expiryMode = ExpiryMode.NONE, priority = 1, proStatus = ProStatus.Unknown,  profileUpdatedAt = null),
+            data = RecipientData.Self(name = "Myself", avatar = null, expiryMode = ExpiryMode.NONE, priority = 1, proStatus = ProStatus.None,  profileUpdatedAt = null),
         ))
 
         advanceUntilIdle()
@@ -105,10 +101,20 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                     isAdmin = true,
                     destroyed = false,
                     kicked = false,
-                    proStatus = ProStatus.Unknown,
+                    proStatus = ProStatus.None,
                     members = listOf()
                 ),
-                firstMember = null,
+                firstMember = Recipient(
+                    address = STANDARD_ADDRESS,
+                    data = RecipientData.Self(
+                        name = "Myself",
+                        avatar = null,
+                        expiryMode = ExpiryMode.NONE,
+                        priority = 1,
+                        proStatus = ProStatus.None,
+                        profileUpdatedAt = null
+                    )
+                ),
                 secondMember = null,
             ),
         )
@@ -165,10 +171,20 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                     isAdmin = false,
                     destroyed = false,
                     kicked = false,
-                    proStatus = ProStatus.Unknown,
+                    proStatus = ProStatus.None,
                     members = listOf()
                 ),
-                firstMember = null,
+                firstMember = Recipient(
+                    address = STANDARD_ADDRESS,
+                    data = RecipientData.Self(
+                        name = "Myself",
+                        avatar = null,
+                        expiryMode = ExpiryMode.NONE,
+                        priority = 1,
+                        proStatus = ProStatus.None,
+                        profileUpdatedAt = null
+                    )
+                ),
                 secondMember = null,
             ),
         )
@@ -225,7 +241,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                 blocked = false,
                 expiryMode = ExpiryMode.NONE,
                 priority = 1,
-                proStatus = ProStatus.Unknown,
+                proStatus = ProStatus.None,
                 profileUpdatedAt = null
             )
         )
@@ -279,7 +295,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                 blocked = false,
                 expiryMode = ExpiryMode.AfterSend(time.inWholeSeconds),
                 priority = 1,
-                proStatus = ProStatus.Unknown,
+                proStatus = ProStatus.None,
                 profileUpdatedAt = null
             )
         )
@@ -340,7 +356,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                 blocked = false,
                 expiryMode = ExpiryMode.AfterSend(time.inWholeSeconds),
                 priority = 1,
-                proStatus = ProStatus.Unknown,
+                proStatus = ProStatus.None,
                 profileUpdatedAt = null
             )
         )
@@ -401,7 +417,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                 blocked = false,
                 expiryMode = ExpiryMode.AfterRead(time.inWholeSeconds),
                 priority = 1,
-                proStatus = ProStatus.Unknown,
+                proStatus = ProStatus.None,
                 profileUpdatedAt = null
             )
         )
@@ -464,7 +480,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                 blocked = false,
                 expiryMode = ExpiryMode.AfterRead(time.inWholeSeconds),
                 priority = 1,
-                proStatus = ProStatus.Unknown,
+                proStatus = ProStatus.None,
                 profileUpdatedAt = null
             )
         )
@@ -533,9 +549,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
     private fun createViewModel(recipient: Recipient) = DisappearingMessagesViewModel(
         address = recipient.address,
         context = application,
-        textSecurePreferences = textSecurePreferences,
         disappearingMessages = disappearingMessages,
-        groupDb = groupDb,
         navigator = navigator,
         isNewConfigEnabled = true,
         showDebugOptions = false,

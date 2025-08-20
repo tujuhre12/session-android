@@ -4,7 +4,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.transform
 import org.thoughtcrime.securesms.database.model.NotifyType
-import java.time.ZonedDateTime
+import java.time.Instant
 
 /**
  * Returns the effective notify type for the recipient, taking account of the time the recipient
@@ -12,7 +12,7 @@ import java.time.ZonedDateTime
  *
  * @param now The current time, defaults to the current system time.
  */
-fun Recipient.effectiveNotifyType(now: ZonedDateTime = ZonedDateTime.now()): NotifyType {
+fun Recipient.effectiveNotifyType(now: Instant = Instant.now()): NotifyType {
     if (mutedUntil != null && now.isBefore(mutedUntil)) {
         return NotifyType.NONE
     }
@@ -27,10 +27,10 @@ fun Recipient.effectiveNotifyType(now: ZonedDateTime = ZonedDateTime.now()): Not
  */
 fun Flow<Recipient>.repeatedWithEffectiveNotifyTypeChange(): Flow<Recipient> {
     return transform { r ->
-        val now = ZonedDateTime.now()
+        val now = Instant.now()
         if (r.mutedUntil != null && now.isBefore(r.mutedUntil)) {
             emit(r)
-            val expirationTime = r.mutedUntil.toInstant().toEpochMilli() - now.toInstant().toEpochMilli()
+            val expirationTime = r.mutedUntil.toEpochMilli() - now.toEpochMilli()
             delay(expirationTime)
             emit(r)
         } else {

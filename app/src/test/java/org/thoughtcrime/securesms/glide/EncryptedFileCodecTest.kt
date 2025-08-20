@@ -6,7 +6,10 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.thoughtcrime.securesms.attachments.EmbeddedMetadataCodec
 import org.thoughtcrime.securesms.attachments.FileMetadata
+import org.thoughtcrime.securesms.util.DateUtils.Companion.millsToInstant
 import java.io.File
+import java.time.Instant
+import java.time.ZonedDateTime
 
 class EncryptedFileCodecTest {
 
@@ -16,7 +19,7 @@ class EncryptedFileCodecTest {
 
         // Create a sample metadata object
         val expectMeta = FileMetadata(
-            expiryTimeEpochSeconds = System.currentTimeMillis(),
+            expiryTime = System.currentTimeMillis().millsToInstant(), // Should not use Instant.now() directly as it's microseconds precision
         )
 
         val expectContent = "Hello, World!".toByteArray()
