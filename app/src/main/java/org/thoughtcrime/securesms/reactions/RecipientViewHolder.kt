@@ -27,6 +27,10 @@ class RecipientViewHolder(
             callback.onRemoveReaction(reaction.baseEmoji, reaction.localId, reaction.timestamp)
         }
 
+        itemView.setOnClickListener {
+            callback.onEmojiReactionUserTapped(reaction.sender)
+        }
+
         binding.reactionsBottomViewAvatar.setThemedContent {
             Avatar(
                 size = LocalDimensions.current.iconMediumAvatar,
