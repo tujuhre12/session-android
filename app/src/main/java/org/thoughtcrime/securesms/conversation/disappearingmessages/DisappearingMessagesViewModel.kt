@@ -19,16 +19,10 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.isGroup
-import org.session.libsession.utilities.isGroupOrCommunity
-import org.session.libsession.utilities.isLegacyGroup
-import org.session.libsession.utilities.recipients.RecipientData
-import org.session.libsession.utilities.toGroupString
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.UiState
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.toUiState
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination
-import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.ui.UINavigator
 
@@ -38,9 +32,7 @@ class DisappearingMessagesViewModel @AssistedInject constructor(
     @Assisted("isNewConfigEnabled")  private val isNewConfigEnabled: Boolean,
     @Assisted("showDebugOptions")    private val showDebugOptions: Boolean,
     @param:ApplicationContext private val context: Context,
-    private val textSecurePreferences: TextSecurePreferences,
     private val disappearingMessages: DisappearingMessages,
-    private val groupDb: GroupDatabase,
     private val navigator: UINavigator<ConversationSettingsDestination>,
     private val recipientRepository: RecipientRepository,
 ) : ViewModel() {
@@ -62,15 +54,10 @@ class DisappearingMessagesViewModel @AssistedInject constructor(
             val recipient = recipientRepository.getRecipient(address)
             val expiryMode = recipient.expiryMode
 
-            val isAdmin = when {
-                recipient.data is RecipientData.Group -> recipient.data.partial.isAdmin
-
-                address.isLegacyGroup -> {
-                    val groupRecord = groupDb.getGroup(address.toGroupString()).orNull()
-                    // Handle as legacy group
-                    groupRecord?.admins?.any{ it.toString() == textSecurePreferences.getLocalNumber() } == true
-                }
-                else -> !address.isGroupOrCommunity
+            val isAdmin = when (recipient.address) {
+                is Address.LegacyGroup, is Address.Group -> recipient.currentUserRole.canModerate
+                is Address.Standard -> true
+                else -> false
             }
 
             _state.update {
