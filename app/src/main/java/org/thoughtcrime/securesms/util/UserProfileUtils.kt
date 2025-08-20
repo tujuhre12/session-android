@@ -111,7 +111,7 @@ class UserProfileUtils @AssistedInject constructor(
         }
 
         return UserProfileModalData(
-            name = recipient.displayName(),
+            name = if (recipient.isLocalNumber) context.getString(R.string.noteToSelf) else recipient.displayName(),
             subtitle = (recipient.data as? RecipientData.Contact)?.nickname?.takeIf { it.isNotBlank() }?.let { "($it)" },
             avatarUIData = avatarUtils.getUIDataFromRecipient(recipient),
             showProBadge = proStatusManager.shouldShowProBadge(recipient.address),
