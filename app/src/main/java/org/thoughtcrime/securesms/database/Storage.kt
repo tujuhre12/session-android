@@ -201,8 +201,7 @@ open class Storage @Inject constructor(
 
     override fun markConversationAsRead(threadId: Long, lastSeenTime: Long, force: Boolean) {
         val threadDb = threadDatabase
-        getRecipientForThread(threadId)?.let { address ->
-            val recipient = recipientRepository.getRecipientSync(address)
+        getRecipientForThread(threadId)?.let { recipient ->
             val currentLastRead = threadDb.getLastSeenAndHasSent(threadId).first()
             // don't set the last read in the volatile if we didn't set it in the DB
             if (!threadDb.markAllAsRead(threadId, lastSeenTime, force) && !force) return
@@ -225,9 +224,7 @@ open class Storage @Inject constructor(
     }
 
     override fun markConversationAsUnread(threadId: Long) {
-        getRecipientForThread(threadId)?.let { address ->
-            val recipient = recipientRepository.getRecipientSync(address)
-
+        getRecipientForThread(threadId)?.let { recipient ->
             // don't process configs for inbox recipients
             if (recipient.isCommunityInboxRecipient) return
 
@@ -951,8 +948,9 @@ open class Storage @Inject constructor(
         return threadId ?: -1
     }
 
-    override fun getRecipientForThread(threadId: Long): Address? {
+    override fun getRecipientForThread(threadId: Long): Recipient? {
         return threadDatabase.getRecipientForThreadId(threadId)
+            ?.let(recipientRepository::getRecipientSync)
     }
     override fun setAutoDownloadAttachments(
         recipient: Address,

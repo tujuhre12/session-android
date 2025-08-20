@@ -71,8 +71,7 @@ class AttachmentDownloadJob @AssistedInject constructor(
                                 recipientRepository: RecipientRepository,
                                 messageDataProvider: MessageDataProvider,
                                 mmsId: Long): Boolean {
-            val threadRecipient = storage.getRecipientForThread(threadID)
-                ?.let(recipientRepository::getRecipientSync) ?: return false
+            val threadRecipient = storage.getRecipientForThread(threadID) ?: return false
 
             // if we are the sender we are always eligible
             val selfSend = messageDataProvider.isOutgoingMessage(MessageId(mmsId, true))

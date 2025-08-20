@@ -151,7 +151,7 @@ class ReceivedMessageHandler @Inject constructor(
             true
         )
         val canPerformChange = storage.canPerformConfigChange(
-            if (threadRecipient?.toString() == userPublicKey) ConfigDatabase.USER_PROFILE_VARIANT else ConfigDatabase.CONTACTS_VARIANT,
+            if (threadRecipient?.address?.toString() == userPublicKey) ConfigDatabase.USER_PROFILE_VARIANT else ConfigDatabase.CONTACTS_VARIANT,
             userPublicKey,
             message.sentTimestamp!!
         )
@@ -730,7 +730,6 @@ class VisibleMessageHandlerContext @AssistedInject constructor(
 
     val threadRecipient: Recipient? by lazy {
         storage.getRecipientForThread(threadId)
-            ?.let(recipientRepository::getRecipientSync)
     }
 
 

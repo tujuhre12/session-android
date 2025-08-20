@@ -24,6 +24,7 @@ import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupDisplayInfo
 import org.session.libsession.utilities.GroupRecord
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
 import org.session.libsignal.messages.SignalServiceGroup
@@ -176,7 +177,7 @@ interface StorageProtocol {
     fun clearMedia(threadID: Long, fromUser: Address? = null): Boolean
 
     // Contacts
-    fun getRecipientForThread(threadId: Long): Address?
+    fun getRecipientForThread(threadId: Long): Recipient?
     fun setAutoDownloadAttachments(recipient: Address, shouldAutoDownloadAttachments: Boolean)
 
     // Attachments
