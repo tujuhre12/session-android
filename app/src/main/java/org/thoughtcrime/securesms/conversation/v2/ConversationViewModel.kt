@@ -274,9 +274,6 @@ class ConversationViewModel @AssistedInject constructor(
     private val _uiMessages = MutableStateFlow<List<UiMessage>>(emptyList())
     val uiMessages: StateFlow<List<UiMessage>> get() = _uiMessages
 
-    private val _charLimitState = MutableStateFlow<InputBarCharLimitState?>(null)
-    val charLimitState: StateFlow<InputBarCharLimitState?> get() = _charLimitState
-
     init {
         viewModelScope.launch {
             combine(

@@ -70,6 +70,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.scan
@@ -1123,7 +1125,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // React to input bar state changes
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.charLimitState.collectLatest(binding.inputBar::setCharLimitState)
+                viewModel.inputBarState
+                    .map { it.charLimitState }
+                    .distinctUntilChanged()
+                    .collectLatest(binding.inputBar::setCharLimitState)
             }
         }
 
