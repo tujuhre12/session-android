@@ -400,6 +400,8 @@ public class AttachmentDatabase extends Database {
     if (database.update(TABLE_NAME, values, PART_ID_WHERE, attachmentId.toStrings()) == 0) {
       //noinspection ResultOfMethodCallIgnored
       dataInfo.file.delete();
+    } else {
+      mutableChangesNotification.tryEmit(attachmentId);
     }
 
     thumbnailExecutor.submit(new ThumbnailFetchCallable(attachmentId));
@@ -516,9 +518,9 @@ public class AttachmentDatabase extends Database {
     final SQLiteDatabase database = getWritableDatabase();
 
     values.put(TRANSFER_STATE, transferState);
-    database.update(TABLE_NAME, values, PART_ID_WHERE, attachmentId.toStrings());
-
-    mutableChangesNotification.tryEmit(attachmentId);
+    if (database.update(TABLE_NAME, values, PART_ID_WHERE, attachmentId.toStrings()) > 0) {
+      mutableChangesNotification.tryEmit(attachmentId);
+    }
   }
 
   @SuppressWarnings("WeakerAccess")
