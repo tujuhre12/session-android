@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOf
@@ -73,6 +74,7 @@ import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.InputbarViewModel
 import org.thoughtcrime.securesms.audio.AudioSlidePlayer
+import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
@@ -133,8 +135,9 @@ class ConversationViewModel @AssistedInject constructor(
     private val avatarUtils: AvatarUtils,
     private val proStatusManager: ProStatusManager,
     private val recipientRepository: RecipientRepository,
-    private val recipientSettingsDatabase: RecipientSettingsDatabase,
-    private val lokiThreadDatabase: LokiThreadDatabase,
+    recipientSettingsDatabase: RecipientSettingsDatabase,
+    lokiThreadDatabase: LokiThreadDatabase,
+    attachmentDatabase: AttachmentDatabase,
     private val blindMappingRepository: BlindMappingRepository,
     private val upmFactory: UserProfileUtils.UserProfileUtilsFactory,
     attachmentDownloadHandlerFactory: AttachmentDownloadHandler.Factory,
@@ -166,7 +169,8 @@ class ConversationViewModel @AssistedInject constructor(
     // than the traditional Uri change.
     val conversationReloadNotification: SharedFlow<*> = merge(
         threadDb.updateNotifications.filter { it == threadId },
-        recipientSettingsDatabase.changeNotification.filter { it == address }
+        recipientSettingsDatabase.changeNotification.filter { it == address },
+        attachmentDatabase.changesNotification.debounce(200L), // debounce to avoid too many reloads
     ).shareIn(viewModelScope, SharingStarted.Eagerly)
 
 

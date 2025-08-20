@@ -57,11 +57,6 @@ public abstract class Database {
                                                          observer);
   }
 
-  protected void notifyAttachmentListeners() {
-    context.getContentResolver().notifyChange(DatabaseContentProviders.Attachment.CONTENT_URI, null);
-  }
-
-
   protected SQLiteDatabase getReadableDatabase() {
     return databaseHelper.get().getReadableDatabase();
   }

@@ -83,6 +83,10 @@ import java.util.concurrent.ExecutorService;
 import javax.inject.Provider;
 
 import kotlin.jvm.Synchronized;
+import kotlinx.coroutines.channels.BufferOverflow;
+import kotlinx.coroutines.flow.MutableSharedFlow;
+import kotlinx.coroutines.flow.SharedFlow;
+import kotlinx.coroutines.flow.SharedFlowKt;
 
 public class AttachmentDatabase extends Database {
   
@@ -159,9 +163,18 @@ public class AttachmentDatabase extends Database {
 
   private final AttachmentSecret attachmentSecret;
 
+  private final MutableSharedFlow<Object> mutableChangesNotification = SharedFlowKt.MutableSharedFlow(
+          0, 100, BufferOverflow.DROP_OLDEST
+  );
+
   public AttachmentDatabase(Context context, Provider<SQLCipherOpenHelper> databaseHelper, AttachmentSecret attachmentSecret) {
     super(context, databaseHelper);
     this.attachmentSecret = attachmentSecret;
+  }
+
+  @NonNull
+  public SharedFlow<Object> getChangesNotification() {
+    return mutableChangesNotification;
   }
 
   public @NonNull InputStream getAttachmentStream(AttachmentId attachmentId, long offset)
@@ -285,8 +298,8 @@ public class AttachmentDatabase extends Database {
 
     deleteAttachmentsOnDisk(deletedAttachments);
 
-    if (!deletedAttachments.isEmpty()) {
-      notifyAttachmentListeners();
+    for (final Long mmsId : mmsMessageIDs) {
+      mutableChangesNotification.tryEmit(mmsId);
     }
   }
 
@@ -316,7 +329,7 @@ public class AttachmentDatabase extends Database {
 
       database.delete(TABLE_NAME, PART_ID_WHERE, id.toStrings());
       deleteAttachmentOnDisk(data, thumbnail, contentType);
-      notifyAttachmentListeners();
+      mutableChangesNotification.tryEmit(id);
     }
   }
 
@@ -504,6 +517,8 @@ public class AttachmentDatabase extends Database {
 
     values.put(TRANSFER_STATE, transferState);
     database.update(TABLE_NAME, values, PART_ID_WHERE, attachmentId.toStrings());
+
+    mutableChangesNotification.tryEmit(attachmentId);
   }
 
   @SuppressWarnings("WeakerAccess")
@@ -756,6 +771,8 @@ public class AttachmentDatabase extends Database {
       }
     }
 
+    mutableChangesNotification.tryEmit(attachmentId);
+
     return attachmentId;
   }
 
@@ -776,6 +793,8 @@ public class AttachmentDatabase extends Database {
     values.put(THUMBNAIL_RANDOM, thumbnailFile.random);
 
     database.update(TABLE_NAME, values, PART_ID_WHERE, attachmentId.toStrings());
+
+    mutableChangesNotification.tryEmit(attachmentId);
   }
 
   /**
@@ -818,6 +837,10 @@ public class AttachmentDatabase extends Database {
       values,
       PART_ID_WHERE + " AND " + PART_AUDIO_ONLY_WHERE,
       extras.getAttachmentId().toStrings());
+
+    if (alteredRows > 0) {
+      mutableChangesNotification.tryEmit(extras.getAttachmentId());
+    }
 
     return alteredRows > 0;
   }
