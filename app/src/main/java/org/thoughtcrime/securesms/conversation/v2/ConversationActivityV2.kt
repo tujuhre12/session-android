@@ -1819,6 +1819,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         sendEmojiRemoval(emoji, message)
     }
 
+    override fun onEmojiReactionUserTapped(recipient: Recipient) {
+        showUserProfileModal(recipient)
+    }
+
     // Called when the user is attempting to clear all instance of a specific emoji
     override fun onClearAll(emoji: String, messageId: MessageId) = viewModel.onEmojiClear(emoji, messageId)
 

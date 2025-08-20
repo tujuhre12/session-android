@@ -155,6 +155,10 @@ final class ReactionRecipientsAdapter extends RecyclerView.Adapter<ReactionRecip
         callback.onRemoveReaction(reaction.getBaseEmoji(), reaction.getLocalId(), reaction.getTimestamp());
       });
 
+      itemView.setOnClickListener((v) -> {
+        callback.onEmojiReactionUserTapped(reaction.getSender());
+      });
+
       this.avatar.update(reaction.getSender());
 
       if (reaction.getSender().isLocalNumber()) {
