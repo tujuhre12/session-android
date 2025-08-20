@@ -61,6 +61,7 @@ import org.session.libsession.utilities.isGroupV2
 import org.session.libsession.utilities.isStandard
 import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.recipients.getType
 import org.session.libsession.utilities.recipients.observeEffectiveNotifyType
@@ -280,15 +281,9 @@ class ConversationViewModel @AssistedInject constructor(
         viewModelScope.launch {
             combine(
                 recipientFlow,
-                openGroupFlow,
-                legacyGroupDeprecationManager.deprecationState
-            ) { recipient,  og, deprecationState ->
-                getInputBarState(
-                    recipient = recipient,
-                    community = og,
-                    deprecationState = deprecationState
-                )
-            }.collectLatest {
+                legacyGroupDeprecationManager.deprecationState,
+                ::getInputBarState
+            ).collectLatest {
                 _inputBarState.value = it
             }
         }
@@ -379,7 +374,6 @@ class ConversationViewModel @AssistedInject constructor(
 
     private fun getInputBarState(
         recipient: Recipient,
-        community: OpenGroup?,
         deprecationState: LegacyGroupDeprecationManager.DeprecationState
     ): InputBarState {
         val currentCharLimitState = _inputBarState.value.charLimitState
@@ -405,7 +399,7 @@ class ConversationViewModel @AssistedInject constructor(
             )
 
             // the user does not have write access in the community
-            community?.canWrite == false -> InputBarState(
+            (recipient.data as? RecipientData.Community)?.openGroup?.canWrite == false -> InputBarState(
                 contentState = InputBarContentState.Disabled(
                     text = application.getString(R.string.permissionsWriteCommunity),
                 ),
@@ -416,7 +410,7 @@ class ConversationViewModel @AssistedInject constructor(
             // other cases the input is visible, and the buttons might be disabled based on some criteria
             else -> InputBarState(
                 contentState = InputBarContentState.Visible,
-                enableAttachMediaControls = shouldEnableInputMediaControls(recipient, community),
+                enableAttachMediaControls = shouldEnableInputMediaControls(recipient),
                 charLimitState = currentCharLimitState
             )
         }
@@ -527,7 +521,7 @@ class ConversationViewModel @AssistedInject constructor(
      *  1. First time we send message to a person.
      *     Since we haven't been approved by them, we can't send them any media, only text
      */
-    private fun shouldEnableInputMediaControls(recipient: Recipient, openGroup: OpenGroup?): Boolean {
+    private fun shouldEnableInputMediaControls(recipient: Recipient): Boolean {
         // disable for blocked users
         if (recipient.blocked) return false
 
@@ -542,7 +536,8 @@ class ConversationViewModel @AssistedInject constructor(
         val allowedForGroup = recipient.isGroupRecipient
 
         // - For communities you must have write access to the community
-        val allowedForCommunity = (recipient.isCommunityRecipient && openGroup?.canWrite == true)
+        val allowedForCommunity = (recipient.isCommunityRecipient &&
+                (recipient.data as? RecipientData.Community)?.openGroup?.canWrite == true)
 
         // - For blinded recipients you must be a contact of the recipient - without which you CAN
         // send them SMS messages - but they will not get through if the recipient does not have
