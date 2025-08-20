@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.conversation.v2
 
 import android.app.Application
 import android.content.ContentResolver
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
@@ -35,10 +36,11 @@ import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import java.time.ZonedDateTime
 
-private val STANDARD_ADDRESS = "0538e63512fd78c04d45b83ec7f0f3d593f60276ce535d1160eb589a00cca7db59".toAddress()
+private val STANDARD_ADDRESS =
+    "0538e63512fd78c04d45b83ec7f0f3d593f60276ce535d1160eb589a00cca7db59".toAddress()
 
 
-class ConversationViewModelTest: BaseViewModelTest() {
+class ConversationViewModelTest : BaseViewModelTest() {
 
     @get:Rule
     val rule = MainCoroutineRule()
@@ -92,7 +94,6 @@ class ConversationViewModelTest: BaseViewModelTest() {
                     emptyFlow()
                 }
             },
-            textSecurePreferences = mock(),
             lokiMessageDb = mock(),
             application = application,
             reactionDb = mock(),
@@ -119,8 +120,13 @@ class ConversationViewModelTest: BaseViewModelTest() {
                 }
             },
             createThreadIfNotExists = true,
-            openGroupManager = mock(),
             attachmentDownloadHandlerFactory = mock(),
+            recipientSettingsDatabase = mock {
+                on { changeNotification } doReturn MutableSharedFlow()
+            },
+            attachmentDatabase = mock {
+                on { changesNotification } doReturn MutableSharedFlow()
+            },
         )
     }
 
