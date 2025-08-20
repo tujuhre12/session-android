@@ -8,6 +8,7 @@ import androidx.collection.LruCache
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.serialization.json.Json
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.ProStatus
@@ -25,7 +26,8 @@ import javax.inject.Singleton
 @Singleton
 class RecipientSettingsDatabase @Inject constructor(
     @ApplicationContext context: Context,
-    databaseHelper: Provider<SQLCipherOpenHelper>
+    databaseHelper: Provider<SQLCipherOpenHelper>,
+    private val json: Provider<Json>,
 ) : Database(context, databaseHelper) {
     private val mutableChangeNotification = MutableSharedFlow<Address>(extraBufferCapacity = 256)
     private val cache = LruCache<Address, RecipientSettings>(256)
@@ -103,6 +105,41 @@ class RecipientSettingsDatabase @Inject constructor(
                 cache.put(address, settings)
                 settings
             }
+    }
+
+    private fun Cursor.toRecipientSettings(): RecipientSettings {
+        return RecipientSettings(
+            muteUntil = getLong(getColumnIndexOrThrow(COL_MUTE_UNTIL)).asEpochSeconds(),
+            notifyType = readNotifyType(getString(getColumnIndexOrThrow(COL_NOTIFY_TYPE))),
+            autoDownloadAttachments = getInt(getColumnIndexOrThrow(COL_AUTO_DOWNLOAD_ATTACHMENTS)) == 1,
+            profilePic = readUserProfile(
+                keyB64 = getString(getColumnIndexOrThrow(COL_PROFILE_PIC_KEY)),
+                url = getString(getColumnIndexOrThrow(COL_PROFILE_PIC_URL))
+            ),
+            blocksCommunityMessagesRequests = getInt(getColumnIndexOrThrow(COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS)) == 1,
+            name = getString(getColumnIndexOrThrow(COL_NAME)),
+            proStatus = getString(getColumnIndexOrThrow(COL_PRO_STATUS))
+                ?.let {
+                    runCatching {
+                        json.get().decodeFromString<ProStatus>(it)
+                    }.getOrNull()
+                }
+                ?: ProStatus.None,
+            profileUpdated = getLong(getColumnIndexOrThrow(COL_PROFILE_UPDATE_TIME)).asEpochSeconds(),
+        )
+    }
+
+    private fun RecipientSettings.toContentValues(): ContentValues {
+        return ContentValues().apply {
+            put(COL_NAME, name)
+            put(COL_MUTE_UNTIL, muteUntil?.toEpochSecond() ?: 0L)
+            put(COL_NOTIFY_TYPE, notifyType.name)
+            put(COL_AUTO_DOWNLOAD_ATTACHMENTS, autoDownloadAttachments)
+            put(COL_PROFILE_PIC_KEY, profilePic?.key?.data?.let(Base64::encodeBytes))
+            put(COL_PROFILE_PIC_URL, profilePic?.url)
+            put(COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS, blocksCommunityMessagesRequests)
+            put(COL_PRO_STATUS, json.get().encodeToString(proStatus))
+        }
     }
 
     companion object {
@@ -186,35 +223,6 @@ class RecipientSettingsDatabase @Inject constructor(
                 .getOrDefault(NotifyType.ALL)
         }
 
-        private fun Cursor.toRecipientSettings(): RecipientSettings {
-            return RecipientSettings(
-                muteUntil = getLong(getColumnIndexOrThrow(COL_MUTE_UNTIL)).asEpochSeconds(),
-                notifyType = readNotifyType(getString(getColumnIndexOrThrow(COL_NOTIFY_TYPE))),
-                autoDownloadAttachments = getInt(getColumnIndexOrThrow(COL_AUTO_DOWNLOAD_ATTACHMENTS)) == 1,
-                profilePic = readUserProfile(
-                    keyB64 = getString(getColumnIndexOrThrow(COL_PROFILE_PIC_KEY)),
-                    url = getString(getColumnIndexOrThrow(COL_PROFILE_PIC_URL))
-                ),
-                blocksCommunityMessagesRequests = getInt(getColumnIndexOrThrow(COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS)) == 1,
-                name = getString(getColumnIndexOrThrow(COL_NAME)),
-                proStatus = getString(getColumnIndexOrThrow(COL_PRO_STATUS))
-                    ?.let(ProStatus::valueOf)
-                    ?: ProStatus.Unknown,
-                profileUpdated = getLong(getColumnIndexOrThrow(COL_PROFILE_UPDATE_TIME)).asEpochSeconds(),
-            )
-        }
 
-        private fun RecipientSettings.toContentValues(): ContentValues {
-            return ContentValues().apply {
-                put(COL_NAME, name)
-                put(COL_MUTE_UNTIL, muteUntil?.toEpochSecond() ?: 0L)
-                put(COL_NOTIFY_TYPE, notifyType.name)
-                put(COL_AUTO_DOWNLOAD_ATTACHMENTS, autoDownloadAttachments)
-                put(COL_PROFILE_PIC_KEY, profilePic?.key?.data?.let(Base64::encodeBytes))
-                put(COL_PROFILE_PIC_URL, profilePic?.url)
-                put(COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS, blocksCommunityMessagesRequests)
-                put(COL_PRO_STATUS, proStatus.name)
-            }
-        }
     }
 }

@@ -48,7 +48,7 @@ sealed interface RecipientData {
         val displayName: String = "",
         override val avatar: RemoteFile? = null,
         override val priority: Long = PRIORITY_VISIBLE,
-        override val proStatus: ProStatus = ProStatus.Unknown,
+        override val proStatus: ProStatus = ProStatus.None,
         val acceptsCommunityMessageRequests: Boolean = false,
         override val profileUpdatedAt: ZonedDateTime? = null,
     ) : RecipientData
@@ -88,7 +88,7 @@ sealed interface RecipientData {
         }
 
         override val proStatus: ProStatus
-            get() = ProStatus.Unknown
+            get() = ProStatus.None
     }
 
     /**
@@ -195,7 +195,7 @@ sealed interface RecipientData {
             get() = null
 
         override val proStatus: ProStatus
-            get() = ProStatus.Unknown
+            get() = ProStatus.None
 
         override fun hasAdmin(user: AccountId): Boolean {
             return members[user]?.canModerate == true

@@ -43,6 +43,7 @@ import java.time.ZonedDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
+import kotlin.math.exp
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.seconds
@@ -81,7 +82,7 @@ class AvatarUploadManager @Inject constructor(
 
                         val expiringIn = runCatching {
                             localEncryptedFileInputStreamFactory.create(localFile)
-                                .use { it.meta.expiryTimeEpochSeconds.asEpochSeconds() }
+                                .use { it.meta.expiryTime }
                         }.onFailure {
                             Log.w(TAG, "Failed to read expiry time from $localFile", it)
                         }.getOrNull() ?: (localFile.lastModified() + DEFAULT_AVATAR_TTL.inWholeMilliseconds).asEpochMillis()!!
@@ -175,7 +176,7 @@ class AvatarUploadManager @Inject constructor(
         // To save us from downloading this avatar again, we store the data as it would be downloaded
         localEncryptedFileOutputStreamFactory.create(
             file = RemoteFileDownloadWorker.computeFileName(application, remoteFile),
-            meta = FileMetadata(expiryTimeEpochSeconds = uploadResult.expires?.toEpochSecond() ?: 0L)
+            meta = FileMetadata(expiryTime = uploadResult.expires)
         ).use {
             it.write(pictureData)
         }

@@ -39,6 +39,7 @@ import org.session.libsignal.utilities.ByteArraySlice.Companion.write
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
+import org.thoughtcrime.securesms.util.DateUtils.Companion.asEpochMillis
 import org.thoughtcrime.securesms.util.getRootCause
 import java.io.File
 import java.security.MessageDigest
@@ -205,10 +206,10 @@ class RemoteFileDownloadWorker @AssistedInject constructor(
                             .getOrNull() ?: continue
 
                         val meta = FileMetadata(
-                            expiryTimeEpochSeconds = if (address.address == prefs.getLocalNumber()) {
-                                TextSecurePreferences.getProfileExpiry(context) / 1000L
+                            expiryTime = if (address.address == prefs.getLocalNumber()) {
+                                TextSecurePreferences.getProfileExpiry(context).asEpochMillis()
                             } else {
-                                0L
+                                null
                             }
                         )
 
@@ -234,8 +235,7 @@ class RemoteFileDownloadWorker @AssistedInject constructor(
                     symmetricKey = file.key.data
                 )
 
-                decrypted.view() to
-                        FileMetadata(expiryTimeEpochSeconds = response.expires?.toEpochSecond() ?: 0L)
+                decrypted.view() to FileMetadata(expiryTime = response.expires)
 
             }
 

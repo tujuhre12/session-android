@@ -4,10 +4,12 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
+import org.session.libsession.utilities.serializable.ZonedDateTimeMillsSerializer
 import java.io.ByteArrayInputStream
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.ByteBuffer
+import java.time.ZonedDateTime
 import javax.inject.Inject
 
 /**
@@ -69,6 +71,7 @@ class EmbeddedMetadataCodec @Inject constructor(
  */
 @Serializable
 data class FileMetadata(
-    val expiryTimeEpochSeconds: Long = 0L,
+    @Serializable(with = ZonedDateTimeMillsSerializer::class)
+    val expiryTime: ZonedDateTime? = null,
     val hasPermanentDownloadError: Boolean = false,
 )

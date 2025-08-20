@@ -14,6 +14,6 @@ data class RecipientSettings(
     val autoDownloadAttachments: Boolean = false,
     val profilePic: UserPic? = null,
     val blocksCommunityMessagesRequests: Boolean = true,
-    val proStatus: ProStatus = ProStatus.Unknown,
+    val proStatus: ProStatus = ProStatus.None,
     val profileUpdated: ZonedDateTime? = null,
 )

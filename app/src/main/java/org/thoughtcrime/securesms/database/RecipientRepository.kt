@@ -400,7 +400,7 @@ class RecipientRepository @Inject constructor(
                             avatar = configs.userProfile.getPic().toRemoteFile(),
                             expiryMode = configs.userProfile.getNtsExpiry(),
                             priority = configs.userProfile.getNtsPriority(),
-                            proStatus = if (proStatusManager.isCurrentUserPro()) ProStatus.ProVisible else ProStatus.Unknown,
+                            proStatus = if (proStatusManager.isCurrentUserPro()) ProStatus.Pro() else ProStatus.None,
                             profileUpdatedAt = null
                         )
                     }
@@ -418,7 +418,7 @@ class RecipientRepository @Inject constructor(
                             blocked = contact.blocked,
                             expiryMode = contact.expiryMode,
                             priority = contact.priority,
-                            proStatus = if (proStatusManager.isUserPro(address)) ProStatus.ProVisible else ProStatus.Unknown,
+                            proStatus = if (proStatusManager.isUserPro(address)) ProStatus.Pro() else ProStatus.None,
                             profileUpdatedAt = contact.profileUpdatedEpochSeconds.asEpochSeconds(),
                         )
                     }
@@ -440,7 +440,7 @@ class RecipientRepository @Inject constructor(
                         isAdmin = groupInfo.adminKey != null,
                         kicked = groupInfo.kicked,
                         destroyed = groupInfo.destroyed,
-                        proStatus = if (proStatusManager.isUserPro(address)) ProStatus.ProVisible else ProStatus.Unknown,
+                        proStatus = if (proStatusManager.isUserPro(address)) ProStatus.Pro() else ProStatus.None,
                         members = configs.groupMembers.all()
                             .asSequence()
                             .map(RecipientData::GroupMemberInfo)
@@ -462,7 +462,7 @@ class RecipientRepository @Inject constructor(
                     displayName = contact.name,
                     avatar = contact.profilePic.toRemoteFile(),
                     priority = contact.priority,
-                    proStatus = if (proStatusManager.isUserPro(address)) ProStatus.ProVisible else ProStatus.Unknown,
+                    proStatus = if (proStatusManager.isUserPro(address)) ProStatus.Pro() else ProStatus.None,
 
                     // This information is not available in the config but we infer that
                     // if you already have this person as blinded contact, you would have been
