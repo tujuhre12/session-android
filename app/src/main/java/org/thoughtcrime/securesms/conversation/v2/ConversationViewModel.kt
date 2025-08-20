@@ -129,7 +129,7 @@ class ConversationViewModel @AssistedInject constructor(
     private val callManager: CallManager,
     val legacyGroupDeprecationManager: LegacyGroupDeprecationManager,
     val dateUtils: DateUtils,
-    private val expiredGroupManager: ExpiredGroupManager,
+    expiredGroupManager: ExpiredGroupManager,
     private val avatarUtils: AvatarUtils,
     private val proStatusManager: ProStatusManager,
     private val recipientRepository: RecipientRepository,
@@ -165,11 +165,14 @@ class ConversationViewModel @AssistedInject constructor(
     // We normally don't need to do this but as we are transitioning to using more flow based approach,
     // the conversation is still using a cursor loader, so we need an alternative way to trigger a reload
     // than the traditional Uri change.
+    @Suppress("OPT_IN_USAGE")
     val conversationReloadNotification: SharedFlow<*> = merge(
         threadDb.updateNotifications.filter { it == threadId },
         recipientSettingsDatabase.changeNotification.filter { it == address },
-        attachmentDatabase.changesNotification.debounce(200L), // debounce to avoid too many reloads
-    ).shareIn(viewModelScope, SharingStarted.Eagerly)
+        attachmentDatabase.changesNotification,
+        reactionDb.changeNotification,
+    ).debounce(200L) // debounce to avoid too many reloads
+        .shareIn(viewModelScope, SharingStarted.Eagerly)
 
 
     val showSendAfterApprovalText: Flow<Boolean> get() = recipientFlow.map { r ->

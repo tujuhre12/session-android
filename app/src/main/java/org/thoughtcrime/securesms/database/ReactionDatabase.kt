@@ -3,6 +3,9 @@ package org.thoughtcrime.securesms.database
 import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import org.json.JSONArray
 import org.json.JSONException
 import org.session.libsignal.utilities.JsonUtil.SaneJSONObject
@@ -10,12 +13,20 @@ import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.util.CursorUtil
+import org.thoughtcrime.securesms.util.asSequence
 import javax.inject.Provider
 
 /**
  * Store reactions on messages.
  */
 class ReactionDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) : Database(context, helper) {
+
+  private val mutableChangeNotification = MutableSharedFlow<MessageId>(
+    extraBufferCapacity = 100,
+    onBufferOverflow = BufferOverflow.DROP_OLDEST
+  )
+
+  val changeNotification: Flow<MessageId> get() = mutableChangeNotification
 
   companion object {
     const val TABLE_NAME = "reaction"
@@ -194,6 +205,11 @@ class ReactionDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) 
         }
 
       writableDatabase.setTransactionSuccessful()
+
+      // Notify listeners about the change
+      for (messageId in reactionsByMessageId.keys) {
+        mutableChangeNotification.tryEmit(messageId)
+      }
     } finally {
       writableDatabase.endTransaction()
     }
@@ -241,7 +257,14 @@ class ReactionDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) 
   }
 
   private fun deleteReactions(query: String, args: Array<String>) {
-    writableDatabase.delete(TABLE_NAME, query, args)
+    val updatedMessageIDs = writableDatabase.rawQuery("DELETE FROM $TABLE_NAME WHERE $query RETURNING $MESSAGE_ID, $IS_MMS", *args).use { cursor ->
+      cursor.asSequence()
+        .mapTo(hashSetOf()) { MessageId(id = it.getLong(0), mms = it.getInt(1) != 0) }
+    }
+
+    for (messageId in updatedMessageIDs) {
+      mutableChangeNotification.tryEmit(messageId)
+    }
   }
 
   fun getReactions(cursor: Cursor): List<ReactionRecord> {
@@ -318,6 +341,9 @@ class ReactionDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) 
       writableDatabase.update(TABLE_NAME, values, query, args)
 
       writableDatabase.setTransactionSuccessful()
+
+      // Notify listeners about the change
+      mutableChangeNotification.tryEmit(reaction.messageId)
     } finally {
       writableDatabase.endTransaction()
     }
