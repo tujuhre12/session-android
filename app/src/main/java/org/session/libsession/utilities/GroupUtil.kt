@@ -19,23 +19,6 @@ object GroupUtil {
         return COMMUNITY_PREFIX + Hex.toStringCondensed(groupID)
     }
 
-//    @JvmStatic
-//    fun getEncodedOpenGroupInboxID(openGroup: OpenGroup, accountId: AccountId): Address {
-//        return getEncodedOpenGroupInboxID(server = openGroup.server, pubKey = openGroup.publicKey, accountId = accountId)
-//    }
-//
-//    @JvmStatic
-//    fun getEncodedOpenGroupInboxID(server: String, pubKey: String, accountId: AccountId): Address {
-//        val openGroupInboxId =
-//            "$server!$pubKey!${accountId.hexString}".toByteArray()
-//        return getEncodedOpenGroupInboxID(openGroupInboxId)
-//    }
-//
-//    @JvmStatic
-//    fun getEncodedOpenGroupInboxID(groupInboxID: ByteArray): Address {
-//        return Address.fromSerialized(COMMUNITY_INBOX_PREFIX + Hex.toStringCondensed(groupInboxID))
-//    }
-
     @JvmStatic
     fun getEncodedClosedGroupID(groupID: ByteArray): String {
         val hex = Hex.toStringCondensed(groupID)
@@ -69,11 +52,6 @@ object GroupUtil {
         return Hex.fromStringCondensed(splitEncodedGroupID(groupID))
     }
 
-    @JvmStatic
-    fun getDecodedOpenGroupInboxAccountId(groupID: String): String {
-        return getDecodedOpenGroupInboxID(groupID)!!.third.hexString
-    }
-
     fun getEncodedOpenGroupInboxAddress(
         server: CommunityServerUrl,
         pubKey: CommunityPublicKey,
@@ -90,22 +68,6 @@ object GroupUtil {
         return Triple(parts[0], parts[1], AccountId(parts[2]))
     }
 
-
-    @JvmStatic
-    fun isCommunity(groupId: String): Boolean {
-        return groupId.startsWith(COMMUNITY_PREFIX)
-    }
-
-    @JvmStatic
-    fun isCommunityInbox(groupId: String): Boolean {
-        return groupId.startsWith(COMMUNITY_INBOX_PREFIX)
-    }
-
-    @JvmStatic
-    fun isLegacyClosedGroup(groupId: String): Boolean {
-        return groupId.startsWith(LEGACY_CLOSED_GROUP_PREFIX)
-    }
-
     // NOTE: Signal group ID handling is weird. The ID is double encoded in the database, but not in a `GroupContext`.
 
     @JvmStatic
@@ -113,17 +75,6 @@ object GroupUtil {
     fun doubleEncodeGroupID(groupPublicKey: String): String {
         if (groupPublicKey.startsWith(IdPrefix.GROUP.value)) throw IllegalArgumentException("Trying to double encode a new closed group")
         return getEncodedClosedGroupID(getEncodedClosedGroupID(Hex.fromStringCondensed(groupPublicKey)).toByteArray())
-    }
-
-    @JvmStatic
-    fun doubleEncodeGroupID(groupID: ByteArray): String {
-        return getEncodedClosedGroupID(getEncodedClosedGroupID(groupID).toByteArray())
-    }
-
-    @JvmStatic
-    @Throws(IOException::class)
-    fun doubleDecodeGroupID(groupID: String): ByteArray {
-        return getDecodedGroupIDAsData(getDecodedGroupID(groupID))
     }
 
     @JvmStatic
