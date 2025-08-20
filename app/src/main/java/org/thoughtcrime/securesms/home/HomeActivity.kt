@@ -22,7 +22,6 @@ import androidx.core.view.updatePadding
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.Navigator
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
@@ -40,7 +39,6 @@ import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityHomeBinding
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
-import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.jobs.JobQueue
@@ -695,18 +693,14 @@ class HomeActivity : ScreenLockActionBarActivity(),
     }
 
     private fun deleteConversation(thread: ThreadRecord) {
-        val threadID = thread.threadId
         val recipient = thread.recipient
 
         if (recipient.address is Address.Group) {
             confirmAndLeaveGroup(
-                dialogData = groupManagerV2.getLeaveGroupConfirmationDialogData(recipient.address.accountId, recipient.displayName()),
-                threadID = threadID,
-                storage = storage,
-                doLeave = {
-                    homeViewModel.leaveGroup(recipient.address.accountId)
-                }
-            )
+                dialogData = groupManagerV2.getLeaveGroupConfirmationDialogData(recipient.address.accountId, recipient.displayName())
+            ) {
+                homeViewModel.leaveGroup(recipient.address.accountId)
+            }
 
             return
         }
@@ -772,7 +766,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
         }
 
         if (recipient.isLegacyGroupRecipient || recipient.isCommunityRecipient) {
-            val group = groupDatabase.getGroup(recipient.address.toString()).orNull()
             positiveButtonId = R.string.leave
 
             // If you are an admin of this group you can delete it
@@ -780,19 +773,19 @@ class HomeActivity : ScreenLockActionBarActivity(),
             val isGroupAdmin = if(deprecationManager.isDeprecated){
                 false
             } else { // prior to the deprecated state, calculate admin rights properly
-                group.admins.map { it.toString() }.contains(textSecurePreferences.getLocalNumber())
+                recipient.currentUserRole.canModerate
             }
 
-            if (group != null && isGroupAdmin) {
+            if (isGroupAdmin) {
                 title = getString(R.string.groupLeave)
                 message = Phrase.from(this, R.string.groupLeaveDescriptionAdmin)
-                    .put(GROUP_NAME_KEY, group.title)
+                    .put(GROUP_NAME_KEY, recipient.displayName())
                     .format()
             } else {
                 // Otherwise this is either a community, or it's a group you're not an admin of
                 title = if (recipient.isCommunityRecipient) getString(R.string.communityLeave) else getString(R.string.groupLeave)
                 message = Phrase.from(this.applicationContext, R.string.groupLeaveDescription)
-                    .put(GROUP_NAME_KEY, group.title)
+                    .put(GROUP_NAME_KEY, recipient.displayName())
                     .format()
             }
         } else {
@@ -822,8 +815,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     private fun confirmAndLeaveGroup(
         dialogData: GroupManagerV2.ConfirmDialogData?,
-        threadID: Long,
-        storage: StorageProtocol,
         doLeave: suspend () -> Unit,
     ) {
         if (dialogData == null) return
