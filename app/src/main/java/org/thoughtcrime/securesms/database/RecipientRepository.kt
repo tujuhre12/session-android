@@ -517,7 +517,7 @@ class RecipientRepository @Inject constructor(
                 partial = partial,
                 firstMember = partial.members.firstOrNull()?.let { member ->
                     fetchGroupMember(member, settingsFetcher)
-                },
+                } ?: getSelf(), // Fallback to have self as first member if no members are present
                 secondMember = partial.members.getOrNull(1)?.let { member ->
                     fetchGroupMember(member, settingsFetcher)
                 },
@@ -561,7 +561,9 @@ class RecipientRepository @Inject constructor(
                         GroupMemberRole.STANDARD
                     }
                 },
-                firstMember = memberAddresses.firstOrNull()?.let { fetchLegacyGroupMember(it, settingsFetcher) },
+                firstMember = memberAddresses.firstOrNull()
+                    ?.let { fetchLegacyGroupMember(it, settingsFetcher) }
+                    ?: getSelf(),  // Fallback to have self as first member if no members are present
                 secondMember = memberAddresses.getOrNull(1)?.let { fetchLegacyGroupMember(it, settingsFetcher) },
                 isCurrentUserAdmin = Address.Standard(myAccountId) in group.admins
             ),

@@ -153,14 +153,14 @@ private fun AvatarElement(
     maxSizeLoad: Dp = LocalDimensions.current.iconLarge,
 ){
     // first attempt to display the custom image if there is one
-    if (data.contactPhoto != null){
+    if (data.remoteFile != null){
         val maxSizePx = with(LocalDensity.current) {
             maxSizeLoad.toPx().toInt().coerceAtLeast(size.toPx().toInt())
         }
 
         SubcomposeAsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
-                .data(data.contactPhoto)
+                .data(data.remoteFile)
                 .allowRgb565(true)
                 .avatarOptions(maxSizePx, freezeFrame = data.freezeFrame)
                 .build(),
@@ -276,7 +276,7 @@ fun PreviewAvatarElement(
             data = AvatarUIElement(
                 name = "TO",
                 color = primaryGreen,
-                contactPhoto = null
+                remoteFile = null
             )
         )
     }
@@ -292,7 +292,7 @@ fun PreviewAvatarSingleAdmin(){
                 listOf(AvatarUIElement(
                 name = "AT",
                 color = primaryGreen,
-                contactPhoto = null
+                remoteFile = null
             ))),
             badge = AvatarBadge.Admin
         )
@@ -309,12 +309,12 @@ fun PreviewAvatarDouble(){
                 listOf(AvatarUIElement(
                     name = "FR",
                     color = primaryGreen,
-                    contactPhoto = null
+                    remoteFile = null
                 ),
                 AvatarUIElement(
                     name = "AT",
                     color = primaryBlue,
-                    contactPhoto = null
+                    remoteFile = null
                 )
             ))
         )
@@ -331,7 +331,7 @@ fun PreviewAvatarSingleUnknown(){
                 listOf(AvatarUIElement(
                 name = "",
                 color = null,
-                contactPhoto = null
+                remoteFile = null
             )))
         )
     }
@@ -348,7 +348,7 @@ fun PreviewAvatarIconNoName(){
                     name = "",
                     icon = R.drawable.session_logo,
                     color = null,
-                    contactPhoto = null
+                    remoteFile = null
                 )))
         )
     }
@@ -365,7 +365,7 @@ fun PreviewAvatarIconWithName(){
                     name = "TO",
                     icon = R.drawable.session_logo,
                     color = null,
-                    contactPhoto = null
+                    remoteFile = null
                 )))
         )
     }
@@ -381,7 +381,7 @@ fun PreviewAvatarSinglePhoto(){
                 listOf(AvatarUIElement(
                 name = "AT",
                 color = primaryGreen,
-                contactPhoto = null
+                remoteFile = null
             )))
         )
     }
@@ -396,7 +396,7 @@ fun PreviewAvatarElementUnclipped(){
             data = AvatarUIElement(
                 name = "TO",
                 color = primaryGreen,
-                contactPhoto = null
+                remoteFile = null
             ),
             clip = RectangleShape
         )

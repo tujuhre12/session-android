@@ -27,7 +27,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
@@ -492,7 +491,7 @@ class ConversationViewModel @AssistedInject constructor(
             showProBadge = proStatusManager.shouldShowProBadge(conversation.address) && !conversation.isLocalNumber // do not show for note to self
         ).also {
             // also preload the larger version of the avatar in case the user goes to the settings
-            avatarData.elements.mapNotNull { it.contactPhoto }.forEach {
+            avatarData.elements.mapNotNull { it.remoteFile }.forEach {
                 val loadSize = application.resources.getDimensionPixelSize(R.dimen.xxl_profile_picture_size)
 
                 val request = ImageRequest.Builder(application)

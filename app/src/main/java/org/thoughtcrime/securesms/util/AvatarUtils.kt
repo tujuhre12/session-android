@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.util
 
 import android.content.Context
-import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Rect
@@ -16,10 +15,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
 import coil3.decode.BitmapFactoryDecoder
 import coil3.request.ImageRequest
-import com.bumptech.glide.RequestBuilder
-import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.bumptech.glide.load.resource.bitmap.CenterCrop
-import com.bumptech.glide.request.RequestOptions
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -27,9 +22,9 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
+import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.IdPrefix
-import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import java.math.BigInteger
@@ -103,7 +98,7 @@ class AvatarUtils @Inject constructor(
         val defaultColor = Color(getColorFromKey(recipient.address.toString()))
 
         // custom image
-        val (contactPhoto, customIcon, color) = when {
+        val (remoteFile, customIcon, color) = when {
             // use custom image if there is one
             recipient.avatar != null -> Triple(recipient.avatar!!, null, defaultColor)
 
@@ -116,7 +111,7 @@ class AvatarUtils @Inject constructor(
             name = extractLabel(name),
             color = color,
             icon = customIcon,
-            contactPhoto = contactPhoto,
+            remoteFile = remoteFile,
             freezeFrame = proStatusManager.freezeFrameForUser(recipient.address)
         )
     }
@@ -214,14 +209,14 @@ data class AvatarUIData(
      * a custom photo.
      * This is used for example to know when to display a fullscreen avatar on tap
      */
-    fun isSingleCustomAvatar() = elements.size == 1 && elements[0].contactPhoto != null
+    fun isSingleCustomAvatar() = elements.size == 1 && elements[0].remoteFile != null
 }
 
 data class AvatarUIElement(
     val name: String? = null,
     val color: Color? = null,
     @DrawableRes val icon: Int? = null,
-    val contactPhoto: Any? = null,
+    val remoteFile: RemoteFile? = null,
     val freezeFrame: Boolean = true,
 )
 
@@ -230,21 +225,6 @@ sealed class AvatarBadge(@DrawableRes val icon: Int){
     data object Admin: AvatarBadge(R.drawable.ic_crown_custom_enlarged)
     data class Custom(@DrawableRes val iconRes: Int): AvatarBadge(iconRes)
 }
-
-// Helper function for our common avatar Glide options
-fun <T>RequestBuilder<T>.avatarOptions(
-    sizePx: Int,
-    freezeFrame: Boolean
-): RequestBuilder<T> = this.override(sizePx)
-    .dontTransform()
-    .diskCacheStrategy(DiskCacheStrategy.NONE)
-    .optionalTransform(CenterCrop())
-    .run {
-        if(freezeFrame){
-            this.dontAnimate()
-                .apply(RequestOptions.decodeTypeOf(Bitmap::class.java))
-        } else this
-    }
 
 fun ImageRequest.Builder.avatarOptions(
     sizePx: Int,

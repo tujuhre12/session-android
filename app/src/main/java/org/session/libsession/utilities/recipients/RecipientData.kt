@@ -9,7 +9,6 @@ import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.AccountId
 import java.time.ZonedDateTime
-import java.util.EnumSet
 
 /**
  * Represents different kind of data associated with different types of recipients.
@@ -160,7 +159,7 @@ sealed interface RecipientData {
      */
     data class Group(
         val partial: PartialGroup,
-        override val firstMember: Recipient?, // Used primarily to assemble the profile picture for the group.
+        override val firstMember: Recipient, // Used primarily to assemble the profile picture for the group.
         override val secondMember: Recipient?, // Used primarily to assemble the profile picture for the group.
     ) : RecipientData, GroupLike {
         override val avatar: RemoteFile?
@@ -189,7 +188,7 @@ sealed interface RecipientData {
         override val priority: Long,
         val members: Map<AccountId, GroupMemberRole>,
         val isCurrentUserAdmin: Boolean,
-        override val firstMember: Recipient?, // Used primarily to assemble the profile picture for the group.
+        override val firstMember: Recipient, // Used primarily to assemble the profile picture for the group.
         override val secondMember: Recipient?, // Used primarily to assemble the profile picture for the group.
     ) : RecipientData, GroupLike {
         override val avatar: RemoteFile?

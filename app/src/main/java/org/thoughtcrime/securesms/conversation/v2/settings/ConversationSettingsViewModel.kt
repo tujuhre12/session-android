@@ -11,7 +11,6 @@ import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity.CLIPBOARD_SERVICE
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.bumptech.glide.Glide
 import com.squareup.phrase.Phrase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -67,8 +66,6 @@ import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
-import org.thoughtcrime.securesms.util.avatarOptions
-import kotlin.math.min
 
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
