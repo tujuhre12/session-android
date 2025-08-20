@@ -103,7 +103,7 @@
                     android:visibility="visible"
                     app:layout_constrainedWidth="true"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toStartOf="@+id/unreadCountIndicator"
+                    app:layout_constraintEnd_toStartOf="@+id/unreadCountTextView"
                     app:layout_constraintHorizontal_bias="0"
                     app:layout_constraintHorizontal_chainStyle="packed"
                     app:layout_constraintStart_toEndOf="@+id/iconPinned"
@@ -131,62 +131,51 @@
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
-                <RelativeLayout
-                    android:id="@+id/unreadCountIndicator"
+                <TextView
+                    android:id="@+id/unreadCountTextView"
                     android:layout_width="wrap_content"
                     android:layout_height="20dp"
-                    android:layout_marginStart="4dp"
+                    android:layout_marginStart="@dimen/very_small_spacing"
+                    android:background="@drawable/rounded_rectangle"
+                    android:backgroundTint="?unreadIndicatorBackgroundColor"
+                    android:gravity="center"
+                    android:includeFontPadding="true"
+                    android:maxWidth="40dp"
+                    android:minWidth="20dp"
+                    android:paddingStart="@dimen/very_small_spacing"
+                    android:paddingEnd="@dimen/very_small_spacing"
+                    android:textColor="?unreadIndicatorTextColor"
+                    android:textSize="@dimen/very_small_font_size"
+                    android:textStyle="bold"
+                    app:layout_constrainedWidth="true"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/unreadMentionBadge"
                     app:layout_constraintStart_toEndOf="@id/markedUnreadIndicator"
-                    app:layout_constraintEnd_toStartOf="@id/unreadMentionIndicator"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    android:minWidth="20dp"
-                    android:maxWidth="40dp"
-                    android:paddingLeft="4dp"
-                    android:paddingRight="4dp"
-                    android:background="@drawable/rounded_rectangle"
-                    android:backgroundTint="?unreadIndicatorBackgroundColor">
+                    tools:text="88" />
 
-                    <TextView
-                        android:id="@+id/unreadCountTextView"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_centerInParent="true"
-                        android:textColor="?unreadIndicatorTextColor"
-                        android:textSize="@dimen/very_small_font_size"
-                        android:textStyle="bold"
-                        tools:text="8"/>
-
-                </RelativeLayout>
-
-                <RelativeLayout
-                    android:id="@+id/unreadMentionIndicator"
+                <TextView
+                    android:id="@+id/unreadMentionBadge"
                     android:layout_width="wrap_content"
                     android:layout_height="20dp"
-                    android:layout_marginStart="4dp"
-                    app:layout_constraintStart_toEndOf="@id/unreadCountIndicator"
-                    app:layout_constraintEnd_toStartOf="@id/timestampTextView"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    android:minWidth="20dp"
-                    android:maxWidth="40dp"
-                    android:paddingLeft="4dp"
-                    android:paddingRight="4dp"
+                    android:layout_marginStart="@dimen/very_small_spacing"
                     android:background="@drawable/rounded_rectangle"
-                    android:backgroundTint="?unreadIndicatorBackgroundColor">
-
-                    <TextView
-                        android:id="@+id/unreadMentionTextView"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_centerInParent="true"
-                        android:paddingBottom="3dp"
-                        android:textColor="?unreadIndicatorTextColor"
-                        android:textSize="@dimen/very_small_font_size"
-                        android:textStyle="bold"
-                        android:text="@" />
-
-                </RelativeLayout>
+                    android:backgroundTint="?unreadIndicatorBackgroundColor"
+                    android:gravity="center"
+                    android:includeFontPadding="true"
+                    android:maxWidth="40dp"
+                    android:minWidth="20dp"
+                    android:paddingStart="@dimen/very_small_spacing"
+                    android:paddingEnd="@dimen/very_small_spacing"
+                    android:text="@"
+                    android:textColor="?unreadIndicatorTextColor"
+                    android:textSize="@dimen/very_small_font_size"
+                    android:textStyle="bold"
+                    app:layout_constrainedWidth="true"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/timestampTextView"
+                    app:layout_constraintStart_toEndOf="@id/unreadCountTextView"
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <TextView
                     android:id="@+id/timestampTextView"
