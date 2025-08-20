@@ -37,6 +37,9 @@ internal class NewMessageViewModel @Inject constructor(
 
     private var loadOnsJob: Job? = null
 
+    private var lasQrScan: Long = 0L
+    private val qrDebounceTime = 3000L
+
     override fun onChange(value: String) {
         loadOnsJob?.cancel()
         loadOnsJob = null
@@ -68,10 +71,18 @@ internal class NewMessageViewModel @Inject constructor(
     }
 
     override fun onScanQrCode(value: String) {
-        if (PublicKeyValidation.isValid(value, isPrefixRequired = false) && PublicKeyValidation.hasValidPrefix(value)) {
-            onPublicKey(value)
-        } else {
-            _qrErrors.tryEmit(application.getString(R.string.qrNotAccountId))
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lasQrScan > qrDebounceTime) {
+            lasQrScan = currentTime
+            if (PublicKeyValidation.isValid(
+                    value,
+                    isPrefixRequired = false
+                ) && PublicKeyValidation.hasValidPrefix(value)
+            ) {
+                onPublicKey(value)
+            } else {
+                _qrErrors.tryEmit(application.getString(R.string.qrNotAccountId))
+            }
         }
     }
 
