@@ -63,6 +63,7 @@ fun UserProfileModal(
     data: UserProfileModalData,
     sendCommand: (UserProfileModalCommands) -> Unit,
     onDismissRequest: () -> Unit,
+    onPostAction: (() -> Unit)? = null // a function for optional code once an action has been taken
 ){
     // the user profile modal
     val context = LocalContext.current
@@ -192,6 +193,9 @@ fun UserProfileModal(
                     onClick = {
                         // close dialog
                         onDismissRequest()
+
+                        // optional action
+                        onPostAction?.invoke()
 
                         // open conversation with user
                         context.startActivity(Intent(context, ConversationActivityV2::class.java)

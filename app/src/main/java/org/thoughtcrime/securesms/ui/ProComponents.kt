@@ -515,6 +515,7 @@ fun AnimatedSessionProActivatedCTA(
 @Composable
 fun GenericProCTA(
     onDismissRequest: () -> Unit,
+    onPostAction: (() -> Unit)? = null // a function for optional code once an action has been taken
 ){
     val context = LocalContext.current
     AnimatedSessionProCTA(
@@ -532,6 +533,7 @@ fun GenericProCTA(
         ),
         onUpgrade = {
             onDismissRequest()
+            onPostAction?.invoke()
             //todo PRO go to screen once it exists
         },
         onCancel = {
