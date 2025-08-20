@@ -76,10 +76,12 @@ class ConversationView : LinearLayout {
             binding.accentView.visibility = if(hasUnreadCount) View.VISIBLE else View.INVISIBLE
         }
 
-        binding.unreadCountTextView.text = UnreadStylingHelper.formatUnreadCount(unreadCount)
+        binding.unreadCountTextView.apply{
+            text = UnreadStylingHelper.formatUnreadCount(unreadCount)
+            isVisible = hasUnreadCount
+        }
 
-        binding.unreadCountIndicator.isVisible = hasUnreadCount
-        binding.unreadMentionIndicator.isVisible = thread.unreadMentionCount != 0
+        binding.unreadMentionBadge.isVisible = thread.unreadMentionCount != 0
         binding.markedUnreadIndicator.isVisible = isMarkedUnread
 
         val senderDisplayName = getTitle(thread.recipient)
