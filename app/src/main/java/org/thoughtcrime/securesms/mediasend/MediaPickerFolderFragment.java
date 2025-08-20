@@ -24,7 +24,7 @@ import com.bumptech.glide.Glide;
 import com.squareup.phrase.Phrase;
 
 import org.session.libsession.utilities.recipients.Recipient;
-import org.session.libsession.utilities.recipients.RecipientKt;
+import org.session.libsession.utilities.recipients.RecipientNamesKt;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.util.ViewUtilitiesKt;
 
@@ -46,7 +46,7 @@ public class MediaPickerFolderFragment extends Fragment implements MediaPickerFo
 
   public static @NonNull MediaPickerFolderFragment newInstance(@NonNull Recipient recipient) {
     Bundle args = new Bundle();
-    args.putString(KEY_RECIPIENT_NAME, RecipientKt.displayName(recipient));
+    args.putString(KEY_RECIPIENT_NAME, RecipientNamesKt.displayName(recipient));
 
     MediaPickerFolderFragment fragment = new MediaPickerFolderFragment();
     fragment.setArguments(args);

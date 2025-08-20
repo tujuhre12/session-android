@@ -16,7 +16,7 @@ import com.bumptech.glide.Glide;
 import org.session.libsession.database.StorageProtocol;
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager;
 import org.session.libsession.utilities.recipients.Recipient;
-import org.session.libsession.utilities.recipients.RecipientKt;
+import org.session.libsession.utilities.recipients.RecipientNamesKt;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.ShareActivity;
 import org.thoughtcrime.securesms.database.RecipientRepository;
@@ -82,7 +82,7 @@ public class DirectShareService extends ChooserTargetService {
         bundle.putParcelable(ShareActivity.EXTRA_ADDRESS, recipient.getAddress());
         bundle.setClassLoader(getClassLoader());
 
-        results.add(new ChooserTarget(RecipientKt.displayName(recipient), Icon.createWithBitmap(avatar), 1.0f, componentName, bundle));
+        results.add(new ChooserTarget(RecipientNamesKt.displayName(recipient), Icon.createWithBitmap(avatar), 1.0f, componentName, bundle));
     }
 
     return results;

@@ -16,7 +16,7 @@ import androidx.core.view.ViewCompat;
 
 import org.session.libsession.utilities.CenterAlignedRelativeSizeSpan;
 import org.session.libsession.utilities.recipients.Recipient;
-import org.session.libsession.utilities.recipients.RecipientKt;
+import org.session.libsession.utilities.recipients.RecipientNamesKt;
 import org.thoughtcrime.securesms.components.emoji.EmojiTextView;
 import org.thoughtcrime.securesms.util.ResUtil;
 
@@ -39,7 +39,7 @@ public class FromTextView extends EmojiTextView {
   }
 
   public void setText(Recipient recipient, boolean read) {
-    final String fromString = RecipientKt.displayName(recipient);
+    final String fromString = RecipientNamesKt.displayName(recipient);
 
     int typeface;
 

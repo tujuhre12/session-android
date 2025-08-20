@@ -15,7 +15,7 @@ import org.session.libsession.utilities.NotificationPrivacyPreference;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.recipients.Recipient;
-import org.session.libsession.utilities.recipients.RecipientKt;
+import org.session.libsession.utilities.recipients.RecipientNamesKt;
 
 import network.loki.messenger.R;
 
@@ -42,7 +42,7 @@ public abstract class AbstractNotificationBuilder extends NotificationCompat.Bui
 
   protected CharSequence getStyledMessage(@NonNull Recipient recipient, @Nullable CharSequence message) {
     SpannableStringBuilder builder = new SpannableStringBuilder();
-    builder.append(Util.getBoldedString(RecipientKt.displayName(recipient)));
+    builder.append(Util.getBoldedString(RecipientNamesKt.displayName(recipient)));
     builder.append(": ");
     builder.append(message == null ? "" : message);
 

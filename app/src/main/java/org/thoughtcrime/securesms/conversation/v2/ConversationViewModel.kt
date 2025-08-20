@@ -8,8 +8,6 @@ import androidx.lifecycle.viewModelScope
 import coil3.imageLoader
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
-import coil3.util.CoilUtils
-import com.bumptech.glide.Glide
 import com.squareup.phrase.Phrase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -29,6 +27,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
@@ -56,7 +55,6 @@ import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ExpirationUtil
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.isCommunityInbox
 import org.session.libsession.utilities.isGroupV2
@@ -65,6 +63,7 @@ import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.recipients.getType
+import org.session.libsession.utilities.recipients.observeEffectiveNotifyType
 import org.session.libsession.utilities.toGroupString
 import org.session.libsession.utilities.upsertContact
 import org.session.libsession.utilities.userConfigsChanged
@@ -91,7 +90,6 @@ import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.groups.ExpiredGroupManager
-import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.AudioSlide
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
@@ -104,7 +102,6 @@ import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.UserProfileModalCommands
 import org.thoughtcrime.securesms.util.UserProfileModalData
 import org.thoughtcrime.securesms.util.UserProfileUtils
-import org.thoughtcrime.securesms.util.avatarOptions
 import org.thoughtcrime.securesms.util.mapStateFlow
 import org.thoughtcrime.securesms.util.mapToStateFlow
 import org.thoughtcrime.securesms.webrtc.CallManager
@@ -192,7 +189,7 @@ class ConversationViewModel @AssistedInject constructor(
 
     val appBarData: StateFlow<ConversationAppBarData> = combine(
         recipientFlow,
-        openGroupFlow,
+        recipientFlow.flatMapLatest { it.observeEffectiveNotifyType() },
         _searchOpened,
         ::getAppBarData
     ).filterNotNull()
@@ -425,7 +422,9 @@ class ConversationViewModel @AssistedInject constructor(
         }
     }
 
-    private suspend fun getAppBarData(conversation: Recipient, community: OpenGroup?, showSearch: Boolean): ConversationAppBarData? {
+    private fun getAppBarData(conversation: Recipient,
+                              effectiveNotifyType: NotifyType,
+                              showSearch: Boolean): ConversationAppBarData? {
         // sort out the pager data, if any
         val pagerData: MutableList<ConversationAppBarPagerData> = mutableListOf()
         // Specify the disappearing messages subtitle if we should
@@ -454,7 +453,7 @@ class ConversationViewModel @AssistedInject constructor(
             )
         }
 
-        if (conversation.isMuted() || conversation.notifyType == NotifyType.MENTIONS) {
+        if (effectiveNotifyType == NotifyType.NONE || effectiveNotifyType == NotifyType.MENTIONS) {
             pagerData += ConversationAppBarPagerData(
                 title = getNotificationStatusTitle(conversation),
                 action = {
@@ -464,8 +463,11 @@ class ConversationViewModel @AssistedInject constructor(
         }
 
         if (conversation.isGroupOrCommunityRecipient && conversation.approved) {
-            val title = if (conversation.isCommunityRecipient) {
-                val userCount = community?.let { lokiAPIDb.getUserCount(it.room, it.server) } ?: 0
+            val title = if (conversation.address is Address.Community) {
+                val userCount = lokiAPIDb.getUserCount(
+                    room = conversation.address.room,
+                    server = conversation.address.serverUrl
+                ) ?: 0
                 application.resources.getQuantityString(R.plurals.membersActive, userCount, userCount)
             } else {
                 val userCount = if (conversation.isGroupV2Recipient) {

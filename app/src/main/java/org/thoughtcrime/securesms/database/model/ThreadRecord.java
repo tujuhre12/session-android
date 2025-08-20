@@ -36,7 +36,7 @@ import org.session.libsession.messaging.utilities.UpdateMessageData;
 import org.session.libsession.utilities.AddressKt;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.recipients.Recipient;
-import org.session.libsession.utilities.recipients.RecipientKt;
+import org.session.libsession.utilities.recipients.RecipientNamesKt;
 import org.thoughtcrime.securesms.database.MmsSmsColumns;
 import org.thoughtcrime.securesms.database.SmsDatabase;
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate;
@@ -83,7 +83,7 @@ public class ThreadRecord extends DisplayRecord {
   }
 
     private String getName() {
-        return RecipientKt.displayName(getRecipient());
+        return RecipientNamesKt.displayName(getRecipient());
     }
 
     @Override
@@ -202,7 +202,7 @@ public class ThreadRecord extends DisplayRecord {
                 prefix = context.getString(R.string.you);
             }
             else if(lastMessage != null){
-                prefix = RecipientKt.displayName(lastMessage.getIndividualRecipient());
+                prefix = RecipientNamesKt.displayName(lastMessage.getIndividualRecipient());
             }
 
             return Phrase.from(context.getString(R.string.messageSnippetGroup))
