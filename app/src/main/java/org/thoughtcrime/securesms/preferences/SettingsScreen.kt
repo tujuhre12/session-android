@@ -243,7 +243,8 @@ fun Settings(
                             .padding(LocalDimensions.current.xxxsSpacing)
                             .align(Alignment.BottomEnd)
                         ,
-                        painter = painterResource(id = R.drawable.ic_plus),
+                        painter = painterResource(id = if(avatarData.elements.first().contactPhoto == null) R.drawable.ic_plus
+                        else R.drawable.ic_pencil),
                         contentDescription = null,
                         colorFilter = ColorFilter.tint(Color.Black)
                     )
@@ -509,7 +510,8 @@ fun Buttons(
 
                 Crossfade(if (hasPaths) primaryGreen else primaryYellow, label = "path") {
                     LargeItemButton(
-                        AnnotatedString(stringResource(R.string.onionRoutingPath)),
+                        modifier = Modifier.qaTag(R.string.qa_settings_item_path),
+                        annotatedStringText = AnnotatedString(stringResource(R.string.onionRoutingPath)),
                         icon = {
                             PathDot(
                                 modifier = Modifier.align(Alignment.Center),

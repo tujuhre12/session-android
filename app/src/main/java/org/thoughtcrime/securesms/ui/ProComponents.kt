@@ -515,6 +515,7 @@ fun AnimatedSessionProActivatedCTA(
 @Composable
 fun GenericProCTA(
     onDismissRequest: () -> Unit,
+    onPostAction: (() -> Unit)? = null // a function for optional code once an action has been taken
 ){
     val context = LocalContext.current
     AnimatedSessionProCTA(
@@ -532,6 +533,7 @@ fun GenericProCTA(
         ),
         onUpgrade = {
             onDismissRequest()
+            onPostAction?.invoke()
             //todo PRO go to screen once it exists
         },
         onCancel = {
@@ -574,7 +576,10 @@ fun AnimatedProfilePicProCTA(
     AnimatedSessionProCTA(
         heroImageBg = R.drawable.cta_hero_animated_bg,
         heroImageAnimatedFg = R.drawable.cta_hero_animated_fg,
-        text = stringResource(R.string.proAnimatedDisplayPictureCallToActionDescription),
+        text = Phrase.from(LocalContext.current, R.string.proAnimatedDisplayPictureCallToActionDescription)
+            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+            .format()
+            .toString(),
         features = listOf(
             CTAFeature.Icon(stringResource(R.string.proFeatureListAnimatedDisplayPicture)),
             CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),

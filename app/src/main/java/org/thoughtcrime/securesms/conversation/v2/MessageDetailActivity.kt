@@ -450,6 +450,15 @@ fun CellButtons(
                 Divider()
             }
 
+            onResend?.let {
+                LargeItemButton(
+                    R.string.resend,
+                    R.drawable.ic_repeat_2,
+                    onClick = it
+                )
+                Divider()
+            }
+
             LargeItemButton(
                 R.string.messageCopy,
                 R.drawable.ic_copy,
@@ -461,15 +470,6 @@ fun CellButtons(
                 LargeItemButton(
                     R.string.save,
                     R.drawable.ic_arrow_down_to_line,
-                    onClick = it
-                )
-                Divider()
-            }
-
-            onResend?.let {
-                LargeItemButton(
-                    R.string.resend,
-                    R.drawable.ic_repeat_2,
                     onClick = it
                 )
                 Divider()

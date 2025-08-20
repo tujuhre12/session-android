@@ -76,26 +76,20 @@ class ConversationView : LinearLayout {
             binding.accentView.visibility = if(hasUnreadCount) View.VISIBLE else View.INVISIBLE
         }
 
-        binding.unreadCountTextView.text = UnreadStylingHelper.formatUnreadCount(unreadCount)
+        binding.unreadCountTextView.apply{
+            text = UnreadStylingHelper.formatUnreadCount(unreadCount)
+            isVisible = hasUnreadCount
+        }
 
-        binding.unreadCountIndicator.isVisible = hasUnreadCount
-        binding.unreadMentionIndicator.isVisible = (thread.unreadMentionCount != 0 && thread.recipient.address.isGroupOrCommunity)
+        binding.unreadMentionBadge.isVisible = thread.unreadMentionCount != 0
         binding.markedUnreadIndicator.isVisible = isMarkedUnread
 
         val senderDisplayName = getTitle(thread.recipient)
 
-        // set up thread name
-        binding.conversationViewDisplayName.apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-            setThemedContent {
-                ProBadgeText(
-                    text = senderDisplayName,
-                    textStyle = LocalType.current.h8.bold().copy(color = LocalColors.current.text),
-                    showBadge = proStatusManager.shouldShowProBadge(thread.recipient.address)
-                            && !thread.recipient.isLocalNumber,
-                )
-            }
-        }
+        // Thread name and pro badge
+        binding.conversationViewDisplayName.text = senderDisplayName
+        binding.iconPro.isVisible = proStatusManager.shouldShowProBadge(thread.recipient.address)
+                && !thread.recipient.isLocalNumber
 
         binding.timestampTextView.text = thread.date.takeIf { it != 0L }?.let { dateUtils.getDisplayFormattedTimeSpanString(
             it

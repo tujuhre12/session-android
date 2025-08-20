@@ -5,6 +5,7 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -62,6 +63,7 @@ fun UserProfileModal(
     data: UserProfileModalData,
     sendCommand: (UserProfileModalCommands) -> Unit,
     onDismissRequest: () -> Unit,
+    onPostAction: (() -> Unit)? = null // a function for optional code once an action has been taken
 ){
     // the user profile modal
     val context = LocalContext.current
@@ -104,7 +106,12 @@ fun UserProfileModal(
 
             // account ID
             AccountIdHeader(
-                text = if(data.isBlinded) stringResource(R.string.blindedId) else stringResource(R.string.accountId)
+                text = if(data.isBlinded) stringResource(R.string.blindedId) else stringResource(R.string.accountId),
+                textStyle = LocalType.current.small,
+                textPaddingValues = PaddingValues(
+                    horizontal = LocalDimensions.current.smallSpacing,
+                    vertical = LocalDimensions.current.xxxsSpacing
+                )
             )
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
@@ -186,6 +193,9 @@ fun UserProfileModal(
                     onClick = {
                         // close dialog
                         onDismissRequest()
+
+                        // optional action
+                        onPostAction?.invoke()
 
                         // open conversation with user
                         context.startActivity(Intent(context, ConversationActivityV2::class.java)

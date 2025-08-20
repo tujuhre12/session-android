@@ -317,7 +317,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
 
                             features.contains(LongMessage) -> ProBadgeCTA.LongMessage
                             features.contains(AnimatedAvatar) -> ProBadgeCTA.AnimatedProfile
-                            else -> null
+                            else -> ProBadgeCTA.Generic
                         }
                     )
                 }

@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
@@ -114,6 +115,11 @@ import kotlin.math.roundToInt
 fun AccountIdHeader(
     modifier: Modifier = Modifier,
     text: String = stringResource(R.string.accountId),
+    textStyle: TextStyle = LocalType.current.base,
+    textPaddingValues: PaddingValues = PaddingValues(
+        horizontal = LocalDimensions.current.contentSpacing,
+        vertical = LocalDimensions.current.xxsSpacing
+    )
 ){
     Row(
         modifier = modifier,
@@ -128,14 +134,13 @@ fun AccountIdHeader(
 
         Text(
             modifier = Modifier
-                .border()
-                .padding(
-                    horizontal = LocalDimensions.current.smallSpacing,
-                    vertical = LocalDimensions.current.xxxsSpacing
+                .border(
+                    shape = MaterialTheme.shapes.large
                 )
+                .padding(textPaddingValues)
             ,
             text = text,
-            style = LocalType.current.small.copy(color = LocalColors.current.textSecondary)
+            style = textStyle.copy(color = LocalColors.current.textSecondary)
         )
 
         Box(
@@ -804,6 +809,7 @@ fun LoadingArcOr(loading: Boolean, content: @Composable () -> Unit) {
 fun SpeechBubbleTooltip(
     text: CharSequence,
     modifier: Modifier = Modifier,
+    maxWidth: Dp = LocalDimensions.current.maxTooltipWidth,
     tooltipState: TooltipState = rememberTooltipState(),
     content: @Composable () -> Unit,
 ) {
@@ -814,23 +820,22 @@ fun SpeechBubbleTooltip(
                 tooltip = {
             val bubbleColor = LocalColors.current.backgroundBubbleReceived
 
-            Column {
-                Card(
-                    shape = MaterialTheme.shapes.medium,
-                    colors = CardDefaults.cardColors(containerColor = bubbleColor),
-                    elevation = CardDefaults.elevatedCardElevation(4.dp)
-                ) {
-                    Text(
-                        text = annotatedStringResource(text),
-                        modifier = Modifier.padding(
-                            horizontal = LocalDimensions.current.xsSpacing,
-                            vertical = LocalDimensions.current.xxsSpacing
-                        ),
-                        style = LocalType.current.small,
-                        color = LocalColors.current.text
-                    )
-                }
-
+            Card(
+                modifier = Modifier.widthIn(max = maxWidth),
+                shape = MaterialTheme.shapes.medium,
+                colors = CardDefaults.cardColors(containerColor = bubbleColor),
+                elevation = CardDefaults.elevatedCardElevation(4.dp)
+            ) {
+                Text(
+                    text = annotatedStringResource(text),
+                    modifier = Modifier.padding(
+                        horizontal = LocalDimensions.current.xsSpacing,
+                        vertical = LocalDimensions.current.xxsSpacing
+                    ),
+                    textAlign = TextAlign.Center,
+                    style = LocalType.current.small,
+                    color = LocalColors.current.text
+                )
             }
         }
     ) {
