@@ -7,5 +7,5 @@ import org.thoughtcrime.securesms.mms.Slide
 data class MediaPreviewArgs(
     val slide: Slide,
     val mmsRecord: MmsMessageRecord,
-    val thread: Address,
+    val conversationAddress: Address,
 )

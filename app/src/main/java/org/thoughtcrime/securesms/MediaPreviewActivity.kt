@@ -61,14 +61,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.MediaPreviewActivityBinding
 import network.loki.messenger.databinding.MediaViewPageBinding
@@ -105,7 +101,6 @@ import org.thoughtcrime.securesms.util.FilenameUtils.getFilenameFromUri
 import org.thoughtcrime.securesms.util.SaveAttachmentTask
 import org.thoughtcrime.securesms.util.SaveAttachmentTask.Companion.showOneTimeWarningDialogOrSave
 import java.io.IOException
-import java.util.Locale
 import java.util.WeakHashMap
 import javax.inject.Inject
 import kotlin.math.max
@@ -123,7 +118,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
     private var initialMediaType: String? = null
     private var initialMediaSize: Long = 0
     private var initialCaption: String? = null
-    private var conversationRecipient: Address? = null
+    private var conversationAddress: Address? = null
     private var leftIsRecent = false
     private val viewModel: MediaPreviewViewModel by viewModels()
     private var viewPagerListener: ViewPagerListener? = null
@@ -355,7 +350,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
     }
 
     private fun initializeResources() {
-        conversationRecipient = IntentCompat.getParcelableExtra(intent,
+        conversationAddress = IntentCompat.getParcelableExtra(intent,
             ADDRESS_EXTRA,
             Address::class.java
         )
@@ -437,7 +432,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
             "Loading Part URI: $initialMediaUri"
         )
 
-        if (conversationRecipient != null) {
+        if (conversationAddress != null) {
             LoaderManager.getInstance(this).restartLoader(0, null, this)
         } else {
             finish()
@@ -445,7 +440,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
     }
 
     private fun showOverview() {
-        conversationRecipient?.let { startActivity(MediaOverviewActivity.createIntent(this, it)) }
+        conversationAddress?.let { startActivity(MediaOverviewActivity.createIntent(this, it)) }
     }
 
     private fun forward() {
@@ -529,13 +524,13 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
             .format().toString()
 
     private fun sendMediaSavedNotificationIfNeeded() {
-        if (conversationRecipient == null || conversationRecipient?.isGroupOrCommunity == true) return
+        if (conversationAddress == null || conversationAddress?.isGroupOrCommunity == true) return
         val message = DataExtractionNotification(
             MediaSaved(
                 nowWithOffset
             )
         )
-        send(message, conversationRecipient!!)
+        send(message, conversationAddress!!)
     }
 
     @SuppressLint("StaticFieldLeak")
@@ -560,8 +555,8 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
         val inflater = this.menuInflater
         inflater.inflate(R.menu.media_preview, menu)
 
-        val isDeprecatedLegacyGroup = conversationRecipient != null &&
-                conversationRecipient?.isLegacyGroup == true &&
+        val isDeprecatedLegacyGroup = conversationAddress != null &&
+                conversationAddress?.isLegacyGroup == true &&
                 deprecationManager.deprecationState.value == LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
 
         if (!isMediaInDb || isDeprecatedLegacyGroup) {
@@ -606,7 +601,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
     }
 
     private val isMediaInDb: Boolean
-        get() = conversationRecipient != null
+        get() = conversationAddress != null
 
     private val currentMediaItem: MediaItem?
         get() {
@@ -623,7 +618,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
     override fun onCreateLoader(id: Int, args: Bundle?): Loader<Pair<Cursor, Int>?> {
         return PagingMediaLoader(
             this,
-            conversationRecipient!!, initialMediaUri!!, leftIsRecent
+            conversationAddress!!, initialMediaUri!!, leftIsRecent
         )
     }
 
@@ -840,7 +835,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
             return getPreviewIntent(
                 context, args.slide,
                 args.mmsRecord,
-                args.thread
+                args.conversationAddress
             )
         }
 
