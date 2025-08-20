@@ -510,7 +510,8 @@ fun Buttons(
 
                 Crossfade(if (hasPaths) primaryGreen else primaryYellow, label = "path") {
                     LargeItemButton(
-                        AnnotatedString(stringResource(R.string.onionRoutingPath)),
+                        modifier = Modifier.qaTag(R.string.qa_settings_item_path),
+                        annotatedStringText = AnnotatedString(stringResource(R.string.onionRoutingPath)),
                         icon = {
                             PathDot(
                                 modifier = Modifier.align(Alignment.Center),
