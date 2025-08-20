@@ -63,8 +63,9 @@ import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
+import org.session.libsession.utilities.recipients.effectiveNotifyType
 import org.session.libsession.utilities.recipients.getType
-import org.session.libsession.utilities.recipients.observeEffectiveNotifyType
+import org.session.libsession.utilities.recipients.repeatedWithEffectiveNotifyTypeChange
 import org.session.libsession.utilities.toGroupString
 import org.session.libsession.utilities.upsertContact
 import org.session.libsession.utilities.userConfigsChanged
@@ -189,8 +190,7 @@ class ConversationViewModel @AssistedInject constructor(
     private val _searchOpened = MutableStateFlow(false)
 
     val appBarData: StateFlow<ConversationAppBarData> = combine(
-        recipientFlow,
-        recipientFlow.flatMapLatest { it.observeEffectiveNotifyType() },
+        recipientFlow.repeatedWithEffectiveNotifyTypeChange(),
         _searchOpened,
         ::getAppBarData
     ).filterNotNull()
@@ -417,7 +417,6 @@ class ConversationViewModel @AssistedInject constructor(
     }
 
     private fun getAppBarData(conversation: Recipient,
-                              effectiveNotifyType: NotifyType,
                               showSearch: Boolean): ConversationAppBarData? {
         // sort out the pager data, if any
         val pagerData: MutableList<ConversationAppBarPagerData> = mutableListOf()
@@ -447,9 +446,10 @@ class ConversationViewModel @AssistedInject constructor(
             )
         }
 
+        val effectiveNotifyType = recipient.effectiveNotifyType()
         if (effectiveNotifyType == NotifyType.NONE || effectiveNotifyType == NotifyType.MENTIONS) {
             pagerData += ConversationAppBarPagerData(
-                title = getNotificationStatusTitle(conversation),
+                title = getNotificationStatusTitle(effectiveNotifyType),
                 action = {
                     showNotificationSettings()
                 }
@@ -509,9 +509,12 @@ class ConversationViewModel @AssistedInject constructor(
         }
     }
 
-    private fun getNotificationStatusTitle(conversation: Recipient): String {
-        return if(conversation.isMuted()) application.getString(R.string.notificationsHeaderMute)
-        else application.getString(R.string.notificationsHeaderMentionsOnly)
+    private fun getNotificationStatusTitle(notifyType: NotifyType): String {
+        return when (notifyType) {
+            NotifyType.NONE -> application.getString(R.string.notificationsHeaderMute)
+            NotifyType.MENTIONS -> application.getString(R.string.notificationsHeaderMentionsOnly)
+            NotifyType.ALL -> ""
+        }
     }
 
     /**
