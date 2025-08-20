@@ -36,6 +36,7 @@ import org.session.libsession.utilities.isGroupV2
 import org.session.libsession.utilities.isLegacyGroup
 import org.session.libsession.utilities.isStandard
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.updateContact
 import org.session.libsession.utilities.upsertContact
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
@@ -471,15 +472,22 @@ class DefaultConversationRepository @Inject constructor(
     }
 
     override suspend fun clearAllMessageRequests(block: Boolean) = runCatching {
-        observeConversationList()
-            .first()
-            .forEach { record ->
-                deleteMessageRequest(record)
-                val recipient = record.recipient
-                if (block && !recipient.isGroupV2Recipient) {
-                    setBlocked(recipient.address, true)
+        configFactory.withMutableUserConfigs { configs ->
+            val unapproved = configs.contacts.all()
+                .asSequence()
+                .filter { !it.approved }
+
+            if (block) {
+                for (contact in unapproved) {
+                    contact.blocked = true
+                    configs.contacts.set(contact)
+                }
+            } else {
+                for (contact in unapproved) {
+                    configs.contacts.erase(contact.id)
                 }
             }
+        }
     }
 
     override suspend fun clearAllMessages(threadId: Long, groupId: AccountId?): Int {
