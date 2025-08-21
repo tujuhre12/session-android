@@ -50,9 +50,17 @@ sealed class Destination {
                     } ?: throw Exception("Missing open group for thread with ID: $threadID.")
                 }
                 is Address.CommunityBlindedId -> {
+                    val serverPublicKey = MessagingModuleConfiguration.shared.configFactory
+                        .withUserConfigs { configs ->
+                            configs.userGroups.allCommunityInfo()
+                                .first { it.community.baseUrl == address.serverUrl.toString() }
+                                .community
+                                .pubKeyHex
+                        }
+
                     OpenGroupInbox(
-                        server = address.serverUrl,
-                        serverPublicKey = address.serverPubKey,
+                        server = address.serverUrl.toString(),
+                        serverPublicKey = serverPublicKey,
                         blindedPublicKey = address.blindedId.blindedId.hexString,
                     )
                 }

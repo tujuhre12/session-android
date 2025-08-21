@@ -39,6 +39,7 @@ import org.session.libsession.utilities.AddressKt;
 import org.session.libsession.utilities.ConfigFactoryProtocol;
 import org.session.libsession.utilities.ConfigFactoryProtocolKt;
 import org.session.libsession.utilities.DistributionTypes;
+import org.session.libsession.utilities.GroupUtil;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.recipients.Recipient;
@@ -72,6 +73,7 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import dagger.Lazy;
+import kotlin.Triple;
 import kotlin.collections.CollectionsKt;
 import kotlinx.coroutines.channels.BufferOverflow;
 import kotlinx.coroutines.flow.Flow;
@@ -79,6 +81,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow;
 import kotlinx.coroutines.flow.SharedFlowKt;
 import kotlinx.serialization.json.Json;
 import network.loki.messenger.libsession_util.util.GroupInfo;
+import okhttp3.HttpUrl;
 
 @Singleton
 public class ThreadDatabase extends Database implements OnAppStartupComponent {
@@ -171,6 +174,60 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
     return "ALTER TABLE "+ TABLE_NAME + " " +
             "ADD COLUMN " + UNREAD_MENTION_COUNT + " INTEGER DEFAULT 0;";
   }
+
+  public static void migrateLegacyCommunityAddresses(final SQLiteDatabase db) {
+    final String query = "SELECT " + ID + ", " + ADDRESS + " FROM " + TABLE_NAME;
+    try (final Cursor cursor = db.rawQuery(query)) {
+        while (cursor.moveToNext()) {
+            final long threadId = cursor.getLong(0);
+            final String address = cursor.getString(1);
+            final String newAddress;
+
+            try {
+                if (address.startsWith(GroupUtil.COMMUNITY_PREFIX)) {
+                  // Fill out the real community address from the database
+                  final String communityQuery = "SELECT public_chat ->>'$.server', public_chat ->> '$.room' FROM loki_public_chat_database WHERE thread_id = ?";
+
+                  try (final Cursor communityCursor = db.rawQuery(communityQuery, threadId)) {
+                    if (communityCursor.moveToNext()) {
+                      newAddress = new Address.Community(
+                              communityCursor.getString(0),
+                              communityCursor.getString(1)
+                      ).toString();
+                    } else {
+                      Log.d(TAG, "Unable to find open group for " + address);
+                      continue;
+                    }
+                  }
+                } else if (address.startsWith(GroupUtil.COMMUNITY_INBOX_PREFIX)) {
+                  Triple<String, String, AccountId> triple = GroupUtil.getDecodedOpenGroupInboxID(address);
+                  if (triple == null) {
+                    Log.w(TAG, "Unable to decode open group inbox address: " + address);
+                    continue;
+                  } else {
+                    newAddress = new Address.CommunityBlindedId(
+                            HttpUrl.get(triple.getFirst()),
+                            new Address.Blinded(triple.getThird())
+                    ).toString();
+                  }
+                } else {
+                  continue;
+                }
+            } catch (Throwable e) {
+                Log.e(TAG, "Error while migrating address " + address, e);
+                continue;
+            }
+
+            if (!newAddress.equals(address)) {
+                Log.i(TAG, "Migrating thread ID=" + threadId);
+                ContentValues contentValues = new ContentValues(1);
+                contentValues.put(ADDRESS, newAddress);
+                db.update(TABLE_NAME, contentValues, ID + " = ?", new String[]{String.valueOf(threadId)});
+            }
+        }
+    }
+  }
+
 
   private final MutableSharedFlow<Long> updateNotifications = SharedFlowKt.MutableSharedFlow(0, 256, BufferOverflow.DROP_OLDEST);
   private final Json json;

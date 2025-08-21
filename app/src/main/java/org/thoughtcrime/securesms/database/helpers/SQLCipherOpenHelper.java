@@ -549,6 +549,11 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
       }
 
       if (oldVersion < lokiV52) {
+        // The recipient database must be migrated BEFORE the thread db as it contains lookup into
+        // the pre-migrated thread data.
+        RecipientDatabase.migrateOldCommunityAddresses(db);
+        ThreadDatabase.migrateLegacyCommunityAddresses(db);
+
         executeStatements(db, RecipientSettingsDatabase.Companion.getMIGRATION_CREATE_TABLE());
         db.execSQL(RecipientSettingsDatabase.MIGRATE_MOVE_DATA_FROM_OLD_TABLE);
         db.execSQL(RecipientSettingsDatabase.MIGRATE_DROP_OLD_TABLE);

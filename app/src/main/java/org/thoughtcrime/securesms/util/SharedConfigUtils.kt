@@ -24,7 +24,7 @@ fun ReadableConversationVolatileConfig.getConversationUnread(recipientAddress: A
         }
 
         is Address.Community -> {
-            getCommunity(baseUrl = recipientAddress.serverUrl, room = recipientAddress.room)?.unread == true
+            getCommunity(baseUrl = recipientAddress.serverUrl.toString(), room = recipientAddress.room)?.unread == true
         }
 
         is Address.CommunityBlindedId -> false

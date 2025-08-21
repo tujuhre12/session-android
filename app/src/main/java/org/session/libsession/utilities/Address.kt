@@ -3,6 +3,9 @@ package org.session.libsession.utilities
 import android.os.Parcel
 import android.os.Parcelable
 import kotlinx.serialization.Serializable
+import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
@@ -87,38 +90,57 @@ sealed class Address : Parcelable, Comparable<Address> {
         override fun toString(): String = address
     }
 
-    data class CommunityBlindedId(val serverUrl: String, val serverPubKey: String, val blindedId: Blinded) : Conversable(), WithAccountId {
+    data class CommunityBlindedId(val serverUrl: HttpUrl, val blindedId: Blinded) : Conversable(), WithAccountId {
         override val accountId: AccountId
             get() = blindedId.blindedId
 
         override val address: String by lazy(LazyThreadSafetyMode.NONE) {
-            GroupUtil.getEncodedOpenGroupInboxAddress(
-                server = serverUrl,
-                pubKey = serverPubKey,
-                blindedAccountId = blindedId.blindedId
-            )
+            serverUrl
+                .newBuilder()
+                .addQueryParameter(URL_QUERY_ARG_BLINDED_ID, blindedId.blindedId.hexString)
+                .build()
+                .toString()
         }
 
         override val debugString: String
-            get() = "CommunityBlindedId(serverUrl=$serverUrl, blindedId=$blindedId)"
+            get() = "CommunityBlindedId(" +
+                    "serverUrl=${serverUrl.redact().substring(0, 10)}, " +
+                    "blindedId=${blindedId.debugString})"
 
         override fun toString(): String = address
+
+        companion object {
+            const val URL_QUERY_ARG_BLINDED_ID = "session_android_address_blinded_id"
+        }
     }
 
-    data class Community(val serverUrl: String, val room: String) : Conversable() {
+    data class Community(val serverUrl: HttpUrl, val room: String) : Conversable() {
         constructor(openGroup: OpenGroup): this(
-            serverUrl = openGroup.server,
+            serverUrl = openGroup.server.toHttpUrl(),
             room = openGroup.room
         )
 
+        constructor(serverUrl: String, room: String) : this(
+            serverUrl = serverUrl.toHttpUrl(),
+            room = room
+        )
+
         override val address: String by lazy(LazyThreadSafetyMode.NONE) {
-            GroupUtil.getEncodedOpenGroupID("$serverUrl.$room".toByteArray())
+            serverUrl
+                .newBuilder()
+                .addQueryParameter(URL_QUERY_ARG_ROOM, room)
+                .build()
+                .toString()
         }
 
         override val debugString: String
-            get() = "Community(serverUrl=${serverUrl.substring(10)}, room=xxxx)"
+            get() = "Community(serverUrl=${serverUrl.redact().substring(0, 10)}, room=xxxx)"
 
         override fun toString(): String = address
+
+        companion object {
+            const val URL_QUERY_ARG_ROOM = "session_android_address_room"
+        }
     }
 
     data class Unknown(val serialized: String) : Address() {
@@ -149,24 +171,49 @@ sealed class Address : Parcelable, Comparable<Address> {
     companion object {
         @JvmStatic
         fun fromSerialized(serialized: String): Address {
-            if (serialized.startsWith(GroupUtil.COMMUNITY_INBOX_PREFIX)) {
-                val (url, key, id) = requireNotNull(GroupUtil.getDecodedOpenGroupInboxID(serialized)) {
-                    "Invalid serialized community inbox address: $serialized"
-                }
-
-                return CommunityBlindedId(url, key, Blinded(id))
+            val url = if (serialized.startsWith("http://", ignoreCase = true) ||
+                serialized.startsWith("https://", ignoreCase = true)) {
+                serialized.toHttpUrlOrNull()
+            } else {
+                null
             }
 
-            if (serialized.startsWith(GroupUtil.COMMUNITY_PREFIX)) {
-                val groupId = GroupUtil.getDecodedGroupID(serialized)
-                val lastDot = groupId.lastIndexOf('.')
-                require(lastDot >= 0) {
-                    "Invalid community address: $serialized"
+            if (url != null) {
+                // Check if the URL has a blinded ID query parameter
+                val blindedId = url.queryParameter(CommunityBlindedId.URL_QUERY_ARG_BLINDED_ID)
+                if (blindedId != null) {
+                    // First we need to make sure this id is valid..
+                    val blinded = runCatching { Blinded(AccountId(blindedId)) }
+                        .getOrNull()
+
+                    // If we have blinded id but failed to parse it, it's an unknown address
+                    if (blinded == null) {
+                        return Unknown(serialized)
+                    }
+
+                    return CommunityBlindedId(
+                        serverUrl = url.newBuilder().removeAllQueryParameters(
+                            CommunityBlindedId.URL_QUERY_ARG_BLINDED_ID)
+                            .build(),
+                        blindedId = blinded
+                    )
                 }
 
-                val serverUrl = groupId.substring(0, lastDot)
-                val room = groupId.substring(lastDot + 1)
-                return Community(serverUrl, room)
+                // Check if we have a room query parameter instead
+                val room = url.queryParameter(Community.URL_QUERY_ARG_ROOM)
+                if (room != null) {
+                    if (room.isBlank()) {
+                        return Unknown(serialized)
+                    }
+
+                    // If we have a room, we can create a Community address
+                    return Community(
+                        serverUrl = url.newBuilder()
+                            .removeAllQueryParameters(Community.URL_QUERY_ARG_ROOM)
+                            .build(),
+                        room = room
+                    )
+                }
             }
 
             if (serialized.startsWith(GroupUtil.LEGACY_CLOSED_GROUP_PREFIX)) {

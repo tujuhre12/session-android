@@ -194,28 +194,28 @@ class ConfigToDatabaseSync @Inject constructor(
 
     private fun onCommunityAdded(address: Address.Community, threadId: Long) {
         // Clear any existing data for this community
-        lokiAPIDatabase.removeLastDeletionServerID(room = address.room, server = address.serverUrl)
-        lokiAPIDatabase.removeLastMessageServerID(room = address.room, server = address.serverUrl)
-        lokiAPIDatabase.removeLastInboxMessageId(address.serverUrl)
-        lokiAPIDatabase.removeLastOutboxMessageId(address.serverUrl)
+        lokiAPIDatabase.removeLastDeletionServerID(room = address.room, server = address.serverUrl.toString())
+        lokiAPIDatabase.removeLastMessageServerID(room = address.room, server = address.serverUrl.toString())
+        lokiAPIDatabase.removeLastInboxMessageId(address.serverUrl.toString())
+        lokiAPIDatabase.removeLastOutboxMessageId(address.serverUrl.toString())
 
         val community = configFactory.withUserConfigs {
             it.userGroups.allCommunityInfo()
-        }.firstOrNull { it.community.baseUrl == address.serverUrl }?.community
+        }.firstOrNull { it.community.baseUrl == address.serverUrl.toString() }?.community
 
         if (community != null) {
             //TODO: This is to save a community public key in the database, but this
             // data is readily available in the config system, remove this once
             // we refactor the OpenGroupManager to use the config system directly.
-            lokiAPIDatabase.setOpenGroupPublicKey(address.serverUrl, community.pubKeyHex)
+            lokiAPIDatabase.setOpenGroupPublicKey(address.serverUrl.toString(), community.pubKeyHex)
         }
     }
 
     private fun deleteCommunityData(address: Address.Community, threadId: Long) {
-        lokiAPIDatabase.removeLastDeletionServerID(room = address.room, server = address.serverUrl)
-        lokiAPIDatabase.removeLastMessageServerID(room = address.room, server = address.serverUrl)
-        lokiAPIDatabase.removeLastInboxMessageId(address.serverUrl)
-        lokiAPIDatabase.removeLastOutboxMessageId(address.serverUrl)
+        lokiAPIDatabase.removeLastDeletionServerID(room = address.room, server = address.serverUrl.toString())
+        lokiAPIDatabase.removeLastMessageServerID(room = address.room, server = address.serverUrl.toString())
+        lokiAPIDatabase.removeLastInboxMessageId(address.serverUrl.toString())
+        lokiAPIDatabase.removeLastOutboxMessageId(address.serverUrl.toString())
         lokiThreadDatabase.removeOpenGroupChat(threadId)
         groupDatabase.delete(address.address)
     }

@@ -291,7 +291,7 @@ class ConversationViewModel @AssistedInject constructor(
         // If we are able to unblind a user, we will navigate to that convo instead
         (address as? Address.CommunityBlindedId)?.let { address ->
             viewModelScope.launch {
-                blindMappingRepository.observeMapping(address.serverUrl, address.blindedId)
+                blindMappingRepository.observeMapping(address.serverUrl.toString(), address.blindedId)
                     .filterNotNull()
                     .collect { contactId ->
                         _uiEvents.emit(ConversationUiEvent.NavigateToConversation(contactId))
@@ -460,7 +460,7 @@ class ConversationViewModel @AssistedInject constructor(
             val title = if (conversation.address is Address.Community) {
                 val userCount = lokiAPIDb.getUserCount(
                     room = conversation.address.room,
-                    server = conversation.address.serverUrl
+                    server = conversation.address.serverUrl.toString()
                 ) ?: 0
                 application.resources.getQuantityString(R.plurals.membersActive, userCount, userCount)
             } else {
@@ -1282,11 +1282,16 @@ class ConversationViewModel @AssistedInject constructor(
             is Address.CommunityBlindedId -> {
                 if (configFactory.withUserConfigs { it.contacts.getBlinded(address.blindedId.address) } == null) {
                     configFactory.withMutableUserConfigs { configs ->
+                        val serverPubKey = configs.userGroups.allCommunityInfo()
+                            .first { it.community.baseUrl == address.serverUrl.toString() }
+                            .community
+                            .pubKeyHex
+
                         configs.contacts.setBlinded(
                             BlindedContact(
                                 id = address.blindedId.blindedId.hexString,
-                                communityServer = address.serverUrl,
-                                communityServerPubKeyHex = address.serverPubKey,
+                                communityServer = address.serverUrl.toString(),
+                                communityServerPubKeyHex = serverPubKey,
                                 name = recipient.displayName(attachesBlindedId = false),
                                 createdEpochSeconds = ZonedDateTime.now().toEpochSecond(),
                                 profilePic = recipient.data.avatar?.toUserPic() ?: UserPic.DEFAULT,

@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
@@ -16,6 +15,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.groups.GroupManagerV2
@@ -36,7 +36,6 @@ import org.session.libsession.utilities.isGroupV2
 import org.session.libsession.utilities.isLegacyGroup
 import org.session.libsession.utilities.isStandard
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.updateContact
 import org.session.libsession.utilities.upsertContact
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
@@ -156,8 +155,7 @@ class DefaultConversationRepository @Inject constructor(
             for (blindedContact in configs.contacts.allBlinded()) {
                 if (blindedContact.priority >= 0) {
                     add(Address.CommunityBlindedId(
-                        serverUrl = blindedContact.communityServer,
-                        serverPubKey = blindedContact.communityServerPubKeyHex,
+                        serverUrl = blindedContact.communityServer.toHttpUrl(),
                         blindedId = Address.Blinded(AccountId(blindedContact.id))
                     ))
                 }

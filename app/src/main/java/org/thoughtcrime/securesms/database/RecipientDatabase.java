@@ -2,15 +2,26 @@ package org.thoughtcrime.securesms.database;
 
 import static org.session.libsession.utilities.GroupUtil.COMMUNITY_PREFIX;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 
 import com.annimon.stream.Stream;
 
+import net.zetetic.database.sqlcipher.SQLiteDatabase;
+
+import org.session.libsession.utilities.Address;
+import org.session.libsession.utilities.GroupUtil;
+import org.session.libsignal.utilities.AccountId;
+import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 
 import java.util.List;
 
 import javax.inject.Provider;
+
+import kotlin.Triple;
+import okhttp3.HttpUrl;
 
 /**
  * Note that you should not use this table anymore, use {@link RecipientSettingsDatabase} instead.
@@ -166,6 +177,62 @@ public class RecipientDatabase extends Database {
   public static String getAddBlocksCommunityMessageRequests() {
     return "ALTER TABLE "+TABLE_NAME+" "+
             "ADD COLUMN "+BLOCKS_COMMUNITY_MESSAGE_REQUESTS+" INT DEFAULT 0;";
+  }
+
+  public static void migrateOldCommunityAddresses(final SQLiteDatabase db) {
+    final String query = "SELECT " + ID + ", " + ADDRESS + " FROM " + TABLE_NAME;
+
+    try (final Cursor cursor = db.rawQuery(query)) {
+      while (cursor.moveToNext()) {
+        final long id = cursor.getLong(0);
+        final String address = cursor.getString(1);
+        final String newAddress;
+
+        try {
+          if (address.startsWith(GroupUtil.COMMUNITY_PREFIX)) {
+            // Fill out the real community address from the database
+            final String communityQuery = "SELECT public_chat ->>'$.server', public_chat ->> '$.room' FROM loki_public_chat_database WHERE thread_id IN (SELECT " +
+                    ThreadDatabase.ID + " FROM " + ThreadDatabase.TABLE_NAME + " WHERE " + ThreadDatabase.ADDRESS + " = ? LIMIT 1)";
+
+            try (final Cursor communityCursor = db.rawQuery(communityQuery, address)) {
+              if (communityCursor.moveToNext()) {
+                newAddress = new Address.Community(
+                        communityCursor.getString(0),
+                        communityCursor.getString(1)
+                ).toString();
+              } else {
+                Log.d(TAG, "Unable to find open group for " + address);
+                continue;
+              }
+            }
+          } else if (address.startsWith(GroupUtil.COMMUNITY_INBOX_PREFIX)) {
+            Triple<String, String, AccountId> triple = GroupUtil.getDecodedOpenGroupInboxID(address);
+            if (triple == null) {
+              Log.w(TAG, "Unable to decode open group inbox address: " + address);
+              continue;
+            } else {
+              newAddress = new Address.CommunityBlindedId(
+                      HttpUrl.get(triple.getFirst()),
+                      new Address.Blinded(triple.getThird())
+              ).toString();
+            }
+          } else {
+            continue;
+          }
+        } catch (Throwable e) {
+          Log.e(TAG, "Error while migrating address " + address, e);
+          continue;
+        }
+
+        if (!newAddress.equals(address)) {
+          Log.i(TAG, "Migrating recipient settings ID = " + id);
+          ContentValues contentValues = new ContentValues(1);
+          contentValues.put(ADDRESS, newAddress);
+          db.update(TABLE_NAME, contentValues, ID + " = ?", new String[]{String.valueOf(id)});
+        }
+      }
+    }
+
   }
 
   public static final int NOTIFY_TYPE_ALL = 0;

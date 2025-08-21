@@ -718,7 +718,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 // Delete the conversation
                 when (recipient.address) {
                     is Address.Community -> {
-                        openGroupManager.delete(recipient.address.serverUrl, recipient.address.room)
+                        openGroupManager.delete(recipient.address.serverUrl.toString(), recipient.address.room)
                     }
 
                     is Address.Standard -> {
@@ -742,7 +742,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                     is Address.CommunityBlindedId -> {
                         configFactory.withMutableUserConfigs { configs ->
                             configs.contacts.eraseBlinded(
-                                communityServerUrl = recipient.address.serverUrl,
+                                communityServerUrl = recipient.address.serverUrl.toString(),
                                 blindedId = recipient.address.blindedId.blindedId.hexString
                             )
                         }

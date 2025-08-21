@@ -298,7 +298,7 @@ class ConfigFactory @Inject constructor(
         withMutableUserConfigs {
             when (address) {
                 is Address.CommunityBlindedId -> it.contacts.eraseBlinded(
-                    communityServerUrl = address.serverUrl,
+                    communityServerUrl = address.serverUrl.toString(),
                     blindedId = address.blindedId.blindedId.hexString,
                 )
 

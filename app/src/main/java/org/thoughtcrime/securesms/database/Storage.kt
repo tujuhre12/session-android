@@ -7,7 +7,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.MutableConversationVolatileConfig
-import network.loki.messenger.libsession_util.util.BaseCommunityInfo
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.Bytes
 import network.loki.messenger.libsession_util.util.Conversation

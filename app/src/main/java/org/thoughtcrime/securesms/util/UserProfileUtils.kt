@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
@@ -99,8 +100,7 @@ class UserProfileUtils @AssistedInject constructor(
             is Address.Blinded -> {
                 storage.getOpenGroup(threadId)?.let { openGroup ->
                     Address.CommunityBlindedId(
-                        serverUrl = openGroup.server,
-                        serverPubKey = openGroup.publicKey,
+                        serverUrl = openGroup.server.toHttpUrl(),
                         blindedId = resolvedAddress
                     )
                 }

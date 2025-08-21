@@ -15,7 +15,11 @@ class AddressTest {
         Scenario("Standard Address", "0538e63512fd78c04d45b83ec7f0f3d593f60276ce535d1160eb589a00cca7db59", Address.Standard::class.java),
         Scenario("Legacy group address", GroupUtil.doubleEncodeGroupID("ab0123"), Address.LegacyGroup::class.java),
         Scenario("Blinded Address", "1538e63512fd78c04d45b83ec7f0f3d593f60276ce535d1160eb589a00cca7db59", Address.Blinded::class.java),
-        Scenario("Community Address", "__loki_public_chat_group__!68747470733a2f2f6f70656e2e67657473657373696f6e2e6f72672e73657373696f6e2d75706461746573", Address.Community::class.java),
+        Scenario("Unused legacy Community Address", "__loki_public_chat_group__!68747470733a2f2f6f70656e2e67657473657373696f6e2e6f72672e73657373696f6e2d75706461746573", Address.Unknown::class.java),
+        Scenario("Community Address", "https://open.getsession.org/?session_android_address_room=session", Address.Community::class.java),
+        Scenario("Unknown Community Address", "https://open.getsession.org", Address.Unknown::class.java),
+        Scenario("Community Blinded Address", "https://open.getsession.org/?session_android_address_blinded_id=1538e63512fd78c04d45b83ec7f0f3d593f60276ce535d1160eb589a00cca7db59", Address.CommunityBlindedId::class.java),
+        Scenario("Invalid Community Blinded Address", "https://open.getsession.org/?session_android_address_blinded_id=invalid", Address.Unknown::class.java),
     )
 
     @Test

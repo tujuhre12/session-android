@@ -1,5 +1,6 @@
 package org.session.libsession.messaging.sending_receiving
 
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.session.libsession.messaging.messages.ProfileUpdateHandler
 import org.session.libsession.messaging.messages.ProfileUpdateHandler.Updates.Companion.toUpdates
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
@@ -28,7 +29,6 @@ class MessageRequestResponseHandler @Inject constructor(
     private val mmsDatabase: MmsDatabase,
     private val smsDatabase: SmsDatabase,
     private val threadDatabase: ThreadDatabase,
-    private val conversationRepository: ConversationRepository,
     private val blindMappingRepository: BlindMappingRepository,
 ) {
 
@@ -115,8 +115,7 @@ class MessageRequestResponseHandler @Inject constructor(
                 val blindedConversationAddresses = blindMappingRepository.calculateReverseMappings(messageSender.address)
                     .mapTo(hashSetOf()) { (c, id) ->
                         Address.CommunityBlindedId(
-                            serverUrl = c.baseUrl,
-                            serverPubKey = c.pubKeyHex,
+                            serverUrl = c.baseUrl.toHttpUrl(),
                             blindedId = id,
                         )
                     }
@@ -147,7 +146,7 @@ class MessageRequestResponseHandler @Inject constructor(
 
     }
 
-    private suspend fun moveConversation(fromThreadId: Long, toThreadId: Long) {
+    private fun moveConversation(fromThreadId: Long, toThreadId: Long) {
         check(fromThreadId != toThreadId) {
             "Cannot move conversation to the same thread"
         }
