@@ -67,8 +67,9 @@ class ProfileUpdateHandler @Inject constructor(
                                 profileUpdatedEpochSeconds = updates.profileUpdateTime?.toEpochSeconds() ?: 0L,
                             )
                         )
+                        Log.d(TAG, "Updated contact profile for ${standardSender.debugString}")
                     } else {
-                        Log.d(TAG, "Ignoring profile update for ${standardSender.debugString}, no changes detected")
+                        Log.d(TAG, "Ignoring contact profile update for ${standardSender.debugString}, no changes detected")
                     }
                 } ?: Log.w(TAG, "Got a unblinded address for a contact but it does not exist: ${standardSender.debugString}")
             }
@@ -130,9 +131,7 @@ class ProfileUpdateHandler @Inject constructor(
         lastUpdated: Instant?,
         newUpdateTime: Instant?
     ): Boolean {
-        return (lastUpdated == null && newUpdateTime == null) ||
-                (lastUpdated == null) ||
-                (newUpdateTime != null && newUpdateTime > lastUpdated)
+        return (lastUpdated == null || newUpdateTime == null) || (newUpdateTime > lastUpdated)
     }
 
     class Updates private constructor(
