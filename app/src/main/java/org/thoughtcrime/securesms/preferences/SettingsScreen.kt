@@ -55,7 +55,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -101,7 +100,6 @@ import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LargeItemButton
-import org.thoughtcrime.securesms.ui.LargeItemButtonWithDrawable
 import org.thoughtcrime.securesms.ui.LoadingDialog
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.PathDot
@@ -460,7 +458,7 @@ fun Buttons(
         if (BuildConfig.BUILD_TYPE != "release") {
             Cell{
                 LargeItemButton(
-                    "Debug Menu",
+                    annotatedStringResource("Debug Menu"),
                     R.drawable.ic_settings,
                 ) { activity?.push<DebugActivity>() }
             }
@@ -471,10 +469,16 @@ fun Buttons(
         Cell {
             Column {
                 if(postPro){
-                    LargeItemButtonWithDrawable(
-                        text = GetString(NonTranslatableStringConstants.APP_PRO),
-                        icon = R.drawable.ic_pro_badge,
-                        iconSize = LocalDimensions.current.iconLargeAvatar,
+                    LargeItemButton(
+                        text = annotatedStringResource(NonTranslatableStringConstants.APP_PRO),
+                        icon = {
+                            Image(
+                                modifier = Modifier.size(LocalDimensions.current.iconLargeAvatar)
+                                    .align(Alignment.Center),
+                                painter = painterResource(R.drawable.ic_pro_badge),
+                                contentDescription = null,
+                            )
+                        },
                         modifier = Modifier.qaTag(R.string.qa_settings_item_pro),
                         colors = accentTextButtonColors()
                     ) {
@@ -483,11 +487,10 @@ fun Buttons(
                     Divider()
                 }
 
-
                 // Invite a friend
                 LargeItemButton(
-                    textId = R.string.sessionInviteAFriend,
-                    icon = R.drawable.ic_user_round_plus,
+                    text = annotatedStringResource(R.string.sessionInviteAFriend),
+                    iconRes = R.drawable.ic_user_round_plus,
                     modifier = Modifier.qaTag(R.string.AccessibilityId_sessionInviteAFriend)
                 ) { context.sendInvitationToUseSession() }
             }
@@ -498,9 +501,9 @@ fun Buttons(
         Cell {
             Column {
                 // Donate
-                LargeItemButtonWithDrawable(
-                    text = GetString(R.string.donate),
-                    icon = R.drawable.ic_heart,
+                LargeItemButton(
+                    text = annotatedStringResource(R.string.donate),
+                    iconRes = R.drawable.ic_heart,
                     iconTint = LocalColors.current.accent,
                     modifier = Modifier.qaTag(R.string.qa_settings_item_donate),
                 ) {
@@ -511,7 +514,7 @@ fun Buttons(
                 Crossfade(if (hasPaths) primaryGreen else primaryYellow, label = "path") {
                     LargeItemButton(
                         modifier = Modifier.qaTag(R.string.qa_settings_item_path),
-                        annotatedStringText = AnnotatedString(stringResource(R.string.onionRoutingPath)),
+                        text = annotatedStringResource(R.string.onionRoutingPath),
                         icon = {
                             PathDot(
                                 modifier = Modifier.align(Alignment.Center),
@@ -526,8 +529,8 @@ fun Buttons(
                 // Add the token page option.
                 LargeItemButton(
                     modifier = Modifier.qaTag(R.string.qa_settings_item_session_network),
-                    text = NETWORK_NAME,
-                    icon = R.drawable.session_network_logo
+                    text = annotatedStringResource(NETWORK_NAME),
+                    iconRes = R.drawable.ic_sent_custom
                 ) { activity?.push<TokenPageActivity>() }
             }
         }
@@ -536,19 +539,24 @@ fun Buttons(
 
         Cell {
             Column {
-                LargeItemButton(R.string.sessionPrivacy, R.drawable.ic_lock_keyhole, Modifier.qaTag(R.string.AccessibilityId_sessionPrivacy)) { activity?.push<PrivacySettingsActivity>() }
+                LargeItemButton(annotatedStringResource(R.string.sessionPrivacy),
+                    R.drawable.ic_lock_keyhole, Modifier.qaTag(R.string.AccessibilityId_sessionPrivacy)) { activity?.push<PrivacySettingsActivity>() }
                 Divider()
 
-                LargeItemButton(R.string.sessionNotifications, R.drawable.ic_volume_2, Modifier.qaTag(R.string.AccessibilityId_notifications)) { activity?.push<NotificationSettingsActivity>() }
+                LargeItemButton(annotatedStringResource(R.string.sessionNotifications),
+                    R.drawable.ic_volume_2, Modifier.qaTag(R.string.AccessibilityId_notifications)) { activity?.push<NotificationSettingsActivity>() }
                 Divider()
 
-                LargeItemButton(R.string.sessionConversations, R.drawable.ic_users_round, Modifier.qaTag(R.string.AccessibilityId_sessionConversations)) { activity?.push<ChatSettingsActivity>() }
+                LargeItemButton(annotatedStringResource(R.string.sessionConversations),
+                    R.drawable.ic_users_round, Modifier.qaTag(R.string.AccessibilityId_sessionConversations)) { activity?.push<ChatSettingsActivity>() }
                 Divider()
 
-                LargeItemButton(R.string.sessionAppearance, R.drawable.ic_paintbrush_vertical, Modifier.qaTag(R.string.AccessibilityId_sessionAppearance)) { activity?.push<AppearanceSettingsActivity>() }
+                LargeItemButton(annotatedStringResource(R.string.sessionAppearance),
+                    R.drawable.ic_paintbrush_vertical, Modifier.qaTag(R.string.AccessibilityId_sessionAppearance)) { activity?.push<AppearanceSettingsActivity>() }
                 Divider()
 
-                LargeItemButton(R.string.sessionMessageRequests, R.drawable.ic_message_square_warning, Modifier.qaTag(R.string.AccessibilityId_sessionMessageRequests)) { activity?.push<MessageRequestsActivity>() }
+                LargeItemButton(annotatedStringResource(R.string.sessionMessageRequests),
+                    R.drawable.ic_message_square_warning, Modifier.qaTag(R.string.AccessibilityId_sessionMessageRequests)) { activity?.push<MessageRequestsActivity>() }
             }
         }
 
@@ -559,19 +567,20 @@ fun Buttons(
                 // Only show the recovery password option if the user has not chosen to permanently hide it
                 if (!recoveryHidden) {
                     LargeItemButton(
-                        R.string.sessionRecoveryPassword,
+                        annotatedStringResource(R.string.sessionRecoveryPassword),
                         R.drawable.ic_recovery_password_custom,
                         Modifier.qaTag(R.string.AccessibilityId_sessionRecoveryPasswordMenuItem)
                     ) { activity?.push<RecoveryPasswordActivity>() }
                     Divider()
                 }
 
-                LargeItemButton(R.string.sessionHelp, R.drawable.ic_question_custom, Modifier.qaTag(R.string.AccessibilityId_help)) { activity?.push<HelpSettingsActivity>() }
+                LargeItemButton(annotatedStringResource(R.string.sessionHelp),
+                    R.drawable.ic_question_custom, Modifier.qaTag(R.string.AccessibilityId_help)) { activity?.push<HelpSettingsActivity>() }
                 Divider()
 
                 LargeItemButton(
-                    textId = R.string.sessionClearData,
-                    icon = R.drawable.ic_trash_2,
+                    text = annotatedStringResource(R.string.sessionClearData),
+                    iconRes = R.drawable.ic_trash_2,
                     modifier = Modifier.qaTag(R.string.AccessibilityId_sessionClearData),
                     colors = dangerButtonColors(),
                 ) {

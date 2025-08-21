@@ -22,8 +22,13 @@ class ProStatusManager @Inject constructor(
         const val TEMP_LABEL_PRO_STATS = "Your Pro Stats"
         const val TEMP_LABEL_PRO_STATS_TT = "Pro stats reflect usage on this device and may appear differently on linked devices"
         const val TEMP_LABEL_MANAGE = "Manage Pro"
-        const val TEMP_LABEL_SETTINGS = "Pro Settings`"
+        const val TEMP_LABEL_SETTINGS = "Pro Settings"
         const val TEMP_LABEL_FEATURES = "Pro Features"
+        const val TEMP_LABEL_UPDATE_PLAN = "Update Plan"
+        const val TEMP_LABEL_PRO_BADGE = "Pro Badge"
+        const val TEMP_LABEL_SHOW_BADGE = "Show Session Pro badge to other users"
+        const val TEMP_LABEL_RENEW = "Renew Pro Plan"
+        const val TEMP_LABEL_RECOVER = "Recover Pro Plan"
     }
     val MAX_CHARACTER_PRO = 10000 // max characters in a message for pro users
     private val MAX_CHARACTER_REGULAR = 2000 // max characters in a message for non pro users

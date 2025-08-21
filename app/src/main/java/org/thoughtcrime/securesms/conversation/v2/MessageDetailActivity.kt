@@ -68,7 +68,6 @@ import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.NonTranslatableStringConstants
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.thoughtcrime.securesms.MediaPreviewActivity
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
@@ -91,6 +90,7 @@ import org.thoughtcrime.securesms.ui.ProCTAFeature
 import org.thoughtcrime.securesms.ui.TitledText
 import org.thoughtcrime.securesms.ui.UserProfileModal
 import org.thoughtcrime.securesms.ui.components.Avatar
+import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.setComposeContent
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -443,7 +443,7 @@ fun CellButtons(
         Column {
             onReply?.let {
                 LargeItemButton(
-                    R.string.reply,
+                    annotatedStringResource(R.string.reply),
                     R.drawable.ic_reply,
                     onClick = it
                 )
@@ -452,7 +452,7 @@ fun CellButtons(
 
             onResend?.let {
                 LargeItemButton(
-                    R.string.resend,
+                    annotatedStringResource(R.string.resend),
                     R.drawable.ic_repeat_2,
                     onClick = it
                 )
@@ -460,7 +460,7 @@ fun CellButtons(
             }
 
             LargeItemButton(
-                R.string.messageCopy,
+                annotatedStringResource(R.string.messageCopy),
                 R.drawable.ic_copy,
                 onClick = onCopy
             )
@@ -468,7 +468,7 @@ fun CellButtons(
 
             onSave?.let {
                 LargeItemButton(
-                    R.string.save,
+                    annotatedStringResource(R.string.save),
                     R.drawable.ic_arrow_down_to_line,
                     onClick = it
                 )
@@ -477,7 +477,7 @@ fun CellButtons(
 
             onDelete?.let {
                 LargeItemButton(
-                    R.string.delete,
+                    annotatedStringResource(R.string.delete),
                     R.drawable.ic_trash_2,
                     colors = dangerButtonColors(),
                     onClick = it

@@ -1111,4 +1111,6 @@
         <item quantity="one">%1$s Longer Message Sent</item>
         <item quantity="other">%1$s Longer Messages Sent</item>
     </plurals>
+    <string name="proAutoRenew">Pro auto-renewing in <b>{relative_time}</b></string>
+    <string name="proExpiring">Pro expiring in <b>{relative_time}</b></string>
 </resources>

@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.preferences.prosettings
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.squareup.phrase.Phrase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -11,6 +12,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import network.loki.messenger.R
+import org.session.libsession.utilities.StringSubstitutionConstants.RELATIVE_TIME_KEY
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.UINavigator
 import javax.inject.Inject
@@ -26,7 +29,13 @@ class ProSettingsViewModel @Inject constructor(
 
     private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(
         UIState(
-            isPro = proStatusManager.isCurrentUserPro()
+            //todo PRO need to properly calculate this
+            proStatus = if(proStatusManager.isCurrentUserPro()) ProAccountStatus.Pro.AutoRenewing(
+                showProBadge = true,
+                infoLabel = Phrase.from(context, R.string.proAutoRenew)
+                    .put(RELATIVE_TIME_KEY, "15 days")
+                    .format()
+            ) else ProAccountStatus.None
         )
     )
     val uiState: StateFlow<UIState> = _uiState
@@ -46,6 +55,14 @@ class ProSettingsViewModel @Inject constructor(
                     it.copy(openLinkDialogUrl = command.url)
                 }
             }
+
+            Commands.ShowPlanUpdate -> {
+                //todo PRO implement
+            }
+
+            is Commands.SetShowProBadge -> {
+                //todo PRO implement
+            }
         }
     }
 
@@ -57,10 +74,13 @@ class ProSettingsViewModel @Inject constructor(
 
     sealed interface Commands {
         data class ShowOpenUrlDialog(val url: String?) : Commands
+
+        object ShowPlanUpdate: Commands
+        data class SetShowProBadge(val show: Boolean): Commands
     }
 
     data class UIState(
-        val isPro: Boolean,
+        val proStatus: ProAccountStatus,
         val disabledHeader: Boolean = false,
         val proStats: ProStats = ProStats()
     )
@@ -70,6 +90,33 @@ class ProSettingsViewModel @Inject constructor(
         val pinnedConversations: Int = 0,
         val proBadges: Int = 0,
         val longMessages: Int = 0
+    )
+
+    sealed interface ProAccountStatus{
+        object None: ProAccountStatus
+
+        sealed interface Pro: ProAccountStatus{
+            val showProBadge: Boolean
+            val infoLabel: CharSequence
+
+            data class AutoRenewing(
+                override val showProBadge: Boolean,
+                override val infoLabel: CharSequence
+            ): Pro
+
+            data class Expiring(
+                override val showProBadge: Boolean,
+                override val infoLabel: CharSequence
+            ): Pro
+        }
+
+        data class Expired(
+            val infoLabel: CharSequence
+        ): ProAccountStatus
+    }
+
+    data class ProSettings(
+        val showProBadge: Boolean = false
     )
 
     data class DialogsState(

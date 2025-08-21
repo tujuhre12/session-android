@@ -275,5 +275,8 @@
     <string name="qa_pro_badge_component">pro-badge-component</string>
     <string name="qa_pro_badge_text">pro-badge-text</string>
     <string name="qa_pro_badge_icon">pro-badge-icon</string>
+    <string name="qa_action_item_title">action-item-title</string>
+    <string name="qa_action_item_subtitle">action-item-subtitle</string>
+    <string name="qa_action_item_icon">action-item-icon</string>
 
 </resources>

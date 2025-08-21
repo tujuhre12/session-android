@@ -33,18 +33,27 @@ import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import com.squareup.phrase.Phrase
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
+import org.session.libsession.utilities.StringSubstitutionConstants.RELATIVE_TIME_KEY
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProAccountStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.CategoryCell
+import org.thoughtcrime.securesms.ui.Divider
+import org.thoughtcrime.securesms.ui.IconActionRowItem
+import org.thoughtcrime.securesms.ui.LargeItemButton
 import org.thoughtcrime.securesms.ui.SessionProSettingsHeader
 import org.thoughtcrime.securesms.ui.SpeechBubbleTooltip
+import org.thoughtcrime.securesms.ui.SwitchActionRowItem
 import org.thoughtcrime.securesms.ui.components.BackAppBar
+import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -109,10 +118,18 @@ fun ProSettingsHome(
             )
 
             // Pro Stats
-            if(data.isPro){
+            if(data.proStatus is ProSettingsViewModel.ProAccountStatus.Pro){
+                // Stats
                 Spacer(Modifier.height(LocalDimensions.current.spacing))
                 ProStats(
-                    data = data,
+                    data = data.proStats,
+                    sendCommand = sendCommand,
+                )
+
+                // Settings
+                Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
+                ProStatus(
+                    data = data.proStatus,
                     sendCommand = sendCommand,
                 )
             }
@@ -124,7 +141,7 @@ fun ProSettingsHome(
 @Composable
 fun ProStats(
     modifier: Modifier = Modifier,
-    data: ProSettingsViewModel.UIState,
+    data: ProSettingsViewModel.ProStats,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
 ){
     CategoryCell(
@@ -168,8 +185,8 @@ fun ProStats(
                     modifier = Modifier.weight(1f),
                     title = pluralStringResource(
                         R.plurals.temp_pro_stats_groups,
-                        data.proStats.groupsUpdated,
-                        NumberUtil.getFormattedNumber(data.proStats.groupsUpdated.toLong())
+                        data.groupsUpdated,
+                        NumberUtil.getFormattedNumber(data.groupsUpdated.toLong())
                     ),
                     icon = R.drawable.ic_users_group_custom
 
@@ -180,8 +197,8 @@ fun ProStats(
                     modifier = Modifier.weight(1f),
                     title = pluralStringResource(
                         R.plurals.temp_pro_stats_pins,
-                        data.proStats.pinnedConversations,
-                        NumberUtil.getFormattedNumber(data.proStats.pinnedConversations.toLong())
+                        data.pinnedConversations,
+                        NumberUtil.getFormattedNumber(data.pinnedConversations.toLong())
                     ),
                     icon = R.drawable.ic_pin
                 )
@@ -195,8 +212,8 @@ fun ProStats(
                     modifier = Modifier.weight(1f),
                     title = pluralStringResource(
                         R.plurals.temp_pro_stats_badges,
-                        data.proStats.proBadges,
-                        NumberUtil.getFormattedNumber(data.proStats.proBadges.toLong())
+                        data.proBadges,
+                        NumberUtil.getFormattedNumber(data.proBadges.toLong())
                     ),
                     icon = R.drawable.ic_rectangle_ellipsis
 
@@ -207,11 +224,51 @@ fun ProStats(
                     modifier = Modifier.weight(1f),
                     title = pluralStringResource(
                         R.plurals.temp_pro_stats_long,
-                        data.proStats.longMessages,
-                        NumberUtil.getFormattedNumber(data.proStats.longMessages.toLong())
+                        data.longMessages,
+                        NumberUtil.getFormattedNumber(data.longMessages.toLong())
                     ),
                     icon = R.drawable.ic_message_square
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun ProStatus(
+    modifier: Modifier = Modifier,
+    data: ProSettingsViewModel.ProAccountStatus,
+    sendCommand: (ProSettingsViewModel.Commands) -> Unit,
+){
+    CategoryCell(
+        modifier = modifier,
+        title = ProStatusManager.TEMP_LABEL_PRO_STATS,
+    ) {
+        // Cell content
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            when(data){
+                is ProAccountStatus.Pro.AutoRenewing,
+                     is ProAccountStatus.Pro.Expiring -> {
+                    IconActionRowItem(
+                        title = annotatedStringResource(ProStatusManager.TEMP_LABEL_UPDATE_PLAN),
+                        subtitle = annotatedStringResource(data.infoLabel),
+                        icon = R.drawable.ic_chevron_right,
+                        onClick = { sendCommand(ProSettingsViewModel.Commands.ShowPlanUpdate) }
+                    )
+                    Divider()
+                    SwitchActionRowItem(
+                        title = annotatedStringResource(ProStatusManager.TEMP_LABEL_PRO_BADGE),
+                        subtitle = annotatedStringResource(ProStatusManager.TEMP_LABEL_SHOW_BADGE),
+                        checked = data.showProBadge,
+                        onCheckedChange = { sendCommand(ProSettingsViewModel.Commands.SetShowProBadge(it)) }
+                    )
+                }
+                is ProAccountStatus.Expired -> {
+
+                }
+                else -> {}
             }
         }
     }
@@ -231,7 +288,7 @@ fun ProStatItem(
         Image(
             painter = painterResource(id = icon),
             contentDescription = null,
-            modifier = Modifier.size(32.dp),
+            modifier = Modifier.size(LocalDimensions.current.iconRowItem),
             colorFilter = ColorFilter.tint(LocalColors.current.accent)
         )
 
@@ -252,7 +309,12 @@ fun PreviewProSettingsPro(
     PreviewTheme(colors) {
         ProSettingsHome(
             data = ProSettingsViewModel.UIState(
-                isPro = true,
+                proStatus = ProAccountStatus.Pro.AutoRenewing(
+                    showProBadge = true,
+                    infoLabel = Phrase.from(LocalContext.current, R.string.proAutoRenew)
+                        .put(RELATIVE_TIME_KEY, "15 days")
+                        .format()
+                ),
                 disabledHeader = false
             ),
             dialogsState = ProSettingsViewModel.DialogsState(),
@@ -270,7 +332,7 @@ fun PreviewProSettingsNonPro(
     PreviewTheme(colors) {
         ProSettingsHome(
             data = ProSettingsViewModel.UIState(
-                isPro = false,
+                proStatus = ProAccountStatus.None,
                 disabledHeader = false
             ),
             dialogsState = ProSettingsViewModel.DialogsState(),

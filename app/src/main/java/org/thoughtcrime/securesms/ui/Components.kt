@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
@@ -87,13 +88,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.times
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsSubCategory
 import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
+import org.thoughtcrime.securesms.ui.components.SessionSwitch
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.TitledRadioButton
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
@@ -254,133 +256,12 @@ fun <T> OptionsCard(card: OptionsCardData<T>, onOptionSelected: (T) -> Unit) {
 }
 
 @Composable
-fun LargeItemButtonWithDrawable(
-    text: GetString,
-    @DrawableRes icon: Int,
-    iconTint: Color? = null,
-    iconSize: Dp? = null,
-    modifier: Modifier = Modifier,
-    subtitle: String? = null,
-    @StringRes subtitleQaTag: Int? = null,
-    colors: ButtonColors = transparentButtonColors(),
-    shape: Shape = RectangleShape,
-    onClick: () -> Unit
-) {
-    ItemButtonWithDrawable(
-        text = text,
-        icon = icon,
-        iconTint = iconTint,
-        iconSize = iconSize,
-        modifier = modifier,
-        subtitle = subtitle,
-        subtitleQaTag = subtitleQaTag,
-        textStyle = LocalType.current.h8,
-        colors = colors,
-        shape = shape,
-        onClick = onClick
-    )
-}
-
-@Composable
-fun ItemButtonWithDrawable(
-    text: GetString,
-    @DrawableRes icon: Int,
-    iconSize: Dp? = null,
-    iconTint: Color? = null,
-    modifier: Modifier = Modifier,
-    subtitle: String? = null,
-    @StringRes subtitleQaTag: Int? = null,
-    textStyle: TextStyle = LocalType.current.xl,
-    colors: ButtonColors = transparentButtonColors(),
-    shape: Shape = RectangleShape,
-    onClick: () -> Unit
-) {
-    ItemButton(
-        annotatedStringText = AnnotatedString(text.string()),
-        modifier = modifier,
-        icon = {
-            Image(
-                painter = painterResource(id = icon),
-                contentDescription = null,
-                colorFilter = iconTint?.let { ColorFilter.tint(it) },
-                modifier = Modifier.align(Alignment.Center)
-                    .then(
-                        if(iconSize != null) {
-                            Modifier.size(iconSize)
-                        } else {
-                            Modifier
-                        }
-                    )
-            )
-        },
-        textStyle = textStyle,
-        subtitle = subtitle,
-        subtitleQaTag = subtitleQaTag,
-        colors = colors,
-        shape = shape,
-        onClick = onClick
-    )
-}
-
-@Composable
 fun LargeItemButton(
-    @StringRes textId: Int,
-    @DrawableRes icon: Int,
-    modifier: Modifier = Modifier,
-    subtitle: String? = null,
-    @StringRes subtitleQaTag: Int? = null,
-    enabled: Boolean = true,
-    colors: ButtonColors = transparentButtonColors(),
-    shape: Shape = RectangleShape,
-    onClick: () -> Unit
-) {
-    ItemButton(
-        textId = textId,
-        icon = icon,
-        modifier = modifier,
-        subtitle = subtitle,
-        subtitleQaTag = subtitleQaTag,
-        enabled = enabled,
-        minHeight = LocalDimensions.current.minLargeItemButtonHeight,
-        textStyle = LocalType.current.h8,
-        colors = colors,
-        shape = shape,
-        onClick = onClick
-    )
-}
-
-@Composable
-fun LargeItemButton(
-    text: String,
-    @DrawableRes icon: Int,
-    modifier: Modifier = Modifier,
-    subtitle: String? = null,
-    @StringRes subtitleQaTag: Int? = null,
-    enabled: Boolean = true,
-    colors: ButtonColors = transparentButtonColors(),
-    shape: Shape = RectangleShape,
-    onClick: () -> Unit
-) {
-    ItemButton(
-        text = text,
-        icon = icon,
-        modifier = modifier,
-        subtitle = subtitle,
-        subtitleQaTag = subtitleQaTag,
-        enabled = enabled,
-        minHeight = LocalDimensions.current.minLargeItemButtonHeight,
-        textStyle = LocalType.current.h8,
-        colors = colors,
-        shape = shape,
-        onClick = onClick
-    )
-}
-
-@Composable
-fun LargeItemButton(
-    annotatedStringText: AnnotatedString,
+    text: AnnotatedString,
     icon: @Composable BoxScope.() -> Unit,
     modifier: Modifier = Modifier,
+    subtitle: String? = null,
+    @StringRes subtitleQaTag: Int? = null,
     enabled: Boolean = true,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
@@ -388,8 +269,41 @@ fun LargeItemButton(
 ) {
     ItemButton(
         modifier = modifier,
-        annotatedStringText = annotatedStringText,
+        text = text,
         icon = icon,
+        subtitle = subtitle,
+        subtitleQaTag = subtitleQaTag,
+        enabled = enabled,
+        minHeight = LocalDimensions.current.minLargeItemButtonHeight,
+        textStyle = LocalType.current.h8,
+        colors = colors,
+        shape = shape,
+        onClick = onClick
+    )
+}
+
+@Composable
+fun LargeItemButton(
+    text: AnnotatedString,
+    @DrawableRes iconRes: Int,
+    modifier: Modifier = Modifier,
+    iconTint: Color? = null,
+    iconSize: Dp = LocalDimensions.current.iconRowItem,
+    subtitle: String? = null,
+    @StringRes subtitleQaTag: Int? = null,
+    enabled: Boolean = true,
+    colors: ButtonColors = transparentButtonColors(),
+    shape: Shape = RectangleShape,
+    onClick: () -> Unit
+) {
+    ItemButton(
+        modifier = modifier,
+        text = text,
+        iconRes = iconRes,
+        iconTint = iconTint,
+        iconSize = iconSize,
+        subtitle = subtitle,
+        subtitleQaTag = subtitleQaTag,
         enabled = enabled,
         minHeight = LocalDimensions.current.minLargeItemButtonHeight,
         textStyle = LocalType.current.h8,
@@ -401,47 +315,11 @@ fun LargeItemButton(
 
 @Composable
 fun ItemButton(
-    text: String,
-    @DrawableRes icon: Int,
-    modifier: Modifier,
-    subtitle: String? = null,
-    @StringRes subtitleQaTag: Int? = null,
-    enabled: Boolean = true,
-    minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
-    textStyle: TextStyle = LocalType.current.xl,
-    colors: ButtonColors = transparentButtonColors(),
-    shape: Shape = RectangleShape,
-    onClick: () -> Unit
-) {
-    ItemButton(
-        annotatedStringText = AnnotatedString(text),
-        modifier = modifier,
-        icon = {
-            Icon(
-                painter = painterResource(id = icon),
-                contentDescription = null,
-                modifier = Modifier.align(Alignment.Center)
-            )
-        },
-        minHeight = minHeight,
-        textStyle = textStyle,
-        shape = shape,
-        colors = colors,
-        subtitle = subtitle,
-        subtitleQaTag = subtitleQaTag,
-        enabled = enabled,
-        onClick = onClick,
-    )
-}
-
-/**
- * Courtesy [ItemButton] implementation that takes a [DrawableRes] for the [icon]
- */
-@Composable
-fun ItemButton(
-    @StringRes textId: Int,
-    @DrawableRes icon: Int,
+    text: AnnotatedString,
     modifier: Modifier = Modifier,
+    @DrawableRes iconRes: Int,
+    iconTint: Color? = null,
+    iconSize: Dp = LocalDimensions.current.iconMedium,
     subtitle: String? = null,
     @StringRes subtitleQaTag: Int? = null,
     enabled: Boolean = true,
@@ -452,45 +330,18 @@ fun ItemButton(
     onClick: () -> Unit
 ) {
     ItemButton(
-        annotatedStringText = AnnotatedString(stringResource(textId)),
-        modifier = modifier,
-        icon = icon,
-        minHeight = minHeight,
-        textStyle = textStyle,
-        shape = shape,
-        colors = colors,
-        subtitle = subtitle,
-        subtitleQaTag = subtitleQaTag,
-        enabled = enabled,
-        onClick = onClick
-    )
-}
-
-@Composable
-fun ItemButton(
-    annotatedStringText: AnnotatedString,
-    icon: Int,
-    modifier: Modifier,
-    subtitle: String? = null,
-    @StringRes subtitleQaTag: Int? = null,
-    enabled: Boolean = true,
-    minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
-    textStyle: TextStyle = LocalType.current.xl,
-    colors: ButtonColors = transparentButtonColors(),
-    shape: Shape = RectangleShape,
-    onClick: () -> Unit
-) {
-    ItemButton(
-        annotatedStringText = annotatedStringText,
+        text = text,
         modifier = modifier,
         subtitle = subtitle,
         subtitleQaTag = subtitleQaTag,
         enabled = enabled,
         icon = {
             Icon(
-                painter = painterResource(id = icon),
+                painter = painterResource(id = iconRes),
                 contentDescription = null,
+                tint = iconTint ?: colors.contentColor,
                 modifier = Modifier.align(Alignment.Center)
+                    .size(iconSize)
             )
         },
         minHeight = minHeight,
@@ -506,36 +357,39 @@ fun ItemButton(
  *
  * A button to be used in a list of buttons, usually in a [Cell] or [Card]
  */
-// THIS IS THE FINAL DEEP LEVEL ANNOTATED STRING BUTTON
 @Composable
 fun ItemButton(
-    annotatedStringText: AnnotatedString,
+    text: AnnotatedString,
     icon: @Composable BoxScope.() -> Unit,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     @StringRes subtitleQaTag: Int? = null,
     enabled: Boolean = true,
-    minHeight: Dp = LocalDimensions.current.minLargeItemButtonHeight,
+    minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     textStyle: TextStyle = LocalType.current.xl,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
 ) {
     TextButton(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth()
+            .heightIn(min = minHeight),
         colors = colors,
         onClick = onClick,
-        contentPadding = PaddingValues(),
+        contentPadding = PaddingValues(
+            start = LocalDimensions.current.smallSpacing,
+            end = LocalDimensions.current.smallSpacing
+        ),
         enabled = enabled,
         shape = shape,
     ) {
         Box(
-            modifier = Modifier
-                .padding(horizontal = LocalDimensions.current.xxsSpacing)
-                .size(minHeight)
-                .align(Alignment.CenterVertically),
-            content = icon
-        )
+            modifier = Modifier.size(LocalDimensions.current.minItemButtonHeight)
+        ) {
+            icon()
+        }
+
+        Spacer(Modifier.width(LocalDimensions.current.smallSpacing))
 
         Column(
             modifier = Modifier
@@ -543,9 +397,8 @@ fun ItemButton(
                 .align(Alignment.CenterVertically)
         ) {
             Text(
-                annotatedStringText,
-                Modifier
-                    .fillMaxWidth(),
+                text,
+                Modifier.fillMaxWidth(),
                 style = textStyle
             )
 
@@ -567,8 +420,8 @@ fun ItemButton(
 fun PreviewItemButton() {
     PreviewTheme {
         ItemButton(
-            textId = R.string.groupCreate,
-            icon = R.drawable.ic_users_group_custom,
+            text = annotatedStringResource(R.string.groupCreate),
+            iconRes = R.drawable.ic_users_group_custom,
             onClick = {}
         )
     }
@@ -579,8 +432,8 @@ fun PreviewItemButton() {
 fun PreviewLargeItemButton() {
     PreviewTheme {
         LargeItemButton(
-            textId = R.string.groupCreate,
-            icon = R.drawable.ic_users_group_custom,
+            text = annotatedStringResource(R.string.groupCreate),
+            iconRes = R.drawable.ic_users_group_custom,
             onClick = {}
         )
     }
@@ -714,11 +567,12 @@ private fun BottomFadingEdgeBoxPreview() {
 }
 
 @Composable
-fun Divider(modifier: Modifier = Modifier, startIndent: Dp = 0.dp) {
+fun Divider(
+    modifier: Modifier = Modifier,
+    paddingValues: PaddingValues = PaddingValues(horizontal = LocalDimensions.current.smallSpacing)
+) {
     HorizontalDivider(
-        modifier = modifier
-            .padding(horizontal = LocalDimensions.current.smallSpacing)
-            .padding(start = startIndent),
+        modifier = modifier.padding(paddingValues),
         color = LocalColors.current.borders,
     )
 }
@@ -1187,4 +1041,163 @@ fun AnimatedGradientDrawable(
                 )
             }
     )
+}
+
+
+@Composable
+fun ActionRowItem(
+    title: AnnotatedString,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    subtitle: AnnotatedString? = null,
+    titleColor: Color = LocalColors.current.text,
+    subtitleColor: Color = LocalColors.current.text,
+    textStyle: TextStyle = LocalType.current.h8,
+    subtitleStyle: TextStyle = LocalType.current.small,
+    minHeight: Dp = LocalDimensions.current.minLargeItemButtonHeight,
+    paddingValues: PaddingValues = PaddingValues(horizontal = LocalDimensions.current.smallSpacing),
+    endContent: @Composable (() -> Unit)? = null
+){
+    Row(
+        modifier = modifier.heightIn(min = minHeight)
+            .clickable { onClick() }
+            .padding(paddingValues),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .align(Alignment.CenterVertically)
+        ) {
+            Text(
+                title,
+                Modifier
+                    .fillMaxWidth()
+                    .qaTag(R.string.qa_action_item_title),
+                style = textStyle,
+                color = titleColor
+            )
+
+            subtitle?.let {
+                Text(
+                    text = it,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .qaTag(R.string.qa_action_item_subtitle),
+                    style = subtitleStyle,
+                    color = subtitleColor
+                )
+            }
+        }
+
+        endContent?.invoke()
+    }
+}
+
+@Composable
+fun IconActionRowItem(
+    title: AnnotatedString,
+    onClick: () -> Unit,
+    @DrawableRes icon: Int,
+    modifier: Modifier = Modifier,
+    subtitle: AnnotatedString? = null,
+    titleColor: Color = LocalColors.current.text,
+    subtitleColor: Color = LocalColors.current.text,
+    textStyle: TextStyle = LocalType.current.h8,
+    subtitleStyle: TextStyle = LocalType.current.small,
+    iconColor: Color = LocalColors.current.text,
+    minHeight: Dp = LocalDimensions.current.minLargeItemButtonHeight,
+    paddingValues: PaddingValues = PaddingValues(horizontal = LocalDimensions.current.smallSpacing),
+){
+    ActionRowItem(
+        modifier = modifier,
+        title = title,
+        onClick = onClick,
+        subtitle = subtitle,
+        titleColor = titleColor,
+        subtitleColor = subtitleColor,
+        textStyle = textStyle,
+        subtitleStyle = subtitleStyle,
+        minHeight = minHeight,
+        paddingValues = paddingValues,
+        endContent = {
+            Icon(
+                modifier = Modifier.padding(horizontal = LocalDimensions.current.xsSpacing)
+                    .size(LocalDimensions.current.iconRowItem)
+                    .qaTag(R.string.qa_action_item_icon),
+                painter = painterResource(id = icon),
+                contentDescription = null,
+                tint = iconColor
+            )
+        }
+    )
+}
+
+@Composable
+fun SwitchActionRowItem(
+    title: AnnotatedString,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    subtitle: AnnotatedString? = null,
+    titleColor: Color = LocalColors.current.text,
+    subtitleColor: Color = LocalColors.current.text,
+    textStyle: TextStyle = LocalType.current.h8,
+    subtitleStyle: TextStyle = LocalType.current.small,
+    paddingValues: PaddingValues = PaddingValues(horizontal = LocalDimensions.current.smallSpacing),
+    minHeight: Dp = LocalDimensions.current.minLargeItemButtonHeight,
+){
+    ActionRowItem(
+        modifier = modifier,
+        title = title,
+        onClick = { onCheckedChange(!checked) },
+        subtitle = subtitle,
+        titleColor = titleColor,
+        subtitleColor = subtitleColor,
+        textStyle = textStyle,
+        subtitleStyle = subtitleStyle,
+        paddingValues = paddingValues,
+        minHeight = minHeight,
+        endContent = {
+            SessionSwitch(
+                checked = checked,
+                onCheckedChange = onCheckedChange
+            )
+        }
+    )
+}
+
+@Preview
+@Composable
+fun PreviewActionRowItems(){
+    PreviewTheme {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            IconActionRowItem(
+                title = annotatedStringResource("This is an action row item"),
+                subtitle = annotatedStringResource("With a subtitle and icon"),
+                onClick = {},
+                icon = R.drawable.ic_message_square
+            )
+
+            IconActionRowItem(
+                title = annotatedStringResource("This is an action row item"),
+                subtitle = annotatedStringResource("With a subtitle and icon"),
+                titleColor = LocalColors.current.danger,
+                subtitleColor = LocalColors.current.danger,
+                onClick = {},
+                icon = R.drawable.ic_triangle_alert,
+                iconColor = LocalColors.current.danger
+            )
+
+            SwitchActionRowItem(
+                title = annotatedStringResource("This is an action row item"),
+                subtitle = annotatedStringResource("With a subtitle and a switch"),
+                checked = true,
+                onCheckedChange = {},
+            )
+        }
+    }
 }

@@ -51,6 +51,7 @@ import org.thoughtcrime.securesms.ui.LargeItemButton
 import org.thoughtcrime.securesms.ui.LoadingDialog
 import org.thoughtcrime.securesms.ui.components.AnnotatedTextWithIcon
 import org.thoughtcrime.securesms.ui.components.BackAppBar
+import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.getCellBottomShape
 import org.thoughtcrime.securesms.ui.getCellTopShape
 import org.thoughtcrime.securesms.ui.qaTag
@@ -299,11 +300,11 @@ fun ConversationSettingsSubCategory(
             data.items.forEachIndexed { index, option ->
                 LargeItemButton(
                     modifier = Modifier.qaTag(option.qaTag),
-                    text = option.name,
+                    text = annotatedStringResource(option.name),
                     subtitle = option.subtitle,
                     subtitleQaTag = option.subtitleQaTag,
                     enabled = option.enabled,
-                    icon = option.icon,
+                    iconRes = option.icon,
                     shape = when (index) {
                         0 -> getCellTopShape()
                         data.items.lastIndex -> getCellBottomShape()
