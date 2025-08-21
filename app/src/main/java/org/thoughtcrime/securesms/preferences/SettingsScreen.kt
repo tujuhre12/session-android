@@ -99,7 +99,7 @@ import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.LargeItemButton
+import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.LoadingDialog
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.PathDot
@@ -457,7 +457,7 @@ fun Buttons(
         // Add the debug menu in non release builds
         if (BuildConfig.BUILD_TYPE != "release") {
             Cell{
-                LargeItemButton(
+                ItemButton(
                     annotatedStringResource("Debug Menu"),
                     R.drawable.ic_settings,
                 ) { activity?.push<DebugActivity>() }
@@ -469,7 +469,7 @@ fun Buttons(
         Cell {
             Column {
                 if(postPro){
-                    LargeItemButton(
+                    ItemButton(
                         text = annotatedStringResource(NonTranslatableStringConstants.APP_PRO),
                         icon = {
                             Image(
@@ -488,7 +488,7 @@ fun Buttons(
                 }
 
                 // Invite a friend
-                LargeItemButton(
+                ItemButton(
                     text = annotatedStringResource(R.string.sessionInviteAFriend),
                     iconRes = R.drawable.ic_user_round_plus,
                     modifier = Modifier.qaTag(R.string.AccessibilityId_sessionInviteAFriend)
@@ -501,7 +501,7 @@ fun Buttons(
         Cell {
             Column {
                 // Donate
-                LargeItemButton(
+                ItemButton(
                     text = annotatedStringResource(R.string.donate),
                     iconRes = R.drawable.ic_heart,
                     iconTint = LocalColors.current.accent,
@@ -512,7 +512,7 @@ fun Buttons(
                 Divider()
 
                 Crossfade(if (hasPaths) primaryGreen else primaryYellow, label = "path") {
-                    LargeItemButton(
+                    ItemButton(
                         modifier = Modifier.qaTag(R.string.qa_settings_item_path),
                         text = annotatedStringResource(R.string.onionRoutingPath),
                         icon = {
@@ -527,7 +527,7 @@ fun Buttons(
                 Divider()
 
                 // Add the token page option.
-                LargeItemButton(
+                ItemButton(
                     modifier = Modifier.qaTag(R.string.qa_settings_item_session_network),
                     text = annotatedStringResource(NETWORK_NAME),
                     iconRes = R.drawable.ic_sent_custom
@@ -539,23 +539,23 @@ fun Buttons(
 
         Cell {
             Column {
-                LargeItemButton(annotatedStringResource(R.string.sessionPrivacy),
+                ItemButton(annotatedStringResource(R.string.sessionPrivacy),
                     R.drawable.ic_lock_keyhole, Modifier.qaTag(R.string.AccessibilityId_sessionPrivacy)) { activity?.push<PrivacySettingsActivity>() }
                 Divider()
 
-                LargeItemButton(annotatedStringResource(R.string.sessionNotifications),
+                ItemButton(annotatedStringResource(R.string.sessionNotifications),
                     R.drawable.ic_volume_2, Modifier.qaTag(R.string.AccessibilityId_notifications)) { activity?.push<NotificationSettingsActivity>() }
                 Divider()
 
-                LargeItemButton(annotatedStringResource(R.string.sessionConversations),
+                ItemButton(annotatedStringResource(R.string.sessionConversations),
                     R.drawable.ic_users_round, Modifier.qaTag(R.string.AccessibilityId_sessionConversations)) { activity?.push<ChatSettingsActivity>() }
                 Divider()
 
-                LargeItemButton(annotatedStringResource(R.string.sessionAppearance),
+                ItemButton(annotatedStringResource(R.string.sessionAppearance),
                     R.drawable.ic_paintbrush_vertical, Modifier.qaTag(R.string.AccessibilityId_sessionAppearance)) { activity?.push<AppearanceSettingsActivity>() }
                 Divider()
 
-                LargeItemButton(annotatedStringResource(R.string.sessionMessageRequests),
+                ItemButton(annotatedStringResource(R.string.sessionMessageRequests),
                     R.drawable.ic_message_square_warning, Modifier.qaTag(R.string.AccessibilityId_sessionMessageRequests)) { activity?.push<MessageRequestsActivity>() }
             }
         }
@@ -566,7 +566,7 @@ fun Buttons(
             Column {
                 // Only show the recovery password option if the user has not chosen to permanently hide it
                 if (!recoveryHidden) {
-                    LargeItemButton(
+                    ItemButton(
                         annotatedStringResource(R.string.sessionRecoveryPassword),
                         R.drawable.ic_recovery_password_custom,
                         Modifier.qaTag(R.string.AccessibilityId_sessionRecoveryPasswordMenuItem)
@@ -574,11 +574,11 @@ fun Buttons(
                     Divider()
                 }
 
-                LargeItemButton(annotatedStringResource(R.string.sessionHelp),
+                ItemButton(annotatedStringResource(R.string.sessionHelp),
                     R.drawable.ic_question_custom, Modifier.qaTag(R.string.AccessibilityId_help)) { activity?.push<HelpSettingsActivity>() }
                 Divider()
 
-                LargeItemButton(
+                ItemButton(
                     text = annotatedStringResource(R.string.sessionClearData),
                     iconRes = R.drawable.ic_trash_2,
                     modifier = Modifier.qaTag(R.string.AccessibilityId_sessionClearData),

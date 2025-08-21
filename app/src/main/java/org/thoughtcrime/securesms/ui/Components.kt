@@ -88,7 +88,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.times
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -256,75 +255,16 @@ fun <T> OptionsCard(card: OptionsCardData<T>, onOptionSelected: (T) -> Unit) {
 }
 
 @Composable
-fun LargeItemButton(
-    text: AnnotatedString,
-    icon: @Composable BoxScope.() -> Unit,
-    modifier: Modifier = Modifier,
-    subtitle: String? = null,
-    @StringRes subtitleQaTag: Int? = null,
-    enabled: Boolean = true,
-    colors: ButtonColors = transparentButtonColors(),
-    shape: Shape = RectangleShape,
-    onClick: () -> Unit
-) {
-    ItemButton(
-        modifier = modifier,
-        text = text,
-        icon = icon,
-        subtitle = subtitle,
-        subtitleQaTag = subtitleQaTag,
-        enabled = enabled,
-        minHeight = LocalDimensions.current.minLargeItemButtonHeight,
-        textStyle = LocalType.current.h8,
-        colors = colors,
-        shape = shape,
-        onClick = onClick
-    )
-}
-
-@Composable
-fun LargeItemButton(
+fun ItemButton(
     text: AnnotatedString,
     @DrawableRes iconRes: Int,
     modifier: Modifier = Modifier,
+    textStyle: TextStyle = LocalType.current.h8,
     iconTint: Color? = null,
     iconSize: Dp = LocalDimensions.current.iconRowItem,
     subtitle: String? = null,
     @StringRes subtitleQaTag: Int? = null,
     enabled: Boolean = true,
-    colors: ButtonColors = transparentButtonColors(),
-    shape: Shape = RectangleShape,
-    onClick: () -> Unit
-) {
-    ItemButton(
-        modifier = modifier,
-        text = text,
-        iconRes = iconRes,
-        iconTint = iconTint,
-        iconSize = iconSize,
-        subtitle = subtitle,
-        subtitleQaTag = subtitleQaTag,
-        enabled = enabled,
-        minHeight = LocalDimensions.current.minLargeItemButtonHeight,
-        textStyle = LocalType.current.h8,
-        colors = colors,
-        shape = shape,
-        onClick = onClick
-    )
-}
-
-@Composable
-fun ItemButton(
-    text: AnnotatedString,
-    modifier: Modifier = Modifier,
-    @DrawableRes iconRes: Int,
-    iconTint: Color? = null,
-    iconSize: Dp = LocalDimensions.current.iconMedium,
-    subtitle: String? = null,
-    @StringRes subtitleQaTag: Int? = null,
-    enabled: Boolean = true,
-    minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
-    textStyle: TextStyle = LocalType.current.xl,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
@@ -344,7 +284,6 @@ fun ItemButton(
                     .size(iconSize)
             )
         },
-        minHeight = minHeight,
         textStyle = textStyle,
         colors = colors,
         shape = shape,
@@ -366,7 +305,7 @@ fun ItemButton(
     @StringRes subtitleQaTag: Int? = null,
     enabled: Boolean = true,
     minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
-    textStyle: TextStyle = LocalType.current.xl,
+    textStyle: TextStyle = LocalType.current.h8,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
@@ -384,7 +323,7 @@ fun ItemButton(
         shape = shape,
     ) {
         Box(
-            modifier = Modifier.size(LocalDimensions.current.minItemButtonHeight)
+            modifier = Modifier.size(LocalDimensions.current.itemButtonIconSpacing)
         ) {
             icon()
         }
@@ -420,18 +359,6 @@ fun ItemButton(
 fun PreviewItemButton() {
     PreviewTheme {
         ItemButton(
-            text = annotatedStringResource(R.string.groupCreate),
-            iconRes = R.drawable.ic_users_group_custom,
-            onClick = {}
-        )
-    }
-}
-
-@Preview
-@Composable
-fun PreviewLargeItemButton() {
-    PreviewTheme {
-        LargeItemButton(
             text = annotatedStringResource(R.string.groupCreate),
             iconRes = R.drawable.ic_users_group_custom,
             onClick = {}
@@ -1054,7 +981,7 @@ fun ActionRowItem(
     subtitleColor: Color = LocalColors.current.text,
     textStyle: TextStyle = LocalType.current.h8,
     subtitleStyle: TextStyle = LocalType.current.small,
-    minHeight: Dp = LocalDimensions.current.minLargeItemButtonHeight,
+    minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     paddingValues: PaddingValues = PaddingValues(horizontal = LocalDimensions.current.smallSpacing),
     endContent: @Composable (() -> Unit)? = null
 ){
@@ -1106,7 +1033,7 @@ fun IconActionRowItem(
     textStyle: TextStyle = LocalType.current.h8,
     subtitleStyle: TextStyle = LocalType.current.small,
     iconColor: Color = LocalColors.current.text,
-    minHeight: Dp = LocalDimensions.current.minLargeItemButtonHeight,
+    minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     paddingValues: PaddingValues = PaddingValues(horizontal = LocalDimensions.current.smallSpacing),
 ){
     ActionRowItem(
@@ -1145,7 +1072,7 @@ fun SwitchActionRowItem(
     textStyle: TextStyle = LocalType.current.h8,
     subtitleStyle: TextStyle = LocalType.current.small,
     paddingValues: PaddingValues = PaddingValues(horizontal = LocalDimensions.current.smallSpacing),
-    minHeight: Dp = LocalDimensions.current.minLargeItemButtonHeight,
+    minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
 ){
     ActionRowItem(
         modifier = modifier,

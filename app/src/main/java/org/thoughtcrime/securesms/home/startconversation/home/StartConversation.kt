@@ -68,14 +68,15 @@ internal fun StartConversationScreen(
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState())
             ) {
-                val dividerIndent: Dp = LocalDimensions.current.minItemButtonHeight + 2*LocalDimensions.current.smallSpacing
+                val dividerIndent: Dp = LocalDimensions.current.itemButtonIconSpacing + 2*LocalDimensions.current.smallSpacing
                 val newMessageTitleTxt:String = context.resources.getQuantityString(R.plurals.messageNew, 1, 1)
                 ItemButton(
                     text = annotatedStringResource(newMessageTitleTxt),
+                    textStyle = LocalType.current.xl,
                     iconRes = R.drawable.ic_message_square,
                     modifier = Modifier.qaTag(R.string.AccessibilityId_messageNew),
                     onClick = {
-                       navigateTo(StartConversationDestination.NewMessage)
+                        navigateTo(StartConversationDestination.NewMessage)
                     }
                 )
                 Divider(
@@ -86,6 +87,7 @@ internal fun StartConversationScreen(
                 )
                 ItemButton(
                     text = annotatedStringResource(R.string.groupCreate),
+                    textStyle = LocalType.current.xl,
                     iconRes = R.drawable.ic_users_group_custom,
                     modifier = Modifier.qaTag(R.string.AccessibilityId_groupCreate),
                     onClick = {
@@ -100,6 +102,7 @@ internal fun StartConversationScreen(
                 )
                 ItemButton(
                     text = annotatedStringResource(R.string.communityJoin),
+                    textStyle = LocalType.current.xl,
                     iconRes = R.drawable.ic_globe,
                     modifier = Modifier.qaTag(R.string.AccessibilityId_communityJoin),
                     onClick = {
@@ -114,6 +117,7 @@ internal fun StartConversationScreen(
                 )
                 ItemButton(
                     text = annotatedStringResource(R.string.sessionInviteAFriend),
+                    textStyle = LocalType.current.xl,
                     iconRes = R.drawable.ic_user_round_plus,
                     modifier = Modifier.qaTag(R.string.AccessibilityId_sessionInviteAFriendButton),
                     onClick = {

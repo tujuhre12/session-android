@@ -83,7 +83,7 @@ import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GenericProCTA
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.HorizontalPagerIndicator
-import org.thoughtcrime.securesms.ui.LargeItemButton
+import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.LongMessageProCTA
 import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.ProCTAFeature
@@ -442,7 +442,7 @@ fun CellButtons(
     Cell(modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing)) {
         Column {
             onReply?.let {
-                LargeItemButton(
+                ItemButton(
                     annotatedStringResource(R.string.reply),
                     R.drawable.ic_reply,
                     onClick = it
@@ -451,7 +451,7 @@ fun CellButtons(
             }
 
             onResend?.let {
-                LargeItemButton(
+                ItemButton(
                     annotatedStringResource(R.string.resend),
                     R.drawable.ic_repeat_2,
                     onClick = it
@@ -459,7 +459,7 @@ fun CellButtons(
                 Divider()
             }
 
-            LargeItemButton(
+            ItemButton(
                 annotatedStringResource(R.string.messageCopy),
                 R.drawable.ic_copy,
                 onClick = onCopy
@@ -467,7 +467,7 @@ fun CellButtons(
             Divider()
 
             onSave?.let {
-                LargeItemButton(
+                ItemButton(
                     annotatedStringResource(R.string.save),
                     R.drawable.ic_arrow_down_to_line,
                     onClick = it
@@ -476,7 +476,7 @@ fun CellButtons(
             }
 
             onDelete?.let {
-                LargeItemButton(
+                ItemButton(
                     annotatedStringResource(R.string.delete),
                     R.drawable.ic_trash_2,
                     colors = dangerButtonColors(),

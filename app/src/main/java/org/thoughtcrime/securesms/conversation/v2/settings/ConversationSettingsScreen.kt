@@ -47,7 +47,7 @@ import org.thoughtcrime.securesms.ui.AvatarQrWidget
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.ExpandableText
-import org.thoughtcrime.securesms.ui.LargeItemButton
+import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.LoadingDialog
 import org.thoughtcrime.securesms.ui.components.AnnotatedTextWithIcon
 import org.thoughtcrime.securesms.ui.components.BackAppBar
@@ -298,7 +298,7 @@ fun ConversationSettingsSubCategory(
     ) {
         Column {
             data.items.forEachIndexed { index, option ->
-                LargeItemButton(
+                ItemButton(
                     modifier = Modifier.qaTag(option.qaTag),
                     text = annotatedStringResource(option.name),
                     subtitle = option.subtitle,
