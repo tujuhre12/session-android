@@ -208,22 +208,6 @@ class MmsDatabase @Inject constructor(
         }
     }
 
-    fun updateInfoMessage(messageId: Long, body: String?, runThreadUpdate: Boolean = true) {
-        val threadId = getThreadIdForMessage(messageId)
-        val db = writableDatabase
-        db.execSQL(
-            "UPDATE $TABLE_NAME SET $BODY = ? WHERE $ID = ?",
-            arrayOf(body, messageId.toString())
-        )
-        with (threadDatabase) {
-            setLastSeen(threadId, SnodeAPI.nowWithOffset)
-            setHasSent(threadId, true)
-            if (runThreadUpdate) {
-                update(threadId, true)
-            }
-        }
-    }
-
     fun updateSentTimestamp(messageId: Long, newTimestamp: Long) {
         val db = writableDatabase
         val threadId = db.rawQuery(

@@ -32,7 +32,6 @@ import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.ReactionRecord
-import network.loki.messenger.libsession_util.util.Contact as LibSessionContact
 import network.loki.messenger.libsession_util.util.GroupMember as LibSessionGroupMember
 
 interface StorageProtocol {
@@ -127,8 +126,6 @@ interface StorageProtocol {
     fun insertIncomingInfoMessage(context: Context, senderPublicKey: String, groupID: String, type: SignalServiceGroup.Type,
         name: String, members: Collection<String>, admins: Collection<String>, sentTimestamp: Long): Long?
 
-    fun updateInfoMessage(context: Context, messageId: Long, groupID: String, type: SignalServiceGroup.Type, name: String, members: Collection<String>)
-
     fun insertOutgoingInfoMessage(context: Context, groupID: String, type: SignalServiceGroup.Type, name: String,
         members: Collection<String>, admins: Collection<String>, threadID: Long, sentTimestamp: Long): Long?
     fun isLegacyClosedGroup(publicKey: String): Boolean
@@ -151,7 +148,6 @@ interface StorageProtocol {
         groupName: String
     )
 
-    fun updateGroupInfoChange(messageId: Long, newType: UpdateMessageData.Kind)
     fun deleteGroupInfoMessages(groupId: AccountId, kind: Class<out UpdateMessageData.Kind>)
 
     // Groups

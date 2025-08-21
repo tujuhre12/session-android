@@ -816,13 +816,6 @@ class GroupManagerV2Impl @Inject constructor(
             // Clear existing message in the thread whenever we receive an invitation that we can't
             // auto approve
             storage.clearMessages(groupThreadId)
-
-            // In most cases, when we receive invitation, the thread has just been created,
-            // and "has_sent" is set to false. But there are cases that we could be "re-invited"
-            // to a group, where we need to go through approval process again.
-            // For a conversation to be in a unapproved list, "has_sent" must be false, hence
-            // setting here explicitly. Details to be seen on ticket SES-2967.
-            threadDatabase.setHasSent(groupThreadId, false)
             storage.insertGroupInviteControlMessage(
                 sentTimestamp = inviteMessageTimestamp,
                 senderPublicKey = inviter.hexString,

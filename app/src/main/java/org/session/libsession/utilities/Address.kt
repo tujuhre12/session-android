@@ -11,6 +11,9 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Util
 import java.util.LinkedList
+import androidx.core.net.toUri
+import coil3.Uri
+import org.session.libsignal.utilities.Log
 
 @Serializable(with = AddressSerializer::class)
 sealed class Address : Parcelable, Comparable<Address> {
@@ -95,9 +98,10 @@ sealed class Address : Parcelable, Comparable<Address> {
             get() = blindedId.blindedId
 
         override val address: String by lazy(LazyThreadSafetyMode.NONE) {
-            serverUrl
-                .newBuilder()
-                .addQueryParameter(URL_QUERY_ARG_BLINDED_ID, blindedId.blindedId.hexString)
+            "${URI_SCHEME}${blindedId.blindedId.hexString}"
+                .toUri()
+                .buildUpon()
+                .appendQueryParameter(URL_QUERY_SERVER, serverUrl.toString())
                 .build()
                 .toString()
         }
@@ -110,7 +114,8 @@ sealed class Address : Parcelable, Comparable<Address> {
         override fun toString(): String = address
 
         companion object {
-            const val URL_QUERY_ARG_BLINDED_ID = "session_android_address_blinded_id"
+            const val URI_SCHEME = "community-blinded://"
+            const val URL_QUERY_SERVER = "server"
         }
     }
 
@@ -128,7 +133,7 @@ sealed class Address : Parcelable, Comparable<Address> {
         override val address: String by lazy(LazyThreadSafetyMode.NONE) {
             serverUrl
                 .newBuilder()
-                .addQueryParameter(URL_QUERY_ARG_ROOM, room)
+                .addPathSegment(room)
                 .build()
                 .toString()
         }
@@ -137,10 +142,6 @@ sealed class Address : Parcelable, Comparable<Address> {
             get() = "Community(serverUrl=${serverUrl.redact().substring(0, 10)}, room=xxxx)"
 
         override fun toString(): String = address
-
-        companion object {
-            const val URL_QUERY_ARG_ROOM = "session_android_address_room"
-        }
     }
 
     data class Unknown(val serialized: String) : Address() {
@@ -171,61 +172,49 @@ sealed class Address : Parcelable, Comparable<Address> {
     companion object {
         @JvmStatic
         fun fromSerialized(serialized: String): Address {
-            val url = if (serialized.startsWith("http://", ignoreCase = true) ||
-                serialized.startsWith("https://", ignoreCase = true)) {
-                serialized.toHttpUrlOrNull()
-            } else {
-                null
-            }
+            try {// It could be a community address if it's an HTTP URL
+                if (serialized.startsWith("http", ignoreCase = true)) {
+                    val httpUrl = serialized.toHttpUrl()
 
-            if (url != null) {
-                // Check if the URL has a blinded ID query parameter
-                val blindedId = url.queryParameter(CommunityBlindedId.URL_QUERY_ARG_BLINDED_ID)
-                if (blindedId != null) {
-                    // First we need to make sure this id is valid..
-                    val blinded = runCatching { Blinded(AccountId(blindedId)) }
-                        .getOrNull()
-
-                    // If we have blinded id but failed to parse it, it's an unknown address
-                    if (blinded == null) {
-                        return Unknown(serialized)
+                    val roomPathIndex = httpUrl.pathSegments.indexOfLast { it.isNotBlank() }
+                    check(roomPathIndex >= 0) {
+                        "Invalid HTTP URL: address does not have a valid room path segment"
                     }
 
-                    return CommunityBlindedId(
-                        serverUrl = url.newBuilder().removeAllQueryParameters(
-                            CommunityBlindedId.URL_QUERY_ARG_BLINDED_ID)
-                            .build(),
-                        blindedId = blinded
-                    )
-                }
-
-                // Check if we have a room query parameter instead
-                val room = url.queryParameter(Community.URL_QUERY_ARG_ROOM)
-                if (room != null) {
-                    if (room.isBlank()) {
-                        return Unknown(serialized)
-                    }
+                    val room = httpUrl.pathSegments[roomPathIndex]
 
                     // If we have a room, we can create a Community address
                     return Community(
-                        serverUrl = url.newBuilder()
-                            .removeAllQueryParameters(Community.URL_QUERY_ARG_ROOM)
+                        serverUrl = httpUrl.newBuilder()
+                            .removePathSegment(roomPathIndex)
                             .build(),
                         room = room
                     )
                 }
-            }
 
-            if (serialized.startsWith(GroupUtil.LEGACY_CLOSED_GROUP_PREFIX)) {
-                val groupId = GroupUtil.doubleDecodeGroupId(serialized)
-                return LegacyGroup(groupId)
-            }
+                if (serialized.startsWith(CommunityBlindedId.URI_SCHEME)) {
+                    val uri = serialized.toUri()
+                    val blinded = Blinded(AccountId(uri.host.orEmpty()))
+                    val server = checkNotNull(uri.getQueryParameter(CommunityBlindedId.URL_QUERY_SERVER)) {
+                        "Invalid CommunityBlindedId: missing server URL query parameter"
+                    }.toHttpUrl()
 
-            AccountId.fromStringOrNull(serialized)?.let {
-                return it.toAddress()
-            }
+                    return CommunityBlindedId(
+                        serverUrl = server,
+                        blindedId = blinded
+                    )
+                }
 
-            return Unknown(serialized)
+                if (serialized.startsWith(GroupUtil.LEGACY_CLOSED_GROUP_PREFIX)) {
+                    val groupId = GroupUtil.doubleDecodeGroupId(serialized)
+                    return LegacyGroup(groupId)
+                }
+
+                return AccountId(serialized).toAddress()
+            } catch (e: Exception) {
+                Log.w("Address", "Failed to parse address: $serialized", e)
+                return Unknown(serialized)
+            }
         }
 
         @JvmStatic

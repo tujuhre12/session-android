@@ -315,18 +315,20 @@ class ConfigToDatabaseSync @Inject constructor(
     private fun updateConvoVolatile(convos: List<Conversation?>) {
         val extracted = convos.filterNotNull()
         for (conversation in extracted) {
-            val threadId = when (conversation) {
-                is Conversation.OneToOne -> storage.getThreadIdFor(conversation.accountId, null, null, createThread = false)
-                is Conversation.LegacyGroup -> storage.getThreadIdFor("", conversation.groupId,null, createThread = false)
-                is Conversation.Community -> storage.getThreadIdFor("",null, "${conversation.baseCommunityInfo.baseUrl.removeSuffix("/")}.${conversation.baseCommunityInfo.room}", createThread = false)
-                is Conversation.ClosedGroup -> storage.getThreadIdFor(conversation.accountId, null, null, createThread = false) // New groups will be managed bia libsession
+            val address: Address.Conversable = when (conversation) {
+                is Conversation.OneToOne -> Address.Standard(AccountId(conversation.accountId))
+                is Conversation.LegacyGroup -> Address.LegacyGroup(conversation.groupId)
+                is Conversation.Community -> Address.Community(serverUrl = conversation.baseCommunityInfo.baseUrl, room = conversation.baseCommunityInfo.room)
+                is Conversation.ClosedGroup -> Address.Group(AccountId(conversation.accountId)) // New groups will be managed bia libsession
                 is Conversation.BlindedOneToOne -> {
                     // Not supported yet
                     continue
                 }
             }
 
-            if (threadId != null) {
+            val threadId = threadDatabase.getThreadIdIfExistsFor(address)
+
+            if (threadId != -1L) {
                 if (conversation.lastRead > storage.getLastSeen(threadId)) {
                     storage.markConversationAsRead(
                         threadId,

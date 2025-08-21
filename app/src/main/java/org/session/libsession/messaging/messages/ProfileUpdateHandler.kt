@@ -6,6 +6,7 @@ import org.session.libsession.messaging.messages.visible.Profile
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.updateContact
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.BlindMappingRepository
@@ -55,23 +56,27 @@ class ProfileUpdateHandler @Inject constructor(
         val standardSender = unblinded ?: (senderAddress as? Address.Standard)
         if (standardSender != null && (updates.name != null || updates.pic != null || updates.profileUpdateTime != null)) {
             configFactory.withMutableUserConfigs { configs ->
-                configs.contacts.get(standardSender.accountId.hexString)?.let { existingContact ->
+                configs.contacts.updateContact(standardSender) {
                     if (shouldUpdateProfile(
-                        lastUpdated = existingContact.profileUpdatedEpochSeconds.secondsToInstant(),
+                        lastUpdated = profileUpdatedEpochSeconds.secondsToInstant(),
                         newUpdateTime = updates.profileUpdateTime
                     )) {
-                        configs.contacts.set(
-                            existingContact.copy(
-                                name = updates.name ?: existingContact.name,
-                                profilePicture = updates.pic ?: existingContact.profilePicture,
-                                profileUpdatedEpochSeconds = updates.profileUpdateTime?.toEpochSeconds() ?: 0L,
-                            )
-                        )
+                        if (updates.name != null) {
+                            name = updates.name
+                        }
+
+                        if (updates.pic != null) {
+                            profilePicture = updates.pic
+                        }
+
+                        if (updates.profileUpdateTime != null) {
+                            profileUpdatedEpochSeconds = updates.profileUpdateTime.toEpochSeconds()
+                        }
                         Log.d(TAG, "Updated contact profile for ${standardSender.debugString}")
                     } else {
                         Log.d(TAG, "Ignoring contact profile update for ${standardSender.debugString}, no changes detected")
                     }
-                } ?: Log.w(TAG, "Got a unblinded address for a contact but it does not exist: ${standardSender.debugString}")
+                }
             }
         }
 
@@ -87,7 +92,7 @@ class ProfileUpdateHandler @Inject constructor(
                             c.profilePic = updates.pic
                         }
 
-                        if (!updates.name.isNullOrBlank()) {
+                        if (updates.name != null) {
                             c.name = updates.name
                         }
 
@@ -110,7 +115,7 @@ class ProfileUpdateHandler @Inject constructor(
                             newUpdateTime = updates.profileUpdateTime
                         )) {
                         r.copy(
-                            name = updates.name?.takeIf { it.isNotBlank() } ?: r.name,
+                            name = updates.name ?: r.name,
                             profilePic = updates.pic ?: r.profilePic,
                             blocksCommunityMessagesRequests = updates.blocksCommunityMessageRequests ?: r.blocksCommunityMessagesRequests
                         )
@@ -135,11 +140,18 @@ class ProfileUpdateHandler @Inject constructor(
     }
 
     class Updates private constructor(
+        // Name to update, must be non-blank if provided.
         val name: String? = null,
         val pic: UserPic? = null,
         val blocksCommunityMessageRequests: Boolean? = null,
         val profileUpdateTime: Instant?,
     ) {
+        init {
+            check(name == null || name.isNotBlank()) {
+                "Name must be non-blank if provided"
+            }
+        }
+
         companion object {
             fun create(
                 name: String? = null,
@@ -160,7 +172,12 @@ class ProfileUpdateHandler @Inject constructor(
                     return null
                 }
 
-                return Updates(name, pic, blocksCommunityMessageRequests, profileUpdateTime)
+                return Updates(
+                    name = if (hasNameUpdate) name else null,
+                    pic = pic,
+                    blocksCommunityMessageRequests = blocksCommunityMessageRequests,
+                    profileUpdateTime = profileUpdateTime
+                )
             }
 
             fun Profile.toUpdates(

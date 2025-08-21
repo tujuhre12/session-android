@@ -220,7 +220,7 @@ class RecipientRepository @Inject constructor(
                             groupDatabase.getGroup(address.toGroupString()).orNull()
 
                         val groupConfig = configFactory.withUserConfigs {
-                            it.userGroups.getLegacyGroupInfo(GroupUtil.doubleDecodeGroupId(address.address))
+                            it.userGroups.getLegacyGroupInfo(address.groupPublicKeyHex)
                         }
 
                         val memberAddresses = group?.members?.toSet().orEmpty()

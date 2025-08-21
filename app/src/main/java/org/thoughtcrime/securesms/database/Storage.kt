@@ -668,12 +668,6 @@ open class Storage @Inject constructor(
         return smsDB.insertMessageInbox(infoMessage,  true).orNull().messageId
     }
 
-    override fun updateInfoMessage(context: Context, messageId: Long, groupID: String, type: SignalServiceGroup.Type, name: String, members: Collection<String>) {
-        val mmsDB = mmsDatabase
-        val updateData = UpdateMessageData.buildGroupUpdate(type, name, members)?.toJSON()
-        mmsDB.updateInfoMessage(messageId, updateData)
-    }
-
     override fun insertOutgoingInfoMessage(context: Context, groupID: String, type: SignalServiceGroup.Type, name: String, members: Collection<String>, admins: Collection<String>, threadID: Long, sentTimestamp: Long): Long? {
         val userPublicKey = getUserPublicKey()!!
         val recipient = fromSerialized(groupID)
@@ -809,12 +803,6 @@ open class Storage @Inject constructor(
         val updateData = UpdateMessageData.buildGroupLeaveUpdate(UpdateMessageData.Kind.GroupErrorQuit(groupName.orEmpty()))
 
         insertUpdateControlMessage(updateData, sentTimestamp, senderPublicKey, closedGroup)
-    }
-
-    override fun updateGroupInfoChange(messageId: Long, newType: UpdateMessageData.Kind) {
-        val mmsDB = mmsDatabase
-        val newMessage = UpdateMessageData.buildGroupLeaveUpdate(newType)
-        mmsDB.updateInfoMessage(messageId, newMessage.toJSON())
     }
 
     override fun deleteGroupInfoMessages(groupId: AccountId, kind: Class<out UpdateMessageData.Kind>) {
