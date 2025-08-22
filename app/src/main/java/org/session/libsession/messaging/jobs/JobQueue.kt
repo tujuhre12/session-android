@@ -37,18 +37,18 @@ class JobQueue : JobDelegate {
     ) = launch {
         for (job in channel) {
             if (!isActive) break
-            val openGroupId = when (job) {
-                is BatchMessageReceiveJob -> job.openGroupID
-                is OpenGroupDeleteJob -> job.openGroupId
-                is TrimThreadJob -> job.openGroupId
+            val communityAddress = when (job) {
+                is BatchMessageReceiveJob -> job.fromCommunity?.address
+                is OpenGroupDeleteJob -> job.address?.address
+                is TrimThreadJob -> job.communityAddress?.address
                 else -> null
             }
-            if (openGroupId.isNullOrEmpty()) {
+            if (communityAddress.isNullOrEmpty()) {
                 Log.e("OpenGroupDispatcher", "Open Group ID was null on ${job.javaClass.simpleName}")
                 handleJobFailedPermanently(job, name, NullPointerException("Open Group ID was null"))
             } else {
-                val groupChannel = if (!openGroupChannels.containsKey(openGroupId)) {
-                    Log.d("OpenGroupDispatcher", "Creating ${openGroupId.hashCode()} channel")
+                val groupChannel = if (!openGroupChannels.containsKey(communityAddress)) {
+                    Log.d("OpenGroupDispatcher", "Creating ${communityAddress.hashCode()} channel")
                     val newGroupChannel = Channel<Job>(UNLIMITED)
                     launch {
                         for (groupJob in newGroupChannel) {
@@ -56,11 +56,11 @@ class JobQueue : JobDelegate {
                             groupJob.process(name)
                         }
                     }
-                    openGroupChannels[openGroupId] = newGroupChannel
+                    openGroupChannels[communityAddress] = newGroupChannel
                     newGroupChannel
                 } else {
                     Log.d("OpenGroupDispatcher", "Re-using channel")
-                    openGroupChannels[openGroupId]!!
+                    openGroupChannels[communityAddress]!!
                 }
                 Log.d("OpenGroupDispatcher", "Sending to channel $groupChannel")
                 groupChannel.send(job)
@@ -134,8 +134,8 @@ class JobQueue : JobDelegate {
                     }
                     is TrimThreadJob,
                     is BatchMessageReceiveJob -> {
-                        if ((job is BatchMessageReceiveJob && !job.openGroupID.isNullOrEmpty())
-                            || (job is TrimThreadJob && !job.openGroupId.isNullOrEmpty())) {
+                        if ((job is BatchMessageReceiveJob && job.fromCommunity != null)
+                            || (job is TrimThreadJob && job.communityAddress != null)) {
                             openGroupQueue.send(job)
                         } else {
                             rxQueue.send(job)

@@ -17,6 +17,7 @@ import org.session.libsession.messaging.messages.signal.OutgoingSecureMediaMessa
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.DistributionTypes
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.GroupUtil.doubleEncodeGroupID
@@ -82,30 +83,19 @@ class ExpiringMessageManager @Inject constructor(
     ): MessageId? {
         val senderPublicKey = message.sender
         val sentTimestamp = message.sentTimestamp
-        val groupId = message.groupPublicKey
+        val groupAddress = message.groupPublicKey?.toAddress() as? Address.GroupLike
         val expiresInMillis = message.expiryMode.expiryMillis
         var groupInfo = Optional.absent<SignalServiceGroup?>()
         val address = fromSerialized(senderPublicKey!!)
         var recipient = recipientRepository.getRecipientSync(address)
 
         // if the sender is blocked, we don't display the update, except if it's in a closed group
-        if (recipient.blocked && groupId == null) return null
+        if (recipient.blocked && groupAddress == null) return null
         return try {
-            if (groupId != null) {
-                val groupAddress: Address
-                groupInfo = when {
-                    groupId.startsWith(IdPrefix.GROUP.value) -> {
-                        groupAddress = fromSerialized(groupId)
-                        Optional.of(SignalServiceGroup(Hex.fromStringCondensed(groupId), SignalServiceGroup.GroupType.SIGNAL))
-                    }
-                    else -> {
-                        val doubleEncoded = GroupUtil.doubleEncodeGroupID(groupId)
-                        groupAddress = fromSerialized(doubleEncoded)
-                        Optional.of(SignalServiceGroup(GroupUtil.getDecodedGroupIDAsData(doubleEncoded), SignalServiceGroup.GroupType.SIGNAL))
-                    }
-                }
+            if (groupAddress != null) {
                 recipient = recipientRepository.getRecipientSync(groupAddress)
             }
+
             val threadId = recipient.address.let(storage.get()::getThreadId) ?: return null
             val mediaMessage = IncomingMediaMessage(
                 address, sentTimestamp!!, -1,
@@ -115,7 +105,7 @@ class ExpiringMessageManager @Inject constructor(
                 false,
                 false,
                 Optional.absent(),
-                groupInfo,
+                Optional.fromNullable(groupAddress),
                 Optional.absent(),
                 DisappearingMessageUpdate(message.expiryMode),
                 Optional.absent(),

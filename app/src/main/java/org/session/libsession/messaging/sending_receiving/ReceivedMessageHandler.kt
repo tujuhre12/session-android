@@ -70,6 +70,7 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.sskenvironment.ReadReceiptManager
 import java.security.SignatureException
 import javax.inject.Inject
@@ -98,12 +99,19 @@ class ReceivedMessageHandler @Inject constructor(
     private val profileUpdateHandler: Provider<ProfileUpdateHandler>,
     @param:ManagerScope private val scope: CoroutineScope,
     private val configFactory: ConfigFactoryProtocol,
+    private val conversationRepository: ConversationRepository,
     private val messageRequestResponseHandler: Provider<MessageRequestResponseHandler>
 ) {
 
-    suspend fun handle(message: Message, proto: SignalServiceProtos.Content, threadId: Long, openGroupID: String?, groupv2Id: AccountId?) {
+    suspend fun handle(
+        message: Message,
+        proto: SignalServiceProtos.Content,
+        threadId: Long,
+        groupv2Id: AccountId?,
+        fromCommunity: Address.Community?,
+    ) {
         // Do nothing if the message was outdated
-        if (messageIsOutdated(message, threadId, openGroupID)) { return }
+        if (messageIsOutdated(message, threadId)) { return }
 
         when (message) {
             is ReadReceipt -> handleReadReceipt(message)
@@ -115,7 +123,7 @@ class ReceivedMessageHandler @Inject constructor(
                 if (groupv2Id != null) {
                     Log.d("MessageReceiver", "Ignoring expiration timer update for closed group")
                 } // also ignore it for communities since they do not support disappearing messages
-                else if (openGroupID != null) {
+                else if (fromCommunity != null) {
                     Log.d("MessageReceiver", "Ignoring expiration timer update for communities")
                 } else {
                     handleExpirationTimerUpdate(message)
@@ -127,7 +135,7 @@ class ReceivedMessageHandler @Inject constructor(
             is VisibleMessage -> handleVisibleMessage(
                 message = message,
                 proto = proto,
-                context = visibleMessageContextFactory.create(threadId, openGroupID),
+                context = visibleMessageContextFactory.create(threadId),
                 runThreadUpdate = true,
                 runProfileUpdate = true
             )
@@ -135,7 +143,7 @@ class ReceivedMessageHandler @Inject constructor(
         }
     }
 
-    private fun messageIsOutdated(message: Message, threadId: Long, openGroupID: String?): Boolean {
+    private fun messageIsOutdated(message: Message, threadId: Long): Boolean {
         when (message) {
             is ReadReceipt -> return false // No visible artifact created so better to keep for more reliable read states
             is UnsendRequest -> return false // We should always process the removal of messages just in case
@@ -144,12 +152,7 @@ class ReceivedMessageHandler @Inject constructor(
         // Determine the state of the conversation and the validity of the message
         val userPublicKey = storage.getUserPublicKey()!!
         val threadRecipient = storage.getRecipientForThread(threadId)
-        val conversationVisibleInConfig = storage.conversationInConfig(
-            if (message.groupPublicKey == null) threadRecipient?.toString() else null,
-            message.groupPublicKey,
-            openGroupID,
-            true
-        )
+        val conversationExists = threadRecipient != null
         val canPerformChange = storage.canPerformConfigChange(
             if (threadRecipient?.address?.toString() == userPublicKey) ConfigDatabase.USER_PROFILE_VARIANT else ConfigDatabase.CONTACTS_VARIANT,
             userPublicKey,
@@ -158,7 +161,7 @@ class ReceivedMessageHandler @Inject constructor(
 
         // If the thread is visible or the message was sent more recently than the last config message (minus
         // buffer period) then we should process the message, if not then the message is outdated
-        return (!conversationVisibleInConfig && !canPerformChange)
+        return (!conversationExists && !canPerformChange)
     }
 
     private fun handleReadReceipt(message: ReadReceipt) {
@@ -293,7 +296,7 @@ class ReceivedMessageHandler @Inject constructor(
         val senderAddress = message.sender!!.toAddress()
 
         // Do nothing if the message was outdated
-        if (messageIsOutdated(message, context.threadId, context.openGroupID)) { return null }
+        if (messageIsOutdated(message, context.threadId)) { return null }
 
 
         // Handle group invite response if new closed group
@@ -398,7 +401,14 @@ class ReceivedMessageHandler @Inject constructor(
                 message.expiryMode = ExpiryMode.NONE
             }
 
-            val messageID = context.storage.persist(message, quoteModel, linkPreviews, message.groupPublicKey, context.openGroupID, attachments, runThreadUpdate) ?: return null
+            val messageID = context.storage.persist(
+                message,
+                quoteModel,
+                linkPreviews,
+                fromGroup = context.threadRecipient?.address as? Address.GroupLike,
+                attachments,
+                runThreadUpdate
+            ) ?: return null
 
             // If we have previously "hidden" the sender, we should flip the flag back to visible
             if (senderAddress is Address.Standard && senderAddress.address != userPublicKey) {
@@ -700,7 +710,6 @@ private fun SignalServiceProtos.Content.ExpirationType.expiryMode(durationSecond
 class VisibleMessageHandlerContext @AssistedInject constructor(
     @param:ApplicationContext val context: Context,
     @Assisted val threadId: Long,
-    @Assisted val openGroupID: String?,
     val storage: StorageProtocol,
     val groupManagerV2: GroupManagerV2,
     val messageExpirationManager: SSKEnvironment.MessageExpirationManagerProtocol,
@@ -708,7 +717,7 @@ class VisibleMessageHandlerContext @AssistedInject constructor(
     val recipientRepository: RecipientRepository,
 ) {
     val openGroup: OpenGroup? by lazy {
-        openGroupID?.let { storage.getOpenGroup(threadId) }
+        storage.getOpenGroup(threadId)
     }
 
     val userBlindedKey: String? by lazy {
@@ -735,10 +744,7 @@ class VisibleMessageHandlerContext @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(
-            threadId: Long,
-            openGroupID: String?
-        ): VisibleMessageHandlerContext
+        fun create(threadId: Long): VisibleMessageHandlerContext
     }
 }
 

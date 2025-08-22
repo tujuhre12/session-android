@@ -16,21 +16,21 @@ import coil3.Uri
 import org.session.libsignal.utilities.Log
 
 @Serializable(with = AddressSerializer::class)
-sealed class Address : Parcelable, Comparable<Address> {
+sealed interface Address : Parcelable, Comparable<Address> {
     /**
      * The serialized form of the address.
      */
-    abstract val address: String
+    val address: String
 
     /**
      * A debug string that is safe to log.
      */
-    abstract val debugString: String
+    val debugString: String
 
     override fun compareTo(other: Address) = address.compareTo(other.address)
 
     @Serializable(with = GroupAddressSerializer::class)
-    data class Group(override val accountId: AccountId) : Conversable(), WithAccountId {
+    data class Group(override val accountId: AccountId) : Conversable, GroupLike, WithAccountId {
         override val address: String
             get() = accountId.hexString
 
@@ -47,7 +47,7 @@ sealed class Address : Parcelable, Comparable<Address> {
     }
 
     @Serializable(with = StandardAddressSerializer::class)
-    data class Standard(override val accountId: AccountId) : Conversable(), WithAccountId {
+    data class Standard(override val accountId: AccountId) : Conversable, WithAccountId {
         override val address: String
             get() = accountId.hexString
 
@@ -63,7 +63,7 @@ sealed class Address : Parcelable, Comparable<Address> {
         override fun toString(): String = address
     }
 
-    data class Blinded(val blindedId: AccountId) : Address(), WithAccountId {
+    data class Blinded(val blindedId: AccountId) : Address, WithAccountId {
         override val accountId: AccountId
             get() = blindedId
 
@@ -82,7 +82,7 @@ sealed class Address : Parcelable, Comparable<Address> {
         override fun toString(): String = address
     }
 
-    data class LegacyGroup(val groupPublicKeyHex: String) : Conversable() {
+    data class LegacyGroup(val groupPublicKeyHex: String) : Conversable, GroupLike {
         override val address: String by lazy(LazyThreadSafetyMode.NONE) {
             GroupUtil.doubleEncodeGroupID(groupPublicKeyHex)
         }
@@ -93,7 +93,7 @@ sealed class Address : Parcelable, Comparable<Address> {
         override fun toString(): String = address
     }
 
-    data class CommunityBlindedId(val serverUrl: HttpUrl, val blindedId: Blinded) : Conversable(), WithAccountId {
+    data class CommunityBlindedId(val serverUrl: HttpUrl, val blindedId: Blinded) : Conversable, WithAccountId {
         override val accountId: AccountId
             get() = blindedId.blindedId
 
@@ -119,7 +119,7 @@ sealed class Address : Parcelable, Comparable<Address> {
         }
     }
 
-    data class Community(val serverUrl: HttpUrl, val room: String) : Conversable() {
+    data class Community(val serverUrl: HttpUrl, val room: String) : Conversable, GroupLike {
         constructor(openGroup: OpenGroup): this(
             serverUrl = openGroup.server.toHttpUrl(),
             room = openGroup.room
@@ -144,7 +144,7 @@ sealed class Address : Parcelable, Comparable<Address> {
         override fun toString(): String = address
     }
 
-    data class Unknown(val serialized: String) : Address() {
+    data class Unknown(val serialized: String) : Address {
         override val address: String
             get() = serialized
 
@@ -158,7 +158,13 @@ sealed class Address : Parcelable, Comparable<Address> {
      * A marker interface for addresses that can be used to start a conversation
      */
     @Serializable(with = ConversableAddressSerializer::class)
-    sealed class Conversable : Address()
+    sealed interface Conversable : Address
+
+    /**
+     * A marker interface for addresses that represent a group-like entity.
+     */
+    sealed interface GroupLike : Address
+
     sealed interface WithAccountId {
         val accountId: AccountId
     }

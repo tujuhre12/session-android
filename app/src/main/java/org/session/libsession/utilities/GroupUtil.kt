@@ -1,6 +1,5 @@
 package org.session.libsession.utilities
 
-import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
@@ -26,15 +25,6 @@ object GroupUtil {
         return LEGACY_CLOSED_GROUP_PREFIX + hex
     }
 
-    @JvmStatic
-    fun getEncodedId(group: SignalServiceGroup): String {
-        val groupId = group.groupId
-        if (group.groupType == SignalServiceGroup.GroupType.PUBLIC_CHAT) {
-            return getEncodedOpenGroupID(groupId)
-        }
-        return getEncodedClosedGroupID(groupId)
-    }
-
     private fun splitEncodedGroupID(groupID: String): String {
         if (groupID.split("!").count() > 1) {
             return groupID.split("!", limit = 2)[1]
@@ -50,14 +40,6 @@ object GroupUtil {
     @JvmStatic
     fun getDecodedGroupIDAsData(groupID: String): ByteArray {
         return Hex.fromStringCondensed(splitEncodedGroupID(groupID))
-    }
-
-    fun getEncodedOpenGroupInboxAddress(
-        server: CommunityServerUrl,
-        pubKey: CommunityPublicKey,
-        blindedAccountId: AccountId
-    ): String {
-        return COMMUNITY_INBOX_PREFIX + Hex.toStringCondensed("$server!$pubKey!${blindedAccountId.hexString}".toByteArray())
     }
 
     @JvmStatic

@@ -123,8 +123,6 @@ interface StorageProtocol {
     fun removeClosedGroupPublicKey(groupPublicKey: String)
     fun addClosedGroupEncryptionKeyPair(encryptionKeyPair: ECKeyPair, groupPublicKey: String, timestamp: Long)
     fun removeAllClosedGroupEncryptionKeyPairs(groupPublicKey: String)
-    fun insertIncomingInfoMessage(context: Context, senderPublicKey: String, groupID: String, type: SignalServiceGroup.Type,
-        name: String, members: Collection<String>, admins: Collection<String>, sentTimestamp: Long): Long?
 
     fun insertOutgoingInfoMessage(context: Context, groupID: String, type: SignalServiceGroup.Type, name: String,
         members: Collection<String>, admins: Collection<String>, threadID: Long, sentTimestamp: Long): Long?
@@ -155,9 +153,6 @@ interface StorageProtocol {
 
     // Thread
     fun getOrCreateThreadIdFor(address: Address): Long
-    fun getThreadIdFor(publicKey: String, groupPublicKey: String?, openGroupID: String?, createThread: Boolean): Long?
-    fun getThreadId(publicKeyOrOpenGroupID: String): Long?
-    fun getThreadId(openGroup: OpenGroup): Long?
     fun getThreadId(address: Address): Long?
     fun getThreadIdForMms(mmsId: Long): Long
     fun getLastUpdated(threadID: Long): Long
@@ -184,7 +179,7 @@ interface StorageProtocol {
     /**
      * Returns the ID of the `TSIncomingMessage` that was constructed.
      */
-    fun persist(message: VisibleMessage, quotes: QuoteModel?, linkPreview: List<LinkPreview?>, groupPublicKey: String?, openGroupID: String?, attachments: List<Attachment>, runThreadUpdate: Boolean): MessageId?
+    fun persist(message: VisibleMessage, quotes: QuoteModel?, linkPreview: List<LinkPreview?>, fromGroup: Address.GroupLike?, attachments: List<Attachment>, runThreadUpdate: Boolean): MessageId?
     fun markConversationAsRead(threadId: Long, lastSeenTime: Long, force: Boolean = false)
     fun markConversationAsUnread(threadId: Long)
     fun getLastSeen(threadId: Long): Long
@@ -231,7 +226,6 @@ interface StorageProtocol {
     fun setExpirationConfiguration(address: Address, expiryMode: ExpiryMode)
 
     // Shared configs
-    fun conversationInConfig(publicKey: String?, groupPublicKey: String?, openGroupId: String?, visibleOnly: Boolean): Boolean
     fun canPerformConfigChange(variant: String, publicKey: String, changeTimestampMs: Long): Boolean
     fun isCheckingCommunityRequests(): Boolean
 }

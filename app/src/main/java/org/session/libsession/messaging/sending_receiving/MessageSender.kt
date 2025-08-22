@@ -441,23 +441,20 @@ object MessageSender {
             // Track the open group server message ID
             val messageIsAddressedToCommunity = message.openGroupServerMessageID != null && (destination is Destination.LegacyOpenGroup || destination is Destination.OpenGroup)
             if (messageIsAddressedToCommunity) {
-                val server: String
-                val room: String
-                when (destination) {
+                val address = when (destination) {
                     is Destination.LegacyOpenGroup -> {
-                        server = destination.server
-                        room = destination.roomToken
+                        Address.Community(destination.server, destination.roomToken)
                     }
+
                     is Destination.OpenGroup -> {
-                        server = destination.server
-                        room = destination.roomToken
+                        Address.Community(destination.server, destination.roomToken)
                     }
+
                     else -> {
                         throw Exception("Destination was a different destination than we were expecting")
                     }
                 }
-                val encoded = GroupUtil.getEncodedOpenGroupID("$server.$room".toByteArray())
-                val communityThreadID = storage.getThreadId(Address.fromSerialized(encoded))
+                val communityThreadID = storage.getThreadId(address)
                 if (communityThreadID != null && communityThreadID >= 0) {
                     storage.setOpenGroupServerMessageID(
                         messageID = messageId,

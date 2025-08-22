@@ -57,7 +57,6 @@ interface ConfigFactoryProtocol {
      */
     fun <T> withMutableGroupConfigs(groupId: AccountId, cb: (MutableGroupConfigs) -> T): T
 
-    fun conversationInConfig(publicKey: String?, groupPublicKey: String?, openGroupId: String?, visibleOnly: Boolean): Boolean
     fun canPerformChange(variant: String, publicKey: String, changeTimestampMs: Long): Boolean
 
     fun getConfigTimestamp(userConfigType: UserConfigType, publicKey: String): Long

@@ -38,7 +38,6 @@ import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import java.security.SecureRandom
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import kotlin.collections.component1
 import kotlin.collections.component2
@@ -287,8 +286,12 @@ object OpenGroupApi {
         return RequestBody.create("application/json".toMediaType(), parametersAsJSON)
     }
 
-    private fun getResponseBody(request: Request, signRequest: Boolean = true): Promise<ByteArraySlice, Exception> {
-        return send(request, signRequest = signRequest).map { response ->
+    private fun getResponseBody(
+        request: Request,
+        signRequest: Boolean = true,
+        serverPubKeyHex: String? = null
+    ): Promise<ByteArraySlice, Exception> {
+        return send(request, signRequest = signRequest, serverPubKeyHex = serverPubKeyHex).map { response ->
             response.body ?: throw Error.ParsingFailed
         }
     }
@@ -312,7 +315,7 @@ object OpenGroupApi {
         return fetched.capabilities
     }
 
-    private fun send(request: Request, signRequest: Boolean): Promise<OnionResponse, Exception> {
+    private fun send(request: Request, signRequest: Boolean, serverPubKeyHex: String? = null): Promise<OnionResponse, Exception> {
         request.server.toHttpUrlOrNull() ?: return Promise.ofFail(Error.InvalidURL)
         val urlBuilder = StringBuilder("${request.server}/${request.endpoint.value}")
         if (request.verb == GET && request.queryParameters.isNotEmpty()) {
@@ -323,9 +326,9 @@ object OpenGroupApi {
         }
 
         suspend fun execute(): OnionResponse {
-            val serverPublicKey =
-                MessagingModuleConfiguration.shared.storage.getOpenGroupPublicKey(request.server)
-                    ?: throw Error.NoPublicKey
+            val serverPublicKey = serverPubKeyHex
+                ?: MessagingModuleConfiguration.shared.storage.getOpenGroupPublicKey(request.server)
+                ?: throw Error.NoPublicKey
             val urlRequest = urlBuilder.toString()
 
             val headers = if (signRequest) {
@@ -864,9 +867,9 @@ object OpenGroupApi {
         }
     }
 
-    fun getCapabilities(server: String): Promise<Capabilities, Exception> {
+    fun getCapabilities(server: String, serverPubKeyHex: String? = null): Promise<Capabilities, Exception> {
         val request = Request(verb = GET, room = null, server = server, endpoint = Endpoint.Capabilities)
-        return getResponseBody(request, signRequest = false).map { response ->
+        return getResponseBody(request, signRequest = false, serverPubKeyHex).map { response ->
             JsonUtil.fromJson(response, Capabilities::class.java)
         }
     }

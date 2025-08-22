@@ -4,30 +4,23 @@ import com.google.protobuf.ByteString
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.selects.onTimeout
-import kotlinx.coroutines.selects.select
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageReceiveParameters
 import org.session.libsession.messaging.jobs.OpenGroupDeleteJob
 import org.session.libsession.messaging.jobs.TrimThreadJob
-import org.session.libsession.messaging.messages.Message
+import org.session.libsession.messaging.messages.Message.Companion.senderOrSync
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.Endpoint
@@ -38,8 +31,8 @@ import org.session.libsession.messaging.open_groups.OpenGroupMessage
 import org.session.libsession.messaging.sending_receiving.MessageReceiver
 import org.session.libsession.messaging.sending_receiving.ReceivedMessageHandler
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.GroupUtil
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
@@ -71,6 +64,8 @@ class OpenGroupPoller @AssistedInject constructor(
     private val lokiThreadDatabase: LokiThreadDatabase,
     private val configFactory: ConfigFactoryProtocol,
     private val threadDatabase: ThreadDatabase,
+    private val trimThreadJobFactory: TrimThreadJob.Factory,
+    private val openGroupDeleteJobFactory: OpenGroupDeleteJob.Factory,
     @Assisted private val server: String,
     @Assisted private val scope: CoroutineScope,
 ) {
@@ -309,8 +304,14 @@ class OpenGroupPoller @AssistedInject constructor(
                         message.syncTarget = syncTarget
                     }
                 }
-                val threadId = Message.getThreadId(message, null, storage, false)
-                receivedMessageHandler.handle(message, proto, threadId ?: -1, null, null)
+                val threadId = threadDatabase.getThreadIdIfExistsFor(message.senderOrSync.toAddress())
+                receivedMessageHandler.handle(
+                    message = message,
+                    proto = proto,
+                    threadId = threadId,
+                    groupv2Id = null,
+                    fromCommunity = null
+                )
             } catch (e: Exception) {
                 Log.e(TAG, "Couldn't handle direct message", e)
             }
@@ -318,12 +319,9 @@ class OpenGroupPoller @AssistedInject constructor(
     }
 
     private fun handleNewMessages(server: String, roomToken: String, messages: List<OpenGroupMessage>) {
-        val openGroupID = "$server.$roomToken"
-        val groupID = GroupUtil.getEncodedOpenGroupID(openGroupID.toByteArray())
+        val threadAddress = Address.Community(serverUrl = server, room = roomToken)
         // check thread still exists
-        val threadId = storage.getThreadId(Address.fromSerialized(groupID)) ?: -1
-        val threadExists = threadId >= 0
-        if (!threadExists) { return }
+        val threadId = storage.getThreadId(threadAddress) ?: return
         val envelopes =  mutableListOf<Triple<Long?, SignalServiceProtos.Envelope, Map<String, OpenGroupApi.Reaction>?>>()
         messages.sortedBy { it.serverID!! }.forEach { message ->
             if (!message.base64EncodedData.isNullOrEmpty()) {
@@ -342,22 +340,27 @@ class OpenGroupPoller @AssistedInject constructor(
             val parameters = list.map { (serverId, message, reactions) ->
                 MessageReceiveParameters(message.toByteArray(), openGroupMessageServerID = serverId, reactions = reactions)
             }
-            JobQueue.shared.add(batchMessageJobFactory.create(parameters, openGroupID))
+            JobQueue.shared.add(batchMessageJobFactory.create(
+                parameters,
+                fromCommunity = threadAddress
+            ))
         }
 
         if (envelopes.isNotEmpty()) {
-            JobQueue.shared.add(TrimThreadJob(threadId, openGroupID))
+            JobQueue.shared.add(trimThreadJobFactory.create(threadId))
         }
     }
 
     private fun handleDeletedMessages(server: String, roomToken: String, serverIds: List<Long>) {
-        val openGroupId = "$server.$roomToken"
-        val groupID = GroupUtil.getEncodedOpenGroupID(openGroupId.toByteArray())
-        val threadID = storage.getThreadId(Address.fromSerialized(groupID)) ?: return
+        val threadID = storage.getThreadId(Address.Community(serverUrl = server, room = roomToken)) ?: return
 
         if (serverIds.isNotEmpty()) {
-            val deleteJob = OpenGroupDeleteJob(serverIds.toLongArray(), threadID, openGroupId)
-            JobQueue.shared.add(deleteJob)
+            JobQueue.shared.add(
+                openGroupDeleteJobFactory.create(
+                    messageServerIds = serverIds.toLongArray(),
+                    threadId = threadID
+                )
+            )
         }
     }
 

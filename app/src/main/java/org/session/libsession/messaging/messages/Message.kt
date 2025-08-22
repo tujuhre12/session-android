@@ -34,9 +34,6 @@ abstract class Message {
     open val isSelfSendValid: Boolean = false
 
     companion object {
-        fun getThreadId(message: Message, openGroupID: String?, storage: StorageProtocol, shouldCreateThread: Boolean): Long? {
-            return storage.getThreadIdFor(message.senderOrSync, message.groupPublicKey, openGroupID, createThread = shouldCreateThread)
-        }
 
         val Message.senderOrSync get() = when(this)  {
             is VisibleMessage -> syncTarget ?: sender!!

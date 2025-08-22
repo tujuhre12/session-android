@@ -6,7 +6,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
-import network.loki.messenger.libsession_util.ConfigBase
 import network.loki.messenger.libsession_util.Contacts
 import network.loki.messenger.libsession_util.ConversationVolatileConfig
 import network.loki.messenger.libsession_util.Curve25519
@@ -34,13 +33,11 @@ import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.UserConfigs
 import org.session.libsession.utilities.getGroup
 import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.configs.ConfigToDatabaseSync
 import org.thoughtcrime.securesms.database.ConfigDatabase
 import org.thoughtcrime.securesms.database.ConfigVariant
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
-import org.thoughtcrime.securesms.groups.GroupManager
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -442,43 +439,6 @@ class ConfigFactory @Inject constructor(
         }
     }
 
-    override fun conversationInConfig(
-        publicKey: String?,
-        groupPublicKey: String?,
-        openGroupId: String?,
-        visibleOnly: Boolean
-    ): Boolean {
-        val userPublicKey = storage.get().getUserPublicKey() ?: return false
-
-        if (openGroupId != null) {
-            val threadId = GroupManager.getOpenGroupThreadID(openGroupId, context)
-            val openGroup = lokiThreadDatabase.getOpenGroupChat(threadId) ?: return false
-
-            // Not handling the `hidden` behaviour for communities so just indicate the existence
-            return withUserConfigs {
-                it.userGroups.getCommunityInfo(openGroup.server, openGroup.room) != null
-            }
-        } else if (groupPublicKey != null) {
-            // Not handling the `hidden` behaviour for legacy groups so just indicate the existence
-            return withUserConfigs {
-                if (groupPublicKey.startsWith(IdPrefix.GROUP.value)) {
-                    it.userGroups.getClosedGroup(groupPublicKey) != null
-                } else {
-                    it.userGroups.getLegacyGroupInfo(groupPublicKey) != null
-                }
-            }
-        } else if (publicKey == userPublicKey) {
-            return withUserConfigs {
-                !visibleOnly || it.userProfile.getNtsPriority() != ConfigBase.PRIORITY_HIDDEN
-            }
-        } else if (publicKey != null) {
-            return withUserConfigs {
-                (!visibleOnly || it.contacts.get(publicKey)?.priority != ConfigBase.PRIORITY_HIDDEN)
-            }
-        } else {
-            return false
-        }
-    }
 
     override fun canPerformChange(
         variant: String,

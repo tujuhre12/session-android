@@ -46,6 +46,7 @@ import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.GroupDisplayInfo
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.GroupUtil
@@ -60,19 +61,15 @@ import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
 import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.Hex
-import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.KeyHelper
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
-import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.groups.GroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.util.FilenameUtils
@@ -271,10 +268,10 @@ open class Storage @Inject constructor(
         message: VisibleMessage,
         quotes: QuoteModel?,
         linkPreview: List<LinkPreview?>,
-        groupPublicKey: String?,
-        openGroupID: String?,
+        fromGroup: Address.GroupLike?,
         attachments: List<Attachment>,
-        runThreadUpdate: Boolean): MessageId? {
+        runThreadUpdate: Boolean
+    ): MessageId? {
         val messageID: MessageId?
         val senderAddress = fromSerialized(message.sender!!)
         val isUserSender = (message.sender!! == getUserPublicKey())
@@ -286,32 +283,10 @@ open class Storage @Inject constructor(
                     serverPubKey = it
                 )
             } ?: false
-        val group: Optional<SignalServiceGroup> = when {
-            openGroupID != null -> Optional.of(SignalServiceGroup(openGroupID.toByteArray(), SignalServiceGroup.GroupType.PUBLIC_CHAT))
-            groupPublicKey != null && groupPublicKey.startsWith(IdPrefix.GROUP.value) -> {
-                Optional.of(SignalServiceGroup(Hex.fromStringCondensed(groupPublicKey), SignalServiceGroup.GroupType.SIGNAL))
-            }
-            groupPublicKey != null -> {
-                val doubleEncoded = GroupUtil.doubleEncodeGroupID(groupPublicKey)
-                Optional.of(SignalServiceGroup(GroupUtil.getDecodedGroupIDAsData(doubleEncoded), SignalServiceGroup.GroupType.SIGNAL))
-            }
-            else -> Optional.absent()
-        }
 
         val targetAddress = if ((isUserSender || isUserBlindedSender) && !message.syncTarget.isNullOrEmpty()) {
-            fromSerialized(message.syncTarget!!)
-        } else if (group.isPresent) {
-            val idHex = group.get().groupId.toHexString()
-            if (idHex.startsWith(IdPrefix.GROUP.value)) {
-                fromSerialized(idHex)
-            } else {
-                fromSerialized(GroupUtil.getEncodedId(group.get()))
-            }
-        } else if (message.recipient?.startsWith(IdPrefix.GROUP.value) == true) {
-            fromSerialized(message.recipient!!)
-        } else {
-            senderAddress
-        }
+            message.syncTarget!!.toAddress()
+        } else fromGroup ?: senderAddress
 
         if (message.threadID == null && !targetAddress.isCommunity) {
             // open group recipients should explicitly create threads
@@ -356,7 +331,7 @@ open class Storage @Inject constructor(
                 val signalServiceAttachments = attachments.mapNotNull {
                     it.toSignalPointer()
                 }
-                val mediaMessage = IncomingMediaMessage.from(message, senderAddress, expiresInMillis, expireStartedAt, group, signalServiceAttachments, quote, linkPreviews)
+                val mediaMessage = IncomingMediaMessage.from(message, senderAddress, expiresInMillis, expireStartedAt, Optional.fromNullable(fromGroup), signalServiceAttachments, quote, linkPreviews)
                 mmsDatabase.insertSecureDecryptedMessageInbox(mediaMessage, message.threadID!!, message.receivedTimestamp ?: 0, runThreadUpdate)
             }
 
@@ -371,7 +346,7 @@ open class Storage @Inject constructor(
                 smsDatabase.insertMessageOutbox(message.threadID ?: -1, textMessage, message.sentTimestamp!!, runThreadUpdate)
             } else {
                 val textMessage = if (isOpenGroupInvitation) IncomingTextMessage.fromOpenGroupInvitation(message.openGroupInvitation, senderAddress, message.sentTimestamp, expiresInMillis, expireStartedAt)
-                else IncomingTextMessage.from(message, senderAddress, group, expiresInMillis, expireStartedAt)
+                else IncomingTextMessage.from(message, senderAddress, Optional.fromNullable(fromGroup), expiresInMillis, expireStartedAt)
                 val encrypted = IncomingEncryptedMessage(textMessage, textMessage.messageBody)
                 smsDatabase.insertMessageInbox(encrypted, message.receivedTimestamp ?: 0, runThreadUpdate)
             }
@@ -429,9 +404,6 @@ open class Storage @Inject constructor(
         return lokiAPIDatabase.getAuthToken(id)
     }
 
-    override fun conversationInConfig(publicKey: String?, groupPublicKey: String?, openGroupId: String?, visibleOnly: Boolean): Boolean {
-        return configFactory.conversationInConfig(publicKey, groupPublicKey, openGroupId, visibleOnly)
-    }
 
     override fun canPerformConfigChange(variant: String, publicKey: String, changeTimestampMs: Long): Boolean {
         return configFactory.canPerformChange(variant, publicKey, changeTimestampMs)
@@ -460,7 +432,10 @@ open class Storage @Inject constructor(
     }
 
     override fun getOpenGroupPublicKey(server: String): String? {
-        return lokiAPIDatabase.getOpenGroupPublicKey(server)
+        return configFactory.withUserConfigs { it.userGroups.allCommunityInfo() }
+            .firstOrNull { it.community.baseUrl == server }
+            ?.community
+            ?.pubKeyHex
     }
 
     override fun getLastMessageServerID(room: String, server: String): Long? {
@@ -613,8 +588,8 @@ open class Storage @Inject constructor(
         return if (group.isPresent) { group.get() } else null
     }
 
-    override fun createGroup(groupId: String, title: String?, members: List<Address>, avatar: SignalServiceAttachmentPointer?, relay: String?, admins: List<Address>, formationTimestamp: Long) {
-        groupDatabase.create(groupId, title, members, avatar, relay, admins, formationTimestamp)
+    override fun createGroup(groupID: String, title: String?, members: List<Address>, avatar: SignalServiceAttachmentPointer?, relay: String?, admins: List<Address>, formationTimestamp: Long) {
+        groupDatabase.create(groupID, title, members, avatar, relay, admins, formationTimestamp)
     }
 
     override fun createInitialConfigGroup(groupPublicKey: String, name: String, members: Map<String, Boolean>, formationTimestamp: Long, encryptionKeyPair: ECKeyPair, expirationTimer: Int) {
@@ -657,15 +632,6 @@ open class Storage @Inject constructor(
 
     override fun updateMembers(groupID: String, members: List<Address>) {
         groupDatabase.updateMembers(groupID, members)
-    }
-
-    override fun insertIncomingInfoMessage(context: Context, senderPublicKey: String, groupID: String, type: SignalServiceGroup.Type, name: String, members: Collection<String>, admins: Collection<String>, sentTimestamp: Long): Long? {
-        val group = SignalServiceGroup(type, GroupUtil.getDecodedGroupIDAsData(groupID), SignalServiceGroup.GroupType.SIGNAL, name, members.toList(), null, admins.toList())
-        val m = IncomingTextMessage(fromSerialized(senderPublicKey), 1, sentTimestamp, "", Optional.of(group), 0, 0, true, false)
-        val updateData = UpdateMessageData.buildGroupUpdate(type, name, members)?.toJSON()
-        val infoMessage = IncomingGroupMessage(m, updateData, true)
-        val smsDB = smsDatabase
-        return smsDB.insertMessageInbox(infoMessage,  true).orNull().messageId
     }
 
     override fun insertOutgoingInfoMessage(context: Context, groupID: String, type: SignalServiceGroup.Type, name: String, members: Collection<String>, admins: Collection<String>, threadID: Long, sentTimestamp: Long): Long? {
@@ -859,8 +825,7 @@ open class Storage @Inject constructor(
             mmsDB.markAsSent(infoMessageID, true)
             return MessageId(infoMessageID, mms = true)
         } else {
-            val group = SignalServiceGroup(Hex.fromStringCondensed(closedGroup.hexString), SignalServiceGroup.GroupType.SIGNAL)
-            val m = IncomingTextMessage(fromSerialized(senderPublicKey), 1, sentTimestamp, "", Optional.of(group), expiresInMillis, expireStartedAt, true, false)
+            val m = IncomingTextMessage(fromSerialized(senderPublicKey), 1, sentTimestamp, "", Optional.of(Address.Group(closedGroup)), expiresInMillis, expireStartedAt, true, false)
             val infoMessage = IncomingGroupMessage(m, inviteJson, true)
             val smsDB = smsDatabase
             val insertResult = smsDB.insertMessageInbox(infoMessage,  true)
@@ -890,35 +855,6 @@ open class Storage @Inject constructor(
 
     override fun getOrCreateThreadIdFor(address: Address): Long {
         return threadDatabase.getOrCreateThreadIdFor(address)
-    }
-
-    override fun getThreadIdFor(publicKey: String, groupPublicKey: String?, openGroupID: String?, createThread: Boolean): Long? {
-        val database = threadDatabase
-        return if (!openGroupID.isNullOrEmpty()) {
-            val recipient = fromSerialized(GroupUtil.getEncodedOpenGroupID(openGroupID.toByteArray()))
-            database.getThreadIdIfExistsFor(recipient).let { if (it == -1L) null else it }
-        } else if (!groupPublicKey.isNullOrEmpty() && !groupPublicKey.startsWith(IdPrefix.GROUP.value)) {
-            val recipient = fromSerialized(GroupUtil.doubleEncodeGroupID(groupPublicKey))
-            if (createThread) database.getOrCreateThreadIdFor(recipient)
-            else database.getThreadIdIfExistsFor(recipient).let { if (it == -1L) null else it }
-        } else if (!groupPublicKey.isNullOrEmpty()) {
-            val recipient = fromSerialized(groupPublicKey)
-            if (createThread) database.getOrCreateThreadIdFor(recipient)
-            else database.getThreadIdIfExistsFor(recipient).let { if (it == -1L) null else it }
-        } else {
-            val recipient = fromSerialized(publicKey)
-            if (createThread) database.getOrCreateThreadIdFor(recipient)
-            else database.getThreadIdIfExistsFor(recipient).let { if (it == -1L) null else it }
-        }
-    }
-
-    override fun getThreadId(publicKeyOrOpenGroupID: String): Long? {
-        val address = fromSerialized(publicKeyOrOpenGroupID)
-        return getThreadId(address)
-    }
-
-    override fun getThreadId(openGroup: OpenGroup): Long? {
-        return GroupManager.getOpenGroupThreadID("${openGroup.server.removeSuffix("/")}.${openGroup.room}", context)
     }
 
     override fun getThreadId(address: Address): Long? {
