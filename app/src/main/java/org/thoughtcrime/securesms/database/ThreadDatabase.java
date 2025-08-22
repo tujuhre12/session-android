@@ -81,7 +81,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow;
 import kotlinx.coroutines.flow.SharedFlowKt;
 import kotlinx.serialization.json.Json;
 import network.loki.messenger.libsession_util.util.GroupInfo;
-import okhttp3.HttpUrl;
 
 @Singleton
 public class ThreadDatabase extends Database implements OnAppStartupComponent {
@@ -206,7 +205,7 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
                     continue;
                   } else {
                     newAddress = new Address.CommunityBlindedId(
-                            HttpUrl.get(triple.getFirst()),
+                            triple.getFirst(),
                             new Address.Blinded(triple.getThird())
                     ).toString();
                   }

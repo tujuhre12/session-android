@@ -212,7 +212,7 @@ public class RecipientDatabase extends Database {
               continue;
             } else {
               newAddress = new Address.CommunityBlindedId(
-                      HttpUrl.get(triple.getFirst()),
+                      triple.getFirst(),
                       new Address.Blinded(triple.getThird())
               ).toString();
             }

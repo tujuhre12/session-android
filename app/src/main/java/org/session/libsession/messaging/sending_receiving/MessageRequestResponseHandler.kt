@@ -1,6 +1,5 @@
 package org.session.libsession.messaging.sending_receiving
 
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.session.libsession.messaging.messages.ProfileUpdateHandler
 import org.session.libsession.messaging.messages.ProfileUpdateHandler.Updates.Companion.toUpdates
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
@@ -17,7 +16,6 @@ import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
-import org.thoughtcrime.securesms.repository.ConversationRepository
 import javax.inject.Inject
 import javax.inject.Provider
 
@@ -115,7 +113,7 @@ class MessageRequestResponseHandler @Inject constructor(
                 val blindedConversationAddresses = blindMappingRepository.calculateReverseMappings(messageSender.address)
                     .mapTo(hashSetOf()) { (c, id) ->
                         Address.CommunityBlindedId(
-                            serverUrl = c.baseUrl.toHttpUrl(),
+                            serverUrl = c.baseUrl,
                             blindedId = id,
                         )
                     }

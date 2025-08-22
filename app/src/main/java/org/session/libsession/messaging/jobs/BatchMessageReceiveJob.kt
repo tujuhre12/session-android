@@ -148,7 +148,7 @@ class BatchMessageReceiveJob @AssistedInject constructor(
     suspend fun executeAsync(dispatcherName: String) {
         val threadMap = mutableMapOf<Long, MutableList<ParsedMessage>>()
         val localUserPublicKey = storage.getUserPublicKey()
-        val serverPublicKey = fromCommunity?.let { storage.getOpenGroupPublicKey(it.serverUrl.toString()) }
+        val serverPublicKey = fromCommunity?.let { storage.getOpenGroupPublicKey(it.serverUrl) }
         val currentClosedGroups = storage.getAllActiveClosedGroupPublicKeys()
 
         // parse and collect IDs

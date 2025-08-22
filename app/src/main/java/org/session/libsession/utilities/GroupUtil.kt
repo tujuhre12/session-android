@@ -8,6 +8,7 @@ import java.io.IOException
 private typealias CommunityServerUrl = String
 private typealias CommunityPublicKey = String
 
+@Deprecated("This class encodes the group ID unsafely and will soon be removed. All new code should use Address to do address manipulation instead.")
 object GroupUtil {
     const val LEGACY_CLOSED_GROUP_PREFIX = "__textsecure_group__!"
     const val COMMUNITY_PREFIX = "__loki_public_chat_group__!"

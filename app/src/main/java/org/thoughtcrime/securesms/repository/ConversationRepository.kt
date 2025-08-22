@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.groups.GroupManagerV2
@@ -155,7 +154,7 @@ class DefaultConversationRepository @Inject constructor(
             for (blindedContact in configs.contacts.allBlinded()) {
                 if (blindedContact.priority >= 0) {
                     add(Address.CommunityBlindedId(
-                        serverUrl = blindedContact.communityServer.toHttpUrl(),
+                        serverUrl = blindedContact.communityServer,
                         blindedId = Address.Blinded(AccountId(blindedContact.id))
                     ))
                 }

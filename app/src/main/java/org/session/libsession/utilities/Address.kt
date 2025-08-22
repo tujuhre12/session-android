@@ -1,19 +1,17 @@
 package org.session.libsession.utilities
 
+import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
+import androidx.core.net.toUri
 import kotlinx.serialization.Serializable
-import okhttp3.HttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Util
 import java.util.LinkedList
-import androidx.core.net.toUri
-import coil3.Uri
 import org.session.libsignal.utilities.Log
+import kotlin.text.startsWith
 
 @Serializable(with = AddressSerializer::class)
 sealed interface Address : Parcelable, Comparable<Address> {
@@ -93,55 +91,69 @@ sealed interface Address : Parcelable, Comparable<Address> {
         override fun toString(): String = address
     }
 
-    data class CommunityBlindedId(val serverUrl: HttpUrl, val blindedId: Blinded) : Conversable, WithAccountId {
+    data class CommunityBlindedId(val serverUrl: String, val blindedId: Blinded) : Conversable, WithAccountId {
+        init {
+            check(serverUrl.startsWith("http://") || serverUrl.startsWith("https://")) {
+                "Server URL must start with http:// or https://, but was: $serverUrl"
+            }
+        }
+
         override val accountId: AccountId
             get() = blindedId.blindedId
 
         override val address: String by lazy(LazyThreadSafetyMode.NONE) {
-            "${URI_SCHEME}${blindedId.blindedId.hexString}"
+            "${URI_PREFIX}${blindedId.blindedId.hexString}"
                 .toUri()
                 .buildUpon()
-                .appendQueryParameter(URL_QUERY_SERVER, serverUrl.toString())
+                .appendQueryParameter(URL_QUERY_SERVER, serverUrl)
                 .build()
                 .toString()
         }
 
         override val debugString: String
             get() = "CommunityBlindedId(" +
-                    "serverUrl=${serverUrl.redact().substring(0, 10)}, " +
+                    "serverUrl=${serverUrl.substring(0, 10)}, " +
                     "blindedId=${blindedId.debugString})"
 
         override fun toString(): String = address
 
         companion object {
-            const val URI_SCHEME = "community-blinded://"
+            const val URI_PREFIX = "community-blinded://"
             const val URL_QUERY_SERVER = "server"
         }
     }
 
-    data class Community(val serverUrl: HttpUrl, val room: String) : Conversable, GroupLike {
+    data class Community(val serverUrl: String, val room: String) : Conversable, GroupLike {
         constructor(openGroup: OpenGroup): this(
-            serverUrl = openGroup.server.toHttpUrl(),
+            serverUrl = openGroup.server,
             room = openGroup.room
         )
 
-        constructor(serverUrl: String, room: String) : this(
-            serverUrl = serverUrl.toHttpUrl(),
-            room = room
-        )
+        init {
+            check(serverUrl.startsWith("http://") ||
+                    serverUrl.startsWith("https://")) {
+                "Server URL must start with http:// or https://, but was: $serverUrl"
+            }
+        }
 
         override val address: String by lazy(LazyThreadSafetyMode.NONE) {
-            serverUrl
-                .newBuilder()
-                .addPathSegment(room)
+            "${URI_PREFIX}${Uri.encode(serverUrl)}"
+                .toUri()
+                .buildUpon()
+                .appendQueryParameter(URL_QUERY_ROOM, room)
                 .build()
                 .toString()
         }
 
         override val debugString: String
-            get() = "Community(serverUrl=${serverUrl.redact().substring(0, 10)}, room=xxxx)"
+            get() = "Community(serverUrl=${serverUrl.substring(0, 10)}, room=xxxx)"
 
         override fun toString(): String = address
+
+        companion object {
+            const val URI_PREFIX = "community://"
+            const val URL_QUERY_ROOM = "room"
+        }
     }
 
     data class Unknown(val serialized: String) : Address {
@@ -178,32 +190,30 @@ sealed interface Address : Parcelable, Comparable<Address> {
     companion object {
         @JvmStatic
         fun fromSerialized(serialized: String): Address {
-            try {// It could be a community address if it's an HTTP URL
-                if (serialized.startsWith("http", ignoreCase = true)) {
-                    val httpUrl = serialized.toHttpUrl()
-
-                    val roomPathIndex = httpUrl.pathSegments.indexOfLast { it.isNotBlank() }
-                    check(roomPathIndex >= 0) {
-                        "Invalid HTTP URL: address does not have a valid room path segment"
+            try {
+                if (serialized.startsWith(Community.URI_PREFIX)) {
+                    val uri = serialized.toUri()
+                    val serverUrl = requireNotNull(uri.host?.takeIf { it.isNotBlank() }) {
+                        "Invalid Community address: missing server URL"
                     }
 
-                    val room = httpUrl.pathSegments[roomPathIndex]
+                    val room = requireNotNull(uri.getQueryParameter(Community.URL_QUERY_ROOM)) {
+                        "Invalid Community address: missing room query parameter"
+                    }
 
                     // If we have a room, we can create a Community address
                     return Community(
-                        serverUrl = httpUrl.newBuilder()
-                            .removePathSegment(roomPathIndex)
-                            .build(),
+                        serverUrl = serverUrl,
                         room = room
                     )
                 }
 
-                if (serialized.startsWith(CommunityBlindedId.URI_SCHEME)) {
+                if (serialized.startsWith(CommunityBlindedId.URI_PREFIX)) {
                     val uri = serialized.toUri()
                     val blinded = Blinded(AccountId(uri.host.orEmpty()))
                     val server = checkNotNull(uri.getQueryParameter(CommunityBlindedId.URL_QUERY_SERVER)) {
                         "Invalid CommunityBlindedId: missing server URL query parameter"
-                    }.toHttpUrl()
+                    }
 
                     return CommunityBlindedId(
                         serverUrl = server,

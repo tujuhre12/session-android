@@ -47,10 +47,7 @@ import kotlin.concurrent.write
 
 @Singleton
 class ConfigFactory @Inject constructor(
-    @param:ApplicationContext private val context: Context,
     private val configDatabase: ConfigDatabase,
-    private val threadDb: ThreadDatabase,
-    private val lokiThreadDatabase: LokiThreadDatabase,
     private val storage: Lazy<StorageProtocol>,
     private val textSecurePreferences: TextSecurePreferences,
     private val clock: SnodeClock,
@@ -295,7 +292,7 @@ class ConfigFactory @Inject constructor(
         withMutableUserConfigs {
             when (address) {
                 is Address.CommunityBlindedId -> it.contacts.eraseBlinded(
-                    communityServerUrl = address.serverUrl.toString(),
+                    communityServerUrl = address.serverUrl,
                     blindedId = address.blindedId.blindedId.hexString,
                 )
 

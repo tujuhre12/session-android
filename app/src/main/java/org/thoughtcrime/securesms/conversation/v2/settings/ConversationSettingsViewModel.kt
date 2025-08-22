@@ -954,7 +954,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 "Address must be a Community address to leave a community"
             }
 
-            openGroupManager.delete(address.serverUrl.toString(), address.room)
+            openGroupManager.delete(address.serverUrl, address.room)
             goBackHome()
         }
     }
