@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -34,7 +35,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -51,6 +51,7 @@ import com.squareup.phrase.Phrase
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.RELATIVE_TIME_KEY
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.*
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProAccountStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.CategoryCell
@@ -68,6 +69,13 @@ import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
+import org.thoughtcrime.securesms.ui.theme.primaryBlue
+import org.thoughtcrime.securesms.ui.theme.primaryGreen
+import org.thoughtcrime.securesms.ui.theme.primaryOrange
+import org.thoughtcrime.securesms.ui.theme.primaryPink
+import org.thoughtcrime.securesms.ui.theme.primaryPurple
+import org.thoughtcrime.securesms.ui.theme.primaryRed
+import org.thoughtcrime.securesms.ui.theme.primaryYellow
 import org.thoughtcrime.securesms.util.NumberUtil
 
 
@@ -78,11 +86,9 @@ fun ProSettingsHomeScreen(
     onBack: () -> Unit,
 ) {
     val data by viewModel.uiState.collectAsState()
-    val dialogsState by viewModel.dialogState.collectAsState()
 
     ProSettingsHome(
         data = data,
-        dialogsState = dialogsState,
         sendCommand = viewModel::onCommand,
         onBack = onBack,
     )
@@ -92,122 +98,96 @@ fun ProSettingsHomeScreen(
 @Composable
 fun ProSettingsHome(
     data: ProSettingsViewModel.UIState,
-    dialogsState: ProSettingsViewModel.DialogsState,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ) {
-    Scaffold(
-        topBar = {
-            BackAppBar(
-                title = "",
-                backgroundColor = Color.Transparent,
-                onBack = onBack,
-            )
-        },
-        contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
-    ) { paddings ->
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = paddings.calculateTopPadding() - LocalDimensions.current.appBarHeight)
-                .consumeWindowInsets(paddings)
-                .padding(
-                    horizontal = LocalDimensions.current.spacing,
-                )
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = CenterHorizontally
-        ) {
-            Spacer(Modifier.height(46.dp))
-
-            SessionProSettingsHeader(
-                disabled = data.proStatus is ProAccountStatus.Expired,
-            )
-
-            // Pro Stats
-            if(data.proStatus is ProAccountStatus.Pro){
-                Spacer(Modifier.height(LocalDimensions.current.spacing))
-                ProStats(
-                    data = data.proStats,
-                    sendCommand = sendCommand,
-                )
-            }
-
-            // Pro account settings
-            if(data.proStatus is ProAccountStatus.Pro){
-                Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
-                ProSettings(
-                    data = data.proStatus,
-                    sendCommand = sendCommand,
-                )
-            }
-
-            // Manage Pro - Expired
-            if(data.proStatus is ProAccountStatus.Expired){
-                Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
-                ProManage(
-                    data = data.proStatus,
-                    sendCommand = sendCommand,
-                )
-            }
-
-            // Features
+    BaseProSettingsScreen(
+        data = data,
+        onBack = onBack,
+    ) {
+        // Pro Stats
+        if(data.proStatus is ProAccountStatus.Pro){
             Spacer(Modifier.height(LocalDimensions.current.spacing))
-            ProFeatures(
+            ProStats(
+                data = data.proStats,
+                sendCommand = sendCommand,
+            )
+        }
+
+        // Pro account settings
+        if(data.proStatus is ProAccountStatus.Pro){
+            Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
+            ProSettings(
                 data = data.proStatus,
                 sendCommand = sendCommand,
             )
+        }
 
-            // Manage Pro - Pro
-            if(data.proStatus is ProAccountStatus.Pro){
-                Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
-                ProManage(
-                    data = data.proStatus,
-                    sendCommand = sendCommand,
+        // Manage Pro - Expired
+        if(data.proStatus is ProAccountStatus.Expired){
+            Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
+            ProManage(
+                data = data.proStatus,
+                sendCommand = sendCommand,
+            )
+        }
+
+        // Features
+        Spacer(Modifier.height(LocalDimensions.current.spacing))
+        ProFeatures(
+            data = data.proStatus,
+            sendCommand = sendCommand,
+        )
+
+        // Manage Pro - Pro
+        if(data.proStatus is ProAccountStatus.Pro){
+            Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
+            ProManage(
+                data = data.proStatus,
+                sendCommand = sendCommand,
+            )
+        }
+
+        // Help
+        Spacer(Modifier.height(LocalDimensions.current.spacing))
+        CategoryCell(
+            title = stringResource(R.string.sessionHelp),
+        ) {
+            val iconColor = if(data.proStatus is ProAccountStatus.Expired) LocalColors.current.text
+            else LocalColors.current.accentText
+
+            // Cell content
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                IconActionRowItem(
+                    title = annotatedStringResource(ProStatusManager.TEMP_LABEL_FAQ),
+                    subtitle = annotatedStringResource(ProStatusManager.TEMP_LABEL_FAQ_DESCR),
+                    icon = R.drawable.ic_square_arrow_up_right,
+                    iconSize = LocalDimensions.current.iconMedium,
+                    iconColor = iconColor,
+                    qaTag = R.string.qa_pro_settings_action_faq,
+                    onClick = {
+                        sendCommand(ShowOpenUrlDialog("https://getsession.org/faq#pro"))
+                    }
+                )
+                Divider()
+                IconActionRowItem(
+                    title = annotatedStringResource(ProStatusManager.TEMP_LABEL_SUPPORT),
+                    subtitle = annotatedStringResource(ProStatusManager.TEMP_LABEL_SUPPORT_DESCR),
+                    icon = R.drawable.ic_square_arrow_up_right,
+                    iconSize = LocalDimensions.current.iconMedium,
+                    iconColor = iconColor,
+                    qaTag = R.string.qa_pro_settings_action_support,
+                    onClick = {
+                        sendCommand(ShowOpenUrlDialog("https://getsession.org/pro-form"))
+                    }
                 )
             }
-
-            // Help
-            Spacer(Modifier.height(LocalDimensions.current.spacing))
-            CategoryCell(
-                title = stringResource(R.string.sessionHelp),
-            ) {
-                val iconColor = if(data.proStatus is ProAccountStatus.Expired) LocalColors.current.text
-                else LocalColors.current.accentText
-
-                // Cell content
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    IconActionRowItem(
-                        title = annotatedStringResource(ProStatusManager.TEMP_LABEL_FAQ),
-                        subtitle = annotatedStringResource(ProStatusManager.TEMP_LABEL_FAQ_DESCR),
-                        icon = R.drawable.ic_square_arrow_up_right,
-                        iconSize = LocalDimensions.current.iconMedium,
-                        iconColor = iconColor,
-                        qaTag = R.string.qa_pro_settings_action_faq,
-                        onClick = {
-                            //todo PRO implement
-                        }
-                    )
-                    Divider()
-                    IconActionRowItem(
-                        title = annotatedStringResource(ProStatusManager.TEMP_LABEL_SUPPORT),
-                        subtitle = annotatedStringResource(ProStatusManager.TEMP_LABEL_SUPPORT_DESCR),
-                        icon = R.drawable.ic_square_arrow_up_right,
-                        iconSize = LocalDimensions.current.iconMedium,
-                        iconColor = iconColor,
-                        qaTag = R.string.qa_pro_settings_action_support,
-                        onClick = {
-                            //todo PRO implement
-                        }
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-            Spacer(modifier = Modifier.height(paddings.calculateBottomPadding()))
         }
+
+        Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+        Spacer(modifier = Modifier.windowInsetsBottomHeight(WindowInsets.systemBars))
     }
 }
 
@@ -354,7 +334,7 @@ fun ProSettings(
                 subtitle = annotatedStringResource(data.infoLabel),
                 icon = R.drawable.ic_chevron_right,
                 qaTag = R.string.qa_pro_settings_action_update_plan,
-                onClick = { sendCommand(ProSettingsViewModel.Commands.ShowPlanUpdate) }
+                onClick = { sendCommand(ShowPlanUpdate) }
             )
             Divider()
             SwitchActionRowItem(
@@ -362,7 +342,7 @@ fun ProSettings(
                 subtitle = annotatedStringResource(ProStatusManager.TEMP_LABEL_SHOW_BADGE),
                 checked = data.showProBadge,
                 qaTag = R.string.qa_pro_settings_action_show_badge,
-                onCheckedChange = { sendCommand(ProSettingsViewModel.Commands.SetShowProBadge(it)) }
+                onCheckedChange = { sendCommand(SetShowProBadge(it)) }
             )
         }
     }
@@ -385,13 +365,65 @@ fun ProFeatures(
         Column(
             modifier = Modifier.fillMaxWidth()
                 .padding(LocalDimensions.current.smallSpacing),
+            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
         ) {
+            // Larger Groups
             ProFeatureItem(
                 title = "Testing",
                 subtitle = annotatedStringResource("Subtitle"),
-                icon = R.drawable.ic_chevron_right,
-                iconGradientStart = LocalColors.current.accent,
-                iconGradientEnd = LocalColors.current.danger,
+                icon = R.drawable.ic_users_round_plus_custom,
+                iconGradientStart = primaryGreen,
+                iconGradientEnd = primaryBlue,
+                expired = data is ProAccountStatus.Expired
+            )
+
+            // Longer messages
+            ProFeatureItem(
+                title = "Testing",
+                subtitle = annotatedStringResource("Subtitle"),
+                icon = R.drawable.ic_message_square,
+                iconGradientStart = primaryBlue,
+                iconGradientEnd = primaryPurple,
+                expired = data is ProAccountStatus.Expired
+            )
+
+            // Animated pics
+            ProFeatureItem(
+                title = "Testing",
+                subtitle = annotatedStringResource("Subtitle"),
+                icon = R.drawable.ic_square_play,
+                iconGradientStart = primaryPurple,
+                iconGradientEnd = primaryPink,
+                expired = data is ProAccountStatus.Expired
+            )
+
+            // Pro badges
+            ProFeatureItem(
+                title = "Testing",
+                subtitle = annotatedStringResource("Subtitle"),
+                icon = R.drawable.ic_rectangle_ellipsis,
+                iconGradientStart = primaryPink,
+                iconGradientEnd = primaryRed,
+                expired = data is ProAccountStatus.Expired
+            )
+
+            // Unlimited pins
+            ProFeatureItem(
+                title = "Testing",
+                subtitle = annotatedStringResource("Subtitle"),
+                icon = R.drawable.ic_pin,
+                iconGradientStart = primaryRed,
+                iconGradientEnd = primaryOrange,
+                expired = data is ProAccountStatus.Expired
+            )
+
+            // More...
+            ProFeatureItem(
+                title = "Testing",
+                subtitle = annotatedStringResource("Subtitle"),
+                icon = R.drawable.ic_circle_plus,
+                iconGradientStart = primaryOrange,
+                iconGradientEnd = primaryYellow,
                 expired = data is ProAccountStatus.Expired
             )
         }
@@ -538,15 +570,14 @@ fun PreviewProSettingsPro(
     PreviewTheme(colors) {
         ProSettingsHome(
             data = ProSettingsViewModel.UIState(
-//                proStatus = ProAccountStatus.Pro.AutoRenewing(
-//                    showProBadge = true,
-//                    infoLabel = Phrase.from(LocalContext.current, R.string.proAutoRenew)
-//                        .put(RELATIVE_TIME_KEY, "15 days")
-//                        .format()
-//                ),
-                proStatus = ProAccountStatus.Expired,
+                proStatus = ProAccountStatus.Pro.AutoRenewing(
+                    showProBadge = true,
+                    infoLabel = Phrase.from(LocalContext.current, R.string.proAutoRenew)
+                        .put(RELATIVE_TIME_KEY, "15 days")
+                        .format()
+                ),
+//                proStatus = ProAccountStatus.Expired,
             ),
-            dialogsState = ProSettingsViewModel.DialogsState(),
             sendCommand = {},
             onBack = {},
         )
@@ -563,7 +594,6 @@ fun PreviewProSettingsNonPro(
             data = ProSettingsViewModel.UIState(
                 proStatus = ProAccountStatus.None,
             ),
-            dialogsState = ProSettingsViewModel.DialogsState(),
             sendCommand = {},
             onBack = {},
         )

@@ -31,13 +31,13 @@ class ProSettingsViewModel @Inject constructor(
         UIState(
             //todo PRO need to properly calculate this
             proStatus = if(proStatusManager.isCurrentUserPro())
-                ProAccountStatus.Expired
-//                ProAccountStatus.Pro.AutoRenewing(
-//                showProBadge = true,
-//                infoLabel = Phrase.from(context, R.string.proAutoRenew)
-//                    .put(RELATIVE_TIME_KEY, "15 days")
-//                    .format()
-//            )
+//                ProAccountStatus.Expired
+                ProAccountStatus.Pro.AutoRenewing(
+                showProBadge = true,
+                infoLabel = Phrase.from(context, R.string.proAutoRenew)
+                    .put(RELATIVE_TIME_KEY, "15 days")
+                    .format()
+            )
             else ProAccountStatus.None
         )
     )
