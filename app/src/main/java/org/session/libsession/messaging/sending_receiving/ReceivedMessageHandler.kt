@@ -422,7 +422,7 @@ class ReceivedMessageHandler @Inject constructor(
                             priority = PRIORITY_VISIBLE
                         }
                     }
-                } else if (existingContact == null) {
+                } else if (existingContact == null || !existingContact.approvedMe) {
                     // If we don't have the contact, create a new one with approvedMe = true
                     Log.d(TAG, "Creating new contact for ${senderAddress.debugString} with approvedMe = true")
                     configFactory.withMutableUserConfigs { configs ->

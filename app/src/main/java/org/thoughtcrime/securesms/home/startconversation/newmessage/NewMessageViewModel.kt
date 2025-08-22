@@ -120,13 +120,6 @@ class NewMessageViewModel @Inject constructor(
 
         val address = publicKey.toAddress()
         if (address is Address.Standard) {
-            // Add this person to our contact and approve them immediately
-            configFactory.withMutableUserConfigs { configs ->
-                configs.contacts.upsertContact(address) {
-                    approved = true
-                }
-            }
-
             viewModelScope.launch { _success.emit(Success(address)) }
         }
 

@@ -109,6 +109,7 @@ import org.thoughtcrime.securesms.util.mapStateFlow
 import org.thoughtcrime.securesms.util.mapToStateFlow
 import org.thoughtcrime.securesms.webrtc.CallManager
 import org.thoughtcrime.securesms.webrtc.data.State
+import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.util.EnumSet
@@ -579,13 +580,17 @@ class ConversationViewModel @AssistedInject constructor(
     }
 
     private fun buildMessageRequestState(recipient: Recipient): MessageRequestUiState {
-        // The basic requirement of showing a message request is:
-        // 1. The other party has not been approved by us, AND
-        // 2. The type of conversation supports message request (only 1to1 and groups v2)
-
         if (
-            // Req 1: we haven't approved the other party
-            (!recipient.approved && !recipient.isLocalNumber) &&
+            // Essential: the recipient is not us
+            !recipient.isSelf &&
+
+            // Req 1: we must have an contact entry that says we haven't approved them.
+            // This is needed because if we haven't added this person into the contact data,
+            // this would be a request from us instead.
+            (
+                    (recipient.data is RecipientData.Contact && !recipient.data.approved) ||
+                            (recipient.data is RecipientData.Group && !recipient.data.partial.approved)
+            ) &&
 
             // Req 2: the type of conversation supports message request
             (recipient.address is Address.Standard || recipient.address is Address.Group)
@@ -1279,6 +1284,12 @@ class ConversationViewModel @AssistedInject constructor(
                     configFactory.withMutableUserConfigs { configs ->
                         configs.contacts.upsertContact(address) {
                             approved = true
+                            name = name.takeIf { it.isNotBlank() } ?: recipient.displayName(attachesBlindedId = false)
+                            profilePicture = profilePicture.takeIf { it != UserPic.DEFAULT }
+                                ?: recipient.avatar?.toUserPic() ?: UserPic.DEFAULT
+                            priority = PRIORITY_VISIBLE
+                            profileUpdatedEpochSeconds = recipient.data.profileUpdatedAt?.toEpochSeconds() ?: profileUpdatedEpochSeconds
+                            createdEpochSeconds = createdEpochSeconds.takeIf { it > 0L } ?: Instant.now().toEpochSeconds()
                         }
                     }
                 }

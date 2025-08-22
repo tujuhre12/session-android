@@ -2067,7 +2067,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         viewModel.implicitlyApproveRecipient()?.let { conversationApprovalJob = it }
         val text = getMessageBody()
         val userPublicKey = textSecurePreferences.getLocalNumber()
-        val isNoteToSelf = (recipient.isStandardRecipient && recipient.address.toString() == userPublicKey)
+        val isNoteToSelf = recipient.isLocalNumber
         if (seed in text && !isNoteToSelf && !hasPermissionToSendSeed) {
             showSessionDialog {
                 title(R.string.warning)
