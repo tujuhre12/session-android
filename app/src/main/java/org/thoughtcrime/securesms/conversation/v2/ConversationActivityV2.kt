@@ -204,7 +204,6 @@ import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.PaddedImageSpan
 import org.thoughtcrime.securesms.util.SaveAttachmentTask
-import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import org.thoughtcrime.securesms.util.drawToBitmap
 import org.thoughtcrime.securesms.util.fadeIn
 import org.thoughtcrime.securesms.util.fadeOut
@@ -290,10 +289,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     private val viewModel: ConversationViewModel by viewModels(extrasProducer = {
         defaultViewModelCreationExtras.withCreationCallback<ConversationViewModel.Factory> {
-            it.create(
-                address = address,
-                createThreadIfNotExists = intent.getBooleanExtra(EXTRA_CREATE_THREAD_IF_NOT_EXISTS, false),
-            )
+            it.create(address = address)
         }
     })
 
@@ -489,7 +485,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         private const val ADDRESS = "address"
         private const val SCROLL_MESSAGE_ID = "scroll_message_id"
         private const val SCROLL_MESSAGE_AUTHOR = "scroll_message_author"
-        private const val EXTRA_CREATE_THREAD_IF_NOT_EXISTS = "create_thread_if_not_exists"
 
         const val SHOW_SEARCH = "show_search"
 
@@ -503,7 +498,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         fun createIntent(
             context: Context,
             address: Address.Conversable,
-            createThreadIfNotExists: Boolean = true,
             // If provided, this will scroll to the message with the given timestamp and author (TODO: use message id instead)
             scrollToMessage: Pair<Long, Address>? = null
         ): Intent {
@@ -513,8 +507,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
             return Intent(context, ConversationActivityV2::class.java).apply {
                 putExtra(ADDRESS, address)
-                putExtra(EXTRA_CREATE_THREAD_IF_NOT_EXISTS, createThreadIfNotExists)
-
                 scrollToMessage?.let { (timestamp, author) ->
                     putExtra(SCROLL_MESSAGE_ID, timestamp)
                     putExtra(SCROLL_MESSAGE_AUTHOR, author)
@@ -2224,7 +2216,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private fun pickFromLibrary() {
         val recipient = viewModel.recipient
         binding.inputBar.text?.trim()?.let { text ->
-            AttachmentManager.selectGallery(this, PICK_FROM_LIBRARY, recipient.address, viewModel.threadId, getMessageBody())
+            AttachmentManager.selectGallery(
+                this,
+                PICK_FROM_LIBRARY,
+                recipient.address,
+                getMessageBody()
+            )
         }
     }
 

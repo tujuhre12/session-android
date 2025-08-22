@@ -73,19 +73,20 @@ interface ConversationRepository {
     fun inviteContactsToCommunity(threadId: Long, contacts: Collection<Address>)
     fun setBlocked(recipient: Address, blocked: Boolean)
     fun markAsDeletedLocally(messages: Set<MessageRecord>, displayedMessage: String)
-    fun deleteMessages(messages: Set<MessageRecord>, threadId: Long)
+    fun deleteMessages(messages: Set<MessageRecord>)
     fun deleteAllLocalMessagesInThreadFromSenderOfMessage(messageRecord: MessageRecord)
     fun isGroupReadOnly(recipient: Recipient): Boolean
     fun getLastSentMessageID(threadId: Long): Flow<MessageId?>
 
-    suspend fun deleteCommunityMessagesRemotely(threadId: Long, messages: Set<MessageRecord>)
+    suspend fun deleteCommunityMessagesRemotely(
+        community: Address.Community,
+        messages: Set<MessageRecord>
+    )
     suspend fun delete1on1MessagesRemotely(
-        threadId: Long,
         recipient: Address,
         messages: Set<MessageRecord>
     )
     suspend fun deleteNoteToSelfMessagesRemotely(
-        threadId: Long,
         recipient: Address,
         messages: Set<MessageRecord>
     )
@@ -96,11 +97,11 @@ interface ConversationRepository {
 
     suspend fun deleteGroupV2MessagesRemotely(recipient: Address, messages: Set<MessageRecord>)
 
-    suspend fun banUser(threadId: Long, recipient: Address): Result<Unit>
-    suspend fun banAndDeleteAll(threadId: Long, recipient: Address): Result<Unit>
+    suspend fun banUser(community: Address.Community, userId: AccountId): Result<Unit>
+    suspend fun banAndDeleteAll(community: Address.Community, userId: AccountId): Result<Unit>
     suspend fun deleteMessageRequest(thread: ThreadRecord): Result<Unit>
     suspend fun clearAllMessageRequests(): Result<Unit>
-    suspend fun acceptMessageRequest(threadId: Long, recipient: Address.Conversable): Result<Unit>
+    suspend fun acceptMessageRequest(recipient: Address.Conversable): Result<Unit>
     suspend fun declineMessageRequest(recipient: Address.Conversable): Result<Unit>
     fun hasReceived(threadId: Long): Boolean
     fun getInvitingAdmin(threadId: Long): Address?
@@ -287,16 +288,16 @@ class DefaultConversationRepository @Inject constructor(
      * This will delete these messages from the db
      * Not to be confused with 'marking messages as deleted'
      */
-    override fun deleteMessages(messages: Set<MessageRecord>, threadId: Long) {
+    override fun deleteMessages(messages: Set<MessageRecord>) {
         // split the messages into mms and sms
         val (mms, sms) = messages.partition { it.isMms }
 
         if(mms.isNotEmpty()){
-            messageDataProvider.deleteMessages(mms.map { it.id }, threadId, isSms = false)
+            messageDataProvider.deleteMessages(mms.map { it.id }, isSms = false)
         }
 
         if(sms.isNotEmpty()){
-            messageDataProvider.deleteMessages(sms.map { it.id }, threadId, isSms = true)
+            messageDataProvider.deleteMessages(sms.map { it.id }, isSms = true)
         }
     }
 
@@ -346,20 +347,17 @@ class DefaultConversationRepository @Inject constructor(
     }
 
     override suspend fun deleteCommunityMessagesRemotely(
-        threadId: Long,
+        community: Address.Community,
         messages: Set<MessageRecord>
     ) {
-        val community = checkNotNull(lokiThreadDb.getOpenGroupChat(threadId)) { "Not a community" }
-
         messages.forEach { message ->
             lokiMessageDb.getServerID(message.messageId)?.let { messageServerID ->
-                OpenGroupApi.deleteMessage(messageServerID, community.room, community.server).await()
+                OpenGroupApi.deleteMessage(messageServerID, community.room, community.serverUrl).await()
             }
         }
     }
 
     override suspend fun delete1on1MessagesRemotely(
-        threadId: Long,
         recipient: Address,
         messages: Set<MessageRecord>
     ) {
@@ -417,7 +415,6 @@ class DefaultConversationRepository @Inject constructor(
     }
 
     override suspend fun deleteNoteToSelfMessagesRemotely(
-        threadId: Long,
         recipient: Address,
         messages: Set<MessageRecord>
     ) {
@@ -448,16 +445,21 @@ class DefaultConversationRepository @Inject constructor(
         )
     }
 
-    override suspend fun banUser(threadId: Long, recipient: Address): Result<Unit> = runCatching {
-        val openGroup = lokiThreadDb.getOpenGroupChat(threadId)!!
-        OpenGroupApi.ban(recipient.toString(), openGroup.room, openGroup.server).await()
+    override suspend fun banUser(community: Address.Community, userId: AccountId): Result<Unit> = runCatching {
+        OpenGroupApi.ban(
+            publicKey = userId.hexString,
+            room = community.room,
+            server = community.serverUrl,
+        ).await()
     }
 
-    override suspend fun banAndDeleteAll(threadId: Long, recipient: Address) = runCatching {
+    override suspend fun banAndDeleteAll(community: Address.Community, userId: AccountId) = runCatching {
         // Note: This accountId could be the blinded Id
-        val openGroup = lokiThreadDb.getOpenGroupChat(threadId)!!
-
-        OpenGroupApi.banAndDeleteAll(recipient.toString(), openGroup.room, openGroup.server).await()
+        OpenGroupApi.banAndDeleteAll(
+            publicKey = userId.hexString,
+            room = community.room,
+            server = community.serverUrl
+        ).await()
     }
 
     override suspend fun deleteMessageRequest(thread: ThreadRecord): Result<Unit> {
@@ -505,7 +507,7 @@ class DefaultConversationRepository @Inject constructor(
         }
     }
 
-    override suspend fun acceptMessageRequest(threadId: Long, recipient: Address.Conversable) = runCatching {
+    override suspend fun acceptMessageRequest(recipient: Address.Conversable) = runCatching {
         when (recipient) {
             is Address.Standard -> {
                 configFactory.withMutableUserConfigs { configs ->
@@ -518,7 +520,7 @@ class DefaultConversationRepository @Inject constructor(
                     MessageSender.send(message = MessageRequestResponse(true), address = recipient)
 
                     // add a control message for our user
-                    storage.insertMessageRequestResponseFromYou(threadId)
+                    storage.insertMessageRequestResponseFromYou(threadDb.getOrCreateThreadIdFor(recipient))
                 }
             }
 

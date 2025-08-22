@@ -235,7 +235,7 @@ class HomeViewModel @Inject constructor(
         // get the helper class for the selected user
         userProfileModalUtils = upmFactory.create(
             userAddress = thread.recipient.address,
-            threadId = thread.threadId,
+            threadAddress = thread.recipient.address as Address.Conversable,
             scope = viewModelScope
         )
 

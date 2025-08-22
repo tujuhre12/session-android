@@ -112,7 +112,6 @@ class ConversationViewModelTest : BaseViewModelTest() {
             dateUtils = mock(),
             proStatusManager = mock(),
             upmFactory = mock(),
-            lokiThreadDatabase = mock(),
             blindMappingRepository = mock(),
             address = recipient.address as Address.Conversable,
             recipientRepository = mock {
@@ -121,7 +120,6 @@ class ConversationViewModelTest : BaseViewModelTest() {
                     flowOf(recipient)
                 }
             },
-            createThreadIfNotExists = true,
             attachmentDownloadHandlerFactory = mock(),
             recipientSettingsDatabase = mock {
                 on { changeNotification } doReturn MutableSharedFlow()
@@ -176,7 +174,7 @@ class ConversationViewModelTest : BaseViewModelTest() {
     fun `should emit error message on ban user failure`() = runBlockingTest {
         val error = Throwable()
         val viewModel = createViewModel(recipient = standardRecipient)
-        whenever(repository.banUser(anyLong(), any())).thenReturn(Result.failure(error))
+        whenever(repository.banUser(any(), any())).thenReturn(Result.failure(error))
         whenever(application.getString(any())).thenReturn("Ban failed")
 
         viewModel.banUser(standardRecipient.address)
@@ -187,7 +185,7 @@ class ConversationViewModelTest : BaseViewModelTest() {
     @Test
     fun `should emit a message on ban user success`() = runBlockingTest {
         val viewModel = createViewModel(recipient = standardRecipient)
-        whenever(repository.banUser(anyLong(), any())).thenReturn(Result.success(Unit))
+        whenever(repository.banUser(any(), any())).thenReturn(Result.success(Unit))
         whenever(application.getString(any())).thenReturn("User banned")
 
         viewModel.banUser(standardRecipient.address)
@@ -202,7 +200,7 @@ class ConversationViewModelTest : BaseViewModelTest() {
     fun `should emit error message on ban user and delete all failure`() = runBlockingTest {
         val viewModel = createViewModel(recipient = standardRecipient)
         val error = Throwable()
-        whenever(repository.banAndDeleteAll(anyLong(), any())).thenReturn(Result.failure(error))
+        whenever(repository.banAndDeleteAll(any(), any())).thenReturn(Result.failure(error))
         whenever(application.getString(any())).thenReturn("Ban failed")
 
         viewModel.banAndDeleteAll(messageRecord)
@@ -213,7 +211,7 @@ class ConversationViewModelTest : BaseViewModelTest() {
     @Test
     fun `should emit a message on ban user and delete all success`() = runBlockingTest {
         val viewModel = createViewModel(recipient = standardRecipient)
-        whenever(repository.banAndDeleteAll(anyLong(), any())).thenReturn(Result.success(Unit))
+        whenever(repository.banAndDeleteAll( any(), any())).thenReturn(Result.success(Unit))
         whenever(application.getString(any())).thenReturn("User banned")
 
         viewModel.banAndDeleteAll(messageRecord)
@@ -228,7 +226,7 @@ class ConversationViewModelTest : BaseViewModelTest() {
     fun `should remove shown message`() = runBlockingTest {
         val viewModel = createViewModel(recipient = standardRecipient)
         // Given that a message is generated
-        whenever(repository.banUser(anyLong(), any())).thenReturn(Result.success(Unit))
+        whenever(repository.banUser(, any(), any())).thenReturn(Result.success(Unit))
         whenever(application.getString(any())).thenReturn("User banned")
 
         viewModel.banUser(standardRecipient.address)

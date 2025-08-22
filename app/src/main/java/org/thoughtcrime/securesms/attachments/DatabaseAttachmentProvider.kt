@@ -196,7 +196,7 @@ class DatabaseAttachmentProvider(context: Context, helper: Provider<SQLCipherOpe
         DatabaseComponent.get(context).lokiMessageDatabase().deleteMessageServerHash(messageId)
     }
 
-    override fun deleteMessages(messageIDs: List<Long>, threadId: Long, isSms: Boolean) {
+    override fun deleteMessages(messageIDs: List<Long>, isSms: Boolean) {
         val messagingDatabase: MessagingDatabase = if (isSms)  DatabaseComponent.get(context).smsDatabase()
                                                    else DatabaseComponent.get(context).mmsDatabase()
 

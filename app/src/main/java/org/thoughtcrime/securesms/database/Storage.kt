@@ -175,10 +175,10 @@ open class Storage @Inject constructor(
         val userMessages = mmsSmsDatabase.getUserMessages(threadId, userSessionId)
         val (mmsMessages, smsMessages) = userMessages.partition { it.isMms }
         if (mmsMessages.isNotEmpty()) {
-            messageDataProvider.deleteMessages(mmsMessages.map(MessageRecord::id), threadId, isSms = false)
+            messageDataProvider.deleteMessages(mmsMessages.map(MessageRecord::id), isSms = false)
         }
         if (smsMessages.isNotEmpty()) {
-            messageDataProvider.deleteMessages(smsMessages.map(MessageRecord::id), threadId, isSms = true)
+            messageDataProvider.deleteMessages(smsMessages.map(MessageRecord::id), isSms = true)
         }
     }
 
@@ -186,10 +186,10 @@ open class Storage @Inject constructor(
         val messages = mmsSmsDatabase.getAllMessagesWithHash(threadId)
         val (mmsMessages, smsMessages) = messages.partition { it.first.isMms }
         if (mmsMessages.isNotEmpty()) {
-            messageDataProvider.deleteMessages(mmsMessages.map{ it.first.id }, threadId, isSms = false)
+            messageDataProvider.deleteMessages(mmsMessages.map{ it.first.id }, isSms = false)
         }
         if (smsMessages.isNotEmpty()) {
-            messageDataProvider.deleteMessages(smsMessages.map{ it.first.id }, threadId, isSms = true)
+            messageDataProvider.deleteMessages(smsMessages.map{ it.first.id }, isSms = true)
         }
 
         return messages.map { it.second } // return the message hashes

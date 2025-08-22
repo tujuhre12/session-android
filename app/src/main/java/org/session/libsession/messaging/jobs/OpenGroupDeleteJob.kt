@@ -43,12 +43,12 @@ class OpenGroupDeleteJob @AssistedInject constructor(
 
             // Delete the SMS messages
             if (smsMessages.isNotEmpty()) {
-                dataProvider.deleteMessages(smsMessages, threadId, true)
+                dataProvider.deleteMessages(smsMessages, true)
             }
 
             // Delete the MMS messages
             if (mmsMessages.isNotEmpty()) {
-                dataProvider.deleteMessages(mmsMessages, threadId, false)
+                dataProvider.deleteMessages(mmsMessages, false)
             }
 
             Log.d(TAG, "Deleted ${smsMessages.size + mmsMessages.size} messages successfully")

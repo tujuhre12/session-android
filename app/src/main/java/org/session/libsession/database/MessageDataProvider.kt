@@ -20,7 +20,7 @@ interface MessageDataProvider {
     fun getMessageIDs(serverIDs: List<Long>, threadID: Long): Pair<List<Long>, List<Long>>
     fun getUserMessageHashes(threadId: Long, userPubKey: String): List<String>
     fun deleteMessage(messageId: MessageId)
-    fun deleteMessages(messageIDs: List<Long>, threadId: Long, isSms: Boolean)
+    fun deleteMessages(messageIDs: List<Long>, isSms: Boolean)
     fun markMessageAsDeleted(messageId: MessageId, displayedMessage: String)
     fun markMessagesAsDeleted(messages: List<MarkAsDeletedMessage>, displayedMessage: String)
     fun markMessagesAsDeleted(threadId: Long, serverHashes: List<String>, displayedMessage: String)

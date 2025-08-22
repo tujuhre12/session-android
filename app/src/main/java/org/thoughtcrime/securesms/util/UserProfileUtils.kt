@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.isBlinded
@@ -36,11 +35,10 @@ import org.thoughtcrime.securesms.pro.ProStatusManager
 class UserProfileUtils @AssistedInject constructor(
     @param:ApplicationContext private val context: Context,
     @Assisted private val userAddress: Address,
-    @Assisted private val threadId: Long,
+    @Assisted private val threadAddress: Address.Conversable,
     @Assisted private val scope: CoroutineScope,
     private val avatarUtils: AvatarUtils,
     private val proStatusManager: ProStatusManager,
-    private val storage: StorageProtocol,
     private val blindedIdMappingRepository: BlindMappingRepository,
     private val recipientRepository: RecipientRepository,
 ) {
@@ -97,11 +95,13 @@ class UserProfileUtils @AssistedInject constructor(
         // "Community inbox" address, so we encode it here..
         val messageAddress: Address.Conversable? = when (resolvedAddress) {
             is Address.Blinded -> {
-                storage.getOpenGroup(threadId)?.let { openGroup ->
+                if (threadAddress is Address.Community) {
                     Address.CommunityBlindedId(
-                        serverUrl = openGroup.server,
+                        serverUrl = threadAddress.serverUrl,
                         blindedId = resolvedAddress
                     )
+                } else {
+                    null
                 }
             }
 
@@ -117,7 +117,7 @@ class UserProfileUtils @AssistedInject constructor(
             currentUserPro = proStatusManager.isCurrentUserPro(),
             rawAddress = recipient.address.address,
             displayAddress = displayAddress,
-            threadId = threadId,
+            threadAddress = threadAddress,
             isBlinded = recipient.address.isBlinded,
             tooltipText = tooltipText,
             enableMessage = !recipient.address.isBlinded || recipient.acceptsCommunityMessageRequests,
@@ -176,7 +176,7 @@ class UserProfileUtils @AssistedInject constructor(
 
     @AssistedFactory
     interface UserProfileUtilsFactory {
-        fun create(userAddress: Address, threadId: Long, scope: CoroutineScope): UserProfileUtils
+        fun create(userAddress: Address, threadAddress: Address.Conversable, scope: CoroutineScope): UserProfileUtils
     }
 
 }
@@ -188,7 +188,7 @@ data class UserProfileModalData(
     val currentUserPro: Boolean,
     val rawAddress: String,
     val displayAddress: String,
-    val threadId: Long,
+    val threadAddress: Address.Conversable,
     val isBlinded: Boolean,
     val tooltipText: CharSequence?,
     val enableMessage: Boolean,

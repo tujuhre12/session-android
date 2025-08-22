@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOf
@@ -116,7 +117,6 @@ import java.util.UUID
 @HiltViewModel(assistedFactory = ConversationViewModel.Factory::class)
 class ConversationViewModel @AssistedInject constructor(
     @Assisted val address: Address.Conversable,
-    @Assisted val createThreadIfNotExists: Boolean,
     private val application: Application,
     private val repository: ConversationRepository,
     private val storage: StorageProtocol,
@@ -135,7 +135,6 @@ class ConversationViewModel @AssistedInject constructor(
     private val proStatusManager: ProStatusManager,
     private val recipientRepository: RecipientRepository,
     recipientSettingsDatabase: RecipientSettingsDatabase,
-    lokiThreadDatabase: LokiThreadDatabase,
     attachmentDatabase: AttachmentDatabase,
     private val blindMappingRepository: BlindMappingRepository,
     private val upmFactory: UserProfileUtils.UserProfileUtilsFactory,
@@ -145,8 +144,9 @@ class ConversationViewModel @AssistedInject constructor(
     proStatusManager = proStatusManager
 ) {
 
-    val threadId: Long = if (createThreadIfNotExists) threadDb.getOrCreateThreadIdFor(address)
-        else threadDb.getThreadIdIfExistsFor(address)
+    val threadId: Long by lazy {
+        threadDb.getOrCreateThreadIdFor(address)
+    }
 
     private val edKeyPair by lazy {
         storage.getUserED25519KeyPair()
@@ -180,8 +180,10 @@ class ConversationViewModel @AssistedInject constructor(
         (r.acceptsCommunityMessageRequests || r.isStandardRecipient) && !r.isLocalNumber && !r.approvedMe
     }
 
-    val openGroupFlow: StateFlow<OpenGroup?> =
-        lokiThreadDatabase.retrieveAndObserveOpenGroup(viewModelScope, threadId) ?: MutableStateFlow(null)
+    val openGroupFlow: StateFlow<OpenGroup?> = recipientFlow
+        .map { (it.data as? RecipientData.Community)?.openGroup }
+        .distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     val openGroup: OpenGroup?
         get() = openGroupFlow.value
@@ -740,7 +742,7 @@ class ConversationViewModel @AssistedInject constructor(
         // if the message was already marked as deleted or control messages, remove it from the db instead
         if(messages.all { it.isDeleted || it.isControlMessage }){
             // Remove the message locally (leave nothing behind)
-            repository.deleteMessages(messages = messages, threadId = threadId)
+            repository.deleteMessages(messages = messages)
         } else {
             // only mark as deleted (message remains behind with "This message was deleted on this device" )
             repository.markAsDeletedLocally(
@@ -789,10 +791,10 @@ class ConversationViewModel @AssistedInject constructor(
 
             // delete remotely
             try {
-                repository.deleteNoteToSelfMessagesRemotely(threadId, address, data.messages)
+                repository.deleteNoteToSelfMessagesRemotely(address, data.messages)
 
                 // When this is done we simply need to remove the message locally (leave nothing behind)
-                repository.deleteMessages(messages = data.messages, threadId = threadId)
+                repository.deleteMessages(messages = data.messages)
 
                 // show confirmation toast
                 withContext(Dispatchers.Main) {
@@ -835,7 +837,7 @@ class ConversationViewModel @AssistedInject constructor(
 
             // delete remotely
             try {
-                repository.delete1on1MessagesRemotely(threadId, address, data.messages)
+                repository.delete1on1MessagesRemotely(address, data.messages)
 
                 // When this is done we simply need to remove the message locally
                 repository.markAsDeletedLocally(
@@ -974,10 +976,10 @@ class ConversationViewModel @AssistedInject constructor(
 
             // delete remotely
             try {
-                repository.deleteCommunityMessagesRemotely(threadId, data.messages)
+                repository.deleteCommunityMessagesRemotely(address as Address.Community, data.messages)
 
                 // When this is done we simply need to remove the message locally (leave nothing behind)
-                repository.deleteMessages(messages = data.messages, threadId = threadId)
+                repository.deleteMessages(messages = data.messages)
 
                 // show confirmation toast
                 withContext(Dispatchers.Main) {
@@ -1021,7 +1023,10 @@ class ConversationViewModel @AssistedInject constructor(
     }
 
     fun banUser(recipient: Address) = viewModelScope.launch {
-        repository.banUser(threadId, recipient)
+        repository.banUser(
+            community = address as Address.Community,
+            userId = (recipient as Address.WithAccountId).accountId
+        )
             .onSuccess {
                 showMessage(application.getString(R.string.banUserBanned))
             }
@@ -1031,8 +1036,9 @@ class ConversationViewModel @AssistedInject constructor(
     }
 
     fun banAndDeleteAll(messageRecord: MessageRecord) = viewModelScope.launch {
-
-        repository.banAndDeleteAll(threadId, messageRecord.individualRecipient.address)
+        repository.banAndDeleteAll(
+            community = address as Address.Community,
+            userId = (messageRecord.individualRecipient.address as Address.WithAccountId).accountId)
             .onSuccess {
                 // At this point the server side messages have been successfully deleted..
                 showMessage(application.getString(R.string.banUserBanned))
@@ -1051,7 +1057,7 @@ class ConversationViewModel @AssistedInject constructor(
 
         _acceptingMessageRequest.value = true
 
-        repository.acceptMessageRequest(threadId, address)
+        repository.acceptMessageRequest(address)
             .onFailure {
                 Log.w("Loki", "Couldn't accept message request due to error", it)
                 _acceptingMessageRequest.value = false
@@ -1200,7 +1206,6 @@ class ConversationViewModel @AssistedInject constructor(
                     )
                 }
             }
-            threadDb.notifyThreadUpdated(threadId)
         }
     }
 
@@ -1245,11 +1250,11 @@ class ConversationViewModel @AssistedInject constructor(
         _uiEvents.tryEmit(ConversationUiEvent.ShowNotificationSettings(address))
     }
 
-    fun showUserProfileModal(address: Address) {
+    fun showUserProfileModal(userAddress: Address) {
         // get the helper class for the selected user
         userProfileModalUtils = upmFactory.create(
-            userAddress = address,
-            threadId = threadId,
+            userAddress = userAddress,
+            threadAddress = address,
             scope = viewModelScope
         )
 
@@ -1309,7 +1314,7 @@ class ConversationViewModel @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(address: Address.Conversable, createThreadIfNotExists: Boolean): ConversationViewModel
+        fun create(address: Address.Conversable): ConversationViewModel
     }
 
     data class DialogsState(

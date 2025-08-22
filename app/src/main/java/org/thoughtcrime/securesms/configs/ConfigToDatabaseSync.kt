@@ -23,7 +23,6 @@ import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
-import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
@@ -283,7 +282,7 @@ class ConfigToDatabaseSync @Inject constructor(
 
                 // Mark visible messages as deleted, and control messages actually deleted.
                 conversationRepository.markAsDeletedLocally(visibleMessages.toSet(), context.getString(R.string.deleteMessageDeletedGlobally))
-                conversationRepository.deleteMessages(controlMessages.toSet(), threadId)
+                conversationRepository.deleteMessages(controlMessages.toSet())
 
                 // if the current user is an admin of this group they should also remove the message from the swarm
                 // as a safety measure

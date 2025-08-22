@@ -130,7 +130,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
             state.value = messageRecord.run {
                 val slides = mmsRecord?.slideDeck?.slides ?: emptyList()
 
-                val conversationAddress = threadDb.getRecipientForThreadId(threadId)!!
+                val conversationAddress = threadDb.getRecipientForThreadId(threadId) as Address.Conversable
                 val conversation = recipientRepository.getRecipient(conversationAddress)
                 val isDeprecatedLegacyGroup = conversationAddress.isLegacyGroup && deprecationManager.isDeprecated
 
@@ -162,7 +162,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
                 // get the helper class for the selected user
                 userProfileModalUtils = upmFactory.create(
                     userAddress = sender.address,
-                    threadId = threadId,
+                    threadAddress = conversationAddress,
                     scope = viewModelScope
                 )
 

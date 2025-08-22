@@ -265,7 +265,7 @@ public class AttachmentManager {
                 .execute();
     }
 
-    public static void selectGallery(Activity activity, int requestCode, @NonNull Address recipient, long threadId, @NonNull String body) {
+    public static void selectGallery(Activity activity, int requestCode, @NonNull Address recipient, @NonNull String body) {
 
         Context c = activity.getApplicationContext();
 
