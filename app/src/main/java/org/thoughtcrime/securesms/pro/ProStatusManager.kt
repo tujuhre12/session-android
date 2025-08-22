@@ -29,6 +29,12 @@ class ProStatusManager @Inject constructor(
         const val TEMP_LABEL_SHOW_BADGE = "Show Session Pro badge to other users"
         const val TEMP_LABEL_RENEW = "Renew Pro Plan"
         const val TEMP_LABEL_RECOVER = "Recover Pro Plan"
+        const val TEMP_LABEL_REFUND = "Request Refund"
+        const val TEMP_LABEL_CANCEL = "Cancel Plan"
+        const val TEMP_LABEL_FAQ = "Pro FAQ"
+        const val TEMP_LABEL_FAQ_DESCR = "Find answers to common questions in the Session Pro FAQ."
+        const val TEMP_LABEL_SUPPORT = "Support"
+        const val TEMP_LABEL_SUPPORT_DESCR = "Need help with your Pro plan? Submit a request to the support team."
     }
     val MAX_CHARACTER_PRO = 10000 // max characters in a message for pro users
     private val MAX_CHARACTER_REGULAR = 2000 // max characters in a message for non pro users

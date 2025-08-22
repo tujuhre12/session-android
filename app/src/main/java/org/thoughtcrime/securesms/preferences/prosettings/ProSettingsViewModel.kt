@@ -30,12 +30,15 @@ class ProSettingsViewModel @Inject constructor(
     private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(
         UIState(
             //todo PRO need to properly calculate this
-            proStatus = if(proStatusManager.isCurrentUserPro()) ProAccountStatus.Pro.AutoRenewing(
-                showProBadge = true,
-                infoLabel = Phrase.from(context, R.string.proAutoRenew)
-                    .put(RELATIVE_TIME_KEY, "15 days")
-                    .format()
-            ) else ProAccountStatus.None
+            proStatus = if(proStatusManager.isCurrentUserPro())
+                ProAccountStatus.Expired
+//                ProAccountStatus.Pro.AutoRenewing(
+//                showProBadge = true,
+//                infoLabel = Phrase.from(context, R.string.proAutoRenew)
+//                    .put(RELATIVE_TIME_KEY, "15 days")
+//                    .format()
+//            )
+            else ProAccountStatus.None
         )
     )
     val uiState: StateFlow<UIState> = _uiState
@@ -110,9 +113,7 @@ class ProSettingsViewModel @Inject constructor(
             ): Pro
         }
 
-        data class Expired(
-            val infoLabel: CharSequence
-        ): ProAccountStatus
+        data object Expired: ProAccountStatus
     }
 
     data class ProSettings(

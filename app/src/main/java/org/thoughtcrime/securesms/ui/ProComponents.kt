@@ -928,8 +928,9 @@ fun AvatarQrWidget(
 @Composable
 fun SessionProSettingsHeader(
     modifier: Modifier = Modifier,
-    color: Color = LocalColors.current.accent
+    disabled: Boolean
 ){
+    val color = if(disabled) LocalColors.current.disabled else LocalColors.current.accent
     val accentColourWithLowAlpha = color.copy(alpha = 0.15f)
 
     Column(modifier = modifier) {
@@ -950,7 +951,7 @@ fun SessionProSettingsHeader(
                 enter = fadeIn(),
                 exit = fadeOut()
             ) {
-                if (!LocalColors.current.isLight) {
+               // if (!LocalColors.current.isLight) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -963,7 +964,7 @@ fun SessionProSettingsHeader(
                                 )
                             )
                     )
-                }
+               // }
             }
 
             Column(
@@ -1019,12 +1020,14 @@ fun PreviewSessionHeader(){
         Column {
             Spacer(Modifier.height(LocalDimensions.current.xlargeSpacing))
 
-            SessionProSettingsHeader()
+            SessionProSettingsHeader(
+                disabled = false
+            )
 
             Spacer(Modifier.height(LocalDimensions.current.xlargeSpacing))
 
             SessionProSettingsHeader(
-                color = LocalColors.current.disabled
+                disabled = true
             )
         }
     }

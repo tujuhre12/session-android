@@ -63,6 +63,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
@@ -77,6 +78,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -87,6 +89,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import kotlinx.coroutines.CoroutineScope
@@ -369,10 +372,24 @@ fun PreviewItemButton() {
 @Composable
 fun Cell(
     modifier: Modifier = Modifier,
+    dropShadow: Boolean = false,
     content: @Composable () -> Unit
 ) {
     Box(
         modifier = modifier
+            .then(
+                if(dropShadow)
+                    Modifier.dropShadow(
+                        shape = MaterialTheme.shapes.small,
+                        shadow = Shadow(
+                            radius = 4.dp,
+                            color = LocalColors.current.text,
+                            alpha = 0.25f,
+                            offset = DpOffset(0.dp, 4.dp)
+                        )
+                    )
+                else Modifier
+            )
             .clip(MaterialTheme.shapes.small)
             .background(
                 color = LocalColors.current.backgroundSecondary,
@@ -405,6 +422,7 @@ fun CategoryCell(
     modifier: Modifier = Modifier,
     title: String? = null,
     titleIcon: @Composable (() -> Unit)? = null,
+    dropShadow: Boolean = false,
     content: @Composable () -> Unit,
 
 ){
@@ -433,7 +451,8 @@ fun CategoryCell(
         }
 
        Cell(
-           modifier = Modifier.fillMaxWidth()
+           modifier = Modifier.fillMaxWidth(),
+           dropShadow = dropShadow
        ){
             content()
        }
@@ -975,6 +994,7 @@ fun AnimatedGradientDrawable(
 fun ActionRowItem(
     title: AnnotatedString,
     onClick: () -> Unit,
+    @StringRes qaTag: Int,
     modifier: Modifier = Modifier,
     subtitle: AnnotatedString? = null,
     titleColor: Color = LocalColors.current.text,
@@ -988,12 +1008,14 @@ fun ActionRowItem(
     Row(
         modifier = modifier.heightIn(min = minHeight)
             .clickable { onClick() }
-            .padding(paddingValues),
+            .padding(paddingValues)
+            .qaTag(qaTag),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(
             modifier = Modifier
                 .weight(1f)
+                .padding(vertical = LocalDimensions.current.xsSpacing)
                 .align(Alignment.CenterVertically)
         ) {
             Text(
@@ -1026,6 +1048,7 @@ fun IconActionRowItem(
     title: AnnotatedString,
     onClick: () -> Unit,
     @DrawableRes icon: Int,
+    @StringRes qaTag: Int,
     modifier: Modifier = Modifier,
     subtitle: AnnotatedString? = null,
     titleColor: Color = LocalColors.current.text,
@@ -1033,6 +1056,7 @@ fun IconActionRowItem(
     textStyle: TextStyle = LocalType.current.h8,
     subtitleStyle: TextStyle = LocalType.current.small,
     iconColor: Color = LocalColors.current.text,
+    iconSize: Dp = LocalDimensions.current.iconRowItem,
     minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     paddingValues: PaddingValues = PaddingValues(horizontal = LocalDimensions.current.smallSpacing),
 ){
@@ -1040,6 +1064,7 @@ fun IconActionRowItem(
         modifier = modifier,
         title = title,
         onClick = onClick,
+        qaTag = qaTag,
         subtitle = subtitle,
         titleColor = titleColor,
         subtitleColor = subtitleColor,
@@ -1048,14 +1073,18 @@ fun IconActionRowItem(
         minHeight = minHeight,
         paddingValues = paddingValues,
         endContent = {
-            Icon(
-                modifier = Modifier.padding(horizontal = LocalDimensions.current.xsSpacing)
-                    .size(LocalDimensions.current.iconRowItem)
-                    .qaTag(R.string.qa_action_item_icon),
-                painter = painterResource(id = icon),
-                contentDescription = null,
-                tint = iconColor
-            )
+            Box(
+                modifier = Modifier.size(LocalDimensions.current.itemButtonIconSpacing)
+            ) {
+                Icon(
+                    modifier = Modifier.align(Alignment.Center)
+                        .size(iconSize)
+                        .qaTag(R.string.qa_action_item_icon),
+                    painter = painterResource(id = icon),
+                    contentDescription = null,
+                    tint = iconColor
+                )
+            }
         }
     )
 }
@@ -1065,6 +1094,7 @@ fun SwitchActionRowItem(
     title: AnnotatedString,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
+    @StringRes qaTag: Int,
     modifier: Modifier = Modifier,
     subtitle: AnnotatedString? = null,
     titleColor: Color = LocalColors.current.text,
@@ -1077,6 +1107,7 @@ fun SwitchActionRowItem(
     ActionRowItem(
         modifier = modifier,
         title = title,
+        qaTag = qaTag,
         onClick = { onCheckedChange(!checked) },
         subtitle = subtitle,
         titleColor = titleColor,
@@ -1106,7 +1137,8 @@ fun PreviewActionRowItems(){
                 title = annotatedStringResource("This is an action row item"),
                 subtitle = annotatedStringResource("With a subtitle and icon"),
                 onClick = {},
-                icon = R.drawable.ic_message_square
+                icon = R.drawable.ic_message_square,
+                qaTag = 0
             )
 
             IconActionRowItem(
@@ -1116,7 +1148,8 @@ fun PreviewActionRowItems(){
                 subtitleColor = LocalColors.current.danger,
                 onClick = {},
                 icon = R.drawable.ic_triangle_alert,
-                iconColor = LocalColors.current.danger
+                iconColor = LocalColors.current.danger,
+                qaTag = 0
             )
 
             SwitchActionRowItem(
@@ -1124,6 +1157,7 @@ fun PreviewActionRowItems(){
                 subtitle = annotatedStringResource("With a subtitle and a switch"),
                 checked = true,
                 onCheckedChange = {},
+                qaTag = 0
             )
         }
     }

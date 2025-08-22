@@ -3,8 +3,10 @@ package org.thoughtcrime.securesms.preferences.prosettings
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,6 +23,7 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberTooltipState
@@ -31,11 +34,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
@@ -113,25 +121,93 @@ fun ProSettingsHome(
             Spacer(Modifier.height(46.dp))
 
             SessionProSettingsHeader(
-                color = if(data.disabledHeader) LocalColors.current.disabled else LocalColors.current.accent,
+                disabled = data.disabledHeader,
             )
 
             // Pro Stats
-            if(data.proStatus is ProSettingsViewModel.ProAccountStatus.Pro){
-                // Stats
+            if(data.proStatus is ProAccountStatus.Pro){
                 Spacer(Modifier.height(LocalDimensions.current.spacing))
                 ProStats(
                     data = data.proStats,
                     sendCommand = sendCommand,
                 )
+            }
 
-                // Settings
+            // Pro account settings
+            if(data.proStatus is ProAccountStatus.Pro){
                 Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
-                ProStatus(
+                ProSettings(
                     data = data.proStatus,
                     sendCommand = sendCommand,
                 )
             }
+
+            // Manage Pro - Expired
+            if(data.proStatus is ProAccountStatus.Expired){
+                Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
+                ProManage(
+                    data = data.proStatus,
+                    sendCommand = sendCommand,
+                )
+            }
+
+            // Features
+            Spacer(Modifier.height(LocalDimensions.current.spacing))
+            ProFeatures(
+                data = data.proStatus,
+                sendCommand = sendCommand,
+            )
+
+            // Manage Pro - Pro
+            if(data.proStatus is ProAccountStatus.Pro){
+                Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
+                ProManage(
+                    data = data.proStatus,
+                    sendCommand = sendCommand,
+                )
+            }
+
+            // Help
+            Spacer(Modifier.height(LocalDimensions.current.spacing))
+            CategoryCell(
+                title = stringResource(R.string.sessionHelp),
+            ) {
+                //todo PRO the icon color needs to take the expired state into account
+                val iconColor = if(data.proStatus is ProAccountStatus.Expired) LocalColors.current.disabled
+                else LocalColors.current.accentText
+
+                // Cell content
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    IconActionRowItem(
+                        title = annotatedStringResource(ProStatusManager.TEMP_LABEL_FAQ),
+                        subtitle = annotatedStringResource(ProStatusManager.TEMP_LABEL_FAQ_DESCR),
+                        icon = R.drawable.ic_square_arrow_up_right,
+                        iconSize = LocalDimensions.current.iconMedium,
+                        iconColor = iconColor,
+                        qaTag = R.string.qa_pro_settings_action_faq,
+                        onClick = {
+                            //todo PRO implement
+                        }
+                    )
+                    Divider()
+                    IconActionRowItem(
+                        title = annotatedStringResource(ProStatusManager.TEMP_LABEL_SUPPORT),
+                        subtitle = annotatedStringResource(ProStatusManager.TEMP_LABEL_SUPPORT_DESCR),
+                        icon = R.drawable.ic_square_arrow_up_right,
+                        iconSize = LocalDimensions.current.iconMedium,
+                        iconColor = iconColor,
+                        qaTag = R.string.qa_pro_settings_action_support,
+                        onClick = {
+                            //todo PRO implement
+                        }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+            Spacer(modifier = Modifier.height(paddings.calculateBottomPadding()))
         }
     }
 }
@@ -145,6 +221,7 @@ fun ProStats(
 ){
     CategoryCell(
         modifier = modifier,
+        dropShadow = LocalColors.current.isLight,
         title = ProStatusManager.TEMP_LABEL_PRO_STATS,
         titleIcon = {
             val tooltipState = rememberTooltipState(isPersistent = true)
@@ -234,46 +311,6 @@ fun ProStats(
 }
 
 @Composable
-fun ProStatus(
-    modifier: Modifier = Modifier,
-    data: ProSettingsViewModel.ProAccountStatus,
-    sendCommand: (ProSettingsViewModel.Commands) -> Unit,
-){
-    CategoryCell(
-        modifier = modifier,
-        title = ProStatusManager.TEMP_LABEL_PRO_STATS,
-    ) {
-        // Cell content
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            when(data){
-                is ProAccountStatus.Pro.AutoRenewing,
-                     is ProAccountStatus.Pro.Expiring -> {
-                    IconActionRowItem(
-                        title = annotatedStringResource(ProStatusManager.TEMP_LABEL_UPDATE_PLAN),
-                        subtitle = annotatedStringResource(data.infoLabel),
-                        icon = R.drawable.ic_chevron_right,
-                        onClick = { sendCommand(ProSettingsViewModel.Commands.ShowPlanUpdate) }
-                    )
-                    Divider()
-                    SwitchActionRowItem(
-                        title = annotatedStringResource(ProStatusManager.TEMP_LABEL_PRO_BADGE),
-                        subtitle = annotatedStringResource(ProStatusManager.TEMP_LABEL_SHOW_BADGE),
-                        checked = data.showProBadge,
-                        onCheckedChange = { sendCommand(ProSettingsViewModel.Commands.SetShowProBadge(it)) }
-                    )
-                }
-                is ProAccountStatus.Expired -> {
-
-                }
-                else -> {}
-            }
-        }
-    }
-}
-
-@Composable
 fun ProStatItem(
     modifier: Modifier = Modifier,
     title: String,
@@ -299,6 +336,197 @@ fun ProStatItem(
     }
 }
 
+@Composable
+fun ProSettings(
+    modifier: Modifier = Modifier,
+    data: ProAccountStatus.Pro,
+    sendCommand: (ProSettingsViewModel.Commands) -> Unit,
+){
+    CategoryCell(
+        modifier = modifier,
+        title = ProStatusManager.TEMP_LABEL_SETTINGS,
+    ) {
+        // Cell content
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            IconActionRowItem(
+                title = annotatedStringResource(ProStatusManager.TEMP_LABEL_UPDATE_PLAN),
+                subtitle = annotatedStringResource(data.infoLabel),
+                icon = R.drawable.ic_chevron_right,
+                qaTag = R.string.qa_pro_settings_action_update_plan,
+                onClick = { sendCommand(ProSettingsViewModel.Commands.ShowPlanUpdate) }
+            )
+            Divider()
+            SwitchActionRowItem(
+                title = annotatedStringResource(ProStatusManager.TEMP_LABEL_PRO_BADGE),
+                subtitle = annotatedStringResource(ProStatusManager.TEMP_LABEL_SHOW_BADGE),
+                checked = data.showProBadge,
+                qaTag = R.string.qa_pro_settings_action_show_badge,
+                onCheckedChange = { sendCommand(ProSettingsViewModel.Commands.SetShowProBadge(it)) }
+            )
+        }
+    }
+}
+
+@Composable
+fun ProFeatures(
+    modifier: Modifier = Modifier,
+    data: ProAccountStatus,
+    sendCommand: (ProSettingsViewModel.Commands) -> Unit,
+) {
+    //todo PRO add real features once we have the strings
+    //todo PRO handle color based on status
+
+    CategoryCell(
+        modifier = modifier,
+        title = ProStatusManager.TEMP_LABEL_FEATURES,
+    ) {
+        // Cell content
+        Column(
+            modifier = Modifier.fillMaxWidth()
+                .padding(LocalDimensions.current.smallSpacing),
+        ) {
+            ProFeatureItem(
+                title = "Testing",
+                subtitle = annotatedStringResource("Subtitle"),
+                icon = R.drawable.ic_chevron_right,
+                iconGradientStart = LocalColors.current.accent,
+                iconGradientEnd = LocalColors.current.danger
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProFeatureItem(
+    modifier: Modifier = Modifier,
+    title: String,
+    subtitle: AnnotatedString,
+    @DrawableRes icon: Int,
+    iconGradientStart: Color,
+    iconGradientEnd: Color,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier.background(
+                brush = Brush.linearGradient(
+                    colors = listOf(iconGradientStart, iconGradientEnd),
+                    start = Offset(0f, 0f),        // Top-left corner
+                    end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)  // Bottom-right corner
+                ),
+                shape = MaterialTheme.shapes.extraSmall
+            ),
+            contentAlignment = Alignment.Center
+        ){
+            Image(
+                painter = painterResource(id = icon),
+                contentDescription = null,
+                modifier = Modifier
+                    .padding(LocalDimensions.current.xsSpacing)
+                    .size(LocalDimensions.current.iconMedium),
+                colorFilter = ColorFilter.tint(Color.Black)
+            )
+        }
+
+        Column {
+            Text(
+                text = title,
+                style = LocalType.current.h9,
+                color = LocalColors.current.text
+            )
+            Text(
+                text = subtitle,
+                style = LocalType.current.small,
+                color = LocalColors.current.textSecondary
+            )
+        }
+    }
+}
+
+@Composable
+fun ProManage(
+    modifier: Modifier = Modifier,
+    data: ProAccountStatus,
+    sendCommand: (ProSettingsViewModel.Commands) -> Unit,
+){
+    CategoryCell(
+        modifier = modifier,
+        title = ProStatusManager.TEMP_LABEL_MANAGE,
+    ) {
+        // Cell content
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            when(data){
+                is ProAccountStatus.Pro.AutoRenewing -> {
+                    IconActionRowItem(
+                        title = annotatedStringResource(ProStatusManager.TEMP_LABEL_CANCEL),
+                        titleColor = LocalColors.current.danger,
+                        icon = R.drawable.ic_circle_x_custom,
+                        iconColor = LocalColors.current.danger,
+                        qaTag = R.string.qa_pro_settings_action_cancel_plan,
+                        onClick = {
+                            //todo PRO implement
+                        }
+                    )
+                    Divider()
+                    IconActionRowItem(
+                        title = annotatedStringResource(ProStatusManager.TEMP_LABEL_REFUND),
+                        titleColor = LocalColors.current.danger,
+                        icon = R.drawable.ic_circle_warning_custom,
+                        iconColor = LocalColors.current.danger,
+                        qaTag = R.string.qa_pro_settings_action_request_refund,
+                        onClick = {
+                            //todo PRO implement
+                        }
+                    )
+                }
+
+                is ProAccountStatus.Pro.Expiring -> {
+                    IconActionRowItem(
+                        title = annotatedStringResource(ProStatusManager.TEMP_LABEL_CANCEL),
+                        titleColor = LocalColors.current.danger,
+                        icon = R.drawable.ic_circle_x_custom,
+                        iconColor = LocalColors.current.danger,
+                        qaTag = R.string.qa_pro_settings_action_cancel_plan,
+                        onClick = {
+                            //todo PRO implement
+                        }
+                    )
+                }
+
+                is ProAccountStatus.Expired -> {
+                    IconActionRowItem(
+                        title = annotatedStringResource(ProStatusManager.TEMP_LABEL_RENEW),
+                        titleColor = LocalColors.current.accentText,
+                        icon = R.drawable.ic_circle_plus,
+                        iconColor = LocalColors.current.accentText,
+                        qaTag = R.string.qa_pro_settings_action_cancel_plan,
+                        onClick = {
+                            //todo PRO implement
+                        }
+                    )
+                    Divider()
+                    IconActionRowItem(
+                        title = annotatedStringResource(ProStatusManager.TEMP_LABEL_RECOVER),
+                        icon = R.drawable.ic_refresh_cw,
+                        qaTag = R.string.qa_pro_settings_action_request_refund,
+                        onClick = {
+                            //todo PRO implement
+                        }
+                    )
+                }
+
+                is ProAccountStatus.None -> {}
+            }
+        }
+    }
+}
 
 @Preview
 @Composable
@@ -314,6 +542,7 @@ fun PreviewProSettingsPro(
                         .put(RELATIVE_TIME_KEY, "15 days")
                         .format()
                 ),
+//                proStatus = ProAccountStatus.Expired,
                 disabledHeader = false
             ),
             dialogsState = ProSettingsViewModel.DialogsState(),
