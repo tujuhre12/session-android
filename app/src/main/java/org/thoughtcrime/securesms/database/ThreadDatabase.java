@@ -309,6 +309,8 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
 
     SQLiteDatabase db = getWritableDatabase();
     db.update(TABLE_NAME, contentValues, ID + " = ?", new String[] {threadId + ""});
+
+    updateUnreadCounts(threadId);
   }
 
   public void clearSnippet(long threadId){
@@ -567,6 +569,14 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
     contentValues.put(LAST_SEEN, lastSeenTime);
     db.beginTransaction();
     db.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {String.valueOf(threadId)});
+    updateUnreadCounts(threadId);
+    db.setTransactionSuccessful();
+    db.endTransaction();
+    notifyThreadUpdated(threadId);
+    return true;
+  }
+
+  private void updateUnreadCounts(long threadId) {
     String smsCountSubQuery = "SELECT COUNT(*) FROM "+SmsDatabase.TABLE_NAME+" AS s WHERE t."+ID+" = s."+SmsDatabase.THREAD_ID+" AND s."+SmsDatabase.DATE_SENT+" > t."+LAST_SEEN+" AND s."+SmsDatabase.READ+" = 0";
     String smsMentionCountSubQuery = "SELECT COUNT(*) FROM "+SmsDatabase.TABLE_NAME+" AS s WHERE t."+ID+" = s."+SmsDatabase.THREAD_ID+" AND s."+SmsDatabase.DATE_SENT+" > t."+LAST_SEEN+" AND s."+SmsDatabase.READ+" = 0 AND s."+SmsDatabase.HAS_MENTION+" = 1";
     String smsReactionCountSubQuery = "SELECT COUNT(*) FROM "+SmsDatabase.TABLE_NAME+" AS s WHERE t."+ID+" = s."+SmsDatabase.THREAD_ID+" AND s."+SmsDatabase.DATE_SENT+" > t."+LAST_SEEN+" AND s."+SmsDatabase.REACTIONS_UNREAD+" = 1";
@@ -579,11 +589,7 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
     String allUnreadMention = "(("+smsMentionCountSubQuery+") + ("+mmsMentionCountSubQuery+"))";
 
     String reflectUpdates = "UPDATE "+TABLE_NAME+" AS t SET "+UNREAD_COUNT+" = "+allUnread+", "+UNREAD_MENTION_COUNT+" = "+allUnreadMention+" WHERE "+ID+" = ?";
-    db.execSQL(reflectUpdates, new Object[]{threadId});
-    db.setTransactionSuccessful();
-    db.endTransaction();
-    notifyThreadUpdated(threadId);
-    return true;
+    getWritableDatabase().rawExecSQL(reflectUpdates, threadId);
   }
 
 

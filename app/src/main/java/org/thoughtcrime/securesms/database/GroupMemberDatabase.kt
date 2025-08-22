@@ -71,6 +71,22 @@ class GroupMemberDatabase(context: Context, helper: Provider<SQLCipherOpenHelper
         return map
     }
 
+    fun delete(community: Address.Community) {
+        writableDatabase.beginTransaction()
+        try {
+            val groupId = community.toGroupId()
+            writableDatabase.delete(TABLE_NAME, "$GROUP_ID = ?", arrayOf(groupId))
+            writableDatabase.setTransactionSuccessful()
+        } finally {
+            writableDatabase.endTransaction()
+        }
+
+        // Clear cache
+        cacheByGroupId.remove(community)
+
+        _changeNotification.tryEmit(community)
+    }
+
     private fun fetchGroupMembersFromDb(address: Address.Community): Map<AccountId, GroupMemberRole> {
         return readableDatabase.rawQuery("SELECT $PROFILE_ID, $ROLE FROM $TABLE_NAME WHERE $GROUP_ID = ?", address.toGroupId()).use {
             it.asSequence()

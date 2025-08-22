@@ -813,9 +813,6 @@ class GroupManagerV2Impl @Inject constructor(
             approveGroupInvite(closedGroupInfo, inviteMessageHash)
         } else {
             lokiDatabase.addGroupInviteReferrer(groupThreadId, inviter.hexString, inviteMessageHash)
-            // Clear existing message in the thread whenever we receive an invitation that we can't
-            // auto approve
-            storage.clearMessages(groupThreadId)
             storage.insertGroupInviteControlMessage(
                 sentTimestamp = inviteMessageTimestamp,
                 senderPublicKey = inviter.hexString,

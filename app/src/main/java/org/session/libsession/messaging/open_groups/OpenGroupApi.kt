@@ -709,7 +709,7 @@ object OpenGroupApi {
             )
         }
         val isAcceptingCommunityRequests = storage.isCheckingCommunityRequests()
-        if (serverCapabilities.contains(Capability.BLIND.name) && isAcceptingCommunityRequests) {
+        if (serverCapabilities.contains(Capability.BLIND.name.lowercase()) && isAcceptingCommunityRequests) {
             requests.add(
                 if (lastInboxMessageId == null) {
                     BatchRequestInfo(

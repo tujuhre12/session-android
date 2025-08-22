@@ -50,8 +50,8 @@ class MessageRequestsViewModel @Inject constructor(
         reloadTrigger.emit(Unit)
     }
 
-    fun clearAllMessageRequests(block: Boolean) = viewModelScope.launch {
-        repository.clearAllMessageRequests(block)
+    fun clearAllMessageRequests() = viewModelScope.launch {
+        repository.clearAllMessageRequests()
         reloadTrigger.emit(Unit)
     }
 

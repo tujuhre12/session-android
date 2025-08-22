@@ -6,8 +6,6 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.bumptech.glide.Glide
-import com.bumptech.glide.RequestManager
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
@@ -19,7 +17,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.recipients.displayName
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
-import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.util.DateUtils
@@ -112,14 +109,10 @@ class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClick
     }
 
     private fun deleteAll() {
-        fun doDeleteAllAndBlock() {
-            viewModel.clearAllMessageRequests(false)
-        }
-
         showSessionDialog {
             title(resources.getString(R.string.clearAll))
             text(resources.getString(R.string.messageRequestsClearAllExplanation))
-            dangerButton(R.string.clear) { doDeleteAllAndBlock() }
+            dangerButton(R.string.clear) { viewModel.clearAllMessageRequests() }
             button(R.string.cancel)
         }
     }

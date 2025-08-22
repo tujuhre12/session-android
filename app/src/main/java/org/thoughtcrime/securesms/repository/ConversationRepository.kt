@@ -99,7 +99,7 @@ interface ConversationRepository {
     suspend fun banUser(threadId: Long, recipient: Address): Result<Unit>
     suspend fun banAndDeleteAll(threadId: Long, recipient: Address): Result<Unit>
     suspend fun deleteMessageRequest(thread: ThreadRecord): Result<Unit>
-    suspend fun clearAllMessageRequests(block: Boolean): Result<Unit>
+    suspend fun clearAllMessageRequests(): Result<Unit>
     suspend fun acceptMessageRequest(threadId: Long, recipient: Address.Conversable): Result<Unit>
     suspend fun declineMessageRequest(recipient: Address.Conversable): Result<Unit>
     fun hasReceived(threadId: Long): Boolean
@@ -468,22 +468,25 @@ class DefaultConversationRepository @Inject constructor(
         )
     }
 
-    override suspend fun clearAllMessageRequests(block: Boolean) = runCatching {
+    override suspend fun clearAllMessageRequests() = runCatching {
+
         configFactory.withMutableUserConfigs { configs ->
-            val unapproved = configs.contacts.all()
+            // Go through all contacts
+            configs.contacts.all()
                 .asSequence()
                 .filter { !it.approved }
+                .forEach {
+                    configs.contacts.erase(it.id)
+                }
 
-            if (block) {
-                for (contact in unapproved) {
-                    contact.blocked = true
-                    configs.contacts.set(contact)
+
+            // Go through all invited groups
+            configs.userGroups.allClosedGroupInfo()
+                .asSequence()
+                .filter { it.invited }
+                .forEach { g ->
+                    configs.userGroups.eraseClosedGroup(g.groupAccountId)
                 }
-            } else {
-                for (contact in unapproved) {
-                    configs.contacts.erase(contact.id)
-                }
-            }
         }
     }
 

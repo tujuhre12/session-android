@@ -35,6 +35,7 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.DraftDatabase
 import org.thoughtcrime.securesms.database.GroupDatabase
+import org.thoughtcrime.securesms.database.GroupMemberDatabase
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
@@ -66,6 +67,7 @@ class ConfigToDatabaseSync @Inject constructor(
     private val mmsDatabase: MmsDatabase,
     private val draftDatabase: DraftDatabase,
     private val groupDatabase: GroupDatabase,
+    private val groupMemberDatabase: GroupMemberDatabase,
     private val lokiThreadDatabase: LokiThreadDatabase,
     private val lokiAPIDatabase: LokiAPIDatabase,
     private val clock: SnodeClock,
@@ -188,7 +190,7 @@ class ConfigToDatabaseSync @Inject constructor(
     ) {
         val joined = configFactory.getGroup(address.accountId)?.joinedAtSecs
         if (joined != null && joined > 0L) {
-            threadDatabase.setCreationDate(threadId, joined)
+            threadDatabase.setCreationDate(threadId, joined * 1000L)
         }
     }
 
@@ -218,6 +220,7 @@ class ConfigToDatabaseSync @Inject constructor(
         lokiAPIDatabase.removeLastOutboxMessageId(address.serverUrl)
         lokiThreadDatabase.removeOpenGroupChat(threadId)
         groupDatabase.delete(address.address)
+        groupMemberDatabase.delete(address)
     }
 
     private fun deleteLegacyGroupData(address: Address.LegacyGroup) {
@@ -313,8 +316,7 @@ class ConfigToDatabaseSync @Inject constructor(
 
 
     private fun updateConvoVolatile(convos: List<Conversation?>) {
-        val extracted = convos.filterNotNull()
-        for (conversation in extracted) {
+        for (conversation in convos.asSequence().filterNotNull()) {
             val address: Address.Conversable = when (conversation) {
                 is Conversation.OneToOne -> Address.Standard(AccountId(conversation.accountId))
                 is Conversation.LegacyGroup -> Address.LegacyGroup(conversation.groupId)
