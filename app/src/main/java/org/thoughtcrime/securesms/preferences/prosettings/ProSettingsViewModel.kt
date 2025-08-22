@@ -84,7 +84,6 @@ class ProSettingsViewModel @Inject constructor(
 
     data class UIState(
         val proStatus: ProAccountStatus,
-        val disabledHeader: Boolean = false,
         val proStats: ProStats = ProStats()
     )
 

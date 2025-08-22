@@ -121,7 +121,7 @@ fun ProSettingsHome(
             Spacer(Modifier.height(46.dp))
 
             SessionProSettingsHeader(
-                disabled = data.disabledHeader,
+                disabled = data.proStatus is ProAccountStatus.Expired,
             )
 
             // Pro Stats
@@ -172,8 +172,7 @@ fun ProSettingsHome(
             CategoryCell(
                 title = stringResource(R.string.sessionHelp),
             ) {
-                //todo PRO the icon color needs to take the expired state into account
-                val iconColor = if(data.proStatus is ProAccountStatus.Expired) LocalColors.current.disabled
+                val iconColor = if(data.proStatus is ProAccountStatus.Expired) LocalColors.current.text
                 else LocalColors.current.accentText
 
                 // Cell content
@@ -392,7 +391,8 @@ fun ProFeatures(
                 subtitle = annotatedStringResource("Subtitle"),
                 icon = R.drawable.ic_chevron_right,
                 iconGradientStart = LocalColors.current.accent,
-                iconGradientEnd = LocalColors.current.danger
+                iconGradientEnd = LocalColors.current.danger,
+                expired = data is ProAccountStatus.Expired
             )
         }
     }
@@ -406,6 +406,7 @@ private fun ProFeatureItem(
     @DrawableRes icon: Int,
     iconGradientStart: Color,
     iconGradientEnd: Color,
+    expired: Boolean
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -415,7 +416,8 @@ private fun ProFeatureItem(
         Box(
             modifier = Modifier.background(
                 brush = Brush.linearGradient(
-                    colors = listOf(iconGradientStart, iconGradientEnd),
+                    colors = if(expired) listOf(LocalColors.current.disabled, LocalColors.current.disabled)
+                            else listOf(iconGradientStart, iconGradientEnd),
                     start = Offset(0f, 0f),        // Top-left corner
                     end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)  // Bottom-right corner
                 ),
@@ -536,14 +538,13 @@ fun PreviewProSettingsPro(
     PreviewTheme(colors) {
         ProSettingsHome(
             data = ProSettingsViewModel.UIState(
-                proStatus = ProAccountStatus.Pro.AutoRenewing(
-                    showProBadge = true,
-                    infoLabel = Phrase.from(LocalContext.current, R.string.proAutoRenew)
-                        .put(RELATIVE_TIME_KEY, "15 days")
-                        .format()
-                ),
-//                proStatus = ProAccountStatus.Expired,
-                disabledHeader = false
+//                proStatus = ProAccountStatus.Pro.AutoRenewing(
+//                    showProBadge = true,
+//                    infoLabel = Phrase.from(LocalContext.current, R.string.proAutoRenew)
+//                        .put(RELATIVE_TIME_KEY, "15 days")
+//                        .format()
+//                ),
+                proStatus = ProAccountStatus.Expired,
             ),
             dialogsState = ProSettingsViewModel.DialogsState(),
             sendCommand = {},
@@ -561,7 +562,6 @@ fun PreviewProSettingsNonPro(
         ProSettingsHome(
             data = ProSettingsViewModel.UIState(
                 proStatus = ProAccountStatus.None,
-                disabledHeader = false
             ),
             dialogsState = ProSettingsViewModel.DialogsState(),
             sendCommand = {},
