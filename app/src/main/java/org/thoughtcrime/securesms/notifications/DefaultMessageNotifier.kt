@@ -301,12 +301,12 @@ class DefaultMessageNotifier @Inject constructor(
 
         val builderCS = notificationText ?: ""
         val ss = highlightMentions(
-            builderCS,
-            false,
-            false,
-            true,
-            if (bundled) notifications[0].threadId else 0,
-            context
+            recipientRepository = recipientRepository,
+            text = builderCS,
+            isOutgoingMessage = false,
+            isQuote = false,
+            formatOnly = true,
+            context = context
         )
 
         builder.setPrimaryMessageBody(
@@ -436,12 +436,12 @@ class DefaultMessageNotifier @Inject constructor(
             val item = iterator.previous()
             builder.addMessageBody(
                 item.individualRecipient, highlightMentions(
-                    (if (item.text != null) item.text else "")!!,
-                    false,
-                    false,
-                    true,  // no styling here, only text formatting
-                    item.threadId,
-                    context
+                    recipientRepository = recipientRepository,
+                    text = (if (item.text != null) item.text else "")!!,
+                    isOutgoingMessage = false,
+                    isQuote = false,
+                    formatOnly = true,  // no styling here, only text formatting
+                    context = context
                 )
             )
         }
@@ -452,12 +452,12 @@ class DefaultMessageNotifier @Inject constructor(
             builder.setTicker(
                 notifications[0].individualRecipient,
                 highlightMentions(
-                    text ?: "",
-                    false,
-                    false,
-                    true,  // no styling here, only text formatting
-                    notifications[0].threadId,
-                    context
+                    recipientRepository = recipientRepository,
+                    text = text ?: "",
+                    isOutgoingMessage = false,
+                    isQuote = false,
+                    formatOnly = true,  // no styling here, only text formatting
+                    context = context
                 )
             )
         }

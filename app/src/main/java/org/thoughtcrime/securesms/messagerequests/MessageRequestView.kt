@@ -15,6 +15,7 @@ import network.loki.messenger.databinding.ViewMessageRequestBinding
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities.highlightMentions
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.ProBadgeText
@@ -40,6 +41,9 @@ class MessageRequestView : LinearLayout {
 
     @Inject
     lateinit var avatarUtils: AvatarUtils
+
+    @Inject
+    lateinit var recipientRepository: RecipientRepository
 
     // region Lifecycle
     constructor(context: Context) : super(context) { initialize() }
@@ -89,9 +93,9 @@ class MessageRequestView : LinearLayout {
         )
 
         val snippet = highlightMentions(
+            recipientRepository = recipientRepository,
             text = thread.getDisplayBody(context),
             formatOnly = true, // no styling here, only text formatting
-            threadID = thread.threadId,
             context = context
         )
 

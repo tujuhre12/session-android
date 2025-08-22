@@ -226,7 +226,7 @@ class ConversationViewModelTest : BaseViewModelTest() {
     fun `should remove shown message`() = runBlockingTest {
         val viewModel = createViewModel(recipient = standardRecipient)
         // Given that a message is generated
-        whenever(repository.banUser(, any(), any())).thenReturn(Result.success(Unit))
+        whenever(repository.banUser( any(), any())).thenReturn(Result.success(Unit))
         whenever(application.getString(any())).thenReturn("User banned")
 
         viewModel.banUser(standardRecipient.address)

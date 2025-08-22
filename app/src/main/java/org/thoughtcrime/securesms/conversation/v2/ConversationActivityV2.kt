@@ -2476,9 +2476,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         while (messageIterator.hasNext()) {
             val message = messageIterator.next()
             val body = MentionUtilities.highlightMentions(
+                recipientRepository = viewModel.recipientRepository,
                 text = message.body,
                 formatOnly = true, // no styling here, only text formatting
-                threadID = viewModel.threadId,
                 context = this
             )
 

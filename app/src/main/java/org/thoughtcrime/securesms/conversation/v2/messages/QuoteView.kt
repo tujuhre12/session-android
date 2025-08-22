@@ -115,10 +115,10 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
         binding.quoteViewBodyTextView.text = if (isOpenGroupInvitation)
             resources.getString(R.string.communityInvitation)
         else MentionUtilities.highlightMentions(
+            recipientRepository = recipientRepository,
             text = (body ?: "").toSpannable(),
             isOutgoingMessage = isOutgoingMessage,
             isQuote = true,
-            threadID = threadID,
             context = context
         )
         binding.quoteViewBodyTextView.setTextColor(textColor)

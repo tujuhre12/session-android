@@ -18,6 +18,7 @@ import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities.highlightMentions
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
@@ -42,6 +43,7 @@ class ConversationView : LinearLayout {
     @Inject lateinit var dateUtils: DateUtils
     @Inject lateinit var proStatusManager: ProStatusManager
     @Inject lateinit var avatarUtils: AvatarUtils
+    @Inject lateinit var recipientRepository: RecipientRepository
 
     private val binding: ViewConversationBinding by lazy { ViewConversationBinding.bind(this) }
     private val screenWidth = Resources.getSystem().displayMetrics.widthPixels
@@ -114,7 +116,7 @@ class ConversationView : LinearLayout {
         val snippet =  highlightMentions(
             text = thread.getDisplayBody(context),
             formatOnly = true, // no styling here, only text formatting
-            threadID = thread.threadId,
+            recipientRepository = recipientRepository,
             context = context
         )
 

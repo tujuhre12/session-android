@@ -134,7 +134,7 @@ class ConversationViewModel @AssistedInject constructor(
     expiredGroupManager: ExpiredGroupManager,
     private val avatarUtils: AvatarUtils,
     private val proStatusManager: ProStatusManager,
-    private val recipientRepository: RecipientRepository,
+    val recipientRepository: RecipientRepository,
     recipientSettingsDatabase: RecipientSettingsDatabase,
     attachmentDatabase: AttachmentDatabase,
     private val blindMappingRepository: BlindMappingRepository,
