@@ -22,7 +22,9 @@ sealed interface ProSettingsDestination {
     data object Home: ProSettingsDestination
 
     @Serializable
-    data object ChooseSubscriptionPlan: ProSettingsDestination
+    data class UpdatePlan(
+        val renew: Boolean
+    ): ProSettingsDestination
 }
 
 @SuppressLint("RestrictedApi")
@@ -68,8 +70,11 @@ fun ProSettingsNavHost(
             }
 
             // Subscription plan selection
-            horizontalSlideComposable<ChooseSubscriptionPlan> {
-
+            horizontalSlideComposable<UpdatePlan> {
+                UpdatePlanScreen(
+                    viewModel = viewModel,
+                    onBack = onBack,
+                )
             }
         }
 

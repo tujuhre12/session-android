@@ -33,10 +33,9 @@ import org.session.libsession.utilities.StringSubstitutionConstants.RELATIVE_TIM
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProAccountStatus
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.SessionProSettingsHeader
-import org.thoughtcrime.securesms.ui.components.AccentFillButton
+import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.DangerFillButtonRect
-import org.thoughtcrime.securesms.ui.components.FillButtonRect
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -132,7 +131,7 @@ fun BaseCellButtonProSettingsScreen(
                 onClick = {}
             )
         } else {
-            AccentFillButton(
+            AccentFillButtonRect(
                 modifier = Modifier.fillMaxWidth()
                     .widthIn(max = LocalDimensions.current.maxContentWidth),
                 text = buttonText,
