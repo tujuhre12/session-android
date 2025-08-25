@@ -37,6 +37,8 @@ import org.session.libsession.utilities.NetworkFailure;
 import org.session.libsession.utilities.ThemeUtil;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.AccountId;
+import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate;
+import org.thoughtcrime.securesms.database.model.content.MessageContent;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 
 import network.loki.messenger.R;
@@ -55,7 +57,6 @@ public abstract class MessageRecord extends DisplayRecord {
   private final List<NetworkFailure>      networkFailures;
   private final long                      expiresIn;
   private final long                      expireStarted;
-  private final boolean                   unidentified;
   public  final long                      id;
   private final List<ReactionRecord>      reactions;
   private final boolean                   hasMention;
@@ -63,31 +64,31 @@ public abstract class MessageRecord extends DisplayRecord {
   @Nullable
   private UpdateMessageData               groupUpdateMessage;
 
-  public final boolean isNotDisappearAfterRead() {
-    return expireStarted == getTimestamp();
-  }
-
   public abstract boolean isMms();
   public abstract boolean isMmsNotification();
 
+  public final MessageId getMessageId() {
+    return new MessageId(getId(), isMms());
+  }
+
   MessageRecord(long id, String body, Recipient conversationRecipient,
-    Recipient individualRecipient,
-    long dateSent, long dateReceived, long threadId,
-    int deliveryStatus, int deliveryReceiptCount, long type,
-    List<IdentityKeyMismatch> mismatches,
-    List<NetworkFailure> networkFailures,
-    long expiresIn, long expireStarted,
-    int readReceiptCount, boolean unidentified, List<ReactionRecord> reactions, boolean hasMention)
+                Recipient individualRecipient,
+                long dateSent, long dateReceived, long threadId,
+                int deliveryStatus, int deliveryReceiptCount, long type,
+                List<IdentityKeyMismatch> mismatches,
+                List<NetworkFailure> networkFailures,
+                long expiresIn, long expireStarted,
+                int readReceiptCount, List<ReactionRecord> reactions, boolean hasMention,
+                @Nullable MessageContent messageContent)
   {
     super(body, conversationRecipient, dateSent, dateReceived,
-      threadId, deliveryStatus, deliveryReceiptCount, type, readReceiptCount);
+      threadId, deliveryStatus, deliveryReceiptCount, type, readReceiptCount, messageContent);
     this.id                  = id;
     this.individualRecipient = individualRecipient;
     this.mismatches          = mismatches;
     this.networkFailures     = networkFailures;
     this.expiresIn           = expiresIn;
     this.expireStarted       = expireStarted;
-    this.unidentified        = unidentified;
     this.reactions           = reactions;
     this.hasMention          = hasMention;
   }
@@ -118,10 +119,6 @@ public abstract class MessageRecord extends DisplayRecord {
     return false;
   }
 
-  public boolean isUpdate() {
-    return isExpirationTimerUpdate() || isCallLog() || isDataExtractionNotification();
-  }
-
   /**
    * @return Decoded group update message. Only valid if the message is a group update message.
    */
@@ -140,13 +137,13 @@ public abstract class MessageRecord extends DisplayRecord {
       UpdateMessageData updateMessageData = getGroupUpdateMessage();
       Recipient groupRecipient = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(getThreadId());
 
-      if (updateMessageData == null || groupRecipient == null || !groupRecipient.isGroupV2Recipient()) {
+      if (updateMessageData == null || groupRecipient == null) {
         return "";
       }
 
       SpannableString text = new SpannableString(UpdateMessageBuilder.buildGroupUpdateMessage(
               context,
-              new AccountId(groupRecipient.getAddress().serialize()),
+              groupRecipient.isGroupV2Recipient() ? new AccountId(groupRecipient.getAddress().toString()) : null, // accountId is only used for GroupsV2
               updateMessageData,
               MessagingModuleConfiguration.getShared().getConfigFactory(),
               isOutgoing(),
@@ -161,13 +158,15 @@ public abstract class MessageRecord extends DisplayRecord {
       }
 
       return text;
-    } else if (isExpirationTimerUpdate()) {
-      int seconds = (int) (getExpiresIn() / 1000);
-      boolean isGroup = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(getThreadId()).isGroupOrCommunityRecipient();
-      return new SpannableString(UpdateMessageBuilder.INSTANCE.buildExpirationTimerMessage(context, seconds, isGroup, getIndividualRecipient().getAddress().serialize(), isOutgoing(), getTimestamp(), expireStarted));
+    } else if (getMessageContent() instanceof DisappearingMessageUpdate) {
+      Recipient rec = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(getThreadId());
+      if(rec == null) return "";
+      boolean isGroup = rec.isGroupOrCommunityRecipient();
+      return UpdateMessageBuilder.INSTANCE
+              .buildExpirationTimerMessage(context, ((DisappearingMessageUpdate) getMessageContent()).getExpiryMode(), isGroup, getIndividualRecipient().getAddress().toString(), isOutgoing());
     } else if (isDataExtractionNotification()) {
-      if (isScreenshotNotification()) return new SpannableString((UpdateMessageBuilder.INSTANCE.buildDataExtractionMessage(context, DataExtractionNotificationInfoMessage.Kind.SCREENSHOT, getIndividualRecipient().getAddress().serialize())));
-      else if (isMediaSavedNotification()) return new SpannableString((UpdateMessageBuilder.INSTANCE.buildDataExtractionMessage(context, DataExtractionNotificationInfoMessage.Kind.MEDIA_SAVED, getIndividualRecipient().getAddress().serialize())));
+      if (isScreenshotNotification()) return new SpannableString((UpdateMessageBuilder.INSTANCE.buildDataExtractionMessage(context, DataExtractionNotificationInfoMessage.Kind.SCREENSHOT, getIndividualRecipient().getAddress().toString())));
+      else if (isMediaSavedNotification()) return new SpannableString((UpdateMessageBuilder.INSTANCE.buildDataExtractionMessage(context, DataExtractionNotificationInfoMessage.Kind.MEDIA_SAVED, getIndividualRecipient().getAddress().toString())));
     } else if (isCallLog()) {
       CallMessageType callType;
       if (isIncomingCall()) {
@@ -179,7 +178,7 @@ public abstract class MessageRecord extends DisplayRecord {
       } else {
         callType = CallMessageType.CALL_FIRST_MISSED;
       }
-      return new SpannableString(UpdateMessageBuilder.INSTANCE.buildCallMessage(context, callType, getIndividualRecipient().getAddress().serialize()));
+      return new SpannableString(UpdateMessageBuilder.INSTANCE.buildCallMessage(context, callType, getIndividualRecipient().getAddress().toString()));
     }
 
     return new SpannableString(getBody());

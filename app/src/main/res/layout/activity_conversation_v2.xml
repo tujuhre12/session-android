@@ -9,38 +9,36 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/conversationAppBar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintVertical_bias="0"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/conversation_header"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:id="@+id/conversationLoader"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/conversationRecyclerView"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintVertical_bias="0"
-        android:theme="@style/Widget.Session.ActionBar.Flat"
-        android:background="?colorPrimary"
-        app:contentInsetStart="0dp">
+        app:layout_constraintTop_toBottomOf="@+id/conversationAppBar"
+        android:indeterminate="true"
+        android:visibility="gone"
+        app:indicatorColor="?colorAccent"
+        app:trackThickness="4dp"/>
 
-        <org.thoughtcrime.securesms.conversation.ConversationActionBarView
-            android:id="@+id/toolbarContent"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-
-    </androidx.appcompat.widget.Toolbar>
-
-    <!--
-    Add this to the below recycler view if you need to debug activity `adjustResize` issues:
-    android:background="@drawable/cross"
-    -->
     <org.thoughtcrime.securesms.conversation.v2.ConversationRecyclerView
         android:focusable="false"
         android:id="@+id/conversationRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        tools:visibility="gone"
         app:layout_constraintVertical_weight="1"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/typingIndicatorViewContainer"
-        app:layout_constraintTop_toBottomOf="@id/outdatedGroupBanner" />
+        app:layout_constraintTop_toBottomOf="@id/conversation_header" />
 
     <org.thoughtcrime.securesms.conversation.v2.components.TypingIndicatorViewContainer
         android:focusable="false"
@@ -59,34 +57,19 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         tools:layout_height="60dp"
+        android:background="?backgroundSecondary"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/recreateGroupButtonContainer"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/bottomSpacer"
+        app:layout_constraintVertical_bias="1"
         />
 
     <org.thoughtcrime.securesms.conversation.v2.search.SearchBottomBar
         android:id="@+id/searchBottomBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/bottomSpacer"
         android:visibility="gone"/>
-
-    <FrameLayout
-        android:focusable="false"
-        android:id="@+id/reactions_shade"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/reactions_screen_light_shade_color"
-        android:foreground="@color/reactions_screen_dark_shade_color"
-        android:visibility="gone"/>
-
-    <ViewStub
-        android:focusable="false"
-        android:id="@+id/conversation_reaction_scrubber_stub"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:inflatedId="@+id/conversation_reaction_scrubber"
-        android:layout="@layout/conversation_reaction_scrubber"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/conversation_mention_candidates"
@@ -105,11 +88,11 @@
         android:id="@+id/attachmentOptionsContainer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/small_spacing"
+        android:layout_marginStart="12dp"
         android:elevation="8dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/inputBar"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="8dp"
         android:orientation="vertical">
 
         <FrameLayout
@@ -184,8 +167,7 @@
                 android:layout_width="16dp"
                 android:layout_height="16dp"
                 android:layout_centerInParent="true"
-                android:rotation="180"
-                android:src="@drawable/ic_chevron_up"
+                android:src="@drawable/ic_chevron_down"
                 app:tint="?android:textColorPrimary" />
 
         </RelativeLayout>
@@ -209,7 +191,7 @@
                 android:layout_centerInParent="true"
                 android:textSize="@dimen/very_small_font_size"
                 android:textColor="?android:textColorPrimary"
-                android:text="8" />
+                tools:text="8" />
 
         </RelativeLayout>
 
@@ -221,72 +203,14 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="-12dp"
         android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        app:layout_constraintBottom_toTopOf="@+id/bottomSpacer" />
 
-    <FrameLayout
-        android:id="@+id/blockedBanner"
-        android:contentDescription="@string/AccessibilityId_blockedBanner"
+    <include
+        android:id="@+id/conversation_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@+id/toolbar"
-        android:background="?danger"
-        android:visibility="gone"
-        >
-
-        <TextView
-            android:id="@+id/blockedBannerTextView"
-            android:contentDescription="@string/AccessibilityId_blockedBannerText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_margin="@dimen/medium_spacing"
-            android:textColor="@color/white"
-            android:textSize="@dimen/small_font_size"
-            android:textStyle="bold"
-            tools:text="Elon is blocked. Unblock them?" />
-
-    </FrameLayout>
-
-    <FrameLayout
-        android:id="@+id/outdatedDisappearingBanner"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@+id/blockedBanner"
-        android:background="?colorAccent"
-        android:contentDescription="@string/AccessibilityId_outdated_group_banner"
-        android:visibility="gone"
-        tools:visibility="visible">
-
-        <TextView
-            android:id="@+id/outdatedDisappearingBannerTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center_horizontal"
-            android:layout_gravity="center"
-            android:layout_marginVertical="@dimen/very_small_spacing"
-            android:layout_marginHorizontal="@dimen/medium_spacing"
-            android:textColor="@color/black"
-            android:textSize="@dimen/small_font_size"
-            tools:text="This user's client is outdated, things may not work as expected" />
-
-    </FrameLayout>
-
-    <TextView
-        android:id="@+id/outdatedGroupBanner"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        app:layout_constraintTop_toBottomOf="@+id/outdatedDisappearingBanner"
-        android:background="?colorAccent"
-        android:paddingVertical="@dimen/very_small_spacing"
-        android:gravity="center_horizontal"
-        android:textColor="?message_sent_text_color"
-        android:paddingHorizontal="@dimen/medium_spacing"
-        android:contentDescription="@string/AccessibilityId_outdated_group_banner"
-        android:textSize="@dimen/small_font_size"
-        android:visibility="gone"
-        tools:text="@string/groupLegacyBanner"
-        tools:visibility="visible" />
+        app:layout_constraintTop_toBottomOf="@+id/conversationAppBar"
+        layout="@layout/view_conversation_header" />
 
     <TextView
         android:padding="@dimen/medium_spacing"
@@ -297,78 +221,36 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="@dimen/large_spacing"
-        app:layout_constraintTop_toBottomOf="@+id/outdatedGroupBanner"
+        app:layout_constraintTop_toBottomOf="@+id/conversation_header"
         android:contentDescription="@string/AccessibilityId_empty_conversation"
+        android:visibility="gone"
+        tools:visibility="visible"
         tools:text="Some Control Message Text"
         />
 
-    <LinearLayout
+    <include
         android:id="@+id/messageRequestBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toTopOf="@+id/recreateGroupButtonContainer"
         app:layout_constraintTop_toBottomOf="@+id/textSendAfterApproval"
+        layout="@layout/view_conversation_message_request_bar"
         android:layout_marginBottom="@dimen/large_spacing"
-        android:orientation="vertical"
-        android:visibility="gone"
-        tools:visibility="visible">
+        tools:visibility="visible"
+        android:visibility="gone" />
 
-        <TextView
-
-            android:id="@+id/messageRequestBlock"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:contentDescription="@string/AccessibilityId_messageRequestsBlock"
-            android:textColor="?danger"
-            android:paddingHorizontal="@dimen/massive_spacing"
-            android:paddingVertical="@dimen/small_spacing"
-            android:textSize="@dimen/text_size"
-            tools:text="@string/deleteAfterGroupPR1BlockUser"/>
-
-        <TextView
-            android:id="@+id/sendAcceptsTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="@dimen/medium_spacing"
-            android:alpha="0.6"
-            android:gravity="center_horizontal"
-            android:text="@string/messageRequestsAcceptDescription"
-            android:textColor="?android:textColorPrimary"
-            android:textSize="@dimen/small_font_size" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="@dimen/medium_spacing"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/acceptMessageRequestButton"
-                style="@style/Widget.Session.Button.Common.ProminentOutline"
-                android:contentDescription="@string/AccessibilityId_messageRequestsAccept"
-                android:layout_width="0dp"
-                android:layout_height="@dimen/medium_button_height"
-                android:layout_weight="1"
-                android:text="@string/accept" />
-
-            <Button
-                android:id="@+id/declineMessageRequestButton"
-                style="@style/Widget.Session.Button.Common.DangerOutline"
-                android:contentDescription="@string/AccessibilityId_deleteRequest"
-                android:layout_width="0dp"
-                android:layout_height="@dimen/medium_button_height"
-                android:layout_marginStart="@dimen/medium_spacing"
-                android:layout_weight="1"
-                android:text="@string/delete" />
-
-        </LinearLayout>
-
-    </LinearLayout>
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/bottomWidgetBarrier"
+        app:barrierDirection="top"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:constraint_referenced_ids="inputBar, searchBottomBar"
+        />
 
     <FrameLayout
         android:id="@+id/recreateGroupButtonContainer"
-        app:layout_constraintBottom_toTopOf="@+id/inputBar"
+        app:layout_constraintBottom_toTopOf="@+id/bottomWidgetBarrier"
         app:layout_constraintTop_toBottomOf="@+id/messageRequestBar"
         android:padding="@dimen/medium_spacing"
         android:visibility="gone"
@@ -381,16 +263,32 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             style="@style/Widget.Session.Button.Common.ProminentOutline"
-            android:contentDescription="@string/AccessibilityId_messageRequestsAccept"
+            android:contentDescription="@string/AccessibilityId_recreate_legacy_group"
             android:text="@string/recreateGroup" />
 
     </FrameLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="?backgroundSecondary"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:id="@+id/bottomSpacer" />
 
     <androidx.compose.ui.platform.ComposeView
         android:id="@+id/dialog_open_url"
         tools:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
+    <ViewStub
+        android:focusable="false"
+        android:id="@+id/conversation_reaction_scrubber_stub"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:inflatedId="@+id/conversation_reaction_scrubber"
+        android:layout="@layout/conversation_reaction_scrubber"/>
 
     <FrameLayout
         android:id="@+id/loader"
@@ -401,13 +299,13 @@
         android:clickable="true"
         android:visibility="gone">
 
-        <com.github.ybq.android.spinkit.SpinKitView
-            style="@style/SpinKitView.Large.ThreeBounce"
-            android:layout_width="wrap_content"
+        <ProgressBar
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
             android:layout_marginTop="8dp"
-            app:SpinKit_Color="@android:color/white" />
+            android:layout_gravity="center"
+            android:indeterminateTint="?colorAccent"
+            android:indeterminate="true"/>
 
     </FrameLayout>
 

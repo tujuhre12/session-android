@@ -20,30 +20,35 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.ContentObserver;
 import android.database.Cursor;
+import android.os.Build;
 
 import androidx.annotation.NonNull;
+import androidx.sqlite.db.SupportSQLiteDatabase;
+import androidx.sqlite.db.SupportSQLiteOpenHelper;
 
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
 import org.session.libsession.utilities.WindowDebouncer;
-import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 
+import java.util.Arrays;
 import java.util.Set;
+
+import javax.inject.Provider;
 
 public abstract class Database {
 
   protected static final String ID_WHERE = "_id = ?";
   protected static final String ID_IN = "_id IN (?)";
 
-  protected       SQLCipherOpenHelper databaseHelper;
+  private final Provider<SQLCipherOpenHelper> databaseHelper;
   protected final Context             context;
   private   final WindowDebouncer     conversationListNotificationDebouncer;
   private   final Runnable            conversationListUpdater;
 
   @SuppressLint("WrongConstant")
-  public Database(Context context, SQLCipherOpenHelper databaseHelper) {
+  public Database(Context context, Provider<SQLCipherOpenHelper> databaseHelper) {
     this.context = context;
     this.conversationListUpdater = () -> {
       context.getContentResolver().notifyChange(DatabaseContentProviders.ConversationList.CONTENT_URI, null);
@@ -79,7 +84,20 @@ public abstract class Database {
   }
 
   protected void setNotifyConversationListeners(Cursor cursor, long threadId) {
-    cursor.setNotificationUri(context.getContentResolver(), DatabaseContentProviders.Conversation.getUriForThread(threadId));
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+          cursor.setNotificationUris(
+                  context.getContentResolver(),
+                  Arrays.asList(
+                          DatabaseContentProviders.Conversation.getUriForThread(threadId),
+                          DatabaseContentProviders.Attachment.CONTENT_URI
+                  )
+          );
+      } else {
+        cursor.setNotificationUri(
+                context.getContentResolver(),
+                DatabaseContentProviders.Conversation.getUriForThread(threadId)
+        );
+      }
   }
 
   protected void setNotifyConversationListListeners(Cursor cursor) {
@@ -96,16 +114,13 @@ public abstract class Database {
     context.getContentResolver().notifyChange(DatabaseContentProviders.Attachment.CONTENT_URI, null);
   }
 
-  public void reset(SQLCipherOpenHelper databaseHelper) {
-    this.databaseHelper = databaseHelper;
-  }
 
   protected SQLiteDatabase getReadableDatabase() {
-    return databaseHelper.getReadableDatabase();
+    return databaseHelper.get().getReadableDatabase();
   }
 
   protected SQLiteDatabase getWritableDatabase() {
-    return databaseHelper.getWritableDatabase();
+    return databaseHelper.get().getWritableDatabase();
   }
 
 }

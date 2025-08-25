@@ -26,6 +26,7 @@ import org.session.libsession.snode.Version
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Device
 import org.session.libsignal.utilities.retryWithUniformInterval
+import org.session.libsignal.utilities.toHexString
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -46,21 +47,22 @@ class PushRegistryV2 @Inject constructor(
 
         val timestamp = clock.currentTimeMills() / 1000 // get timestamp in ms -> s
         val publicKey = swarmAuth.accountId.hexString
+        val sortedNamespace = namespaces.sorted()
         val signed = swarmAuth.sign(
-            "MONITOR${publicKey}${timestamp}1${namespaces.joinToString(separator = ",")}".encodeToByteArray()
+            "MONITOR${publicKey}${timestamp}1${sortedNamespace.joinToString(separator = ",")}".encodeToByteArray()
         )
         val requestParameters = SubscriptionRequest(
             pubkey = publicKey,
             session_ed25519 = swarmAuth.ed25519PublicKeyHex,
-            namespaces = namespaces,
+            namespaces = sortedNamespace,
             data = true, // only permit data subscription for now (?)
             service = device.service,
             sig_ts = timestamp,
             service_info = mapOf("token" to token),
-            enc_key = pnKey.asHexString,
+            enc_key = pnKey.toHexString(),
         ).let(Json::encodeToJsonElement).jsonObject + signed
 
-        val response = retryResponseBody<SubscriptionResponse>(
+        val response = getResponseBody<SubscriptionResponse>(
             "subscribe",
             Json.encodeToString(requestParameters)
         )
@@ -89,7 +91,7 @@ class PushRegistryV2 @Inject constructor(
             service_info = mapOf("token" to token),
         ).let(Json::encodeToJsonElement).jsonObject + signature
 
-        val response: UnsubscribeResponse = retryResponseBody("unsubscribe", Json.encodeToString(requestParameters))
+        val response: UnsubscribeResponse = getResponseBody("unsubscribe", Json.encodeToString(requestParameters))
 
         check(response.isSuccess()) {
             "Error unsubscribing to push notifications: ${response.message}"
@@ -104,9 +106,6 @@ class PushRegistryV2 @Inject constructor(
             }
         })
     }
-
-    private suspend inline fun <reified T: Response> retryResponseBody(path: String, requestParameters: String): T =
-        retryWithUniformInterval(maxRetryCount = maxRetryCount) { getResponseBody(path, requestParameters) }
 
     @OptIn(ExperimentalSerializationApi::class)
     private suspend inline fun <reified T: Response> getResponseBody(path: String, requestParameters: String): T {

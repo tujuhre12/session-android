@@ -17,17 +17,12 @@
 package org.thoughtcrime.securesms.mms;
 
 import android.content.Context;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
 import com.annimon.stream.Stream;
-
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment;
-import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.util.MediaUtil;
-
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -130,6 +125,16 @@ public class SlideDeck {
     return null;
   }
 
+  public boolean hasVideo() {
+    for (Slide slide : slides) {
+      if (slide.hasVideo()) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   public @Nullable TextSlide getTextSlide() {
     for (Slide slide: slides) {
       if (MediaUtil.isLongTextType(slide.getContentType())) {
@@ -151,5 +156,16 @@ public class SlideDeck {
   @Override
   public int hashCode() {
     return Objects.hash(slides);
+  }
+
+  public boolean isVoiceNote() {
+    List<Attachment> attachments = asAttachments();
+    if (attachments.isEmpty()) {
+      return false;
+    }
+
+    Attachment attachment = attachments.get(0);
+    return attachment.isVoiceNote();
+
   }
 }
