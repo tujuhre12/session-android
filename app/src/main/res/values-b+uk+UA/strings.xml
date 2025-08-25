@@ -186,7 +186,6 @@
     <string name="callsSettings">Дзвінки (Beta)</string>
     <string name="callsVoiceAndVideo">Голосові та відеодзвінки</string>
     <string name="callsVoiceAndVideoBeta">Голосові та відеодзвінки (бета-версія)</string>
-    <string name="callsVoiceAndVideoModalDescription">Ваша IP-адреса видима вашому партнеру по дзвінку та серверу Oxen Foundation при використанні бета-дзвінків.</string>
     <string name="callsVoiceAndVideoToggleDescription">Дозволяє голосові та відеодзвінки з іншими користувачами.</string>
     <string name="callsYouCalled">Ви дзвонили {name}</string>
     <string name="callsYouMissedCallPermissions">Ви пропустили дзвінок від <b>{name}</b>, бо не увімкнули <b>Голосові та відеодзвінки</b> у налаштуваннях конфіденційності.</string>
@@ -811,8 +810,6 @@
     <string name="openSurvey">Пройти опитування</string>
     <string name="other">Інші</string>
     <string name="passwordChange">Змінити пароль</string>
-    <string name="passwordChangeDescription">Змінити пароль, необхідний для розблокування {app_name}.</string>
-    <string name="passwordChangedDescription">Ваш пароль змінено. Будь ласка, збережіть його в безпеці.</string>
     <string name="passwordConfirm">Підтвердіть пароль</string>
     <string name="passwordCurrentIncorrect">Ваш поточний пароль невірний.</string>
     <string name="passwordEnter">Введіть пароль</string>
@@ -823,7 +820,6 @@
     <string name="passwordFailed">Не вдалося встановити пароль</string>
     <string name="passwordIncorrect">Неправильний пароль</string>
     <string name="passwordRemove">Видалити пароль</string>
-    <string name="passwordRemovedDescription">Ваш пароль був видалений.</string>
     <string name="passwordSet">Встановити пароль</string>
     <string name="paste">Вставити</string>
     <string name="permissionChange">Потрібна зміна дозволів</string>
