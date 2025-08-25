@@ -827,7 +827,6 @@
     <string name="proAnimatedDisplayPictureFeature">Immagine del profilo animata</string>
     <string name="proAnimatedDisplayPictureModalDescription">gli utenti possono caricare GIF</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Carica GIF con</string>
-    <string name="proBadge">Badge {app_pro}</string>
     <string name="proCallToActionLongerMessages">Vuoi inviare messaggi più lunghi? Invia più testo e sblocca funzionalità premium con {app_pro}</string>
     <string name="proCallToActionPinnedConversations">Vuoi più chat bloccate? Organizza le tue chat e sblocca le funzionalità premium con {app_pro}</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Vuoi più di 5 chat bloccate? Organizza le tue chat e sblocca le funzionalità premium con {app_pro}</string>

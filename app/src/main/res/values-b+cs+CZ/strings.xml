@@ -871,7 +871,6 @@
     <string name="proAnimatedDisplayPictureFeature">Animovaný zobrazovaný obrázek</string>
     <string name="proAnimatedDisplayPictureModalDescription">uživatelé mohou nahrávat GIFy</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Nahrajte GIFy se</string>
-    <string name="proBadge">Odznak {app_pro}</string>
     <string name="proCallToActionLongerMessages">Chcete posílat delší zprávy? Posílejte více textu odemknutím prémiových funkcí Session Pro</string>
     <string name="proCallToActionPinnedConversations">Chcete více připnutí? Organizujte své chaty a odemkněte prémiové funkce pomocí Session Pro</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Chcete více než 5 připnutí? Organizujte své chaty a odemkněte prémiové funkce pomocí Session Pro</string>

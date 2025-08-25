@@ -802,7 +802,6 @@
     <string name="proAnimatedDisplayPictureFeature">动画头像</string>
     <string name="proAnimatedDisplayPictureModalDescription">用户可上传 GIF</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">使用 PRO 上传 GIF</string>
-    <string name="proBadge">{app_pro} 徽章</string>
     <string name="proCallToActionLongerMessages">想发送更长的消息？使用 {app_pro} 发送更多文本并解锁高级功能</string>
     <string name="proCallToActionPinnedConversations">想要固定更多对话？使用 {app_pro} 整理你的聊天并解锁高级功能</string>
     <string name="proCallToActionPinnedConversationsMoreThan">想要固定超过 5 个对话？使用 {app_pro} 整理你的聊天并解锁高级功能</string>

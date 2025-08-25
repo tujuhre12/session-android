@@ -67,6 +67,7 @@
     <string name="appNameNotes">Notes</string>
     <string name="appNameStocks">Stocks</string>
     <string name="appNameWeather">Weather</string>
+    <string name="appProBadge">{app_pro} Badge</string>
     <string name="appearanceAutoDarkMode">Auto Dark Mode</string>
     <string name="appearanceHideMenuBar">Hide Menu Bar</string>
     <string name="appearanceLanguage">Language</string>
@@ -633,6 +634,7 @@
     <string name="lockAppUnlocked">{app_name} is unlocked</string>
     <string name="logs">Logs</string>
     <string name="manageMembers">Manage Members</string>
+    <string name="managePro">Manage {pro}</string>
     <string name="max">Max</string>
     <string name="media">Media</string>
     <plurals name="members">
@@ -879,7 +881,7 @@
     <string name="pinUnpin">Unpin</string>
     <string name="pinUnpinConversation">Unpin Conversation</string>
     <string name="plusLoadsMore">Plus Loads More...</string>
-    <string name="plusLoadsMoreDescription">New features coming soon to {pro}. Discover what\'s next on the {pro} Roadmap</string>
+    <string name="plusLoadsMoreDescription">New features coming soon to {pro}. Discover what\'s next on the <b>{pro} Roadmap</b> {icon}</string>
     <string name="preferences">Preferences</string>
     <string name="preview">Preview</string>
     <string name="previewNotification">Preview Notification</string>
@@ -895,7 +897,7 @@
     <string name="proAnimatedDisplayPicturesDescription">Set animated GIFs and WebP images as your display picture.</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Upload GIFs with</string>
     <string name="proAutoRenewTime">{pro} auto-renewing in <b>{time}</b></string>
-    <string name="proBadge">{app_pro} Badge</string>
+    <string name="proBadge">{pro} Badge</string>
     <string name="proBadgeVisible">Show {app_pro} badge to other users</string>
     <string name="proBadges">Badges</string>
     <string name="proBadgesDescription">Show your support for {app_name} with an exclusive badge next to your display name.</string>
@@ -933,8 +935,8 @@
     <string name="proLongerMessagesSent">{count} Longer Messages Sent</string>
     <string name="proMessageInfoFeatures">This message used the following {app_pro} features:</string>
     <string name="proPinnedConversations">{count} Pinned Conversations</string>
-    <string name="proPlanActivatedAuto">Your {app_pro} plan is active!\n\nYour plan will automatically renew for another <b>{time}</b> on <b>{date}</b>. Updates to your plan take effect when {pro} is next renewed.</string>
-    <string name="proPlanActivatedAutoShort">Your {app_pro} plan is active!\n\nYour plan will automatically renew for another <b>{time}</b> on <b>{date}</b>.</string>
+    <string name="proPlanActivatedAuto">Your {app_pro} plan is active!\n\nYour plan will automatically renew for another <b>{currentPlan}</b> on <b>{date}</b>. Updates to your plan take effect when {pro} is next renewed.</string>
+    <string name="proPlanActivatedAutoShort">Your {app_pro} plan is active!\n\nYour plan will automatically renew for another <b>{currentPlan}</b> on <b>{date}</b>.</string>
     <string name="proPlanActivatedNotAuto">Your {app_pro} plan will expire on {date}.\n\nUpdate your plan now to ensure uninterrupted access to exclusive Pro features.</string>
     <string name="proPlanExpireDate">Your {app_pro} plan will expire on {date}.</string>
     <string name="proPlanNotFound">{pro} Plan Not Found</string>
@@ -948,6 +950,7 @@
     <string name="proPlanRenewSupport">Your {app_pro} plan has been renewed! Thank you for supporting the {network_name}.</string>
     <string name="proPlanRestored">{pro} Plan Restored</string>
     <string name="proPlanRestoredDescription">A valid plan for {app_pro} was detected and your {pro} status has been restored!</string>
+    <string name="proPlanSignUp">Because you originally signed up for {app_pro} via the {platformStore} Store, you\'ll need to use your {platformAccount} to update your plan.</string>
     <string name="proPriceOneMonth">1 Month - {monthlyPrice} / Month</string>
     <string name="proPriceThreeMonths">3 Months - {monthlyPrice} / Month</string>
     <string name="proPriceTwelveMonths">12 Months - {monthlyPrice} / Month</string>
@@ -960,6 +963,7 @@
     <string name="proRefundingDescription">Refunds for {app_pro} plans are handled exclusively by {platformAccount} through the {platformStore} Store.\n\nDue to {platformAccount} refund policies, {app_name} developers have no ability to influence the outcome of refund requests. This includes whether the request is approved or denied, as well as whether a full or partial refund is issued.</string>
     <string name="proRequestedRefund">Refund Requested</string>
     <string name="proSendMore">Send more with</string>
+    <string name="proSettings">{pro} Settings</string>
     <string name="proStats">Your {pro} Stats</string>
     <string name="proStatsTooltip">{pro} stats reflect usage on this device and may appear differently on linked devices</string>
     <string name="proSupportDescription">Need help with your {pro} plan? Submit a request to the support team.</string>
