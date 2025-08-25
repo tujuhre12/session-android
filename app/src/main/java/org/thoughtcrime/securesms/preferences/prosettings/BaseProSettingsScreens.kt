@@ -67,7 +67,7 @@ fun BaseProSettingsScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = paddings.calculateTopPadding() - LocalDimensions.current.appBarHeight,)
+                .padding(top = paddings.calculateTopPadding() - LocalDimensions.current.appBarHeight)
                 .consumeWindowInsets(paddings)
                 .padding(
                     horizontal = LocalDimensions.current.spacing,
@@ -104,7 +104,7 @@ fun BaseCellButtonProSettingsScreen(
         data = data,
         onBack = onBack,
     ) {
-        Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
+        Spacer(Modifier.height(LocalDimensions.current.spacing))
 
         if(!title.isNullOrEmpty()) {
             Text(

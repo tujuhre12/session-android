@@ -18,18 +18,29 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.max
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
+import org.session.libsession.utilities.NonTranslatableStringConstants
+import org.session.libsession.utilities.StringSubstitutionConstants
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.MONTHLY_PRICE_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.RELATIVE_TIME_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProAccountStatus
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProPlan
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProPlanBadge
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.RadioButtonIndicator
+import org.thoughtcrime.securesms.ui.components.annotatedStringResource
+import org.thoughtcrime.securesms.ui.components.inlineContentMap
 import org.thoughtcrime.securesms.ui.components.radioButtonColors
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -74,11 +85,11 @@ fun UpdatePlan(
         // and display sizes for better visibility and the padding should work accordingly
         var badgeHeight by remember { mutableStateOf(0.dp) }
 
-        Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
+        Spacer(Modifier.height(LocalDimensions.current.spacing))
 
         Text(
             modifier = Modifier.fillMaxWidth(),
-            text = planData.title,
+            text = annotatedStringResource(planData.title),
             textAlign = TextAlign.Center,
             style = LocalType.current.base,
             color = LocalColors.current.text,
@@ -88,23 +99,45 @@ fun UpdatePlan(
         Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
 
         // SUBSCRIPTIONS
-        // 12 months
-        /*PlanItem(
-            title = "",
-            subtitle = "",
-            selected = true,
-            currentPlan = true,
-            badgePadding = badgeHeight,
-            onBadgeLaidOut = { badgeHeight = maxOf(it, badgeHeight) }
-        )*/
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
+        ) {
+            planData.plans.forEach {
+                PlanItem(
+                    proPlan = it,
+                    badgePadding = badgeHeight / 2,
+                    onBadgeLaidOut = { height -> badgeHeight = max(badgeHeight, height) }
+                )
+            }
+        }
 
         Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
 
         AccentFillButtonRect(
             modifier = Modifier.fillMaxWidth()
                 .widthIn(max = LocalDimensions.current.maxContentWidth),
-            text = "TEMP",
+            text = stringResource(R.string.updatePlan),
             onClick = {}
+        )
+
+        Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
+
+        Text(
+            modifier = Modifier.fillMaxWidth()
+                .padding(horizontal = LocalDimensions.current.spacing),
+            text = annotatedStringResource(
+                Phrase.from(LocalContext.current.getText(R.string.proTosPrivacy))
+                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                    .format()
+            ),
+            textAlign = TextAlign.Center,
+            style = LocalType.current.small,
+            color = LocalColors.current.text,
+            inlineContent = inlineContentMap(
+                textSize = LocalType.current.small.fontSize,
+                imageColor = LocalColors.current.text
+            ),
         )
     }
 }
@@ -137,7 +170,8 @@ private fun PlanItem(
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth()
-                    .padding(LocalDimensions.current.smallSpacing),
+                    .padding(LocalDimensions.current.smallSpacing)
+                    .padding(top = if(proPlan.badges.isNotEmpty()) badgePadding/2 else 0.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(
@@ -166,22 +200,23 @@ private fun PlanItem(
         }
 
         // badges
-        Row(
-            modifier = Modifier
-                .padding(start = LocalDimensions.current.smallSpacing)
-                .onGloballyPositioned { coordinates ->
-                    onBadgeLaidOut(with(density) { coordinates.size.height.toDp() })
-                },
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            proPlan.badges.forEach {
-                PlanBadge(
-                    modifier = Modifier.weight(1f, fill = false),
-                    badge = it
-                )
+        if(proPlan.badges.isNotEmpty()) {
+            Row(
+                modifier = Modifier
+                    .padding(start = LocalDimensions.current.smallSpacing)
+                    .onGloballyPositioned { coordinates ->
+                        onBadgeLaidOut(with(density) { coordinates.size.height.toDp() })
+                    },
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                proPlan.badges.forEach {
+                    PlanBadge(
+                        modifier = Modifier.weight(1f, fill = false),
+                        badge = it
+                    )
+                }
             }
         }
-
     }
 }
 
@@ -278,10 +313,51 @@ private fun PreviewUpdatePlan(
     @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
 ) {
     PreviewTheme(colors) {
+        val context = LocalContext.current
         UpdatePlan(
             planData = ProSettingsViewModel.ProPlanUIState(
                 title = "This is a title",
-                enableButton = true
+                enableButton = true,
+                plans = listOf(
+                    ProPlan(
+                        title = Phrase.from(context.getText(R.string.proPriceTwelveMonths))
+                            .put(MONTHLY_PRICE_KEY, "$3.99")
+                            .format().toString(),
+                        subtitle = Phrase.from(context.getText(R.string.proBilledAnnually))
+                            .put(PRICE_KEY, "$47.99")
+                            .format().toString(),
+                        selected = false,
+                        currentPlan = false,
+                        badges = listOf(
+                            ProPlanBadge("20% Off"),
+                        ),
+                    ),
+                    ProPlan(
+                        title = Phrase.from(context.getText(R.string.proPriceThreeMonths))
+                            .put(MONTHLY_PRICE_KEY, "$4.99")
+                            .format().toString(),
+                        subtitle = Phrase.from(context.getText(R.string.proBilledQuarterly))
+                            .put(PRICE_KEY, "$14.99")
+                            .format().toString(),
+                        selected = true,
+                        currentPlan = true,
+                        badges = listOf(
+                            ProPlanBadge("Current Plan"),
+                            ProPlanBadge("20% Off", "This is a tooltip"),
+                        ),
+                    ),
+                    ProPlan(
+                        title = Phrase.from(context.getText(R.string.proPriceOneMonth))
+                            .put(MONTHLY_PRICE_KEY, "$5.99")
+                            .format().toString(),
+                        subtitle = Phrase.from(context.getText(R.string.proBilledMonthly))
+                            .put(PRICE_KEY, "$5")
+                            .format().toString(),
+                        selected = false,
+                        currentPlan = false,
+                        badges = emptyList(),
+                    ),
+                )
             ),
             proData = ProSettingsViewModel.ProSettingsUIState(
                 proStatus = ProAccountStatus.Pro.AutoRenewing(

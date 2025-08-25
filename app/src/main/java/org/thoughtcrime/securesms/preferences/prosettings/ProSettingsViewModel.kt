@@ -18,6 +18,8 @@ import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.CURRENT_PLAN_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.MONTHLY_PRICE_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.RELATIVE_TIME_KEY
 import org.thoughtcrime.securesms.pro.ProStatusManager
@@ -67,21 +69,39 @@ class ProSettingsViewModel @Inject constructor(
         _proPlanUIState.update {
             ProPlanUIState(
                 title = if(planStatus is ProAccountStatus.Expired)
-                    Phrase.from(context, R.string.proPlanRenewStart)
+                    Phrase.from(context.getText(R.string.proPlanRenewStart))
                         .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                         .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                        .format().toString()
-                    else Phrase.from(context, R.string.proPlanActivatedAuto)
+                        .format()
+                    else Phrase.from(context.getText(R.string.proPlanActivatedAuto))
                     .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                    .put(CURRENT_PLAN_KEY, "3 months") //todo PRO imeplement properly
-                    .put(DATE_KEY, "May 21st, 2025") //todo PRO imeplement properly
+                    .put(CURRENT_PLAN_KEY, "3 months") //todo PRO implement properly
+                    .put(DATE_KEY, "May 21st, 2025") //todo PRO implement properly
                     .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                    .format().toString(),
+                    .format(),
                 enableButton = false,
+                //todo PRO calculate all plans properly
                 plans = listOf(
                     ProPlan(
-                        title = "Plan 1",
-                        subtitle = "Subtitle",
+                        title = Phrase.from(context.getText(R.string.proPriceTwelveMonths))
+                            .put(MONTHLY_PRICE_KEY, "$3.99")
+                            .format().toString(),
+                        subtitle = Phrase.from(context.getText(R.string.proBilledAnnually))
+                            .put(PRICE_KEY, "$47.99")
+                            .format().toString(),
+                        selected = false,
+                        currentPlan = false,
+                        badges = listOf(
+                            ProPlanBadge("20% Off"),
+                        ),
+                    ),
+                    ProPlan(
+                        title = Phrase.from(context.getText(R.string.proPriceThreeMonths))
+                            .put(MONTHLY_PRICE_KEY, "$4.99")
+                            .format().toString(),
+                        subtitle = Phrase.from(context.getText(R.string.proBilledQuarterly))
+                            .put(PRICE_KEY, "$14.99")
+                            .format().toString(),
                         selected = true,
                         currentPlan = true,
                         badges = listOf(
@@ -90,14 +110,15 @@ class ProSettingsViewModel @Inject constructor(
                         ),
                     ),
                     ProPlan(
-                        title = "Plan 2",
-                        subtitle = "Subtitle",
+                        title = Phrase.from(context.getText(R.string.proPriceOneMonth))
+                            .put(MONTHLY_PRICE_KEY, "$5.99")
+                            .format().toString(),
+                        subtitle = Phrase.from(context.getText(R.string.proBilledMonthly))
+                            .put(PRICE_KEY, "$5")
+                            .format().toString(),
                         selected = false,
                         currentPlan = false,
-                        badges = listOf(
-                            ProPlanBadge("Current Plan"),
-                            ProPlanBadge("20% Off", "This is a tooltip"),
-                        ),
+                        badges = emptyList(),
                     ),
                 )
             )
@@ -172,7 +193,7 @@ class ProSettingsViewModel @Inject constructor(
     data class ProPlanUIState(
         val plans: List<ProPlan> = emptyList(),
         val enableButton: Boolean = false,
-        val title: String = "",
+        val title: CharSequence = "",
     )
 
     data class ProPlan(
