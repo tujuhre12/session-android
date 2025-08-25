@@ -141,6 +141,17 @@ class ProSettingsViewModel @Inject constructor(
             is Commands.SetShowProBadge -> {
                 //todo PRO implement
             }
+
+            is Commands.SelectProPlan -> {
+                _proPlanUIState.update { data ->
+                    data.copy(
+                        plans = data.plans.map {
+                            it.copy(selected = it == command.plan)
+                        },
+                        enableButton = !command.plan.currentPlan
+                    )
+                }
+            }
         }
     }
 
@@ -155,6 +166,8 @@ class ProSettingsViewModel @Inject constructor(
 
         object ShowPlanUpdate: Commands
         data class SetShowProBadge(val show: Boolean): Commands
+
+        data class SelectProPlan(val plan: ProPlan): Commands
     }
 
     data class ProSettingsUIState(

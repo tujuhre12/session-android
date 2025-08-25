@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.preferences.prosettings
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -29,7 +30,6 @@ import androidx.compose.ui.unit.max
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
-import org.session.libsession.utilities.StringSubstitutionConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.MONTHLY_PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRICE_KEY
@@ -37,6 +37,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.RELATIVE_TIM
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProAccountStatus
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProPlan
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProPlanBadge
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.*
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.RadioButtonIndicator
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
@@ -99,25 +100,29 @@ fun UpdatePlan(
         Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
 
         // SUBSCRIPTIONS
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
-        ) {
-            planData.plans.forEach {
-                PlanItem(
-                    proPlan = it,
-                    badgePadding = badgeHeight / 2,
-                    onBadgeLaidOut = { height -> badgeHeight = max(badgeHeight, height) }
-                )
+        planData.plans.forEachIndexed { index, data ->
+            if(index != 0){
+                Spacer(Modifier.height(if(data.badges.isNotEmpty()){
+                    max(LocalDimensions.current.xsSpacing, LocalDimensions.current.contentSpacing - badgeHeight/2)
+                } else LocalDimensions.current.contentSpacing))
             }
+            PlanItem(
+                proPlan = data,
+                badgePadding = badgeHeight / 2,
+                onBadgeLaidOut = { height -> badgeHeight = max(badgeHeight, height) },
+                onClick = {
+                    sendCommand(SelectProPlan(data))
+                }
+            )
         }
 
-        Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
+        Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
 
         AccentFillButtonRect(
             modifier = Modifier.fillMaxWidth()
                 .widthIn(max = LocalDimensions.current.maxContentWidth),
             text = stringResource(R.string.updatePlan),
+            enabled = planData.enableButton,
             onClick = {}
         )
 
@@ -144,10 +149,11 @@ fun UpdatePlan(
 
 @Composable
 private fun PlanItem(
-    proPlan: ProSettingsViewModel.ProPlan,
+    proPlan: ProPlan,
     badgePadding: Dp,
     modifier: Modifier= Modifier,
-    onBadgeLaidOut: (Dp) -> Unit
+    onBadgeLaidOut: (Dp) -> Unit,
+    onClick: () -> Unit
 ){
     val density = LocalDensity.current
 
@@ -155,7 +161,8 @@ private fun PlanItem(
     Box(modifier = modifier.fillMaxWidth()) {
         // card content
         Box(
-            modifier = modifier.padding(top = maxOf(badgePadding, 9.dp)) // 9.dp is a simple fallback to match default styling
+            modifier = modifier
+                .padding(top = if(proPlan.badges.isNotEmpty()) maxOf(badgePadding, 9.dp) else 0.dp) // 9.dp is a simple fallback to match default styling
                 .background(
                     color = LocalColors.current.backgroundSecondary,
                     shape = MaterialTheme.shapes.small
@@ -166,7 +173,9 @@ private fun PlanItem(
                     shape = MaterialTheme.shapes.small
                 )
                 .clip(MaterialTheme.shapes.small)
-
+                .clickable(
+                    onClick = onClick
+                )
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth()
@@ -268,7 +277,8 @@ private fun PreviewUpdatePlanItems(
                     ),
                 ),
                 badgePadding = 0.dp,
-                onBadgeLaidOut = {}
+                onBadgeLaidOut = {},
+                onClick = {}
             )
 
             PlanItem(
@@ -283,7 +293,8 @@ private fun PreviewUpdatePlanItems(
                     ),
                 ),
                 badgePadding = 0.dp,
-                onBadgeLaidOut = {}
+                onBadgeLaidOut = {},
+                onClick = {}
             )
 
             PlanItem(
@@ -301,7 +312,8 @@ private fun PreviewUpdatePlanItems(
                     ),
                 ),
                 badgePadding = 0.dp,
-                onBadgeLaidOut = {}
+                onBadgeLaidOut = {},
+                onClick = {}
             )
         }
     }
