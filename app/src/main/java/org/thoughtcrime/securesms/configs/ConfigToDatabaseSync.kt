@@ -4,12 +4,15 @@ import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
@@ -57,6 +60,7 @@ private const val TAG = "ConfigToDatabaseSync"
  *
  * @see ConfigUploader For upload config system data into swarm automagically.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class ConfigToDatabaseSync @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val configFactory: ConfigFactoryProtocol,
@@ -80,7 +84,10 @@ class ConfigToDatabaseSync @Inject constructor(
     init {
         // Sync conversations from config -> database
         scope.launch {
-            conversationRepository.conversationListAddressesFlow
+            preferences.watchLocalNumber()
+                .filterNotNull()
+                .take(1)
+                .flatMapLatest { conversationRepository.conversationListAddressesFlow }
                 .map { addresses ->
                     addresses to configFactory.withUserConfigs { it.convoInfoVolatile.all() }
                 }

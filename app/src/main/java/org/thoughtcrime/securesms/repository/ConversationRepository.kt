@@ -163,7 +163,7 @@ class DefaultConversationRepository @Inject constructor(
         .stateIn(scope, SharingStarted.Eagerly, getConversationListAddresses())
 
     private fun getConversationListAddresses() = buildSet {
-        val myAddress = Address.Standard(AccountId(textSecurePreferences.getLocalNumber()!!))
+        val myAddress = Address.Standard(AccountId(textSecurePreferences.getLocalNumber() ?: return@buildSet ))
 
         configFactory.withUserConfigs { configs ->
             // Have NTS?
