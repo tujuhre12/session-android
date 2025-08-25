@@ -827,7 +827,6 @@
     <string name="proAnimatedDisplayPictureFeature">Animasiyalı profil şəkli</string>
     <string name="proAnimatedDisplayPictureModalDescription">istifadəçiləri GIF-ləri yükləyə bilər</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">GIF-ləri yükləyin</string>
-    <string name="proBadge">{app_pro} Nişanı</string>
     <string name="proCallToActionLongerMessages">Daha uzun mesajlar göndərmək istəyirsiniz? {app_pro} ilə daha çox mətn göndərin və premium özəlliklərin kilidini açın</string>
     <string name="proCallToActionPinnedConversations">Daha çoxunu sancmaq istəyirsiniz? {app_pro} ilə söhbətlərinizi təşkil edin və premium özəlliklərin kilidini açın</string>
     <string name="proCallToActionPinnedConversationsMoreThan">5-dən çoxunu sancmaq istəyirsiniz? {app_pro} ilə söhbətlərinizi təşkil edin və premium özəlliklərin kilidini açın</string>
