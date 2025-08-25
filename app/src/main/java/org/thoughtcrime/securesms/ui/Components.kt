@@ -1028,6 +1028,7 @@ fun ActionRowItem(
             )
 
             subtitle?.let {
+                Spacer(Modifier.height(2.dp))
                 Text(
                     text = it,
                     modifier = Modifier

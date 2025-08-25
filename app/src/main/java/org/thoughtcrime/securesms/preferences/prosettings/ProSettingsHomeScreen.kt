@@ -38,9 +38,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.dp
 import com.squareup.phrase.Phrase
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
+import org.session.libsession.utilities.NonTranslatableStringConstants
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.RELATIVE_TIME_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.SetShowProBadge
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
@@ -50,9 +55,13 @@ import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.CategoryCell
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.IconActionRowItem
+import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
+import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.SpeechBubbleTooltip
 import org.thoughtcrime.securesms.ui.SwitchActionRowItem
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
+import org.thoughtcrime.securesms.ui.proBadgeColorDisabled
+import org.thoughtcrime.securesms.ui.proBadgeColorStandard
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -152,8 +161,16 @@ fun ProSettingsHome(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 IconActionRowItem(
-                    title = annotatedStringResource(ProStatusManager.TEMP_LABEL_FAQ),
-                    subtitle = annotatedStringResource(ProStatusManager.TEMP_LABEL_FAQ_DESCR),
+                    title = annotatedStringResource(
+                        Phrase.from(LocalContext.current, R.string.proFaq)
+                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                            .format().toString()
+                    ),
+                    subtitle = annotatedStringResource(
+                        Phrase.from(LocalContext.current, R.string.proFaqDescription)
+                            .put(APP_NAME_KEY, stringResource(R.string.app_name))
+                            .format().toString()
+                    ),
                     icon = R.drawable.ic_square_arrow_up_right,
                     iconSize = LocalDimensions.current.iconMedium,
                     iconColor = iconColor,
@@ -164,8 +181,12 @@ fun ProSettingsHome(
                 )
                 Divider()
                 IconActionRowItem(
-                    title = annotatedStringResource(ProStatusManager.TEMP_LABEL_SUPPORT),
-                    subtitle = annotatedStringResource(ProStatusManager.TEMP_LABEL_SUPPORT_DESCR),
+                    title = annotatedStringResource(R.string.helpSupport),
+                    subtitle = annotatedStringResource(
+                        Phrase.from(LocalContext.current, R.string.proSupportDescription)
+                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                            .format().toString()
+                    ),
                     icon = R.drawable.ic_square_arrow_up_right,
                     iconSize = LocalDimensions.current.iconMedium,
                     iconColor = iconColor,
@@ -192,13 +213,17 @@ fun ProStats(
     CategoryCell(
         modifier = modifier,
         dropShadow = LocalColors.current.isLight,
-        title = ProStatusManager.TEMP_LABEL_PRO_STATS,
+        title = Phrase.from(LocalContext.current, R.string.proStats)
+            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+            .format().toString(),
         titleIcon = {
             val tooltipState = rememberTooltipState(isPersistent = true)
             val scope = rememberCoroutineScope()
 
             SpeechBubbleTooltip(
-                text = ProStatusManager.TEMP_LABEL_PRO_STATS_TT,
+                text = Phrase.from(LocalContext.current, R.string.proStatsTooltip)
+                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                    .format().toString(),
                 tooltipState = tooltipState
             ) {
                 Image(
@@ -321,7 +346,7 @@ fun ProSettings(
             modifier = Modifier.fillMaxWidth(),
         ) {
             IconActionRowItem(
-                title = annotatedStringResource(ProStatusManager.TEMP_LABEL_UPDATE_PLAN),
+                title = annotatedStringResource(R.string.updatePlan),
                 subtitle = annotatedStringResource(data.infoLabel),
                 icon = R.drawable.ic_chevron_right,
                 qaTag = R.string.qa_pro_settings_action_update_plan,
@@ -330,7 +355,11 @@ fun ProSettings(
             Divider()
             SwitchActionRowItem(
                 title = annotatedStringResource(ProStatusManager.TEMP_LABEL_PRO_BADGE),
-                subtitle = annotatedStringResource(ProStatusManager.TEMP_LABEL_SHOW_BADGE),
+                subtitle = annotatedStringResource(
+                    Phrase.from(LocalContext.current, R.string.proBadgeVisible)
+                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                        .format().toString()
+                ),
                 checked = data.showProBadge,
                 qaTag = R.string.qa_pro_settings_action_show_badge,
                 onCheckedChange = { sendCommand(SetShowProBadge(it)) }
@@ -345,12 +374,11 @@ fun ProFeatures(
     data: ProAccountStatus,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
 ) {
-    //todo PRO add real features once we have the strings
-    //todo PRO handle color based on status
-
     CategoryCell(
         modifier = modifier,
-        title = ProStatusManager.TEMP_LABEL_FEATURES,
+        title = Phrase.from(LocalContext.current, R.string.proFeatures)
+            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+            .format().toString(),
     ) {
         // Cell content
         Column(
@@ -360,8 +388,8 @@ fun ProFeatures(
         ) {
             // Larger Groups
             ProFeatureItem(
-                title = "Testing",
-                subtitle = annotatedStringResource("Subtitle"),
+                title = stringResource(R.string.proLargerGroups),
+                subtitle = annotatedStringResource(R.string.proLargerGroupsDescription),
                 icon = R.drawable.ic_users_round_plus_custom,
                 iconGradientStart = primaryGreen,
                 iconGradientEnd = primaryBlue,
@@ -370,8 +398,8 @@ fun ProFeatures(
 
             // Longer messages
             ProFeatureItem(
-                title = "Testing",
-                subtitle = annotatedStringResource("Subtitle"),
+                title = stringResource(R.string.proLongerMessages),
+                subtitle = annotatedStringResource(R.string.proLongerMessagesDescription),
                 icon = R.drawable.ic_message_square,
                 iconGradientStart = primaryBlue,
                 iconGradientEnd = primaryPurple,
@@ -380,8 +408,8 @@ fun ProFeatures(
 
             // Animated pics
             ProFeatureItem(
-                title = "Testing",
-                subtitle = annotatedStringResource("Subtitle"),
+                title = stringResource(R.string.proAnimatedDisplayPictures),
+                subtitle = annotatedStringResource(R.string.proAnimatedDisplayPicturesDescription),
                 icon = R.drawable.ic_square_play,
                 iconGradientStart = primaryPurple,
                 iconGradientEnd = primaryPink,
@@ -390,18 +418,23 @@ fun ProFeatures(
 
             // Pro badges
             ProFeatureItem(
-                title = "Testing",
-                subtitle = annotatedStringResource("Subtitle"),
+                title = stringResource(R.string.proBadges),
+                subtitle = annotatedStringResource(
+                    Phrase.from(LocalContext.current, R.string.proBadgesDescription)
+                        .put(APP_NAME_KEY, stringResource(R.string.app_name))
+                        .format().toString()
+                ),
                 icon = R.drawable.ic_rectangle_ellipsis,
                 iconGradientStart = primaryPink,
                 iconGradientEnd = primaryRed,
-                expired = data is ProAccountStatus.Expired
+                expired = data is ProAccountStatus.Expired,
+                showProBadge = true,
             )
 
             // Unlimited pins
             ProFeatureItem(
-                title = "Testing",
-                subtitle = annotatedStringResource("Subtitle"),
+                title = stringResource(R.string.proUnlimitedPins),
+                subtitle = annotatedStringResource(R.string.proUnlimitedPinsDescription),
                 icon = R.drawable.ic_pin,
                 iconGradientStart = primaryRed,
                 iconGradientEnd = primaryOrange,
@@ -410,12 +443,21 @@ fun ProFeatures(
 
             // More...
             ProFeatureItem(
-                title = "Testing",
-                subtitle = annotatedStringResource("Subtitle"),
+                title = stringResource(R.string.proFeatureListLoadsMore),
+                subtitle = annotatedStringResource(
+                    Phrase.from(LocalContext.current, R.string.plusLoadsMoreDescription)
+                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                        .format()
+                    //todo PRO add bold + icon here
+                ),
                 icon = R.drawable.ic_circle_plus,
                 iconGradientStart = primaryOrange,
                 iconGradientEnd = primaryYellow,
-                expired = data is ProAccountStatus.Expired
+                expired = data is ProAccountStatus.Expired,
+                onClick = {
+                    sendCommand(ShowOpenUrlDialog("https://getsession.org/pro-roadmap"))
+                }
             )
         }
     }
@@ -429,10 +471,17 @@ private fun ProFeatureItem(
     @DrawableRes icon: Int,
     iconGradientStart: Color,
     iconGradientEnd: Color,
-    expired: Boolean
+    expired: Boolean,
+    showProBadge: Boolean = false,
+    badgeAtStart: Boolean = true,
+    onClick: (() -> Unit)? = null
 ) {
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth()
+            .then(
+                if (onClick != null) Modifier.clickable { onClick() }
+                else Modifier
+            ),
         horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -459,11 +508,14 @@ private fun ProFeatureItem(
         }
 
         Column {
-            Text(
+            ProBadgeText(
                 text = title,
-                style = LocalType.current.h9,
-                color = LocalColors.current.text
+                textStyle = LocalType.current.h9,
+                badgeColors = if(expired) proBadgeColorDisabled() else proBadgeColorStandard(),
+                showBadge = showProBadge,
+                badgeAtStart = badgeAtStart,
             )
+            Spacer(Modifier.height(2.dp))
             Text(
                 text = subtitle,
                 style = LocalType.current.small,
@@ -490,7 +542,7 @@ fun ProManage(
             when(data){
                 is ProAccountStatus.Pro.AutoRenewing -> {
                     IconActionRowItem(
-                        title = annotatedStringResource(ProStatusManager.TEMP_LABEL_CANCEL),
+                        title = annotatedStringResource(R.string.cancelPlan),
                         titleColor = LocalColors.current.danger,
                         icon = R.drawable.ic_circle_x_custom,
                         iconColor = LocalColors.current.danger,
@@ -501,7 +553,7 @@ fun ProManage(
                     )
                     Divider()
                     IconActionRowItem(
-                        title = annotatedStringResource(ProStatusManager.TEMP_LABEL_REFUND),
+                        title = annotatedStringResource(R.string.requestRefund),
                         titleColor = LocalColors.current.danger,
                         icon = R.drawable.ic_circle_warning_custom,
                         iconColor = LocalColors.current.danger,
@@ -514,7 +566,7 @@ fun ProManage(
 
                 is ProAccountStatus.Pro.Expiring -> {
                     IconActionRowItem(
-                        title = annotatedStringResource(ProStatusManager.TEMP_LABEL_CANCEL),
+                        title = annotatedStringResource(R.string.cancelPlan),
                         titleColor = LocalColors.current.danger,
                         icon = R.drawable.ic_circle_x_custom,
                         iconColor = LocalColors.current.danger,
@@ -527,7 +579,11 @@ fun ProManage(
 
                 is ProAccountStatus.Expired -> {
                     IconActionRowItem(
-                        title = annotatedStringResource(ProStatusManager.TEMP_LABEL_RENEW),
+                        title = annotatedStringResource(
+                            Phrase.from(LocalContext.current, R.string.proPlanRenew)
+                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                .format().toString()
+                        ),
                         titleColor = LocalColors.current.accentText,
                         icon = R.drawable.ic_circle_plus,
                         iconColor = LocalColors.current.accentText,
@@ -538,7 +594,11 @@ fun ProManage(
                     )
                     Divider()
                     IconActionRowItem(
-                        title = annotatedStringResource(ProStatusManager.TEMP_LABEL_RECOVER),
+                        title = annotatedStringResource(
+                            Phrase.from(LocalContext.current, R.string.proPlanRecover)
+                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                .format().toString()
+                        ),
                         icon = R.drawable.ic_refresh_cw,
                         qaTag = R.string.qa_pro_settings_action_request_refund,
                         onClick = {
@@ -567,7 +627,22 @@ fun PreviewProSettingsPro(
                         .put(RELATIVE_TIME_KEY, "15 days")
                         .format()
                 ),
-//                proStatus = ProAccountStatus.Expired,
+            ),
+            sendCommand = {},
+            onBack = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewProSettingsExpired(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+) {
+    PreviewTheme(colors) {
+        ProSettingsHome(
+            data = ProSettingsViewModel.ProSettingsUIState(
+                proStatus = ProAccountStatus.Expired,
             ),
             sendCommand = {},
             onBack = {},

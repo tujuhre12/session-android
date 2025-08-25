@@ -6,9 +6,11 @@ import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination.*
 import org.thoughtcrime.securesms.ui.NavigationAction
@@ -22,9 +24,7 @@ sealed interface ProSettingsDestination {
     data object Home: ProSettingsDestination
 
     @Serializable
-    data class UpdatePlan(
-        val renew: Boolean
-    ): ProSettingsDestination
+    data object UpdatePlan: ProSettingsDestination
 }
 
 @SuppressLint("RestrictedApi")
@@ -36,6 +36,7 @@ fun ProSettingsNavHost(
 ){
     SharedTransitionLayout {
         val navController = rememberNavController()
+        val scope = rememberCoroutineScope()
 
         // all screens within the Pro Flow can share the same VM
         val viewModel = hiltViewModel<ProSettingsViewModel>()
@@ -73,7 +74,7 @@ fun ProSettingsNavHost(
             horizontalSlideComposable<UpdatePlan> {
                 UpdatePlanScreen(
                     viewModel = viewModel,
-                    onBack = onBack,
+                    onBack = { scope.launch { navigator.navigateUp() }},
                 )
             }
         }

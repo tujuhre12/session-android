@@ -27,57 +27,65 @@ class ProSettingsViewModel @Inject constructor(
     private val proStatusManager: ProStatusManager,
 ) : ViewModel() {
 
-    private val _proSettingsUIState: MutableStateFlow<ProSettingsUIState> = MutableStateFlow(
-        ProSettingsUIState(
-            //todo PRO need to properly calculate this
-            proStatus = if(proStatusManager.isCurrentUserPro())
-//                ProAccountStatus.Expired
-                ProAccountStatus.Pro.AutoRenewing(
-                showProBadge = true,
-                infoLabel = Phrase.from(context, R.string.proAutoRenew)
-                    .put(RELATIVE_TIME_KEY, "15 days")
-                    .format()
-            )
-            else ProAccountStatus.None
-        )
-    )
+    private val _proSettingsUIState: MutableStateFlow<ProSettingsUIState> = MutableStateFlow(ProSettingsUIState())
     val proSettingsUIState: StateFlow<ProSettingsUIState> = _proSettingsUIState
 
     private val _dialogState: MutableStateFlow<DialogsState> = MutableStateFlow(DialogsState())
     val dialogState: StateFlow<DialogsState> = _dialogState
 
-    private val _proPlanUIState: MutableStateFlow<ProPlanUIState> = MutableStateFlow(
-        //todo PRO need to properly calculate this
-        ProPlanUIState(
-            enableButton = false,
-            plans = listOf(
-                ProPlan(
-                    title = "Plan 1",
-                    subtitle = "Subtitle",
-                    selected = true,
-                    currentPlan = true,
-                    badges = listOf(
-                        ProPlanBadge("Current Plan"),
-                        ProPlanBadge("20% Off", "This is a tooltip"),
-                    ),
-                ),
-                ProPlan(
-                    title = "Plan 2",
-                    subtitle = "Subtitle",
-                    selected = false,
-                    currentPlan = false,
-                    badges = listOf(
-                        ProPlanBadge("Current Plan"),
-                        ProPlanBadge("20% Off", "This is a tooltip"),
-                    ),
-                ),
-            )
-        )
-    )
+    private val _proPlanUIState: MutableStateFlow<ProPlanUIState> = MutableStateFlow(ProPlanUIState())
     val proPlanUIState: StateFlow<ProPlanUIState> = _proPlanUIState
 
     init {
+        generateState()
+    }
 
+    private fun generateState(){
+        //todo PRO need to properly calculate this
+        val planStatus = //                ProAccountStatus.Expired
+            ProAccountStatus.Pro.AutoRenewing(
+                showProBadge = true,
+                infoLabel = Phrase.from(context, R.string.proAutoRenew)
+                    .put(RELATIVE_TIME_KEY, "15 days")
+                    .format()
+            )
+
+        _proSettingsUIState.update {
+            ProSettingsUIState(
+                proStatus = if(proStatusManager.isCurrentUserPro())
+                    planStatus
+                else ProAccountStatus.None
+            )
+        }
+
+        _proPlanUIState.update {
+            ProPlanUIState(
+                title = if(planStatus is ProAccountStatus.Expired) "Upgrade" else "Update",
+                enableButton = false,
+                plans = listOf(
+                    ProPlan(
+                        title = "Plan 1",
+                        subtitle = "Subtitle",
+                        selected = true,
+                        currentPlan = true,
+                        badges = listOf(
+                            ProPlanBadge("Current Plan"),
+                            ProPlanBadge("20% Off", "This is a tooltip"),
+                        ),
+                    ),
+                    ProPlan(
+                        title = "Plan 2",
+                        subtitle = "Subtitle",
+                        selected = false,
+                        currentPlan = false,
+                        badges = listOf(
+                            ProPlanBadge("Current Plan"),
+                            ProPlanBadge("20% Off", "This is a tooltip"),
+                        ),
+                    ),
+                )
+            )
+        }
     }
 
 
@@ -90,7 +98,7 @@ class ProSettingsViewModel @Inject constructor(
             }
 
             Commands.ShowPlanUpdate -> {
-                //todo PRO implement
+                navigateTo(ProSettingsDestination.UpdatePlan)
             }
 
             is Commands.SetShowProBadge -> {
@@ -113,7 +121,7 @@ class ProSettingsViewModel @Inject constructor(
     }
 
     data class ProSettingsUIState(
-        val proStatus: ProAccountStatus,
+        val proStatus: ProAccountStatus = ProAccountStatus.None,
         val proStats: ProStats = ProStats()
     )
 
@@ -147,7 +155,8 @@ class ProSettingsViewModel @Inject constructor(
 
     data class ProPlanUIState(
         val plans: List<ProPlan> = emptyList(),
-        val enableButton: Boolean
+        val enableButton: Boolean = false,
+        val title: String = "",
     )
 
     data class ProPlan(
