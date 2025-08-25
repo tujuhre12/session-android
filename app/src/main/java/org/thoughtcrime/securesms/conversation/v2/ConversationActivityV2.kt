@@ -385,11 +385,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             glide = glide,
         )
         adapter.visibleMessageViewDelegate = this
-
-        // Register an AdapterDataObserver to scroll us to the bottom of the RecyclerView for if
-        // we're already near the the bottom and the data changes.
-        adapter.registerAdapterDataObserver(ConversationAdapterDataObserver(binding.conversationRecyclerView, adapter))
-
         adapter
     }
 
@@ -806,6 +801,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                                 )
                             }
                         }
+                    }
+                } else {
+                    // If there are new data updated, we'll try to stay scrolled at the bottom (if we were at the bottom).
+                    // scrolled to bottom has a leniency of 50dp, so if we are within the 50dp but not fully at the bottom, scroll down
+                    if (binding.conversationRecyclerView.isNearBottom && !binding.conversationRecyclerView.isFullyScrolled) {
+                        binding.conversationRecyclerView.smoothScrollToPosition(adapter.itemCount)
                     }
                 }
 
@@ -2785,17 +2786,4 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }
         }
     }
-
-    // AdapterDataObserver implementation to scroll us to the bottom of the ConversationRecyclerView
-    // when we're already near the bottom and we send or receive a message.
-    inner class ConversationAdapterDataObserver(val recyclerView: ConversationRecyclerView, val adapter: ConversationAdapter) : RecyclerView.AdapterDataObserver() {
-        override fun onChanged() {
-            super.onChanged()
-            // scrolled to bottom has a leniency of 50dp, so if we are within the 50dp but not fully at the bottom, scroll down
-            if (recyclerView.isNearBottom && !recyclerView.isFullyScrolled) {
-                recyclerView.smoothScrollToPosition(adapter.itemCount)
-            }
-        }
-    }
-
 }
