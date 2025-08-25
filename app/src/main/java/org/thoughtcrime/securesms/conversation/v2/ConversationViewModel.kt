@@ -58,6 +58,7 @@ import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ExpirationUtil
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
+import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.isCommunityInbox
 import org.session.libsession.utilities.isGroupV2
@@ -83,7 +84,6 @@ import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
-import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.ReactionDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
@@ -108,6 +108,7 @@ import org.thoughtcrime.securesms.util.DateUtils.Companion.toEpochSeconds
 import org.thoughtcrime.securesms.util.UserProfileModalCommands
 import org.thoughtcrime.securesms.util.UserProfileModalData
 import org.thoughtcrime.securesms.util.UserProfileUtils
+import org.thoughtcrime.securesms.util.castAwayType
 import org.thoughtcrime.securesms.util.mapStateFlow
 import org.thoughtcrime.securesms.util.mapToStateFlow
 import org.thoughtcrime.securesms.webrtc.CallManager
@@ -233,7 +234,8 @@ class ConversationViewModel @AssistedInject constructor(
 
     val groupV2ThreadState: Flow<GroupThreadStatus> get() = when {
         !address.isGroupV2 -> flowOf( GroupThreadStatus.None)
-        else -> configFactory.userConfigsChanged(500)
+        else -> configFactory.userConfigsChanged(setOf(UserConfigType.USER_GROUPS), debounceMills = 500)
+            .castAwayType()
             .onStart { emit(Unit) }
             .map {
                 configFactory.getGroup(AccountId(address.toString())).let { group ->

@@ -3,6 +3,7 @@ package org.session.libsession.utilities
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withTimeoutOrNull
@@ -126,9 +127,15 @@ fun ConfigFactoryProtocol.getGroup(groupId: AccountId): GroupInfo.ClosedGroupInf
 
 /**
  * Flow that emits when the user configs are modified or merged.
+ *
+ * @param onlyConfigTypes If not null, only emits when the specified config types are updated.
+ * @param debounceMills If greater than 0, debounce the emissions by the specified milliseconds
  */
-fun ConfigFactoryProtocol.userConfigsChanged(debounceMills: Long = 0L): Flow<*> =
-    configUpdateNotifications.filter { it is ConfigUpdateNotification.UserConfigsModified || it is ConfigUpdateNotification.UserConfigsMerged }
+fun ConfigFactoryProtocol.userConfigsChanged(
+    onlyConfigTypes: Set<UserConfigType>? = null,
+    debounceMills: Long = 0L,
+): Flow<ConfigUpdateNotification.UserConfigsUpdated> =
+    configUpdateNotifications.filterIsInstance<ConfigUpdateNotification.UserConfigsUpdated>()
         .let { flow ->
             if (debounceMills > 0) {
                 flow.debounce(debounceMills)
@@ -136,6 +143,14 @@ fun ConfigFactoryProtocol.userConfigsChanged(debounceMills: Long = 0L): Flow<*> 
                 flow
             }
         }
+        .let { flow ->
+            if (onlyConfigTypes != null) {
+                flow.filter { updated -> updated.updatedTypes.any { it in onlyConfigTypes } }
+            } else {
+                flow
+            }
+        }
+
 
 /**
  * Wait until all configs of given group are pushed to the server.
@@ -213,15 +228,7 @@ interface MutableGroupConfigs : GroupConfigs {
 
 
 sealed interface ConfigUpdateNotification {
-    /**
-     * The user configs have been modified locally.
-     */
-    data object UserConfigsModified : ConfigUpdateNotification
-
-    /**
-     * The user configs have been merged from the server.
-     */
-    data class UserConfigsMerged(val configType: UserConfigType) : ConfigUpdateNotification
+    data class UserConfigsUpdated(val updatedTypes: Set<UserConfigType>, val fromMerge: Boolean) : ConfigUpdateNotification
 
     data class GroupConfigsUpdated(val groupId: AccountId, val fromMerge: Boolean) : ConfigUpdateNotification
 }

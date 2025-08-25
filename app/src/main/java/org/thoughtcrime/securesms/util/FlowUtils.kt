@@ -64,3 +64,9 @@ fun <T, R> StateFlow<T>.mapStateFlow(
 
 @OptIn(ExperimentalCoroutinesApi::class)
 fun <T> Flow<Iterable<T>>.flatten(): Flow<T> = flatMapConcat { it.asFlow() }
+
+/**
+ * Erase the type of the flow, so that it can be combined with other flows of different types
+ * easily. Useful for pushing out notification but you don't care about the values themselves.
+ */
+fun <T> Flow<T>.castAwayType(): Flow<*> = this as Flow<*>

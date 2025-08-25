@@ -24,6 +24,7 @@ import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRemoteFile
 import org.session.libsession.utilities.userConfigsChanged
@@ -35,11 +36,11 @@ import org.session.libsignal.utilities.ProfileAvatarData
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.util.DateUtils.Companion.millsToInstant
+import org.thoughtcrime.securesms.util.castAwayType
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.security.SecureRandom
 import java.time.Instant
-import java.time.ZonedDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
@@ -65,7 +66,8 @@ class AvatarUploadManager @Inject constructor(
         .map { it != null }
         .flatMapLatest { isLoggedIn ->
             if (isLoggedIn) {
-                configFactory.userConfigsChanged()
+                configFactory.userConfigsChanged(onlyConfigTypes = setOf(UserConfigType.USER_PROFILE))
+                    .castAwayType()
                     .onStart { emit(Unit) }
                     .map {
                         configFactory.withUserConfigs { it.userProfile.getPic() }

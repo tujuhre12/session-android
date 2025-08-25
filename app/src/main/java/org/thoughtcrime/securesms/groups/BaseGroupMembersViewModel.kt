@@ -49,7 +49,7 @@ abstract class BaseGroupMembersViewModel(
         (configFactory.configUpdateNotifications
             .filter {
                 it is ConfigUpdateNotification.GroupConfigsUpdated && it.groupId == groupId ||
-                        it is ConfigUpdateNotification.UserConfigsMerged
+                        it is ConfigUpdateNotification.UserConfigsUpdated
             } as Flow<*>)
             .onStart { emit(Unit) }
             .map { _ ->

@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -37,6 +36,7 @@ import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.isGroupV2
 import org.session.libsession.utilities.isLegacyGroup
 import org.session.libsession.utilities.isStandard
@@ -59,7 +59,8 @@ import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.ManagerScope
-import org.thoughtcrime.securesms.util.mapToStateFlow
+import org.thoughtcrime.securesms.util.castAwayType
+import java.util.EnumSet
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -146,7 +147,12 @@ class DefaultConversationRepository @Inject constructor(
 ) : ConversationRepository {
 
     override val conversationListAddressesFlow = configFactory
-        .userConfigsChanged()
+        .userConfigsChanged(EnumSet.of(
+            UserConfigType.CONTACTS,
+            UserConfigType.USER_PROFILE,
+            UserConfigType.USER_GROUPS
+        ))
+        .castAwayType()
         .onStart {
             // Only start when we have a local number
             textSecurePreferences.watchLocalNumber().filterNotNull().first()

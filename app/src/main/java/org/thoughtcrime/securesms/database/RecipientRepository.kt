@@ -33,8 +33,8 @@ import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.GroupRecord
-import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.ProStatus
 import org.session.libsession.utilities.recipients.Recipient
@@ -52,6 +52,7 @@ import org.thoughtcrime.securesms.groups.GroupMemberComparator
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.util.DateUtils.Companion.secondsToInstant
 import java.lang.ref.WeakReference
+import java.util.EnumSet
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -157,7 +158,7 @@ class RecipientRepository @Inject constructor(
         when (recipientData) {
             is RecipientData.Self -> {
                 value = createLocalRecipient(address, recipientData)
-                changeSource = configFactory.userConfigsChanged()
+                changeSource = configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_PROFILE))
             }
 
             is RecipientData.BlindedContact -> {
@@ -166,7 +167,7 @@ class RecipientRepository @Inject constructor(
                     data = recipientData,
                 )
 
-                changeSource = configFactory.userConfigsChanged()
+                changeSource = configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.CONTACTS))
             }
 
             is RecipientData.Contact -> {
@@ -177,7 +178,7 @@ class RecipientRepository @Inject constructor(
                 )
 
                 changeSource = merge(
-                    configFactory.userConfigsChanged(),
+                    configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.CONTACTS)),
                     recipientSettingsDatabase.changeNotification.filter { it == address }
                 )
             }
@@ -193,7 +194,7 @@ class RecipientRepository @Inject constructor(
                 val memberAddresses = recipientData.members.mapTo(hashSetOf()) { it.address }
 
                 changeSource = merge(
-                    configFactory.userConfigsChanged(),
+                    configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_GROUPS)),
                     configFactory.configUpdateNotifications
                         .filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
                         .filter { it.groupId.hexString == address.address },
@@ -228,7 +229,7 @@ class RecipientRepository @Inject constructor(
                         changeSource = merge(
                             groupDatabase.updateNotification,
                             recipientSettingsDatabase.changeNotification.filter { it == address || it in memberAddresses },
-                            configFactory.userConfigsChanged(),
+                            configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_GROUPS)),
                         )
 
                         value = group?.let { createLegacyGroupRecipient(address, groupConfig, it, settings, settingsFetcher) }
@@ -256,7 +257,7 @@ class RecipientRepository @Inject constructor(
                             lokiThreadDatabase.changeNotification,
                             recipientSettingsDatabase.changeNotification.filter { it == address },
                             groupMemberDatabase.changeNotification.filter { it == address },
-                            configFactory.userConfigsChanged(),
+                            configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_GROUPS)),
                         )
                     }
 
@@ -279,7 +280,7 @@ class RecipientRepository @Inject constructor(
                         changeSource = merge(
                             configFactory.configUpdateNotifications.filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
                                 .filter { it.groupId == address.accountId },
-                            configFactory.userConfigsChanged(),
+                            configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_GROUPS)),
                             recipientSettingsDatabase.changeNotification.filter { it == address }
                         )
                     }

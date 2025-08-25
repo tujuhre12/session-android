@@ -12,13 +12,14 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
-import okhttp3.HttpUrl
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.util.castAwayType
 import org.thoughtcrime.securesms.util.mapStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -44,7 +45,8 @@ class BlindMappingRepository @Inject constructor(
         .filterNotNull()
         .flatMapLatest { localAddress ->
             configFactory
-                .userConfigsChanged(200L)
+                .userConfigsChanged(setOf(UserConfigType.USER_GROUPS, UserConfigType.CONTACTS))
+                .castAwayType()
                 .onStart { emit(Unit) }
                 .map {
                     configFactory.withUserConfigs { configs ->

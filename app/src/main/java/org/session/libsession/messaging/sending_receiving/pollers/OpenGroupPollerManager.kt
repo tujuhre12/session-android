@@ -17,10 +17,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
+import org.thoughtcrime.securesms.util.castAwayType
+import java.util.EnumSet
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -49,7 +52,8 @@ class OpenGroupPollerManager @Inject constructor(
             .flatMapLatest { loggedIn ->
                 if (loggedIn) {
                     configFactory
-                        .userConfigsChanged()
+                        .userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_GROUPS))
+                        .castAwayType()
                         .onStart { emit(Unit) }
                         .map {
                             configFactory.withUserConfigs { configs ->

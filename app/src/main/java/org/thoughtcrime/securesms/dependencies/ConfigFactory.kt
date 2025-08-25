@@ -1,8 +1,6 @@
 package org.thoughtcrime.securesms.dependencies
 
-import android.content.Context
 import dagger.Lazy
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
@@ -36,8 +34,7 @@ import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.configs.ConfigToDatabaseSync
 import org.thoughtcrime.securesms.database.ConfigDatabase
 import org.thoughtcrime.securesms.database.ConfigVariant
-import org.thoughtcrime.securesms.database.LokiThreadDatabase
-import org.thoughtcrime.securesms.database.ThreadDatabase
+import java.util.EnumSet
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -152,7 +149,7 @@ class ConfigFactory @Inject constructor(
      *
      * @param cb A function that takes a [UserConfigsImpl] and returns a pair of the result of the operation and a boolean indicating if the configs were changed.
      */
-    private fun <T> doWithMutableUserConfigs(cb: (UserConfigsImpl) -> Pair<T, List<ConfigUpdateNotification>>): T {
+    private fun <T> doWithMutableUserConfigs(fromMerge: Boolean, cb: (UserConfigsImpl) -> Pair<T, Set<UserConfigType>>): T {
         val (lock, configs) = ensureUserConfigsInitialized()
         val (result, changed) = lock.write {
             cb(configs)
@@ -160,11 +157,9 @@ class ConfigFactory @Inject constructor(
 
         if (changed.isNotEmpty()) {
             coroutineScope.launch {
-                for (notification in changed) {
-                    // Config change notifications are important so we must use suspend version of
-                    // emit (not tryEmit)
-                    _configUpdateNotifications.emit(notification)
-                }
+                // Config change notifications are important so we must use suspend version of
+                // emit (not tryEmit)
+                _configUpdateNotifications.emit(ConfigUpdateNotification.UserConfigsUpdated(updatedTypes = changed, fromMerge = fromMerge))
             }
         }
 
@@ -179,7 +174,7 @@ class ConfigFactory @Inject constructor(
             return
         }
 
-        val result = doWithMutableUserConfigs { configs ->
+        val result = doWithMutableUserConfigs(fromMerge = true) { configs ->
             val config = when (userConfigType) {
                 UserConfigType.CONTACTS -> configs.contacts
                 UserConfigType.USER_PROFILE -> configs.userProfile
@@ -195,9 +190,8 @@ class ConfigFactory @Inject constructor(
                 .maxOfOrNull { it.timestamp }
 
             maxTimestamp?.let {
-                (config.dump() to it) to
-                listOf(ConfigUpdateNotification.UserConfigsMerged(userConfigType))
-            } ?: (null to emptyList())
+                (config.dump() to it) to EnumSet.of(userConfigType)
+            } ?: (null to emptySet())
         }
 
         // Dump now regardless so we can save the timestamp to the database
@@ -214,16 +208,14 @@ class ConfigFactory @Inject constructor(
     }
 
     override fun <T> withMutableUserConfigs(cb: (MutableUserConfigs) -> T): T {
-        return doWithMutableUserConfigs {
+        return doWithMutableUserConfigs(fromMerge = false) {
             val result = cb(it)
 
-            val changed = if (it.userGroups.dirty() ||
-                it.convoInfoVolatile.dirty() ||
-                it.userProfile.dirty() ||
-                it.contacts.dirty()) {
-                listOf(ConfigUpdateNotification.UserConfigsModified)
-            } else {
-                emptyList()
+            val changed = buildSet {
+                if (it.userGroups.dirty()) add(UserConfigType.USER_GROUPS)
+                if (it.convoInfoVolatile.dirty()) add(UserConfigType.CONVO_INFO_VOLATILE)
+                if (it.userProfile.dirty()) add(UserConfigType.USER_PROFILE)
+                if (it.contacts.dirty()) add(UserConfigType.CONTACTS)
             }
 
             result to changed
@@ -378,7 +370,7 @@ class ConfigFactory @Inject constructor(
         // Confirm push for the configs and gather the dumped data to be saved into the db.
         // For this operation, we will no notify the users as there won't be any real change in terms
         // of the displaying data.
-        val dump = doWithMutableUserConfigs { configs ->
+        val dump = doWithMutableUserConfigs(fromMerge = false) { configs ->
             sequenceOf(contacts, userProfile, convoInfoVolatile, userGroups)
                 .zip(
                     sequenceOf(
@@ -392,7 +384,7 @@ class ConfigFactory @Inject constructor(
                 .onEach { (push, config) -> config.second.confirmPushed(push!!.first.seqNo, push.second.hashes.toTypedArray()) }
                 .map { (push, config) ->
                     Triple(config.first.configVariant, config.second.dump(), push!!.second.timestamp)
-                }.toList() to emptyList()
+                }.toList() to emptySet()
         }
 
         // We need to persist the data to the database to save timestamp after the push
