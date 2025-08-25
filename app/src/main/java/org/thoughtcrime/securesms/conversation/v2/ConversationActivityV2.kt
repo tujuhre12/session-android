@@ -71,6 +71,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -1081,37 +1082,17 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         // When we see "shouldExit", we finish the activity once for all.
         lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                // Wait for `shouldExit == true` then finish the activity
-                viewModel.shouldExit
-                    .scan(null to null) { acc: Pair<Boolean?, Boolean?>, current ->
-                        acc.second to current
-                    }
-                    .mapNotNull { (prev, curr) ->
-                        // If shouldExit(curr) is true, we will always finish the activity,
-                        // but we will show a toast on the way out only if we used to have a conversation,
-                        // this is a way to detect the deletion of the conversation.
-                        val shouldShowToast = if (curr == true) {
-                            prev == false
-                        } else {
-                            return@mapNotNull null
-                        }
+            // Wait for exit signal
+            viewModel.shouldExit.first()
 
-                        shouldShowToast
-                    }
-                    .collect { shouldShowToast ->
-                        if (shouldShowToast) {
-                            Toast.makeText(
-                                this@ConversationActivityV2,
-                                getString(R.string.conversationsDeleted),
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
+            Toast.makeText(
+                this@ConversationActivityV2,
+                getString(R.string.conversationsDeleted),
+                Toast.LENGTH_LONG
+            ).show()
 
-                        if (!isFinishing) {
-                            finish()
-                        }
-                    }
+            if (!isFinishing) {
+                finish()
             }
         }
 

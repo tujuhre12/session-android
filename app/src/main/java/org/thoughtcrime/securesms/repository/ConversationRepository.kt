@@ -1,17 +1,23 @@
 package org.thoughtcrime.securesms.repository
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
@@ -52,6 +58,8 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.util.mapToStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -65,7 +73,8 @@ interface ConversationRepository {
 
     fun getConversationList(): List<ThreadRecord>
 
-    fun getConversationListAddresses(): Set<Address.Conversable>
+
+    val conversationListAddressesFlow: StateFlow<Set<Address.Conversable>>
 
     fun saveDraft(threadId: Long, text: String)
     fun getDraft(threadId: Long): String?
@@ -133,9 +142,21 @@ class DefaultConversationRepository @Inject constructor(
     private val clock: SnodeClock,
     private val recipientDatabase: RecipientSettingsDatabase,
     private val recipientRepository: RecipientRepository,
+    @param:ManagerScope private val scope: CoroutineScope,
 ) : ConversationRepository {
 
-    override fun getConversationListAddresses() = buildSet {
+    override val conversationListAddressesFlow = configFactory
+        .userConfigsChanged()
+        .onStart {
+            // Only start when we have a local number
+            textSecurePreferences.watchLocalNumber().filterNotNull().first()
+
+            emit(Unit)
+        }
+        .map { getConversationListAddresses() }
+        .stateIn(scope, SharingStarted.Eagerly, getConversationListAddresses())
+
+    private fun getConversationListAddresses() = buildSet {
         val myAddress = Address.Standard(AccountId(textSecurePreferences.getLocalNumber()!!))
 
         configFactory.withUserConfigs { configs ->
@@ -186,10 +207,7 @@ class DefaultConversationRepository @Inject constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     override fun observeConversationList(): Flow<List<ThreadRecord>> {
-        return configFactory.userConfigsChanged(200)
-            .onStart { emit(Unit) }
-            .map { getConversationListAddresses() }
-            .distinctUntilChanged()
+        return conversationListAddressesFlow
             .flatMapLatest { allAddresses ->
                 merge(
                     configFactory.configUpdateNotifications,

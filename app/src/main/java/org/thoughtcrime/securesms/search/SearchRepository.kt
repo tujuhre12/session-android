@@ -121,8 +121,8 @@ class SearchRepository @Inject constructor(
     }
 
     private fun queryMessages(query: String): CursorList<MessageResult> {
-        val blockedContacts = conversationRepository.getConversationListAddresses()
-        val messages = searchDatabase.queryMessages(query, blockedContacts)
+        val allConvo = conversationRepository.conversationListAddressesFlow.value
+        val messages = searchDatabase.queryMessages(query, allConvo)
         return if (messages != null)
             CursorList(messages, MessageModelBuilder())
         else

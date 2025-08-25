@@ -80,13 +80,9 @@ class ConfigToDatabaseSync @Inject constructor(
     init {
         // Sync conversations from config -> database
         scope.launch {
-            configFactory.userConfigsChanged()
-                .onStart {
-                    preferences.watchLocalNumber().filterNotNull().first()
-                    emit(Unit)
-                }
-                .map {
-                    conversationRepository.getConversationListAddresses() to configFactory.withUserConfigs { it.convoInfoVolatile.all() }
+            conversationRepository.conversationListAddressesFlow
+                .map { addresses ->
+                    addresses to configFactory.withUserConfigs { it.convoInfoVolatile.all() }
                 }
                 .distinctUntilChanged()
                 .collectLatest { (conversations, convoInfo) ->

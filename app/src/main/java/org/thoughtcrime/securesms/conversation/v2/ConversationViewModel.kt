@@ -28,6 +28,8 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
@@ -38,6 +40,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.BlindedContact
@@ -263,9 +266,19 @@ class ConversationViewModel @AssistedInject constructor(
     private val _showLoader = MutableStateFlow(false)
     val showLoader: StateFlow<Boolean> get() = _showLoader
 
-    val shouldExit: Flow<Boolean> get() = (threadDb.updateNotifications as Flow<*>)
-        .onStart { emit(Unit) }
-        .map { threadDb.getThreadIdIfExistsFor(address) == -1L }
+    // The only criterial to trigger a exit of this conversation screen is that this conversation
+    // is removed from the conversation list. So first we need to wait until this convo is added
+    // to the convo list (it could have been in there already or not), then we wait until it is removed.
+    // This sequence is crucial as exiting the convo screen is very abrupt and we want to avoid it
+    // as much as possible.
+    val shouldExit: Flow<*> get() = flow {
+        // Wait until this convo is in the list
+        repository.conversationListAddressesFlow.first { it.contains(address) }
+
+        // then wait until it is removed
+        repository.conversationListAddressesFlow.first { !it.contains(address) }
+        emit(Unit)
+    }
 
     private val _acceptingMessageRequest = MutableStateFlow<Boolean>(false)
     val messageRequestState: StateFlow<MessageRequestUiState> = combine(
@@ -301,7 +314,6 @@ class ConversationViewModel @AssistedInject constructor(
                     }
             }
         }
-
     }
 
     /**
@@ -1280,16 +1292,26 @@ class ConversationViewModel @AssistedInject constructor(
                     return
                 }
 
-                if (configFactory.withUserConfigs { it.contacts.get(address.address)?.approved } != true) {
+                val existingContact = configFactory.withUserConfigs { it.contacts.get(address.accountId.hexString) }
+
+                if (existingContact?.approved != true || existingContact.priority == PRIORITY_HIDDEN) {
                     configFactory.withMutableUserConfigs { configs ->
                         configs.contacts.upsertContact(address) {
-                            approved = true
-                            name = name.takeIf { it.isNotBlank() } ?: recipient.displayName(attachesBlindedId = false)
-                            profilePicture = profilePicture.takeIf { it != UserPic.DEFAULT }
-                                ?: recipient.avatar?.toUserPic() ?: UserPic.DEFAULT
-                            priority = PRIORITY_VISIBLE
-                            profileUpdatedEpochSeconds = recipient.data.profileUpdatedAt?.toEpochSeconds() ?: profileUpdatedEpochSeconds
-                            createdEpochSeconds = createdEpochSeconds.takeIf { it > 0L } ?: Instant.now().toEpochSeconds()
+                            // Mark the existing contact as approve if we haven't approved them before
+                            if (existingContact?.approved != true) {
+                                approved = true
+                                name = name.takeIf { it.isNotBlank() } ?: recipient.displayName(attachesBlindedId = false)
+                                profilePicture = profilePicture.takeIf { it != UserPic.DEFAULT }
+                                    ?: recipient.avatar?.toUserPic() ?: UserPic.DEFAULT
+                                priority = PRIORITY_VISIBLE
+                                profileUpdatedEpochSeconds = recipient.data.profileUpdatedAt?.toEpochSeconds() ?: profileUpdatedEpochSeconds
+                                createdEpochSeconds = createdEpochSeconds.takeIf { it > 0L } ?: Instant.now().toEpochSeconds()
+                            }
+
+                            // If the contact was hidden, make it visible now
+                            if (priority == PRIORITY_HIDDEN) {
+                                priority = PRIORITY_VISIBLE
+                            }
                         }
                     }
                 }
