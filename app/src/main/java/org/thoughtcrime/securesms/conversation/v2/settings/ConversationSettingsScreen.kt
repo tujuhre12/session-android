@@ -143,7 +143,7 @@ fun ConversationSettings(
 
             // name and edit icon
             AnnotatedTextWithIcon(
-                modifier = Modifier
+                modifier = Modifier.qaTag(data.nameQaTag)
                     .fillMaxWidth()
                     .safeContentWidth()
                     .then(
