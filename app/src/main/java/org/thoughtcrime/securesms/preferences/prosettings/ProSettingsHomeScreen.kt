@@ -43,10 +43,15 @@ import com.squareup.phrase.Phrase
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
+import org.session.libsession.utilities.NonTranslatableStringConstants.NETWORK_NAME
+import org.session.libsession.utilities.NonTranslatableStringConstants.TOKEN_NAME_LONG
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.ICON_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.NETWORK_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.RELATIVE_TIME_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.TOKEN_NAME_LONG_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.SetShowProBadge
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowPlanUpdate
@@ -60,6 +65,8 @@ import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.SpeechBubbleTooltip
 import org.thoughtcrime.securesms.ui.SwitchActionRowItem
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
+import org.thoughtcrime.securesms.ui.components.iconExternalLink
+import org.thoughtcrime.securesms.ui.components.inlineContentMap
 import org.thoughtcrime.securesms.ui.proBadgeColorDisabled
 import org.thoughtcrime.securesms.ui.proBadgeColorStandard
 import org.thoughtcrime.securesms.ui.qaTag
@@ -339,7 +346,9 @@ fun ProSettings(
 ){
     CategoryCell(
         modifier = modifier,
-        title = ProStatusManager.TEMP_LABEL_SETTINGS,
+        title = Phrase.from(LocalContext.current, R.string.proSettings)
+            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+            .format().toString(),
     ) {
         // Cell content
         Column(
@@ -354,7 +363,11 @@ fun ProSettings(
             )
             Divider()
             SwitchActionRowItem(
-                title = annotatedStringResource(ProStatusManager.TEMP_LABEL_PRO_BADGE),
+                title = annotatedStringResource(
+                    Phrase.from(LocalContext.current, R.string.proBadge)
+                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                        .format().toString()
+                ),
                 subtitle = annotatedStringResource(
                     Phrase.from(LocalContext.current, R.string.proBadgeVisible)
                         .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
@@ -445,11 +458,11 @@ fun ProFeatures(
             ProFeatureItem(
                 title = stringResource(R.string.proFeatureListLoadsMore),
                 subtitle = annotatedStringResource(
-                    Phrase.from(LocalContext.current, R.string.plusLoadsMoreDescription)
+                    text = Phrase.from(LocalContext.current.getText(R.string.plusLoadsMoreDescription))
                         .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                        .put(ICON_KEY, iconExternalLink)
                         .format()
-                    //todo PRO add bold + icon here
                 ),
                 icon = R.drawable.ic_circle_plus,
                 iconGradientStart = primaryOrange,
@@ -519,7 +532,11 @@ private fun ProFeatureItem(
             Text(
                 text = subtitle,
                 style = LocalType.current.small,
-                color = LocalColors.current.textSecondary
+                color = LocalColors.current.textSecondary,
+                inlineContent = inlineContentMap(
+                    textSize = LocalType.current.small.fontSize,
+                    imageColor = LocalColors.current.text
+                ),
             )
         }
     }
@@ -533,7 +550,9 @@ fun ProManage(
 ){
     CategoryCell(
         modifier = modifier,
-        title = ProStatusManager.TEMP_LABEL_MANAGE,
+        title = Phrase.from(LocalContext.current, R.string.managePro)
+            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+            .format().toString(),
     ) {
         // Cell content
         Column(

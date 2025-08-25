@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.preferences.prosettings
 
 import android.content.Context
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.squareup.phrase.Phrase
@@ -13,6 +14,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
+import org.session.libsession.utilities.NonTranslatableStringConstants
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.CURRENT_PLAN_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.RELATIVE_TIME_KEY
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.UINavigator
@@ -60,7 +66,17 @@ class ProSettingsViewModel @Inject constructor(
 
         _proPlanUIState.update {
             ProPlanUIState(
-                title = if(planStatus is ProAccountStatus.Expired) "Upgrade" else "Update",
+                title = if(planStatus is ProAccountStatus.Expired)
+                    Phrase.from(context, R.string.proPlanRenewStart)
+                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                        .format().toString()
+                    else Phrase.from(context, R.string.proPlanActivatedAuto)
+                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                    .put(CURRENT_PLAN_KEY, "3 months") //todo PRO imeplement properly
+                    .put(DATE_KEY, "May 21st, 2025") //todo PRO imeplement properly
+                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                    .format().toString(),
                 enableButton = false,
                 plans = listOf(
                     ProPlan(

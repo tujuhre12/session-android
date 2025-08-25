@@ -46,10 +46,12 @@ fun UpdatePlanScreen(
     viewModel: ProSettingsViewModel,
     onBack: () -> Unit,
 ) {
-    val data by viewModel.proSettingsUIState.collectAsState()
+    val proData by viewModel.proSettingsUIState.collectAsState()
+    val planData by viewModel.proPlanUIState.collectAsState()
 
     UpdatePlan(
-        data = data,
+        proData = proData,
+        planData = planData,
         sendCommand = viewModel::onCommand,
         onBack = onBack,
     )
@@ -58,12 +60,13 @@ fun UpdatePlanScreen(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun UpdatePlan(
-    data: ProSettingsViewModel.ProSettingsUIState,
+    proData: ProSettingsViewModel.ProSettingsUIState,
+    planData: ProSettingsViewModel.ProPlanUIState,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ) {
     BaseProSettingsScreen(
-        data = data,
+        data = proData,
         onBack = onBack,
     ) {
         // Keeps track of the badge height dynamically so we can adjust the padding accordingly
@@ -75,7 +78,7 @@ fun UpdatePlan(
 
         Text(
             modifier = Modifier.fillMaxWidth(),
-            text = "TEMP",
+            text = planData.title,
             textAlign = TextAlign.Center,
             style = LocalType.current.base,
             color = LocalColors.current.text,
@@ -276,7 +279,11 @@ private fun PreviewUpdatePlan(
 ) {
     PreviewTheme(colors) {
         UpdatePlan(
-            data = ProSettingsViewModel.ProSettingsUIState(
+            planData = ProSettingsViewModel.ProPlanUIState(
+                title = "This is a title",
+                enableButton = true
+            ),
+            proData = ProSettingsViewModel.ProSettingsUIState(
                 proStatus = ProAccountStatus.Pro.AutoRenewing(
                     showProBadge = true,
                     infoLabel = Phrase.from(LocalContext.current, R.string.proAutoRenew)
