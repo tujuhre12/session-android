@@ -183,7 +183,6 @@
     <string name="callsSettings">通話 (Beta)</string>
     <string name="callsVoiceAndVideo">語音和視訊通話</string>
     <string name="callsVoiceAndVideoBeta">語音和視訊通話 (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">您在使用測試版通話時，您的 IP 將會被通話夥伴和 Oxen Foundation 伺服器看到。</string>
     <string name="callsVoiceAndVideoToggleDescription">啟用語音通話和視像通話功能。</string>
     <string name="callsYouCalled">您撥打給 {name}</string>
     <string name="callsYouMissedCallPermissions">您錯過了<b>{name} </b>的一個通話，因為您沒有在隱私設定中啟用<b>語音和視頻通話</b>。</string>
@@ -748,8 +747,6 @@
     <string name="openSurvey">開啟問卷</string>
     <string name="other">其他</string>
     <string name="passwordChange">變更密碼</string>
-    <string name="passwordChangeDescription">更改解鎖 {app_name} 所需的密碼。</string>
-    <string name="passwordChangedDescription">您的密碼變更完成。請注意保管。</string>
     <string name="passwordConfirm">確認密碼</string>
     <string name="passwordCurrentIncorrect">您目前的密碼不正確。</string>
     <string name="passwordEnter">輸入密碼</string>
@@ -761,7 +758,6 @@
     <string name="passwordFailed">設定密碼失敗</string>
     <string name="passwordIncorrect">密碼錯誤</string>
     <string name="passwordRemove">移除密碼</string>
-    <string name="passwordRemovedDescription">已移除密碼。</string>
     <string name="passwordSet">設定密碼</string>
     <string name="paste">貼上</string>
     <string name="permissionChange">權限變更</string>
