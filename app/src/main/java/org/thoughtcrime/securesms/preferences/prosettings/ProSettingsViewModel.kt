@@ -27,8 +27,8 @@ class ProSettingsViewModel @Inject constructor(
     private val proStatusManager: ProStatusManager,
 ) : ViewModel() {
 
-    private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(
-        UIState(
+    private val _proSettingsUIState: MutableStateFlow<ProSettingsUIState> = MutableStateFlow(
+        ProSettingsUIState(
             //todo PRO need to properly calculate this
             proStatus = if(proStatusManager.isCurrentUserPro())
 //                ProAccountStatus.Expired
@@ -41,10 +41,40 @@ class ProSettingsViewModel @Inject constructor(
             else ProAccountStatus.None
         )
     )
-    val uiState: StateFlow<UIState> = _uiState
+    val proSettingsUIState: StateFlow<ProSettingsUIState> = _proSettingsUIState
 
     private val _dialogState: MutableStateFlow<DialogsState> = MutableStateFlow(DialogsState())
     val dialogState: StateFlow<DialogsState> = _dialogState
+
+    private val _proPlanUIState: MutableStateFlow<ProPlanUIState> = MutableStateFlow(
+        //todo PRO need to properly calculate this
+        ProPlanUIState(
+            enableButton = false,
+            plans = listOf(
+                ProPlan(
+                    title = "Plan 1",
+                    subtitle = "Subtitle",
+                    selected = true,
+                    currentPlan = true,
+                    badges = listOf(
+                        ProPlanBadge("Current Plan"),
+                        ProPlanBadge("20% Off", "This is a tooltip"),
+                    ),
+                ),
+                ProPlan(
+                    title = "Plan 2",
+                    subtitle = "Subtitle",
+                    selected = false,
+                    currentPlan = false,
+                    badges = listOf(
+                        ProPlanBadge("Current Plan"),
+                        ProPlanBadge("20% Off", "This is a tooltip"),
+                    ),
+                ),
+            )
+        )
+    )
+    val proPlanUIState: StateFlow<ProPlanUIState> = _proPlanUIState
 
     init {
 
@@ -82,7 +112,7 @@ class ProSettingsViewModel @Inject constructor(
         data class SetShowProBadge(val show: Boolean): Commands
     }
 
-    data class UIState(
+    data class ProSettingsUIState(
         val proStatus: ProAccountStatus,
         val proStats: ProStats = ProStats()
     )
@@ -115,8 +145,22 @@ class ProSettingsViewModel @Inject constructor(
         data object Expired: ProAccountStatus
     }
 
-    data class ProSettings(
-        val showProBadge: Boolean = false
+    data class ProPlanUIState(
+        val plans: List<ProPlan> = emptyList(),
+        val enableButton: Boolean
+    )
+
+    data class ProPlan(
+        val title: String,
+        val subtitle: String,
+        val currentPlan: Boolean,
+        val selected: Boolean,
+        val badges: List<ProPlanBadge>
+    )
+
+    data class ProPlanBadge(
+        val title: String,
+        val tooltip: String? = null
     )
 
     data class DialogsState(

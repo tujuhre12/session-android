@@ -76,7 +76,7 @@ fun ProSettingsHomeScreen(
     viewModel: ProSettingsViewModel,
     onBack: () -> Unit,
 ) {
-    val data by viewModel.uiState.collectAsState()
+    val data by viewModel.proSettingsUIState.collectAsState()
 
     ProSettingsHome(
         data = data,
@@ -88,7 +88,7 @@ fun ProSettingsHomeScreen(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun ProSettingsHome(
-    data: ProSettingsViewModel.UIState,
+    data: ProSettingsViewModel.ProSettingsUIState,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ) {
@@ -560,7 +560,7 @@ fun PreviewProSettingsPro(
 ) {
     PreviewTheme(colors) {
         ProSettingsHome(
-            data = ProSettingsViewModel.UIState(
+            data = ProSettingsViewModel.ProSettingsUIState(
                 proStatus = ProAccountStatus.Pro.AutoRenewing(
                     showProBadge = true,
                     infoLabel = Phrase.from(LocalContext.current, R.string.proAutoRenew)
@@ -582,7 +582,7 @@ fun PreviewProSettingsNonPro(
 ) {
     PreviewTheme(colors) {
         ProSettingsHome(
-            data = ProSettingsViewModel.UIState(
+            data = ProSettingsViewModel.ProSettingsUIState(
                 proStatus = ProAccountStatus.None,
             ),
             sendCommand = {},

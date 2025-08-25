@@ -46,7 +46,7 @@ fun UpdatePlanScreen(
     viewModel: ProSettingsViewModel,
     onBack: () -> Unit,
 ) {
-    val data by viewModel.uiState.collectAsState()
+    val data by viewModel.proSettingsUIState.collectAsState()
 
     UpdatePlan(
         data = data,
@@ -58,7 +58,7 @@ fun UpdatePlanScreen(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun UpdatePlan(
-    data: ProSettingsViewModel.UIState,
+    data: ProSettingsViewModel.ProSettingsUIState,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ) {
@@ -86,14 +86,14 @@ fun UpdatePlan(
 
         // SUBSCRIPTIONS
         // 12 months
-        PlanItem(
+        /*PlanItem(
             title = "",
             subtitle = "",
             selected = true,
             currentPlan = true,
             badgePadding = badgeHeight,
             onBadgeLaidOut = { badgeHeight = maxOf(it, badgeHeight) }
-        )
+        )*/
 
         Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
 
@@ -108,13 +108,9 @@ fun UpdatePlan(
 
 @Composable
 private fun PlanItem(
-    title: String,
-    subtitle: String,
-    selected: Boolean,
-    currentPlan: Boolean,
+    proPlan: ProSettingsViewModel.ProPlan,
     badgePadding: Dp,
     modifier: Modifier= Modifier,
-    discount: String? = null,
     onBadgeLaidOut: (Dp) -> Unit
 ){
     val density = LocalDensity.current
@@ -130,7 +126,7 @@ private fun PlanItem(
                 )
                 .border(
                     width = 1.dp,
-                    color = if(currentPlan) LocalColors.current.accent else LocalColors.current.borders,
+                    color = if(proPlan.selected) LocalColors.current.accent else LocalColors.current.borders,
                     shape = MaterialTheme.shapes.small
                 )
                 .clip(MaterialTheme.shapes.small)
@@ -145,18 +141,18 @@ private fun PlanItem(
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(
-                        text = title,
+                        text = proPlan.title,
                         style = LocalType.current.h7,
                     )
 
                     Text(
-                        text = subtitle,
+                        text = proPlan.subtitle,
                         style = LocalType.current.small.copy(color = LocalColors.current.textSecondary),
                     )
                 }
 
                 RadioButtonIndicator(
-                    selected = selected,
+                    selected = proPlan.selected,
                     enabled = true,
                     colors = radioButtonColors(
                         unselectedBorder = LocalColors.current.borders,
@@ -175,19 +171,10 @@ private fun PlanItem(
                 },
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Discount badge
-            discount?.let {
+            proPlan.badges.forEach {
                 PlanBadge(
                     modifier = Modifier.weight(1f, fill = false),
-                    text = it,
-                )
-            }
-
-            // Current plan badge
-            if (currentPlan) {
-                PlanBadge(
-                    modifier = Modifier.weight(1f, fill = false),
-                    text = "Current Plan",
+                    badge = it
                 )
             }
         }
@@ -197,7 +184,7 @@ private fun PlanItem(
 
 @Composable
 private fun PlanBadge(
-    text: String,
+    badge: ProSettingsViewModel.ProPlanBadge,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -210,7 +197,7 @@ private fun PlanBadge(
                 horizontal = 6.dp,
                 vertical = 2.dp
             ),
-            text = text,
+            text = badge.title,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             style = LocalType.current.small.bold().copy(
@@ -232,31 +219,49 @@ private fun PreviewUpdatePlanItems(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             PlanItem(
-                title = "Plan 1",
-                subtitle = "Subtitle",
-                selected = true,
-                currentPlan = true,
-                discount = "20% Off",
+                proPlan = ProSettingsViewModel.ProPlan(
+                    title = "Plan 1",
+                    subtitle = "Subtitle",
+                    selected = true,
+                    currentPlan = true,
+                    badges = listOf(
+                        ProSettingsViewModel.ProPlanBadge("Current Plan"),
+                        ProSettingsViewModel.ProPlanBadge("20% Off", "This is a tooltip"),
+                    ),
+                ),
                 badgePadding = 0.dp,
                 onBadgeLaidOut = {}
             )
 
             PlanItem(
-                title = "Plan 2",
-                subtitle = "Subtitle",
-                selected = false,
-                currentPlan = false,
-                discount = "20% Off",
+                proPlan = ProSettingsViewModel.ProPlan(
+                    title = "Plan 2",
+                    subtitle = "Subtitle",
+                    selected = false,
+                    currentPlan = false,
+                    badges = listOf(
+                        ProSettingsViewModel.ProPlanBadge("Current Plan"),
+                        ProSettingsViewModel.ProPlanBadge("20% Off", "This is a tooltip"),
+                    ),
+                ),
                 badgePadding = 0.dp,
                 onBadgeLaidOut = {}
             )
 
             PlanItem(
-                title = "Plan 1 with a very long title boo foo bar hello there",
-                subtitle = "Subtitle that is also very long and is allowed to go onto another line",
-                selected = true,
-                currentPlan = true,
-                discount = "20% Off but that is very long so we can test how this renders to be safe",
+                proPlan = ProSettingsViewModel.ProPlan(
+                    title = "Plan 1 with a very long title boo foo bar hello there",
+                    subtitle = "Subtitle that is also very long and is allowed to go onto another line",
+                    selected = true,
+                    currentPlan = true,
+                    badges = listOf(
+                        ProSettingsViewModel.ProPlanBadge("Current Plan"),
+                        ProSettingsViewModel.ProPlanBadge(
+                            "20% Off but that is very long so we can test how this renders to be safe",
+                            "This is a tooltip"
+                        ),
+                    ),
+                ),
                 badgePadding = 0.dp,
                 onBadgeLaidOut = {}
             )
@@ -271,7 +276,7 @@ private fun PreviewUpdatePlan(
 ) {
     PreviewTheme(colors) {
         UpdatePlan(
-            data = ProSettingsViewModel.UIState(
+            data = ProSettingsViewModel.ProSettingsUIState(
                 proStatus = ProAccountStatus.Pro.AutoRenewing(
                     showProBadge = true,
                     infoLabel = Phrase.from(LocalContext.current, R.string.proAutoRenew)

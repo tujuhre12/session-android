@@ -49,7 +49,7 @@ import org.thoughtcrime.securesms.ui.theme.ThemeColors
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BaseProSettingsScreen(
-    data: ProSettingsViewModel.UIState,
+    data: ProSettingsViewModel.ProSettingsUIState,
     onBack: () -> Unit,
     content: @Composable () -> Unit
 ){
@@ -92,7 +92,7 @@ fun BaseProSettingsScreen(
  */
 @Composable
 fun BaseCellButtonProSettingsScreen(
-    data: ProSettingsViewModel.UIState,
+    data: ProSettingsViewModel.ProSettingsUIState,
     onBack: () -> Unit,
     buttonText: String,
     dangerButton: Boolean,
@@ -148,7 +148,7 @@ private fun PreviewBaseCellButton(
 ) {
     PreviewTheme(colors) {
         BaseCellButtonProSettingsScreen(
-            data = ProSettingsViewModel.UIState(
+            data = ProSettingsViewModel.ProSettingsUIState(
                 proStatus = ProAccountStatus.Pro.AutoRenewing(
                     showProBadge = true,
                     infoLabel = Phrase.from(LocalContext.current, R.string.proAutoRenew)
