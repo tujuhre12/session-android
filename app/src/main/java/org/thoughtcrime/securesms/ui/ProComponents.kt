@@ -73,6 +73,7 @@ import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.FillButtonRect
 import org.thoughtcrime.securesms.ui.components.QrImage
+import org.thoughtcrime.securesms.ui.components.TertiaryFillButtonRect
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -274,10 +275,9 @@ fun SessionProCTA(
                                 onClick = onUpgrade
                             )
 
-                            FillButtonRect(
+                            TertiaryFillButtonRect(
                                 modifier = Modifier.weight(1f),
                                 text = stringResource(R.string.cancel),
-                                color = LocalColors.current.backgroundTertiary,
                                 onClick = onCancel
                             )
                         }
@@ -442,10 +442,9 @@ private fun SessionProActivatedCTA(
                         Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
 
                         // buttons
-                        FillButtonRect(
+                        TertiaryFillButtonRect(
                             modifier = Modifier.align(Alignment.CenterHorizontally),
                             text = stringResource(R.string.close),
-                            color = LocalColors.current.backgroundTertiary,
                             onClick = onCancel
                         )
                     }

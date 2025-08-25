@@ -68,6 +68,18 @@ interface ButtonType {
         )
     }
 
+    object TertiaryFill: ButtonType {
+        @Composable
+        override fun border(enabled: Boolean) = if (enabled) null else disabledBorder
+        @Composable
+        override fun buttonColors() = ButtonDefaults.buttonColors(
+            contentColor = LocalColors.current.text,
+            containerColor = LocalColors.current.backgroundTertiary,
+            disabledContentColor = LocalColors.current.disabled,
+            disabledContainerColor = Color.Transparent
+        )
+    }
+
     object DangerFill: ButtonType {
         @Composable
         override fun border(enabled: Boolean) = if (enabled) null else disabledBorder

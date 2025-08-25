@@ -127,6 +127,10 @@ fun Button(
     Button(text, onClick, ButtonType.AccentFill, modifier, enabled, shape = sessionShapes().extraSmall)
 }
 
+@Composable fun TertiaryFillButtonRect(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
+    Button(text, onClick, ButtonType.TertiaryFill, modifier, enabled, shape = sessionShapes().extraSmall)}
+
+
 @Composable fun DangerFillButtonRect(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
     Button(text, onClick, ButtonType.DangerFill, modifier, enabled, shape = sessionShapes().extraSmall)
 }
@@ -351,7 +355,7 @@ private fun VariousButtons(
             BorderlessButton("Borderless Secondary", color = LocalColors.current.textSecondary) {}
             FillButtonRect("Fill Rect") {}
             FillButtonRect("Fill Rect Disabled", enabled = false) {}
-            FillButtonRect("Tertiary Fill Rect", color = LocalColors.current.backgroundTertiary) {}
+            TertiaryFillButtonRect("Tertiary Fill Rect") {}
             DangerFillButtonRect ("Danger Fill Rect") {}
             AccentFillButtonRect("Accent Fill Rect") {}
             AccentFillButtonRect("Accent Fill Rect Disabled", enabled = false) {}
