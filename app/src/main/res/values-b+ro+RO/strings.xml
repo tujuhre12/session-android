@@ -849,7 +849,6 @@
     <string name="proAnimatedDisplayPictureFeature">Poză de profil animată</string>
     <string name="proAnimatedDisplayPictureModalDescription">utilizatorii pot încărca GIF-uri</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Încarcă GIF-uri cu</string>
-    <string name="proBadge">Insigna {app_pro}</string>
     <string name="proCallToActionLongerMessages">Vrei să trimiți mesaje mai lungi? Trimite mai mult text și deblochează funcții premium cu {app_pro}</string>
     <string name="proCallToActionPinnedConversations">Vrei mai multe fixări? Organizează-ți conversațiile și deblochează funcționalități premium cu {app_pro}</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Vrei mai mult de 5 fixări? Organizează-ți conversațiile și deblochează funcționalități premium cu {app_pro}</string>

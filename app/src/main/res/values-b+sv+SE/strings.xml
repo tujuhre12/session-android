@@ -827,7 +827,6 @@
     <string name="proAnimatedDisplayPictureFeature">Animerad visningsbild</string>
     <string name="proAnimatedDisplayPictureModalDescription">användare kan ladda upp GIF:ar</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Ladda upp GIF:ar med</string>
-    <string name="proBadge">{app_pro}-märke</string>
     <string name="proCallToActionLongerMessages">Vill du skicka längre meddelanden? Skicka mer text och lås upp premiumfunktioner med {app_pro}</string>
     <string name="proCallToActionPinnedConversations">Vill du ha fler fästen? Organisera dina chattar och lås upp premiumfunktioner med {app_pro}</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Vill du ha mer än 5 fästisar? Organisera dina chattar och lås upp premiumfunktioner med {app_pro}</string>
