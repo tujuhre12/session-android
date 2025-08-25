@@ -69,6 +69,7 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.MediaPreviewActivity
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -403,7 +404,7 @@ fun MessageProFeatures(
                 data = CTAFeature.Icon(
                     text = when(it){
                         ProStatusManager.MessageProFeature.ProBadge -> Phrase.from(LocalContext.current, R.string.proBadge)
-                            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                             .format()
                             .toString()
                         ProStatusManager.MessageProFeature.LongMessage -> stringResource(id = R.string.proIncreasedMessageLengthFeature)
