@@ -48,4 +48,5 @@ object StringSubstitutionConstants {
     const val LIMIT_KEY: StringSubKey                      = "limit"
     const val STORE_VARIANT_KEY: StringSubKey              = "storevariant"
     const val APP_PRO_KEY: StringSubKey                    = "app_pro"
+    const val PRO_KEY: StringSubKey                        = "pro"
 }
