@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.conversation.v2
 
 import android.app.Application
 import android.content.ContentResolver
+import androidx.test.platform.app.InstrumentationRegistry
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
@@ -12,6 +13,7 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
 import org.mockito.Mockito
 import org.mockito.Mockito.anyLong
 import org.mockito.Mockito.verify
@@ -21,7 +23,9 @@ import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import org.robolectric.RobolectricTestRunner
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
+import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.recipients.ProStatus
@@ -40,6 +44,7 @@ private val STANDARD_ADDRESS =
     "0538e63512fd78c04d45b83ec7f0f3d593f60276ce535d1160eb589a00cca7db59".toAddress()
 
 
+@RunWith(RobolectricTestRunner::class)
 class ConversationViewModelTest : BaseViewModelTest() {
 
     @get:Rule
@@ -50,12 +55,6 @@ class ConversationViewModelTest : BaseViewModelTest() {
 
 
     private val testContentResolver = mock<ContentResolver>()
-
-    private val application = mock<Application> {
-        on { getString(any()) } doReturn ""
-        on { contentResolver } doReturn testContentResolver
-        on { getString(any()) } doReturn ""
-    }
 
     private val avatarUtils = mock<AvatarUtils> {
         onBlocking { getUIDataFromRecipient(anyOrNull()) }
@@ -80,6 +79,11 @@ class ConversationViewModelTest : BaseViewModelTest() {
         )
     )
 
+    private val communityRecipient = Recipient(
+        address = Address.Community(serverUrl = "http://url", room = "room"),
+        data = RecipientData.Generic()
+    )
+
     private val threadId = 12345L
 
     private fun createViewModel(recipient: Recipient): ConversationViewModel {
@@ -95,7 +99,7 @@ class ConversationViewModelTest : BaseViewModelTest() {
                 }
             },
             lokiMessageDb = mock(),
-            application = application,
+            application = InstrumentationRegistry.getInstrumentation().context.applicationContext as Application,
             reactionDb = mock {
                 on { changeNotification } doReturn MutableSharedFlow()
             },
@@ -173,9 +177,8 @@ class ConversationViewModelTest : BaseViewModelTest() {
     @Test
     fun `should emit error message on ban user failure`() = runBlockingTest {
         val error = Throwable()
-        val viewModel = createViewModel(recipient = standardRecipient)
+        val viewModel = createViewModel(recipient = communityRecipient)
         whenever(repository.banUser(any(), any())).thenReturn(Result.failure(error))
-        whenever(application.getString(any())).thenReturn("Ban failed")
 
         viewModel.banUser(standardRecipient.address)
 
@@ -184,9 +187,8 @@ class ConversationViewModelTest : BaseViewModelTest() {
 
     @Test
     fun `should emit a message on ban user success`() = runBlockingTest {
-        val viewModel = createViewModel(recipient = standardRecipient)
+        val viewModel = createViewModel(recipient = communityRecipient)
         whenever(repository.banUser(any(), any())).thenReturn(Result.success(Unit))
-        whenever(application.getString(any())).thenReturn("User banned")
 
         viewModel.banUser(standardRecipient.address)
 
@@ -198,10 +200,9 @@ class ConversationViewModelTest : BaseViewModelTest() {
 
     @Test
     fun `should emit error message on ban user and delete all failure`() = runBlockingTest {
-        val viewModel = createViewModel(recipient = standardRecipient)
+        val viewModel = createViewModel(recipient = communityRecipient)
         val error = Throwable()
         whenever(repository.banAndDeleteAll(any(), any())).thenReturn(Result.failure(error))
-        whenever(application.getString(any())).thenReturn("Ban failed")
 
         viewModel.banAndDeleteAll(messageRecord)
 
@@ -210,9 +211,8 @@ class ConversationViewModelTest : BaseViewModelTest() {
 
     @Test
     fun `should emit a message on ban user and delete all success`() = runBlockingTest {
-        val viewModel = createViewModel(recipient = standardRecipient)
+        val viewModel = createViewModel(recipient = communityRecipient)
         whenever(repository.banAndDeleteAll( any(), any())).thenReturn(Result.success(Unit))
-        whenever(application.getString(any())).thenReturn("User banned")
 
         viewModel.banAndDeleteAll(messageRecord)
 
@@ -224,10 +224,9 @@ class ConversationViewModelTest : BaseViewModelTest() {
 
     @Test
     fun `should remove shown message`() = runBlockingTest {
-        val viewModel = createViewModel(recipient = standardRecipient)
+        val viewModel = createViewModel(recipient = communityRecipient)
         // Given that a message is generated
         whenever(repository.banUser( any(), any())).thenReturn(Result.success(Unit))
-        whenever(application.getString(any())).thenReturn("User banned")
 
         viewModel.banUser(standardRecipient.address)
         assertThat(viewModel.uiMessages.value.size, equalTo(1))

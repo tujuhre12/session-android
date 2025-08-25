@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -36,6 +37,7 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -148,11 +150,6 @@ class ConversationViewModel @AssistedInject constructor(
     application = application,
     proStatusManager = proStatusManager
 ) {
-
-    val threadId: Long by lazy {
-        threadDb.getOrCreateThreadIdFor(address)
-    }
-
     private val edKeyPair by lazy {
         storage.getUserED25519KeyPair()
     }
@@ -162,6 +159,31 @@ class ConversationViewModel @AssistedInject constructor(
 
     private val _dialogsState = MutableStateFlow(DialogsState())
     val dialogsState: StateFlow<DialogsState> = _dialogsState
+
+    val threadIdFlow: StateFlow<Long?> =
+        threadDb.getThreadIdIfExistsFor(address).takeIf { it != -1L }
+            ?.let { MutableStateFlow(it) }
+            ?: threadDb
+                .updateNotifications
+                .map {
+                    withContext(Dispatchers.Default) {
+                        threadDb.getThreadIdIfExistsFor(address)
+                    }
+                }
+                .filter { it != -1L }
+                .take(1)
+                .stateIn(
+                    scope = viewModelScope,
+                    started = SharingStarted.Eagerly,
+                    initialValue = null
+                )
+
+    /**
+     * Current thread ID, or -1 if it doesn't exist yet.
+     *
+     */
+    @Deprecated("Use threadIdFlow instead")
+    val threadId: Long get() = threadIdFlow.value ?: -1L
 
     val recipientFlow: StateFlow<Recipient> = recipientRepository.observeRecipient(address)
         .filterNotNull()
@@ -173,7 +195,9 @@ class ConversationViewModel @AssistedInject constructor(
     // than the traditional Uri change.
     @Suppress("OPT_IN_USAGE")
     val conversationReloadNotification: SharedFlow<*> = merge(
-        threadDb.updateNotifications.filter { it == threadId },
+        threadIdFlow
+            .filterNotNull()
+            .flatMapLatest { id ->  threadDb.updateNotifications.filter { it == id } },
         recipientSettingsDatabase.changeNotification.filter { it == address },
         attachmentDatabase.changesNotification,
         reactionDb.changeNotification,
@@ -1343,7 +1367,12 @@ class ConversationViewModel @AssistedInject constructor(
                 }
             }
 
-            else -> {}
+            is Address.Community,
+            is Address.Group,
+            is Address.LegacyGroup -> {
+                // No need to create config entries as they should be created prior to
+                // being able to send messages in these conversations.
+            }
         }
     }
 

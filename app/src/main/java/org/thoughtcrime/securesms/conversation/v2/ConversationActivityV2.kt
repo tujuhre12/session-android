@@ -71,6 +71,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
@@ -2075,7 +2076,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         lifecycleScope.launch(Dispatchers.Default) {
             // Put the message in the database and send it
             message.id = MessageId(smsDb.insertMessageOutbox(
-                viewModel.threadId,
+                viewModel.threadIdFlow.filterNotNull().first(),
                 outgoingTextMessage,
                 false,
                 message.sentTimestamp!!,
@@ -2142,7 +2143,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 message.id = MessageId(
                     mmsDb.insertMessageOutbox(
                         outgoingTextMessage,
-                        viewModel.threadId,
+                        viewModel.threadIdFlow.filterNotNull().first(),
                         false,
                         runThreadUpdate = true
                     ), mms = true
