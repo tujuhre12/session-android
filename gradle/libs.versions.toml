@@ -174,6 +174,9 @@ google-play-review = { module = "com.google.android.play:review", version.ref = 
 google-play-review-ktx = { module = "com.google.android.play:review-ktx", version.ref = "googlePlayReviewVersion" }
 sqlite-web-viewer = { module = "io.github.simophin:sqlite-web-viewer", version = "0.0.3" }
 protoc = { module = "com.google.protobuf:protoc", version = "4.31.1" }
+ktor-bom = { module = "io.ktor:ktor-bom", version = "3.2.3" }
+ktor-client-core = { module = "io.ktor:ktor-client-core" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "gradlePluginVersion" }
