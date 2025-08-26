@@ -215,7 +215,7 @@ fun ConversationSettings(
                         },
                     text = data.displayAccountId,
                     textAlign = TextAlign.Center,
-                    style = LocalType.current.base.monospace(),
+                    style = LocalType.current.xl.monospace(),
                     color = LocalColors.current.text
                 )
             }
