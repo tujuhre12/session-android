@@ -49,7 +49,7 @@ import org.thoughtcrime.securesms.ui.theme.ThemeColors
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BaseProSettingsScreen(
-    data: ProSettingsViewModel.ProSettingsUIState,
+    disabled: Boolean,
     onBack: () -> Unit,
     content: @Composable () -> Unit
 ){
@@ -78,7 +78,7 @@ fun BaseProSettingsScreen(
             Spacer(Modifier.height(46.dp))
 
             SessionProSettingsHeader(
-                disabled = data.proStatus is ProAccountStatus.Expired,
+                disabled = disabled,
             )
 
             content()
@@ -92,7 +92,7 @@ fun BaseProSettingsScreen(
  */
 @Composable
 fun BaseCellButtonProSettingsScreen(
-    data: ProSettingsViewModel.ProSettingsUIState,
+    disabled: Boolean,
     onBack: () -> Unit,
     buttonText: String,
     dangerButton: Boolean,
@@ -101,7 +101,7 @@ fun BaseCellButtonProSettingsScreen(
     content: @Composable () -> Unit
 ) {
     BaseProSettingsScreen(
-        data = data,
+        disabled = disabled,
         onBack = onBack,
     ) {
         Spacer(Modifier.height(LocalDimensions.current.spacing))
@@ -148,15 +148,7 @@ private fun PreviewBaseCellButton(
 ) {
     PreviewTheme(colors) {
         BaseCellButtonProSettingsScreen(
-            data = ProSettingsViewModel.ProSettingsUIState(
-                proStatus = ProAccountStatus.Pro.AutoRenewing(
-                    showProBadge = true,
-                    infoLabel = Phrase.from(LocalContext.current, R.string.proAutoRenew)
-                        .put(RELATIVE_TIME_KEY, "15 days")
-                        .format()
-                ),
-//                proStatus = ProAccountStatus.Expired,
-            ),
+            disabled = false,
             onBack = {},
             title = "This is a title",
             buttonText = "This is a button",

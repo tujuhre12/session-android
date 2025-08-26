@@ -373,6 +373,7 @@ fun PreviewItemButton() {
 fun Cell(
     modifier: Modifier = Modifier,
     dropShadow: Boolean = false,
+    bgColor: Color = LocalColors.current.backgroundSecondary,
     content: @Composable () -> Unit
 ) {
     Box(
@@ -392,7 +393,7 @@ fun Cell(
             )
             .clip(MaterialTheme.shapes.small)
             .background(
-                color = LocalColors.current.backgroundSecondary,
+                color = bgColor,
             )
             .wrapContentHeight()
             .fillMaxWidth()

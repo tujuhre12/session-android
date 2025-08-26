@@ -50,13 +50,13 @@ class ProSettingsViewModel @Inject constructor(
 
     private fun generateState(){
         //todo PRO need to properly calculate this
-        val planStatus = //                ProAccountStatus.Expired
-            ProAccountStatus.Pro.AutoRenewing(
-                showProBadge = true,
-                infoLabel = Phrase.from(context, R.string.proAutoRenew)
-                    .put(RELATIVE_TIME_KEY, "15 days")
-                    .format()
-            )
+        val planStatus =                 ProAccountStatus.Expired
+//            ProAccountStatus.Pro.AutoRenewing(
+//                showProBadge = true,
+//                infoLabel = Phrase.from(context, R.string.proAutoRenew)
+//                    .put(RELATIVE_TIME_KEY, "15 days")
+//                    .format()
+//            )
 
         _proSettingsUIState.update {
             ProSettingsUIState(
@@ -67,20 +67,28 @@ class ProSettingsViewModel @Inject constructor(
         }
 
         _proPlanUIState.update {
-            ProPlanUIState(
-                title = if(planStatus is ProAccountStatus.Expired)
-                    Phrase.from(context.getText(R.string.proPlanRenewStart))
-                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                        .format()
-                    else Phrase.from(context.getText(R.string.proPlanActivatedAuto))
+
+            val (title, buttonLabel) = if(planStatus is ProAccountStatus.Expired)
+                Phrase.from(context.getText(R.string.proPlanRenewStart))
                     .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                    .put(CURRENT_PLAN_KEY, "3 months") //todo PRO implement properly
-                    .put(DATE_KEY, "May 21st, 2025") //todo PRO implement properly
-                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                    .format(),
-                enableButton = false,
+                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                    .format() to
+                        context.getString(R.string.renew)
+            else Phrase.from(context.getText(R.string.proPlanActivatedAuto))
+                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                .put(CURRENT_PLAN_KEY, "3 months") //todo PRO implement properly
+                .put(DATE_KEY, "May 21st, 2025") //todo PRO implement properly
+                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                .format() to
+                    context.getString(R.string.updatePlan)
+
+            ProPlanUIState(
+                title = title,
+                buttonLabel = buttonLabel,
+                enableButton = planStatus is ProAccountStatus.Expired, // expired plan always have an enabled button
                 //todo PRO calculate all plans properly
+                //todo PRO add tooltip if the user's current plan is 3 or 12 months
+                //todo PRO do not show a current plan badge when status is expired
                 plans = listOf(
                     ProPlan(
                         title = Phrase.from(context.getText(R.string.proPriceTwelveMonths))
@@ -148,7 +156,8 @@ class ProSettingsViewModel @Inject constructor(
                         plans = data.plans.map {
                             it.copy(selected = it == command.plan)
                         },
-                        enableButton = !command.plan.currentPlan
+                        enableButton = _proSettingsUIState.value.proStatus is ProAccountStatus.Expired
+                                || !command.plan.currentPlan
                     )
                 }
             }
@@ -221,6 +230,7 @@ class ProSettingsViewModel @Inject constructor(
         val plans: List<ProPlan> = emptyList(),
         val enableButton: Boolean = false,
         val title: CharSequence = "",
+        val buttonLabel: String = "",
     )
 
     data class ProPlan(

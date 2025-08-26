@@ -31,6 +31,7 @@ import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.ICON_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.MONTHLY_PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.RELATIVE_TIME_KEY
@@ -41,6 +42,7 @@ import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.C
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.RadioButtonIndicator
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
+import org.thoughtcrime.securesms.ui.components.iconExternalLink
 import org.thoughtcrime.securesms.ui.components.inlineContentMap
 import org.thoughtcrime.securesms.ui.components.radioButtonColors
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -58,11 +60,9 @@ fun UpdatePlanScreen(
     viewModel: ProSettingsViewModel,
     onBack: () -> Unit,
 ) {
-    val proData by viewModel.proSettingsUIState.collectAsState()
     val planData by viewModel.proPlanUIState.collectAsState()
 
     UpdatePlan(
-        proData = proData,
         planData = planData,
         sendCommand = viewModel::onCommand,
         onBack = onBack,
@@ -72,13 +72,12 @@ fun UpdatePlanScreen(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun UpdatePlan(
-    proData: ProSettingsViewModel.ProSettingsUIState,
     planData: ProSettingsViewModel.ProPlanUIState,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ) {
     BaseProSettingsScreen(
-        data = proData,
+        disabled = false,
         onBack = onBack,
     ) {
         // Keeps track of the badge height dynamically so we can adjust the padding accordingly
@@ -121,19 +120,30 @@ fun UpdatePlan(
         AccentFillButtonRect(
             modifier = Modifier.fillMaxWidth()
                 .widthIn(max = LocalDimensions.current.maxContentWidth),
-            text = stringResource(R.string.updatePlan),
+            text = planData.buttonLabel,
             enabled = planData.enableButton,
             onClick = {}
         )
 
-        Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
+        Spacer(Modifier.height(LocalDimensions.current.xxsSpacing))
 
         Text(
             modifier = Modifier.fillMaxWidth()
-                .padding(horizontal = LocalDimensions.current.spacing),
+                .clickable(
+                    onClick = {
+                        sendCommand(ShowTCPolicyDialog)
+                    }
+                )
+                .padding(
+                    horizontal = LocalDimensions.current.spacing,
+                    vertical = LocalDimensions.current.xxsSpacing
+                )
+                .clip(MaterialTheme.shapes.extraSmall),
             text = annotatedStringResource(
                 Phrase.from(LocalContext.current.getText(R.string.proTosPrivacy))
                     .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                    .put(ICON_KEY, iconExternalLink)
+                    .put(ICON_KEY, iconExternalLink)
                     .format()
             ),
             textAlign = TextAlign.Center,
@@ -370,15 +380,6 @@ private fun PreviewUpdatePlan(
                         badges = emptyList(),
                     ),
                 )
-            ),
-            proData = ProSettingsViewModel.ProSettingsUIState(
-                proStatus = ProAccountStatus.Pro.AutoRenewing(
-                    showProBadge = true,
-                    infoLabel = Phrase.from(LocalContext.current, R.string.proAutoRenew)
-                        .put(RELATIVE_TIME_KEY, "15 days")
-                        .format()
-                ),
-//                proStatus = ProAccountStatus.Expired,
             ),
             sendCommand = {},
             onBack = {},

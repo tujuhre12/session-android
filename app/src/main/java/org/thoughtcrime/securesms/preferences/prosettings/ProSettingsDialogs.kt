@@ -1,7 +1,10 @@
 package org.thoughtcrime.securesms.preferences.prosettings
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -16,12 +19,15 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
+import org.thoughtcrime.securesms.openUrl
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.*
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.Cell
+import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.IconActionRowItem
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
+import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
@@ -44,6 +50,12 @@ fun ProSettingsDialogs(
             }
         )
     }
+
+    if(dialogsState.showTCPolicyDialog){
+        TCPolicyDialog(
+            sendCommand = sendCommand
+        )
+    }
 }
 
 @Composable
@@ -55,20 +67,39 @@ fun TCPolicyDialog(
         title = stringResource(R.string.urlOpen),
         text = stringResource(R.string.urlOpenBrowser),
         content = {
-            Cell {
+            Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
+            Cell(
+              bgColor = LocalColors.current.backgroundTertiary
+            ) {
                 Column(
-                    modifier = Modifier.fillMaxWidth()
-                        .padding(10.dp),
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
+                    val context = LocalContext.current
+                    val spacing = LocalDimensions.current.xsSpacing
+
                     val tcsUrl = "https://getsession.org/pro/terms"
                     IconActionRowItem(
                         title = annotatedStringResource(tcsUrl),
                         textStyle = LocalType.current.large.bold(),
                         icon = R.drawable.ic_square_arrow_up_right,
                         iconSize = LocalDimensions.current.iconSmall,
+                        paddingValues = PaddingValues(start = spacing),
                         qaTag = R.string.AccessibilityId_onboardingTos,
                         onClick = {
-                            sendCommand(ShowOpenUrlDialog(tcsUrl))
+                            context.openUrl(tcsUrl)
+                        }
+                    )
+                    Divider(paddingValues = PaddingValues(horizontal = spacing))
+                    val privacyUrl = "https://getsession.org/pro/privacy"
+                    IconActionRowItem(
+                        title = annotatedStringResource(privacyUrl),
+                        textStyle = LocalType.current.large.bold(),
+                        icon = R.drawable.ic_square_arrow_up_right,
+                        iconSize = LocalDimensions.current.iconSmall,
+                        paddingValues = PaddingValues(start = spacing),
+                        qaTag = R.string.AccessibilityId_onboardingPrivacy,
+                        onClick = {
+                            context.openUrl(privacyUrl)
                         }
                     )
                 }

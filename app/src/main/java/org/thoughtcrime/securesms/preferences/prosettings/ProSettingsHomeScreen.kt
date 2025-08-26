@@ -109,7 +109,7 @@ fun ProSettingsHome(
     onBack: () -> Unit,
 ) {
     BaseProSettingsScreen(
-        data = data,
+        disabled = data.proStatus is ProAccountStatus.Expired,
         onBack = onBack,
     ) {
         // Pro Stats
@@ -132,7 +132,7 @@ fun ProSettingsHome(
 
         // Manage Pro - Expired
         if(data.proStatus is ProAccountStatus.Expired){
-            Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
+            Spacer(Modifier.height(LocalDimensions.current.spacing))
             ProManage(
                 data = data.proStatus,
                 sendCommand = sendCommand,
@@ -608,7 +608,7 @@ fun ProManage(
                         iconColor = LocalColors.current.accentText,
                         qaTag = R.string.qa_pro_settings_action_cancel_plan,
                         onClick = {
-                            //todo PRO implement
+                            sendCommand(ShowPlanUpdate)
                         }
                     )
                     Divider()
