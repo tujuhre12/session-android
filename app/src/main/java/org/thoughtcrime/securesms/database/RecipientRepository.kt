@@ -280,7 +280,7 @@ class RecipientRepository @Inject constructor(
                         changeSource = merge(
                             configFactory.configUpdateNotifications.filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
                                 .filter { it.groupId == address.accountId },
-                            configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_GROUPS)),
+                            configFactory.userConfigsChanged(),
                             recipientSettingsDatabase.changeNotification.filter { it == address }
                         )
                     }
