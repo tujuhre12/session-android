@@ -14,6 +14,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
@@ -121,6 +122,7 @@ import java.time.ZonedDateTime
 import java.util.EnumSet
 import java.util.UUID
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel(assistedFactory = ConversationViewModel.Factory::class)
 class ConversationViewModel @AssistedInject constructor(
     @Assisted val address: Address.Conversable,
@@ -411,7 +413,9 @@ class ConversationViewModel @AssistedInject constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
 
     val lastSeenMessageId: Flow<MessageId?>
-        get() = repository.getLastSentMessageID(threadId)
+        get() = threadIdFlow.flatMapLatest { id ->
+            repository.getLastSentMessageID(id ?: return@flatMapLatest flowOf(null))
+        }
 
     private fun getInputBarState(
         recipient: Recipient,
