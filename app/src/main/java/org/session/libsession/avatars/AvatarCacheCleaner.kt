@@ -43,8 +43,8 @@ class AvatarCacheCleaner @Inject constructor(
         val dir = File(application.cacheDir, "remote_files")
         val files = dir.listFiles().orEmpty()
         var deleted = 0
-        for (f in files) {
-            if (f !in wantedFiles && f.delete()) deleted++
+        for (file in files) {
+            if (file !in wantedFiles && file.delete()) deleted++
         }
 
         // 4) Clear Glide cache. Might need this now but we should remove after we fully migrate to Coil
