@@ -243,6 +243,29 @@ fun DebugMenu(
                     }
                 )
 
+                AnimatedVisibility(uiState.forceCurrentUserAsPro) {
+                    Column {
+                        Text(
+                            modifier = Modifier.padding(top = LocalDimensions.current.xxsSpacing),
+                            text = "Debug Subscription Status",
+                            style = LocalType.current.base
+                        )
+                        DropDown(
+                            modifier = Modifier.fillMaxWidth()
+                                .padding(top = LocalDimensions.current.xxsSpacing),
+                            selectedText = uiState.selectedDebugSubscriptionStatus.label,
+                            values = uiState.debugSubscriptionStatuses.map { it.label },
+                            onValueSelected = { selection ->
+                                sendCommand(
+                                    DebugMenuViewModel.Commands.SetDebugSubscriptionStatus(
+                                        uiState.debugSubscriptionStatuses.first { it.label == selection }
+                                    )
+                                )
+                            }
+                        )
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
                 DebugSwitchRow(
                     text = "Set all incoming messages as Pro",
@@ -704,13 +727,15 @@ fun PreviewDebugMenu() {
                 deprecatedTime = ZonedDateTime.now(),
                 availableDeprecationState = emptyList(),
                 deprecatingStartTime = ZonedDateTime.now(),
-                forceCurrentUserAsPro = false,
+                forceCurrentUserAsPro = true,
                 forceIncomingMessagesAsPro = true,
                 forceOtherUsersAsPro = false,
                 forcePostPro = false,
                 forceShortTTl = false,
                 messageProFeature = setOf(ProStatusManager.MessageProFeature.AnimatedAvatar),
                 dbInspectorState = DebugMenuViewModel.DatabaseInspectorState.STARTED,
+                debugSubscriptionStatuses = setOf(DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE),
+                selectedDebugSubscriptionStatus = DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE
             ),
             sendCommand = {},
             onClose = {}

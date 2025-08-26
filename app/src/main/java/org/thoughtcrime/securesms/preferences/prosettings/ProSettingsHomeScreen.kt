@@ -43,24 +43,19 @@ import com.squareup.phrase.Phrase
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
-import org.session.libsession.utilities.NonTranslatableStringConstants.NETWORK_NAME
-import org.session.libsession.utilities.NonTranslatableStringConstants.TOKEN_NAME_LONG
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.ICON_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.NETWORK_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.RELATIVE_TIME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.TOKEN_NAME_LONG_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.SetShowProBadge
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowPlanUpdate
 import org.thoughtcrime.securesms.pro.ProAccountStatus
-import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.ui.CategoryCell
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.IconActionRowItem
-import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.SpeechBubbleTooltip
 import org.thoughtcrime.securesms.ui.SwitchActionRowItem
@@ -84,6 +79,9 @@ import org.thoughtcrime.securesms.ui.theme.primaryPurple
 import org.thoughtcrime.securesms.ui.theme.primaryRed
 import org.thoughtcrime.securesms.ui.theme.primaryYellow
 import org.thoughtcrime.securesms.util.NumberUtil
+import java.time.Duration
+import java.time.Instant
+import kotlin.math.exp
 
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -126,6 +124,7 @@ fun ProSettingsHome(
             Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
             ProSettings(
                 data = data.proStatus,
+                expiry = data.proExpiryLabel,
                 sendCommand = sendCommand,
             )
         }
@@ -342,6 +341,7 @@ fun ProStatItem(
 fun ProSettings(
     modifier: Modifier = Modifier,
     data: ProAccountStatus.Pro,
+    expiry: CharSequence,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
 ){
     CategoryCell(
@@ -354,9 +354,11 @@ fun ProSettings(
         Column(
             modifier = Modifier.fillMaxWidth(),
         ) {
+            val context = LocalContext .current
+
             IconActionRowItem(
                 title = annotatedStringResource(R.string.updatePlan),
-                subtitle = annotatedStringResource(data.infoLabel),
+                subtitle = annotatedStringResource(expiry),
                 icon = R.drawable.ic_chevron_right,
                 qaTag = R.string.qa_pro_settings_action_update_plan,
                 onClick = { sendCommand(ShowPlanUpdate) }
@@ -642,9 +644,8 @@ fun PreviewProSettingsPro(
             data = ProSettingsViewModel.ProSettingsUIState(
                 proStatus = ProAccountStatus.Pro.AutoRenewing(
                     showProBadge = true,
-                    infoLabel = Phrase.from(LocalContext.current, R.string.proAutoRenew)
-                        .put(RELATIVE_TIME_KEY, "15 days")
-                        .format()
+                    validUntil = Instant.now() + Duration.ofDays(14),
+                    type = ProSubscriptionDuration.THREE_MONTHS
                 ),
             ),
             sendCommand = {},

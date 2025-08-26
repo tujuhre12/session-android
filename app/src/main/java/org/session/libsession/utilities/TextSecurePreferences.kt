@@ -51,6 +51,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CA
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CALL_WARNING
 import org.session.libsession.utilities.TextSecurePreferences.Companion._events
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import java.io.IOException
 import java.time.ZonedDateTime
@@ -228,6 +229,9 @@ interface TextSecurePreferences {
     fun  getDebugMessageFeatures(): Set<ProStatusManager.MessageProFeature>
     fun  setDebugMessageFeatures(features: Set<ProStatusManager.MessageProFeature>)
 
+    fun getDebugSubscriptionStatus(): DebugMenuViewModel.DebugSubscriptionStatus?
+    fun setDebugSubscriptionStatus(status: DebugMenuViewModel.DebugSubscriptionStatus?)
+
     fun setSubscriptionProvider(provider: String)
     fun getSubscriptionProvider(): String?
 
@@ -390,6 +394,7 @@ interface TextSecurePreferences {
         const val IN_APP_REVIEW_STATE = "in_app_review_state"
 
         const val DEBUG_MESSAGE_FEATURES = "debug_message_features"
+        const val DEBUG_SUBSCRIPTION_STATUS = "debug_subscription_status"
 
         const val SUBSCRIPTION_PROVIDER = "session_subscription_provider"
 
@@ -1876,6 +1881,16 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setDebugMessageFeatures(features: Set<ProStatusManager.MessageProFeature>) {
         setStringSetPreference(TextSecurePreferences.DEBUG_MESSAGE_FEATURES, features.map { it.name }.toSet())
+    }
+
+    override fun getDebugSubscriptionStatus(): DebugMenuViewModel.DebugSubscriptionStatus? {
+        return getStringPreference(TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS, null)?.let {
+            DebugMenuViewModel.DebugSubscriptionStatus.valueOf(it)
+        }
+    }
+
+    override fun setDebugSubscriptionStatus(status: DebugMenuViewModel.DebugSubscriptionStatus?) {
+        setStringPreference(TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS, status?.name)
     }
 
     override fun getSubscriptionProvider(): String? {

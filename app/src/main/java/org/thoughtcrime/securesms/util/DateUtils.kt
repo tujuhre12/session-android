@@ -2,9 +2,13 @@ package org.thoughtcrime.securesms.util
 
 import android.content.Context
 import android.text.format.DateFormat
-import  android.text.format.DateUtils as AndroidxDateUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
-import java.text.SimpleDateFormat
+import network.loki.messenger.R
+import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.TextSecurePreferences.Companion.DATE_FORMAT_PREF
+import org.session.libsession.utilities.TextSecurePreferences.Companion.TIME_FORMAT_PREF
+import org.session.libsignal.utilities.Log
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -14,11 +18,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
-import network.loki.messenger.R
-import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.TextSecurePreferences.Companion.DATE_FORMAT_PREF
-import org.session.libsession.utilities.TextSecurePreferences.Companion.TIME_FORMAT_PREF
-import org.session.libsignal.utilities.Log
+import android.text.format.DateUtils as AndroidxDateUtils
 
 enum class RelativeDay { TODAY, YESTERDAY, TOMORROW }
 
@@ -200,6 +200,27 @@ class DateUtils @Inject constructor(
                 date1.month == date2.month &&
                 date1.dayOfMonth == date2.dayOfMonth &&
                 date1.hour == date2.hour
+    }
+
+    fun getExpiryString(instant: Instant?): String {
+        val now = Instant.now()
+        val timeRemaining = Duration.between(now, instant)
+
+        // Instant has passed
+        if (timeRemaining.isNegative || timeRemaining.isZero) {
+            return context.getString(R.string.proExpired)
+        }
+
+        val totalHours = timeRemaining.toHours()
+
+        return if (totalHours >= 24) {
+            // More than one full day remaining - show days
+            val days = timeRemaining.toDays()
+            "$days ${if (days == 1L) "day" else "days"}" //todo PRO need crowdin plural strings
+        } else {
+            // Less than 24 hours remaining - show hours
+            "$totalHours ${if (totalHours == 1L) "hour" else "hours"}"  //todo PRO need crowdin plural strings
+        }
     }
 
     // Helper methods

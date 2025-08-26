@@ -14,7 +14,11 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.RELATIVE_TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
+import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
+import java.time.Duration
+import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -110,12 +114,24 @@ class ProStatusManager @Inject constructor(
 
     fun getCurrentSubscriptionStatus(): ProAccountStatus {
         //todo PRO implement properly
-        return  ProAccountStatus.Pro.AutoRenewing(
-            showProBadge = true,
-            infoLabel = Phrase.from(context, R.string.proAutoRenew)
-                .put(RELATIVE_TIME_KEY, "15 days")
-                .format()
-        )
+        //todo PRO need a way to differentiate originating store
+
+        val subscriptionStatus = prefs.getDebugSubscriptionStatus() ?: DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE
+        return  when(subscriptionStatus){
+            DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE -> ProAccountStatus.Pro.AutoRenewing(
+                showProBadge = true,
+                validUntil = Instant.now() + Duration.ofDays(14),
+                type = ProSubscriptionDuration.THREE_MONTHS
+            )
+
+            DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE -> ProAccountStatus.Pro.Expiring(
+                showProBadge = true,
+                validUntil = Instant.now() + Duration.ofDays(14),
+                type = ProSubscriptionDuration.TWELVE_MONTHS
+            )
+
+            else -> ProAccountStatus.Expired
+        }
     }
 
     /**

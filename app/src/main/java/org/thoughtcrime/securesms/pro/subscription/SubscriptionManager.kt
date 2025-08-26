@@ -9,9 +9,5 @@ interface SubscriptionManager {
     val description: String
     val iconRes: Int?
 
-    enum class SubscriptionType {
-        ONE_MONTH, THREE_MONTHS, TWELVE_MONTHS
-    }
-
-    fun purchasePlan(subscriptionType: SubscriptionType)
+    fun purchasePlan(subscriptionDuration: ProSubscriptionDuration)
 }

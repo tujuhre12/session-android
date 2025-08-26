@@ -79,6 +79,15 @@ class DebugMenuViewModel @Inject constructor(
             forceShortTTl = textSecurePreferences.forcedShortTTL(),
             messageProFeature = textSecurePreferences.getDebugMessageFeatures(),
             dbInspectorState = DatabaseInspectorState.NOT_AVAILABLE,
+            debugSubscriptionStatuses = setOf(
+                DebugSubscriptionStatus.AUTO_GOOGLE,
+                DebugSubscriptionStatus.EXPIRING_GOOGLE,
+                DebugSubscriptionStatus.EXPIRED_GOOGLE,
+                DebugSubscriptionStatus.AUTO_APPLE,
+                DebugSubscriptionStatus.EXPIRING_APPLE,
+                DebugSubscriptionStatus.EXPIRED_APPLE,
+            ),
+            selectedDebugSubscriptionStatus = textSecurePreferences.getDebugSubscriptionStatus() ?: DebugSubscriptionStatus.AUTO_GOOGLE,
         )
     )
     val uiState: StateFlow<UIState>
@@ -278,6 +287,13 @@ class DebugMenuViewModel @Inject constructor(
                     }
                 }
             }
+
+            is Commands.SetDebugSubscriptionStatus -> {
+                textSecurePreferences.setDebugSubscriptionStatus(command.status)
+                _uiState.update {
+                    it.copy(selectedDebugSubscriptionStatus = command.status)
+                }
+            }
         }
     }
 
@@ -380,12 +396,23 @@ class DebugMenuViewModel @Inject constructor(
         val deprecatedTime: ZonedDateTime,
         val deprecatingStartTime: ZonedDateTime,
         val dbInspectorState: DatabaseInspectorState,
+        val debugSubscriptionStatuses: Set<DebugSubscriptionStatus>,
+        val selectedDebugSubscriptionStatus: DebugSubscriptionStatus,
     )
 
     enum class DatabaseInspectorState {
         NOT_AVAILABLE,
         STARTED,
         STOPPED,
+    }
+
+    enum class DebugSubscriptionStatus(val label: String) {
+        AUTO_GOOGLE("Auto Renewing (Google, 3 months)"),
+        EXPIRING_GOOGLE("Expiring/Cancelled (Google, 12 months)"),
+        EXPIRED_GOOGLE("Expired (Google)"),
+        AUTO_APPLE("Auto Renewing (Apple, 1 months)"),
+        EXPIRING_APPLE("Expiring/Cancelled (Apple, 1 months)"),
+        EXPIRED_APPLE("Expired (Apple)")
     }
 
     sealed class Commands {
@@ -411,5 +438,6 @@ class DebugMenuViewModel @Inject constructor(
         object ClearTrustedDownloads: Commands()
         data class GenerateContacts(val prefix: String, val count: Int): Commands()
         data object ToggleDatabaseInspector : Commands()
+        data class SetDebugSubscriptionStatus(val status: DebugSubscriptionStatus) : Commands()
     }
 }

@@ -20,12 +20,14 @@ import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.MONTHLY_PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.RELATIVE_TIME_KEY
 import org.thoughtcrime.securesms.pro.ProAccountStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionCoordinator
-import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
 import org.thoughtcrime.securesms.ui.SimpleDialogData
 import org.thoughtcrime.securesms.ui.UINavigator
+import org.thoughtcrime.securesms.util.DateUtils
 import javax.inject.Inject
 
 
@@ -35,7 +37,8 @@ class ProSettingsViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val navigator: UINavigator<ProSettingsDestination>,
     private val proStatusManager: ProStatusManager,
-    private val subscriptionCoordinator: SubscriptionCoordinator
+    private val subscriptionCoordinator: SubscriptionCoordinator,
+    private val dateUtils: DateUtils
 ) : ViewModel() {
 
     private val _proSettingsUIState: MutableStateFlow<ProSettingsUIState> = MutableStateFlow(ProSettingsUIState())
@@ -59,7 +62,20 @@ class ProSettingsViewModel @Inject constructor(
             ProSettingsUIState(
                 proStatus = if(proStatusManager.isCurrentUserPro())
                     planStatus
-                else ProAccountStatus.None
+                else ProAccountStatus.None,
+                proExpiryLabel = when(planStatus){
+                    is ProAccountStatus.Pro.AutoRenewing ->
+                        Phrase.from(context, R.string.proAutoRenew)
+                        .put(RELATIVE_TIME_KEY, dateUtils.getExpiryString(planStatus.validUntil))
+                        .format()
+
+                    is ProAccountStatus.Pro.Expiring ->
+                        Phrase.from(context, R.string.proExpiring)
+                        .put(RELATIVE_TIME_KEY, dateUtils.getExpiryString(planStatus.validUntil))
+                        .format()
+
+                    else -> ""
+                }
             )
         }
 
@@ -105,7 +121,7 @@ class ProSettingsViewModel @Inject constructor(
                             .format().toString(),
                         selected = false,
                         currentPlan = false,
-                        type = SubscriptionManager.SubscriptionType.TWELVE_MONTHS,
+                        duration = ProSubscriptionDuration.TWELVE_MONTHS,
                         badges = listOf(
                             ProPlanBadge("20% Off"),
                         ),
@@ -119,7 +135,7 @@ class ProSettingsViewModel @Inject constructor(
                             .format().toString(),
                         selected = true,
                         currentPlan = true,
-                        type = SubscriptionManager.SubscriptionType.THREE_MONTHS,
+                        duration = ProSubscriptionDuration.THREE_MONTHS,
                         badges = listOf(
                             ProPlanBadge("Current Plan"),
                             ProPlanBadge("20% Off", "This is a tooltip"),
@@ -134,7 +150,7 @@ class ProSettingsViewModel @Inject constructor(
                             .format().toString(),
                         selected = false,
                         currentPlan = false,
-                        type = SubscriptionManager.SubscriptionType.ONE_MONTH,
+                        duration = ProSubscriptionDuration.ONE_MONTH,
                         badges = emptyList(),
                     ),
                 )
@@ -227,7 +243,7 @@ class ProSettingsViewModel @Inject constructor(
 
     private fun getPlanFromProvider(){
         subscriptionCoordinator.getCurrentManager().purchasePlan(
-            getSelectedPlan().type
+            getSelectedPlan().duration
         )
     }
 
@@ -253,7 +269,8 @@ class ProSettingsViewModel @Inject constructor(
 
     data class ProSettingsUIState(
         val proStatus: ProAccountStatus = ProAccountStatus.None,
-        val proStats: ProStats = ProStats()
+        val proStats: ProStats = ProStats(),
+        val proExpiryLabel: CharSequence = ""
     )
 
     data class ProStats(
@@ -273,7 +290,7 @@ class ProSettingsViewModel @Inject constructor(
     data class ProPlan(
         val title: String,
         val subtitle: String,
-        val type: SubscriptionManager.SubscriptionType,
+        val duration: ProSubscriptionDuration,
         val currentPlan: Boolean,
         val selected: Boolean,
         val badges: List<ProPlanBadge>
