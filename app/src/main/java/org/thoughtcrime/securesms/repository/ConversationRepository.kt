@@ -173,7 +173,7 @@ class DefaultConversationRepository @Inject constructor(
 
             // Contacts
             for (contact in configs.contacts.all()) {
-                if (contact.priority >= 0 && !contact.blocked) {
+                if (contact.priority >= 0 && (!contact.blocked || contact.approved)) {
                     add(Address.Standard(AccountId(contact.id)))
                 }
             }
