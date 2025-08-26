@@ -1,8 +1,12 @@
 package org.thoughtcrime.securesms.groups
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import org.session.libsession.avatars.AvatarCacheCleaner
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPollerManager
@@ -10,6 +14,7 @@ import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
+import org.thoughtcrime.securesms.dependencies.ManagerScope
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -23,6 +28,7 @@ class OpenGroupManager @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val pollerManager: OpenGroupPollerManager,
     private val lokiAPIDatabase: LokiAPIDatabase,
+    private val avatarCacheCleaner: AvatarCacheCleaner,
 ) {
     suspend fun add(server: String, room: String, publicKey: String) {
         // Fetch the server's capabilities upfront to see if this server is actually running
@@ -59,6 +65,8 @@ class OpenGroupManager @Inject constructor(
             configs.userGroups.eraseCommunity(server, room)
             configs.convoInfoVolatile.eraseCommunity(server, room)
         }
+
+        avatarCacheCleaner.launchAvatarCleanup()
     }
 
     suspend fun addOpenGroup(urlAsString: String) {
