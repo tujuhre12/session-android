@@ -19,7 +19,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -34,11 +33,10 @@ import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.ICON_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.MONTHLY_PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRICE_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.RELATIVE_TIME_KEY
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProAccountStatus
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProPlan
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProPlanBadge
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.*
+import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.RadioButtonIndicator
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
@@ -122,7 +120,9 @@ fun UpdatePlan(
                 .widthIn(max = LocalDimensions.current.maxContentWidth),
             text = planData.buttonLabel,
             enabled = planData.enableButton,
-            onClick = {}
+            onClick = {
+                sendCommand(GetProPlan)
+            }
         )
 
         Spacer(Modifier.height(LocalDimensions.current.xxsSpacing))
@@ -281,6 +281,7 @@ private fun PreviewUpdatePlanItems(
                     subtitle = "Subtitle",
                     selected = true,
                     currentPlan = true,
+                    type = SubscriptionManager.SubscriptionType.TWELVE_MONTHS,
                     badges = listOf(
                         ProSettingsViewModel.ProPlanBadge("Current Plan"),
                         ProSettingsViewModel.ProPlanBadge("20% Off", "This is a tooltip"),
@@ -297,6 +298,7 @@ private fun PreviewUpdatePlanItems(
                     subtitle = "Subtitle",
                     selected = false,
                     currentPlan = false,
+                    type = SubscriptionManager.SubscriptionType.TWELVE_MONTHS,
                     badges = listOf(
                         ProSettingsViewModel.ProPlanBadge("Current Plan"),
                         ProSettingsViewModel.ProPlanBadge("20% Off", "This is a tooltip"),
@@ -313,6 +315,7 @@ private fun PreviewUpdatePlanItems(
                     subtitle = "Subtitle that is also very long and is allowed to go onto another line",
                     selected = true,
                     currentPlan = true,
+                    type = SubscriptionManager.SubscriptionType.TWELVE_MONTHS,
                     badges = listOf(
                         ProSettingsViewModel.ProPlanBadge("Current Plan"),
                         ProSettingsViewModel.ProPlanBadge(
@@ -350,6 +353,7 @@ private fun PreviewUpdatePlan(
                             .format().toString(),
                         selected = false,
                         currentPlan = false,
+                        type = SubscriptionManager.SubscriptionType.TWELVE_MONTHS,
                         badges = listOf(
                             ProPlanBadge("20% Off"),
                         ),
@@ -363,6 +367,7 @@ private fun PreviewUpdatePlan(
                             .format().toString(),
                         selected = true,
                         currentPlan = true,
+                        type = SubscriptionManager.SubscriptionType.TWELVE_MONTHS,
                         badges = listOf(
                             ProPlanBadge("Current Plan"),
                             ProPlanBadge("20% Off", "This is a tooltip"),
@@ -377,6 +382,7 @@ private fun PreviewUpdatePlan(
                             .format().toString(),
                         selected = false,
                         currentPlan = false,
+                        type = SubscriptionManager.SubscriptionType.TWELVE_MONTHS,
                         badges = emptyList(),
                     ),
                 )

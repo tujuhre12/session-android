@@ -1,12 +1,17 @@
 package org.thoughtcrime.securesms.pro
 
+import android.content.Context
+import com.squareup.phrase.Phrase
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import network.loki.messenger.R
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.StringSubstitutionConstants.RELATIVE_TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
@@ -15,6 +20,7 @@ import javax.inject.Singleton
 
 @Singleton
 class ProStatusManager @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val prefs: TextSecurePreferences,
 ) : OnAppStartupComponent {
     val MAX_CHARACTER_PRO = 10000 // max characters in a message for pro users
@@ -42,6 +48,9 @@ class ProStatusManager @Inject constructor(
             }
         }
     }
+
+    //todo PRO add "about to expire" CTA logic on app launch
+    //todo PRO add "expired" CTA logic on app launch
 
     fun isCurrentUserPro(): Boolean {
         // if the debug is set, return that
@@ -99,6 +108,15 @@ class ProStatusManager @Inject constructor(
         return if (isCurrentUserPro()) Int.MAX_VALUE else MAX_PIN_REGULAR
     }
 
+    fun getCurrentSubscriptionStatus(): ProAccountStatus {
+        //todo PRO implement properly
+        return  ProAccountStatus.Pro.AutoRenewing(
+            showProBadge = true,
+            infoLabel = Phrase.from(context, R.string.proAutoRenew)
+                .put(RELATIVE_TIME_KEY, "15 days")
+                .format()
+        )
+    }
 
     /**
      * This will calculate the pro features of an outgoing message

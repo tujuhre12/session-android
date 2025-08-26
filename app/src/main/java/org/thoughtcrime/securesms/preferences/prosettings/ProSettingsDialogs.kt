@@ -5,27 +5,24 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.unit.dp
-import com.squareup.phrase.Phrase
 import network.loki.messenger.R
-import org.session.libsession.utilities.NonTranslatableStringConstants
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.openUrl
-import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.*
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.HideSimpleDialog
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.HideTCPolicyDialog
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.Cell
+import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.Divider
+import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.IconActionRowItem
+import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -51,9 +48,46 @@ fun ProSettingsDialogs(
         )
     }
 
+    // T&C + Policy dialog
     if(dialogsState.showTCPolicyDialog){
         TCPolicyDialog(
             sendCommand = sendCommand
+        )
+    }
+
+    //  Simple dialogs
+    if (dialogsState.showSimpleDialog != null) {
+        val buttons = mutableListOf<DialogButtonData>()
+        if(dialogsState.showSimpleDialog.positiveText != null) {
+            buttons.add(
+                DialogButtonData(
+                    text = GetString(dialogsState.showSimpleDialog.positiveText),
+                    color = if (dialogsState.showSimpleDialog.positiveStyleDanger) LocalColors.current.danger
+                    else LocalColors.current.text,
+                    qaTag = dialogsState.showSimpleDialog.positiveQaTag,
+                    onClick = dialogsState.showSimpleDialog.onPositive
+                )
+            )
+        }
+        if(dialogsState.showSimpleDialog.negativeText != null){
+            buttons.add(
+                DialogButtonData(
+                    text = GetString(dialogsState.showSimpleDialog.negativeText),
+                    qaTag = dialogsState.showSimpleDialog.negativeQaTag,
+                    onClick = dialogsState.showSimpleDialog.onNegative
+                )
+            )
+        }
+
+        AlertDialog(
+            onDismissRequest = {
+                // hide dialog
+                sendCommand(HideSimpleDialog)
+            },
+            title = annotatedStringResource(dialogsState.showSimpleDialog.title),
+            text = annotatedStringResource(dialogsState.showSimpleDialog.message),
+            showCloseButton = dialogsState.showSimpleDialog.showXIcon,
+            buttons = buttons
         )
     }
 }

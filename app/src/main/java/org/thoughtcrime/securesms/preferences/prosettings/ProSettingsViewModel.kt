@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.preferences.prosettings
 
 import android.content.Context
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.squareup.phrase.Phrase
@@ -21,8 +20,11 @@ import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.MONTHLY_PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.RELATIVE_TIME_KEY
+import org.thoughtcrime.securesms.pro.ProAccountStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.pro.subscription.SubscriptionCoordinator
+import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
+import org.thoughtcrime.securesms.ui.SimpleDialogData
 import org.thoughtcrime.securesms.ui.UINavigator
 import javax.inject.Inject
 
@@ -33,6 +35,7 @@ class ProSettingsViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val navigator: UINavigator<ProSettingsDestination>,
     private val proStatusManager: ProStatusManager,
+    private val subscriptionCoordinator: SubscriptionCoordinator
 ) : ViewModel() {
 
     private val _proSettingsUIState: MutableStateFlow<ProSettingsUIState> = MutableStateFlow(ProSettingsUIState())
@@ -50,13 +53,7 @@ class ProSettingsViewModel @Inject constructor(
 
     private fun generateState(){
         //todo PRO need to properly calculate this
-        val planStatus =                 ProAccountStatus.Expired
-//            ProAccountStatus.Pro.AutoRenewing(
-//                showProBadge = true,
-//                infoLabel = Phrase.from(context, R.string.proAutoRenew)
-//                    .put(RELATIVE_TIME_KEY, "15 days")
-//                    .format()
-//            )
+        val planStatus = proStatusManager.getCurrentSubscriptionStatus()
 
         _proSettingsUIState.update {
             ProSettingsUIState(
@@ -67,20 +64,29 @@ class ProSettingsViewModel @Inject constructor(
         }
 
         _proPlanUIState.update {
+            // sort out the title and button label for the plan screen based on subscription status
+            val (title, buttonLabel) = when(planStatus) {
+                is ProAccountStatus.Expired ->
+                    Phrase.from(context.getText(R.string.proPlanRenewStart))
+                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                        .format() to
+                            context.getString(R.string.renew)
 
-            val (title, buttonLabel) = if(planStatus is ProAccountStatus.Expired)
-                Phrase.from(context.getText(R.string.proPlanRenewStart))
+                is ProAccountStatus.Pro.Expiring -> Phrase.from(context.getText(R.string.proPlanActivatedNotAuto))
                     .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                    .put(DATE_KEY, "May 21st, 2025") //todo PRO implement properly
                     .format() to
-                        context.getString(R.string.renew)
-            else Phrase.from(context.getText(R.string.proPlanActivatedAuto))
-                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                .put(CURRENT_PLAN_KEY, "3 months") //todo PRO implement properly
-                .put(DATE_KEY, "May 21st, 2025") //todo PRO implement properly
-                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                .format() to
-                    context.getString(R.string.updatePlan)
+                        context.getString(R.string.updatePlan)
+
+                else -> Phrase.from(context.getText(R.string.proPlanActivatedAuto))
+                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                    .put(CURRENT_PLAN_KEY, "3 months") //todo PRO implement properly
+                    .put(DATE_KEY, "May 21st, 2025") //todo PRO implement properly
+                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                    .format() to
+                        context.getString(R.string.updatePlan)
+            }
 
             ProPlanUIState(
                 title = title,
@@ -99,6 +105,7 @@ class ProSettingsViewModel @Inject constructor(
                             .format().toString(),
                         selected = false,
                         currentPlan = false,
+                        type = SubscriptionManager.SubscriptionType.TWELVE_MONTHS,
                         badges = listOf(
                             ProPlanBadge("20% Off"),
                         ),
@@ -112,6 +119,7 @@ class ProSettingsViewModel @Inject constructor(
                             .format().toString(),
                         selected = true,
                         currentPlan = true,
+                        type = SubscriptionManager.SubscriptionType.THREE_MONTHS,
                         badges = listOf(
                             ProPlanBadge("Current Plan"),
                             ProPlanBadge("20% Off", "This is a tooltip"),
@@ -126,6 +134,7 @@ class ProSettingsViewModel @Inject constructor(
                             .format().toString(),
                         selected = false,
                         currentPlan = false,
+                        type = SubscriptionManager.SubscriptionType.ONE_MONTH,
                         badges = emptyList(),
                     ),
                 )
@@ -158,6 +167,7 @@ class ProSettingsViewModel @Inject constructor(
                         },
                         enableButton = _proSettingsUIState.value.proStatus is ProAccountStatus.Expired
                                 || !command.plan.currentPlan
+                        //todo PRO should the button always be enabled for EXPIRING state?
                     )
                 }
             }
@@ -173,7 +183,52 @@ class ProSettingsViewModel @Inject constructor(
                     it.copy(showTCPolicyDialog = false)
                 }
             }
+
+            Commands.GetProPlan -> {
+                // if we already have a current plan, ask for confirmation first
+                if(_proSettingsUIState.value.proStatus is ProAccountStatus.Pro){
+                    _dialogState.update {
+                        it.copy(
+                            showSimpleDialog = SimpleDialogData(
+                                title = context.getString(R.string.updatePlan),
+                                message = if(_proSettingsUIState.value.proStatus is ProAccountStatus.Pro.AutoRenewing)
+                                    "TEMP AUTO RENEW"
+                                else "TEMP EXPIRING", //todo PRO get real string
+                                positiveText = context.getString(R.string.updatePlan),
+                                negativeText = context.getString(R.string.cancel),
+                                positiveStyleDanger = false,
+                                onPositive = { getPlanFromProvider() },
+                                onNegative = { onCommand(Commands.HideTCPolicyDialog) }
+                            )
+                        )
+                    }
+                }
+                // otherwise go straight to the store
+                else {
+                    getPlanFromProvider()
+                }
+            }
+
+            Commands.ConfirmProPlan -> {
+                getPlanFromProvider()
+            }
+
+            Commands.HideSimpleDialog -> {
+                _dialogState.update {
+                    it.copy(showSimpleDialog = null)
+                }
+            }
         }
+    }
+
+    private fun getSelectedPlan(): ProPlan {
+        return _proPlanUIState.value.plans.first { it.selected }
+    }
+
+    private fun getPlanFromProvider(){
+        subscriptionCoordinator.getCurrentManager().purchasePlan(
+            getSelectedPlan().type
+        )
     }
 
     private fun navigateTo(destination: ProSettingsDestination){
@@ -186,11 +241,14 @@ class ProSettingsViewModel @Inject constructor(
         data class ShowOpenUrlDialog(val url: String?) : Commands
         data object ShowTCPolicyDialog: Commands
         data object HideTCPolicyDialog: Commands
+        data object HideSimpleDialog : Commands
 
         object ShowPlanUpdate: Commands
         data class SetShowProBadge(val show: Boolean): Commands
 
         data class SelectProPlan(val plan: ProPlan): Commands
+        data object GetProPlan: Commands
+        data object ConfirmProPlan: Commands
     }
 
     data class ProSettingsUIState(
@@ -205,27 +263,6 @@ class ProSettingsViewModel @Inject constructor(
         val longMessages: Int = 0
     )
 
-    sealed interface ProAccountStatus{
-        object None: ProAccountStatus
-
-        sealed interface Pro: ProAccountStatus{
-            val showProBadge: Boolean
-            val infoLabel: CharSequence
-
-            data class AutoRenewing(
-                override val showProBadge: Boolean,
-                override val infoLabel: CharSequence
-            ): Pro
-
-            data class Expiring(
-                override val showProBadge: Boolean,
-                override val infoLabel: CharSequence
-            ): Pro
-        }
-
-        data object Expired: ProAccountStatus
-    }
-
     data class ProPlanUIState(
         val plans: List<ProPlan> = emptyList(),
         val enableButton: Boolean = false,
@@ -236,6 +273,7 @@ class ProSettingsViewModel @Inject constructor(
     data class ProPlan(
         val title: String,
         val subtitle: String,
+        val type: SubscriptionManager.SubscriptionType,
         val currentPlan: Boolean,
         val selected: Boolean,
         val badges: List<ProPlanBadge>
@@ -249,5 +287,6 @@ class ProSettingsViewModel @Inject constructor(
     data class DialogsState(
         val openLinkDialogUrl: String? = null,
         val showTCPolicyDialog: Boolean = false,
+        val showSimpleDialog: SimpleDialogData? = null,
     )
 }

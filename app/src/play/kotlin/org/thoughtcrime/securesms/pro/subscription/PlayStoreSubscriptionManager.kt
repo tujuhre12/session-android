@@ -10,4 +10,8 @@ class PlayStoreSubscriptionManager @Inject constructor(): SubscriptionManager {
     override val displayName = ""
     override val description = ""
     override val iconRes = null
+
+    override fun purchasePlan(subscriptionType: SubscriptionManager.SubscriptionType) {
+        //todo PRO implement
+    }
 }

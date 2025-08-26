@@ -55,7 +55,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.TOKEN_NAME_L
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.SetShowProBadge
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowPlanUpdate
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProAccountStatus
+import org.thoughtcrime.securesms.pro.ProAccountStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.CategoryCell
 import org.thoughtcrime.securesms.ui.Divider

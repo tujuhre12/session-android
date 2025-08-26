@@ -22,15 +22,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import com.squareup.phrase.Phrase
-import network.loki.messenger.R
-import org.session.libsession.utilities.StringSubstitutionConstants.RELATIVE_TIME_KEY
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProAccountStatus
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.SessionProSettingsHeader
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
