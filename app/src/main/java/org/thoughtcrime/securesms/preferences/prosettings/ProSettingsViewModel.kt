@@ -152,6 +152,18 @@ class ProSettingsViewModel @Inject constructor(
                     )
                 }
             }
+
+            Commands.ShowTCPolicyDialog -> {
+                _dialogState.update {
+                    it.copy(showTCPolicyDialog = true)
+                }
+            }
+
+            Commands.HideTCPolicyDialog -> {
+                _dialogState.update {
+                    it.copy(showTCPolicyDialog = false)
+                }
+            }
         }
     }
 
@@ -163,6 +175,8 @@ class ProSettingsViewModel @Inject constructor(
 
     sealed interface Commands {
         data class ShowOpenUrlDialog(val url: String?) : Commands
+        data object ShowTCPolicyDialog: Commands
+        data object HideTCPolicyDialog: Commands
 
         object ShowPlanUpdate: Commands
         data class SetShowProBadge(val show: Boolean): Commands
@@ -224,5 +238,6 @@ class ProSettingsViewModel @Inject constructor(
 
     data class DialogsState(
         val openLinkDialogUrl: String? = null,
+        val showTCPolicyDialog: Boolean = false,
     )
 }
