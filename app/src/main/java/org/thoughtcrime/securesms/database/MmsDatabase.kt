@@ -654,10 +654,8 @@ class MmsDatabase @Inject constructor(
             linkPreviews = retrieved.linkPreviews,
             contentValues = contentValues,
         )
-        if (retrieved.messageContent !is DisappearingMessageUpdate) {
-            if (runThreadUpdate) {
-                threadDatabase.update(threadId, true)
-            }
+        if (runThreadUpdate) {
+            threadDatabase.update(threadId, true)
         }
         return Optional.of(InsertResult(messageId, threadId))
     }

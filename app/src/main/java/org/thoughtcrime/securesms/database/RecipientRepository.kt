@@ -369,13 +369,6 @@ class RecipientRepository @Inject constructor(
      */
     @DelicateCoroutinesApi
     fun getRecipientSync(address: Address): Recipient {
-        // If we have a cached flow, we can try to grab its current value.
-        val cached = recipientFlowCache[address]?.get()?.replayCache?.firstOrNull()
-        if (cached != null) {
-            return cached
-        }
-
-        // Otherwise, we might have to go to the database to get the recipient..
         return fetchRecipient(
             address = address,
             settingsFetcher = recipientSettingsDatabase::getSettings,
