@@ -201,7 +201,6 @@ fun ConversationSettings(
                 Text(
                     modifier = Modifier
                         .qaTag(R.string.qa_conversation_settings_account_id)
-                        .safeContentWidth()
                         .pointerInput(Unit) {
                             detectTapGestures(
                                 onLongPress = { onLongPress() }
