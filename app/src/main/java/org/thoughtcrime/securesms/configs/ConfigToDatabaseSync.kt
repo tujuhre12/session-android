@@ -6,6 +6,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -28,6 +29,7 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
@@ -50,6 +52,8 @@ import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
+import org.thoughtcrime.securesms.util.castAwayType
+import java.util.EnumSet
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -87,9 +91,15 @@ class ConfigToDatabaseSync @Inject constructor(
             preferences.watchLocalNumber()
                 .filterNotNull()
                 .take(1)
-                .flatMapLatest { conversationRepository.conversationListAddressesFlow }
-                .map { addresses ->
-                    addresses to configFactory.withUserConfigs { it.convoInfoVolatile.all() }
+                .flatMapLatest {
+                    combine(
+                        conversationRepository.conversationListAddressesFlow,
+                        configFactory.userConfigsChanged(EnumSet.of(UserConfigType.CONVO_INFO_VOLATILE))
+                            .castAwayType()
+                            .onStart { emit(Unit) }
+                            .map { _ -> configFactory.withUserConfigs { it.convoInfoVolatile.all() } },
+                        ::Pair
+                    )
                 }
                 .distinctUntilChanged()
                 .collectLatest { (conversations, convoInfo) ->
@@ -104,9 +114,7 @@ class ConfigToDatabaseSync @Inject constructor(
     }
 
     private fun ensureConversations(addresses: Set<Address.Conversable>) {
-        val myAddress = Address.Standard(AccountId(preferences.getLocalNumber()!!))
-        val ensureAddresses = if (myAddress in addresses) addresses else addresses + myAddress
-        val result = threadDatabase.ensureThreads(ensureAddresses) // Always include NTS so it doesn't get deleted
+        val result = threadDatabase.ensureThreads(addresses)
 
         if (result.deletedThreads.isNotEmpty()) {
             val deletedThreadIDs = result.deletedThreads.values

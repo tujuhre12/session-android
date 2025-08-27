@@ -176,7 +176,7 @@ class BatchMessageReceiveJob @AssistedInject constructor(
                 val threadID = if (shouldCreateThread(parsedParams)) {
                     threadDatabase.getOrCreateThreadIdFor(threadAddress)
                 } else {
-                    threadDatabase.getOrCreateThreadIdFor(threadAddress)
+                    threadDatabase.getThreadIdIfExistsFor(threadAddress)
                 }
                 threadMap.getOrPut(threadID) { mutableListOf() } += parsedParams
             } catch (e: Exception) {

@@ -13,7 +13,6 @@ import org.session.libsession.utilities.isLegacyGroup
 import org.session.libsession.utilities.isStandard
 import org.thoughtcrime.securesms.database.model.NotifyType
 import java.time.Instant
-import java.time.ZonedDateTime
 
 data class Recipient(
     val address: Address,
@@ -113,10 +112,10 @@ data class Recipient(
     val mutedUntilMills: Long?
         get() = mutedUntil?.toEpochMilli()
 
-    val acceptsCommunityMessageRequests: Boolean
+    val acceptsBlindedCommunityMessageRequests: Boolean
         get() = when (data) {
-            is RecipientData.BlindedContact -> data.acceptsCommunityMessageRequests
-            is RecipientData.Generic -> data.acceptsCommunityMessageRequests
+            is RecipientData.BlindedContact -> data.acceptsBlindedCommunityMessageRequests
+            is RecipientData.Generic -> data.acceptsBlindedCommunityMessageRequests
             is RecipientData.Community,
             is RecipientData.LegacyGroup,
             is RecipientData.Contact,

@@ -120,7 +120,7 @@ class UserProfileUtils @AssistedInject constructor(
             threadAddress = threadAddress,
             isBlinded = recipient.address.isBlinded,
             tooltipText = tooltipText,
-            enableMessage = !recipient.address.isBlinded || recipient.acceptsCommunityMessageRequests,
+            enableMessage = !recipient.address.isBlinded || recipient.acceptsBlindedCommunityMessageRequests,
             expandedAvatar = false,
             showQR = false,
             showProCTA = false,

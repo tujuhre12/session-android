@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.Address
@@ -93,7 +94,11 @@ class HomeViewModel @Inject constructor(
                 conversationRepository.observeConversationList()
             }
             .map { convos ->
-                val (approved, unapproved) = convos.partition { it.recipient.approved }
+                val (approved, unapproved) = convos
+                    .asSequence()
+                    .filter { !it.recipient.blocked } // We don't display blocked convo
+                    .filter { it.recipient.priority != PRIORITY_HIDDEN } // We don't show hidden convo
+                    .partition { it.recipient.approved }
                 val unreadUnapproved = unapproved
                     .count { it.unreadCount > 0 || it.unreadMentionCount > 0 }
                 unreadUnapproved to approved.sortedWith(CONVERSATION_COMPARATOR)
