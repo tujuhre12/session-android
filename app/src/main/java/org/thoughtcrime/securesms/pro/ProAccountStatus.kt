@@ -31,3 +31,28 @@ sealed interface ProAccountStatus{
 
     data object Expired: ProAccountStatus
 }
+
+/*
+sealed interface SubscriptionState{
+    data object NeverSubscribed: SubscriptionState
+
+    sealed interface Active: SubscriptionState{
+        val proStatus: ProStatus.Pro
+        val type: ProSubscriptionDuration
+
+        //todo PRO we need a way to know which store the subscription is from
+
+        data class AutoRenewing(
+            override val proStatus: ProStatus.Pro,
+            override val type: ProSubscriptionDuration,
+        ): Active
+
+        data class Expiring(
+            override val proStatus: ProStatus.Pro,
+            override val type: ProSubscriptionDuration
+        ): Active
+    }
+
+    data object Expired: SubscriptionState
+}
+ */

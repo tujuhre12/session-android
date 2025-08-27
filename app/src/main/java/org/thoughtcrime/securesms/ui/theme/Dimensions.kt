@@ -27,7 +27,7 @@ data class Dimensions(
 
     val borderStroke: Dp = 1.dp,
 
-    val iconXXSmall: Dp = 9.dp,
+    val iconXXSmall: Dp = 10.dp,
     val iconXSmall: Dp = 14.dp,
     val iconSmall: Dp = 20.dp,
     val iconMedium: Dp = 24.dp,

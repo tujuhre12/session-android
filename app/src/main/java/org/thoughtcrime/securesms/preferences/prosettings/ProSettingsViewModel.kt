@@ -18,6 +18,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.CURRENT_PLAN_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.MONTHLY_PRICE_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.PERCENT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.RELATIVE_TIME_KEY
@@ -103,55 +104,87 @@ class ProSettingsViewModel @Inject constructor(
                     .format() to
                         context.getString(R.string.updatePlan)
             }
+            val isPro = planStatus is ProAccountStatus.Pro
+            val currentPlan12Months = isPro && planStatus.type == ProSubscriptionDuration.TWELVE_MONTHS
+            val currentPlan3Months = isPro && planStatus.type == ProSubscriptionDuration.THREE_MONTHS
+            val currentPlan1Month = isPro && planStatus.type == ProSubscriptionDuration.ONE_MONTH
 
             ProPlanUIState(
                 title = title,
                 buttonLabel = buttonLabel,
                 enableButton = planStatus is ProAccountStatus.Expired, // expired plan always have an enabled button
-                //todo PRO calculate all plans properly
-                //todo PRO add tooltip if the user's current plan is 3 or 12 months
-                //todo PRO do not show a current plan badge when status is expired
                 plans = listOf(
                     ProPlan(
                         title = Phrase.from(context.getText(R.string.proPriceTwelveMonths))
-                            .put(MONTHLY_PRICE_KEY, "$3.99")
+                            .put(MONTHLY_PRICE_KEY, "$3.99")  //todo PRO calculate properly
                             .format().toString(),
                         subtitle = Phrase.from(context.getText(R.string.proBilledAnnually))
-                            .put(PRICE_KEY, "$47.99")
+                            .put(PRICE_KEY, "$47.99")  //todo PRO calculate properly
                             .format().toString(),
-                        selected = false,
-                        currentPlan = false,
+                        selected = currentPlan12Months,
+                        currentPlan = currentPlan12Months,
                         duration = ProSubscriptionDuration.TWELVE_MONTHS,
-                        badges = listOf(
-                            ProPlanBadge("20% Off"),
-                        ),
+                        badges = buildList {
+                            if(currentPlan12Months){
+                                add(
+                                    ProPlanBadge(context.getString(R.string.currentPlan))
+                                )
+                            }
+
+                            add(
+                                ProPlanBadge(
+                                    "33% Off", //todo PRO calculate properly
+                                    if(currentPlan12Months)  Phrase.from(context.getText(R.string.proDiscountTooltip))
+                                        .put(PERCENT_KEY, "33")  //todo PRO calculate properly
+                                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                                        .format().toString()
+                                    else null
+                                )
+                            )
+                        },
                     ),
                     ProPlan(
                         title = Phrase.from(context.getText(R.string.proPriceThreeMonths))
-                            .put(MONTHLY_PRICE_KEY, "$4.99")
+                            .put(MONTHLY_PRICE_KEY, "$4.99")  //todo PRO calculate properly
                             .format().toString(),
                         subtitle = Phrase.from(context.getText(R.string.proBilledQuarterly))
-                            .put(PRICE_KEY, "$14.99")
+                            .put(PRICE_KEY, "$14.99")  //todo PRO calculate properly
                             .format().toString(),
-                        selected = true,
-                        currentPlan = true,
+                        selected = currentPlan3Months,
+                        currentPlan = currentPlan3Months,
                         duration = ProSubscriptionDuration.THREE_MONTHS,
-                        badges = listOf(
-                            ProPlanBadge("Current Plan"),
-                            ProPlanBadge("20% Off", "This is a tooltip"),
-                        ),
+                        badges = buildList {
+                            if(currentPlan3Months){
+                                add(
+                                    ProPlanBadge(context.getString(R.string.currentPlan))
+                                )
+                            }
+
+                            add(
+                                ProPlanBadge(
+                                "16% Off", //todo PRO calculate properly
+                                if(currentPlan3Months)  Phrase.from(context.getText(R.string.proDiscountTooltip))
+                                    .put(PERCENT_KEY, "16")  //todo PRO calculate properly
+                                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                                    .format().toString()
+                                    else null
+                                )
+                            )
+                        },
                     ),
                     ProPlan(
                         title = Phrase.from(context.getText(R.string.proPriceOneMonth))
-                            .put(MONTHLY_PRICE_KEY, "$5.99")
+                            .put(MONTHLY_PRICE_KEY, "$5.99") //todo PRO calculate properly
                             .format().toString(),
                         subtitle = Phrase.from(context.getText(R.string.proBilledMonthly))
-                            .put(PRICE_KEY, "$5")
+                            .put(PRICE_KEY, "$5") //todo PRO calculate properly
                             .format().toString(),
-                        selected = false,
-                        currentPlan = false,
+                        selected = currentPlan1Month,
+                        currentPlan = currentPlan1Month,
                         duration = ProSubscriptionDuration.ONE_MONTH,
-                        badges = emptyList(),
+                        badges = if(currentPlan1Month) listOf(
+                            ProPlanBadge(context.getString(R.string.currentPlan))
+                        ) else emptyList(),
                     ),
                 )
             )

@@ -1,10 +1,12 @@
 package org.thoughtcrime.securesms.preferences.prosettings
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -12,13 +14,16 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -27,22 +32,26 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import com.squareup.phrase.Phrase
+import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.ICON_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.MONTHLY_PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRICE_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProPlan
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProPlanBadge
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.*
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
+import org.thoughtcrime.securesms.ui.SpeechBubbleTooltip
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.RadioButtonIndicator
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.components.iconExternalLink
 import org.thoughtcrime.securesms.ui.components.inlineContentMap
 import org.thoughtcrime.securesms.ui.components.radioButtonColors
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -239,9 +248,10 @@ private fun PlanItem(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PlanBadge(
-    badge: ProSettingsViewModel.ProPlanBadge,
+    badge: ProPlanBadge,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -249,18 +259,47 @@ private fun PlanBadge(
         color = LocalColors.current.accent,
         shape = RoundedCornerShape(4.0.dp)
     ) {
-        Text(
+        Row(
             modifier = Modifier.padding(
                 horizontal = 6.dp,
                 vertical = 2.dp
             ),
-            text = badge.title,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            style = LocalType.current.small.bold().copy(
-                color = LocalColors.current.accentButtonFillText
+            horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = badge.title,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = LocalType.current.small.bold().copy(
+                    color = LocalColors.current.accentButtonFillText
+                )
             )
-        )
+
+            if (badge.tooltip != null) {
+                val tooltipState = rememberTooltipState(isPersistent = true)
+                val scope = rememberCoroutineScope()
+
+                SpeechBubbleTooltip(
+                    text = badge.tooltip,
+                    tooltipState = tooltipState
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_circle_help),
+                        contentDescription = null,
+                        colorFilter = ColorFilter.tint(LocalColors.current.accentButtonFillText),
+                        modifier = Modifier
+                            .size(LocalDimensions.current.iconXXSmall)
+                            .clickable {
+                                scope.launch {
+                                    if (tooltipState.isVisible) tooltipState.dismiss() else tooltipState.show()
+                                }
+                            }
+                            .qaTag("Tooltip")
+                    )
+                }
+            }
+        }
     }
 }
 

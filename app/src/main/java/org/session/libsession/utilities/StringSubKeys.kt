@@ -54,4 +54,5 @@ object StringSubstitutionConstants {
     const val PLATFORM_ACCOUNT_KEY: StringSubKey           = "platform_account"
     const val MONTHLY_PRICE_KEY: StringSubKey              = "monthly_price"
     const val PRICE_KEY: StringSubKey                      = "price"
+    const val PERCENT_KEY: StringSubKey                    = "percent"
 }

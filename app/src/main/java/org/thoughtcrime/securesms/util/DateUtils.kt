@@ -1,6 +1,9 @@
 package org.thoughtcrime.securesms.util
 
 import android.content.Context
+import android.icu.text.MeasureFormat
+import android.icu.util.Measure
+import android.icu.util.MeasureUnit
 import android.text.format.DateFormat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import network.loki.messenger.R
@@ -18,6 +21,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.math.max
 import android.text.format.DateUtils as AndroidxDateUtils
 
 enum class RelativeDay { TODAY, YESTERDAY, TOMORROW }
@@ -211,15 +215,17 @@ class DateUtils @Inject constructor(
             return context.getString(R.string.proExpired)
         }
 
-        val totalHours = timeRemaining.toHours()
+        val totalHours = max(timeRemaining.toHours(), 1)
+        val locale = context.resources.configuration.locales[0]
+        val format = MeasureFormat.getInstance(locale, MeasureFormat.FormatWidth.WIDE)
 
         return if (totalHours >= 24) {
             // More than one full day remaining - show days
             val days = timeRemaining.toDays()
-            "$days ${if (days == 1L) "day" else "days"}" //todo PRO need crowdin plural strings
+            format.format(Measure(days, MeasureUnit.DAY))
         } else {
             // Less than 24 hours remaining - show hours
-            "$totalHours ${if (totalHours == 1L) "hour" else "hours"}"  //todo PRO need crowdin plural strings
+            format.format(Measure(totalHours, MeasureUnit.HOUR))
         }
     }
 

@@ -126,7 +126,7 @@ class ProStatusManager @Inject constructor(
 
             DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE -> ProAccountStatus.Pro.Expiring(
                 showProBadge = true,
-                validUntil = Instant.now() + Duration.ofDays(14),
+                validUntil = Instant.now() + Duration.ofDays(2),
                 type = ProSubscriptionDuration.TWELVE_MONTHS
             )
 
