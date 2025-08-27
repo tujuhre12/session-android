@@ -195,7 +195,7 @@ class RecipientSettingsDatabase @Inject constructor(
     fun cleanupRecipientSettings(addressesToKeep: Set<Address>): Int {
         if (addressesToKeep.isEmpty()) return 0
 
-        // Build a temporary lookup of strings for SQL bind args
+        // Build a temporary lookup of strings
         val keepSet = addressesToKeep.mapTo(hashSetOf()) { it.toString() }
 
         // Collect all rows, figure out orphans in memory
@@ -205,11 +205,11 @@ class RecipientSettingsDatabase @Inject constructor(
         if (orphans.isEmpty()) return 0
 
         var deleted = 0
-        val db = writableDatabase
-        db.beginTransaction()
+        val database = writableDatabase
+        database.beginTransaction()
         try {
             for (address in orphans) {
-                val rows = db.delete(
+                val rows = database.delete(
                     TABLE_NAME,
                     "$COL_ADDRESS = ?",
                     arrayOf(address.toString())
@@ -220,9 +220,9 @@ class RecipientSettingsDatabase @Inject constructor(
                     deleted += rows
                 }
             }
-            db.setTransactionSuccessful()
+            database.setTransactionSuccessful()
         } finally {
-            db.endTransaction()
+            database.endTransaction()
         }
         return deleted
     }
