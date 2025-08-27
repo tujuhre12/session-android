@@ -43,10 +43,7 @@ class RecipientSettingsDatabase @Inject constructor(
 
         // If nothing is updated, return early
         if (oldSettings == newSettings) {
-            Log.d(
-                TAG,
-                "No changes to settings for ${address.debugString}, old: $oldSettings, new: $newSettings"
-            )
+            Log.d(TAG, "No changes to settings for ${address.debugString}, old: $oldSettings, new: $newSettings")
             return
         }
 
@@ -83,11 +80,10 @@ class RecipientSettingsDatabase @Inject constructor(
     fun delete(address: Address) {
         cache.remove(address)
         if (writableDatabase.delete(
-                TABLE_NAME,
-                "$COL_ADDRESS = ?",
-                arrayOf(address.toString())
-            ) > 0
-        ) {
+            TABLE_NAME,
+            "$COL_ADDRESS = ?",
+            arrayOf(address.toString())
+        ) > 0) {
             mutableChangeNotification.tryEmit(address)
         }
     }
@@ -98,10 +94,7 @@ class RecipientSettingsDatabase @Inject constructor(
             return existing
         }
 
-        return readableDatabase.rawQuery(
-            "SELECT * FROM $TABLE_NAME WHERE $COL_ADDRESS = ?",
-            address.address
-        )
+        return readableDatabase.rawQuery("SELECT * FROM $TABLE_NAME WHERE $COL_ADDRESS = ?", address.address)
             .use { cursor ->
                 // If no settings are saved in the database, return the empty settings, and cache
                 // that as well so that we don't have to query the database again.
@@ -125,11 +118,7 @@ class RecipientSettingsDatabase @Inject constructor(
                 keyB64 = getString(getColumnIndexOrThrow(COL_PROFILE_PIC_KEY)),
                 url = getString(getColumnIndexOrThrow(COL_PROFILE_PIC_URL))
             ),
-            blocksCommunityMessagesRequests = getInt(
-                getColumnIndexOrThrow(
-                    COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS
-                )
-            ) == 1,
+            blocksCommunityMessagesRequests = getInt(getColumnIndexOrThrow(COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS)) == 1,
             name = getString(getColumnIndexOrThrow(COL_NAME)),
             proStatus = getString(getColumnIndexOrThrow(COL_PRO_STATUS))
                 ?.let {
@@ -250,15 +239,13 @@ class RecipientSettingsDatabase @Inject constructor(
         private const val COL_PROFILE_PIC_KEY = "profile_pic_key_b64"
         private const val COL_PROFILE_PIC_URL = "profile_pic_url"
         private const val COL_NAME = "name"
-        private const val COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS =
-            "blocks_community_messages_requests"
+        private const val COL_BLOCKS_COMMUNITY_MESSAGES_REQUESTS = "blocks_community_messages_requests"
         private const val COL_PRO_STATUS = "pro_status"
 
         // The time when the profile pic/name/is_pro was last updated, in epoch seconds.
         private const val COL_PROFILE_UPDATE_TIME = "profile_update_time"
 
-        val MIGRATION_CREATE_TABLE = arrayOf(
-            """
+        val MIGRATION_CREATE_TABLE = arrayOf("""
             CREATE TABLE recipient_settings (
                 $COL_ADDRESS TEXT NOT NULL PRIMARY KEY COLLATE NOCASE,
                 $COL_MUTE_UNTIL INTEGER NOT NULL DEFAULT 0,

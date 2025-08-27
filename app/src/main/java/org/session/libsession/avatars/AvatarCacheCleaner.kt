@@ -1,16 +1,13 @@
 package org.session.libsession.avatars
 
 import android.app.Application
-import com.bumptech.glide.Glide
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.attachments.RemoteFileDownloadWorker
-import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.glide.RecipientAvatarDownloadManager
@@ -23,7 +20,6 @@ class AvatarCacheCleaner @Inject constructor(
     private val application: Application,
     private val recipientAvatarDownloadManager: RecipientAvatarDownloadManager,
     private val recipientSettingsDatabase: RecipientSettingsDatabase,
-    private val mmsSmsDatabase: MmsSmsDatabase,
     @param:ManagerScope private val coroutineScope: CoroutineScope
 ) {
 
