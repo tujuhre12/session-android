@@ -15,6 +15,7 @@ import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.Period
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -228,6 +229,12 @@ class DateUtils @Inject constructor(
             // Less than 24 hours remaining - show hours
             format.format(Measure(totalHours, MeasureUnit.HOUR))
         }
+    }
+
+    fun getLocalisedTimeDuration(amount: Int, unit: MeasureUnit): String {
+        val locale = context.resources.configuration.locales[0]
+        val format = MeasureFormat.getInstance(locale, MeasureFormat.FormatWidth.WIDE)
+        return format.format(Measure(amount, unit))
     }
 
     // Helper methods

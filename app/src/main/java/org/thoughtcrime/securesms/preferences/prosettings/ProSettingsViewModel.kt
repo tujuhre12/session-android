@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.preferences.prosettings
 
 import android.content.Context
+import android.icu.util.MeasureUnit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.squareup.phrase.Phrase
@@ -22,6 +23,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.PERCENT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.RELATIVE_TIME_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.SELECTED_PLAN_KEY
 import org.thoughtcrime.securesms.pro.SubscriptionState
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
@@ -29,6 +31,7 @@ import org.thoughtcrime.securesms.pro.subscription.SubscriptionCoordinator
 import org.thoughtcrime.securesms.ui.SimpleDialogData
 import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.util.DateUtils
+import java.time.ZonedDateTime
 import javax.inject.Inject
 
 
@@ -50,6 +53,8 @@ class ProSettingsViewModel @Inject constructor(
 
     private val _proPlanUIState: MutableStateFlow<ProPlanUIState> = MutableStateFlow(ProPlanUIState())
     val proPlanUIState: StateFlow<ProPlanUIState> = _proPlanUIState
+
+    private val proSettingsDateFormat = "MMMM d, yyyy"
 
     init {
         generateState()
@@ -123,7 +128,7 @@ class ProSettingsViewModel @Inject constructor(
                             .format().toString(),
                         selected = currentPlan12Months,
                         currentPlan = currentPlan12Months,
-                        duration = ProSubscriptionDuration.TWELVE_MONTHS,
+                        durationType = ProSubscriptionDuration.TWELVE_MONTHS,
                         badges = buildList {
                             if(currentPlan12Months){
                                 add(
@@ -152,7 +157,7 @@ class ProSettingsViewModel @Inject constructor(
                             .format().toString(),
                         selected = currentPlan3Months,
                         currentPlan = currentPlan3Months,
-                        duration = ProSubscriptionDuration.THREE_MONTHS,
+                        durationType = ProSubscriptionDuration.THREE_MONTHS,
                         badges = buildList {
                             if(currentPlan3Months){
                                 add(
@@ -181,7 +186,7 @@ class ProSettingsViewModel @Inject constructor(
                             .format().toString(),
                         selected = currentPlan1Month,
                         currentPlan = currentPlan1Month,
-                        duration = ProSubscriptionDuration.ONE_MONTH,
+                        durationType = ProSubscriptionDuration.ONE_MONTH,
                         badges = if(currentPlan1Month) listOf(
                             ProPlanBadge(context.getString(R.string.currentPlan))
                         ) else emptyList(),
@@ -235,13 +240,41 @@ class ProSettingsViewModel @Inject constructor(
             Commands.GetProPlan -> {
                 // if we already have a current plan, ask for confirmation first
                 if(_proSettingsUIState.value.subscriptionState is SubscriptionState.Active){
+                    val newSubscriptionExpiryDate = ZonedDateTime.now()
+                        .plus(getSelectedPlan().durationType.duration)
+                        .toInstant()
+                        .toEpochMilli()
+                    val newSubscriptionExpiryString = dateUtils.getLocaleFormattedDate(
+                        newSubscriptionExpiryDate, proSettingsDateFormat
+                    )
+
+                    val currentSubscriptionDuration = dateUtils.getLocalisedTimeDuration(
+                        amount = (_proSettingsUIState.value.subscriptionState as SubscriptionState.Active).type.duration.months,
+                        unit = MeasureUnit.MONTH
+                    )
+
+                    val selectedSubscriptionDuration = dateUtils.getLocalisedTimeDuration(
+                        amount = getSelectedPlan().durationType.duration.months,
+                        unit = MeasureUnit.MONTH
+                    )
+
                     _dialogState.update {
                         it.copy(
                             showSimpleDialog = SimpleDialogData(
                                 title = context.getString(R.string.updatePlan),
                                 message = if(_proSettingsUIState.value.subscriptionState is SubscriptionState.Active.AutoRenewing)
-                                    "TEMP AUTO RENEW"
-                                else "TEMP EXPIRING", //todo PRO get real string
+                                    Phrase.from(context.getText(R.string.proUpdatePlanDescription))
+                                        .put(CURRENT_PLAN_KEY, currentSubscriptionDuration)
+                                        .put(SELECTED_PLAN_KEY, selectedSubscriptionDuration)
+                                        .put(DATE_KEY, newSubscriptionExpiryString)
+                                        .put(SELECTED_PLAN_KEY, selectedSubscriptionDuration)
+                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                        .format()
+                                else Phrase.from(context.getText(R.string.proUpdatePlanExpireDescription))
+                                    .put(DATE_KEY, newSubscriptionExpiryString)
+                                    .put(DATE_KEY, newSubscriptionExpiryString)
+                                    .put(SELECTED_PLAN_KEY, selectedSubscriptionDuration)
+                                    .format(),
                                 positiveText = context.getString(R.string.updatePlan),
                                 negativeText = context.getString(R.string.cancel),
                                 positiveStyleDanger = false,
@@ -275,7 +308,7 @@ class ProSettingsViewModel @Inject constructor(
 
     private fun getPlanFromProvider(){
         subscriptionCoordinator.getCurrentManager().purchasePlan(
-            getSelectedPlan().duration
+            getSelectedPlan().durationType
         )
     }
 
@@ -322,7 +355,7 @@ class ProSettingsViewModel @Inject constructor(
     data class ProPlan(
         val title: String,
         val subtitle: String,
-        val duration: ProSubscriptionDuration,
+        val durationType: ProSubscriptionDuration,
         val currentPlan: Boolean,
         val selected: Boolean,
         val badges: List<ProPlanBadge>
