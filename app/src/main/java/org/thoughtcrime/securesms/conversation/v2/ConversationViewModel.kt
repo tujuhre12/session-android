@@ -208,7 +208,7 @@ class ConversationViewModel @AssistedInject constructor(
 
 
     val showSendAfterApprovalText: Flow<Boolean> get() = recipientFlow.map { r ->
-        (r.acceptsCommunityMessageRequests || r.isStandardRecipient) && !r.isLocalNumber && !r.approvedMe
+        (r.acceptsBlindedCommunityMessageRequests || r.isStandardRecipient) && !r.isLocalNumber && !r.approvedMe
     }
 
     val openGroupFlow: StateFlow<OpenGroup?> = recipientFlow
@@ -616,7 +616,7 @@ class ConversationViewModel @AssistedInject constructor(
                 groupDb.getGroup(recipient.address.toGroupString()).orNull()?.isActive == true &&
                         deprecationState != LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
             }
-            address.isCommunityInbox && !recipient.acceptsCommunityMessageRequests -> false
+            address.isCommunityInbox && !recipient.acceptsBlindedCommunityMessageRequests -> false
             else -> true
         }
     }

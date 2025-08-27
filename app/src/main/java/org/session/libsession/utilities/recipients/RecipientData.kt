@@ -9,7 +9,6 @@ import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.AccountId
 import java.time.Instant
-import java.time.ZonedDateTime
 
 /**
  * Represents different kind of data associated with different types of recipients.
@@ -50,7 +49,7 @@ sealed interface RecipientData {
         override val avatar: RemoteFile? = null,
         override val priority: Long = PRIORITY_VISIBLE,
         override val proStatus: ProStatus = ProStatus.None,
-        val acceptsCommunityMessageRequests: Boolean = false,
+        val acceptsBlindedCommunityMessageRequests: Boolean = false,
         override val profileUpdatedAt: Instant? = null,
     ) : RecipientData
 
@@ -59,7 +58,7 @@ sealed interface RecipientData {
         override val avatar: RemoteFile.Encrypted?,
         override val priority: Long,
         override val proStatus: ProStatus,
-        val acceptsCommunityMessageRequests: Boolean,
+        val acceptsBlindedCommunityMessageRequests: Boolean,
         override val profileUpdatedAt: Instant?
     ) : ConfigBased, RecipientData
 

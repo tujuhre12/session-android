@@ -76,7 +76,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
@@ -1425,7 +1424,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }
 
             // If we're trying to message someone who has blocked community message requests
-            recipient.address.isBlinded && !recipient.acceptsCommunityMessageRequests -> {
+            recipient.address.isBlinded && !recipient.acceptsBlindedCommunityMessageRequests -> {
                 Phrase.from(applicationContext, R.string.messageRequestsTurnedOff)
                     .put(NAME_KEY, recipient.displayName())
                     .format()

@@ -461,7 +461,7 @@ class RecipientRepository @Inject constructor(
                     // This information is not available in the config but we infer that
                     // if you already have this person as blinded contact, you would have been
                     // able to send them a message before.
-                    acceptsCommunityMessageRequests = true,
+                    acceptsBlindedCommunityMessageRequests = true,
                     profileUpdatedAt = contact.profileUpdatedEpochSeconds.secondsToInstant()
                 )
             }
@@ -491,7 +491,7 @@ class RecipientRepository @Inject constructor(
                 displayName = settings.name?.takeIf { it.isNotBlank() } ?: groupMemberInfo?.name.orEmpty(),
                 avatar = settings.profilePic?.toRemoteFile() ?: groupMemberInfo?.profilePic?.toRemoteFile(),
                 proStatus = settings.proStatus,
-                acceptsCommunityMessageRequests = !settings.blocksCommunityMessagesRequests,
+                acceptsBlindedCommunityMessageRequests = !settings.blocksCommunityMessagesRequests,
             ),
             mutedUntil = settings.muteUntil,
             autoDownloadAttachments = settings.autoDownloadAttachments,
