@@ -836,8 +836,8 @@
     <string name="passwordSetShortDescription">Require password to unlock {app_name} on startup.</string>
     <string name="passwordStrengthCharLength">Longer than 12 characters</string>
     <string name="passwordStrengthIncludeNumber">Includes a number</string>
-    <string name="passwordStrengthIncludesLetter">Includes a letter</string>
     <string name="passwordStrengthIncludesLowercase">Includes a lowercase letter</string>
+    <string name="passwordStrengthIncludesSymbol">Includes a symbol</string>
     <string name="passwordStrengthIncludesUppercase">Includes a uppercase letter</string>
     <string name="passwordStrengthIndicator">Password Strength Indicator</string>
     <string name="passwordStrengthIndicatorDescription">Setting a strong password helps protect your messages and attachments if your device is ever lost or stolen.</string>
@@ -973,6 +973,8 @@
     <string name="proTosPrivacy">By updating, you agree to the {app_pro} <b>Terms of Service</b> {icon} and <b>Privacy Policy</b> {icon}</string>
     <string name="proUnlimitedPins">Unlimited Pins</string>
     <string name="proUnlimitedPinsDescription">Organize all your chats with unlimited pinned conversations.</string>
+    <string name="proUpdatePlanDescription">You are currently on the <b>{current_plan} Plan</b>. Are you sure you want to switch to the <b>{selected_plan} Plan</b>?\n\nBy updating, your plan will automatically renew on <b>{date}</b> for an additional {selected_plan} of {pro} access.</string>
+    <string name="proUpdatePlanExpireDescription">Your plan will expire on <b>{date}</b>.\n\nBy updating, your plan will automatically renew on <b>{date}</b> for an additional {selected_plan} of Pro access.</string>
     <string name="proUserProfileModalCallToAction">Want to get more out of {app_name}? Upgrade to {app_pro} for a more powerful messaging experience.</string>
     <string name="processingRefundRequest">{platform_account} is processing your refund request</string>
     <string name="profile">Profile</string>
