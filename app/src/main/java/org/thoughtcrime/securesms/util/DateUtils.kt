@@ -16,8 +16,9 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.util.*
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -247,4 +248,34 @@ class DateUtils @Inject constructor(
 
     private fun getLocalizedPattern(template: String, locale: Locale): String =
         DateFormat.getBestDateTimePattern(locale, template)
+
+    companion object {
+        fun Long.asEpochSeconds(): ZonedDateTime? {
+            if (this <= 0) return null
+
+            return Instant.ofEpochSecond(this).atZone(ZoneId.of("UTC"))
+        }
+
+        fun Long.secondsToInstant(): Instant? {
+            if (this <= 0) return null
+
+            return Instant.ofEpochSecond(this)
+        }
+
+        fun Long.millsToInstant(): Instant? {
+            if (this <= 0) return null
+
+            return Instant.ofEpochMilli(this)
+        }
+
+        fun Long.asEpochMillis(): ZonedDateTime? {
+            if (this <= 0) return null
+
+            return Instant.ofEpochMilli(this).atZone(ZoneId.of("UTC"))
+        }
+
+        fun Instant.toEpochSeconds(): Long {
+            return this.toEpochMilli() / 1000
+        }
+    }
 }

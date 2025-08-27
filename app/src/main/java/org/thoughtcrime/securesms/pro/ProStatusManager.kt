@@ -13,6 +13,7 @@ import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.RELATIVE_TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.isCommunity
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
