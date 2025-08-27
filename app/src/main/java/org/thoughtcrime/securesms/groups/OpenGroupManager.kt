@@ -65,8 +65,6 @@ class OpenGroupManager @Inject constructor(
             configs.userGroups.eraseCommunity(server, room)
             configs.convoInfoVolatile.eraseCommunity(server, room)
         }
-
-        avatarCacheCleaner.launchAvatarCleanup()
     }
 
     suspend fun addOpenGroup(urlAsString: String) {

@@ -38,28 +38,15 @@ class AvatarCacheCleaner @Inject constructor(
     suspend fun cleanUpAvatars(): Int = withContext(Dispatchers.IO) {
         // 1) Build the set of still-wanted Avatars from:
         // -> Config
-        // -> RecipientSettingsDatabase
 
         // config
         val avatarsFromConfig: Set<RemoteFile> = recipientAvatarDownloadManager.getAllAvatars()
         // recipient_settings
-        val recipientAvatars : Map<Address, RemoteFile> = recipientSettingsDatabase.getAllReferencedAvatarFiles()
-        // mms and sms used to check for active references
-        val localActiveAddresses : Set<Address> = mmsSmsDatabase.getAllReferencedAddresses()
-        .mapTo(mutableSetOf()) { Address.fromSerialized(it) }
-
-        // 2) Keep only those recipient avatars whose address exists in a community/group
-        // Filter here since we don't delete rows from recipient_settings
-        val keepFromRecipients: Set<RemoteFile> =
-            recipientAvatars
-                .asSequence()
-                .filter { (address, _) -> address in localActiveAddresses }
-                .map { it.value }
-                .toSet()
+        val recipientAvatars : Set<RemoteFile> = recipientSettingsDatabase.getAllReferencedAvatarFiles()
 
         // 3) Union of everything we want to keep
         val filesToKeep: Set<RemoteFile> =
-            (avatarsFromConfig + keepFromRecipients).toSet()
+            (avatarsFromConfig + recipientAvatars).toSet()
 
         // 4) Map to actual files (same hashing/location as downloader)
         val wantedFiles: Set<File> = filesToKeep

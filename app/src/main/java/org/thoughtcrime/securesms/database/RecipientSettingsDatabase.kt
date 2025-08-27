@@ -157,31 +157,85 @@ class RecipientSettingsDatabase @Inject constructor(
     }
 
     /**
-     * This method returns all referenced profile picture URL.
+     * This method returns all profile pic url and key.
      * This will be used to identify which avatars are still being used  to exclude
      * them from the cleanup.
      */
-    fun getAllReferencedAvatarFiles(): Map<Address, RemoteFile.Encrypted> {
-        LinkedHashSet<RemoteFile.Encrypted>()
-
-        val sql =
+    fun getAllReferencedAvatarFiles(): Set<RemoteFile.Encrypted> {
+        val recipientAvatars = LinkedHashSet<RemoteFile.Encrypted>()
+        readableDatabase.rawQuery(
             """
         SELECT $COL_PROFILE_PIC_URL, $COL_PROFILE_PIC_KEY
         FROM $TABLE_NAME
         WHERE $COL_PROFILE_PIC_URL IS NOT NULL AND $COL_PROFILE_PIC_URL != ''
           AND $COL_PROFILE_PIC_KEY IS NOT NULL AND $COL_PROFILE_PIC_KEY != ''
-        """.trimIndent()
-
-        return readableDatabase.rawQuery(sql, emptyArray()).use { cursor ->
-            buildMap {
-                while (cursor.moveToNext()) {
-                    val address = Address.fromSerialized(cursor.getString(0))
-                    val url = cursor.getString(0)
-                    val key = Base64.decode(cursor.getString(1))
-                    put(address, RemoteFile.Encrypted(url = url, key = Bytes(key)))
+        """.trimIndent(),
+            null
+        ).use { cursor ->
+            while (cursor.moveToNext()) {
+                val url = cursor.getString(0)
+                val keyB64 = cursor.getString(1)
+                runCatching {
+                    val keyBytes = Base64.decode(keyB64)
+                    recipientAvatars += RemoteFile.Encrypted(url = url, key = Bytes(keyBytes))
+                }.onFailure {
+                    // ignore bad rows
                 }
             }
         }
+        return recipientAvatars
+    }
+
+    fun getAllRecipientAddresses(): Set<Address> {
+        return readableDatabase.rawQuery(
+            "SELECT $COL_ADDRESS FROM $TABLE_NAME", emptyArray()
+        ).use { cursor ->
+            buildSet {
+                while (cursor.moveToNext()) {
+                    val raw = cursor.getString(0)
+                    if (!raw.isNullOrBlank()) add(Address.fromSerialized(raw))
+                }
+            }
+        }
+    }
+
+    /**
+     * Delete all rows whose address is NOT in [addressesToKeep].
+     * Returns the number of rows deleted.
+     */
+    fun cleanupRecipientSettings(addressesToKeep: Set<Address>): Int {
+        if (addressesToKeep.isEmpty()) return 0
+
+        // Build a temporary lookup of strings for SQL bind args
+        val keepSet = addressesToKeep.mapTo(hashSetOf()) { it.toString() }
+
+        // Collect all rows, figure out orphans in memory
+        val allRecipientAddresses = getAllRecipientAddresses()
+        val orphans = allRecipientAddresses.filter { it.toString() !in keepSet }
+
+        if (orphans.isEmpty()) return 0
+
+        var deleted = 0
+        val db = writableDatabase
+        db.beginTransaction()
+        try {
+            for (address in orphans) {
+                val rows = db.delete(
+                    TABLE_NAME,
+                    "$COL_ADDRESS = ?",
+                    arrayOf(address.toString())
+                )
+                if (rows > 0) {
+                    cache.remove(address)
+                    mutableChangeNotification.tryEmit(address)
+                    deleted += rows
+                }
+            }
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
+        }
+        return deleted
     }
 
     companion object {
