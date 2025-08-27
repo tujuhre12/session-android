@@ -12,6 +12,7 @@ import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.channels.Channel
 import org.session.libsession.messaging.groups.GroupScope
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.sending_receiving.MessageSender
@@ -73,6 +74,8 @@ class GroupLeavingWorker @AssistedInject constructor(
                         )
 
                         // If we are not the only admin, send a left message for other admin to handle the member removal
+                        // We'll have to wait for this message to be sent before going ahead to delete the group
+                        val statusChannel = Channel<kotlin.Result<Unit>>()
                         MessageSender.send(
                             GroupUpdated(
                                 GroupUpdateMessage.newBuilder()
@@ -80,7 +83,10 @@ class GroupLeavingWorker @AssistedInject constructor(
                                     .build()
                             ),
                             address,
+                            statusCallback = statusChannel
                         )
+
+                        statusChannel.receive().getOrThrow()
                     }
 
                     // If we are the only admin, leaving this group will destroy the group
