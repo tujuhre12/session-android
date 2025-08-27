@@ -165,12 +165,10 @@ class DefaultConversationRepository @Inject constructor(
     private fun getConversationListAddresses() = buildSet {
         val myAddress = Address.Standard(AccountId(textSecurePreferences.getLocalNumber() ?: return@buildSet ))
 
-        configFactory.withUserConfigs { configs ->
-            // Have NTS?
-            if (configs.userProfile.getNtsPriority() >= 0) {
-                add(myAddress)
-            }
+        // Always have NTS - we should only "hide" them on home screen - the convo should never be deleted
+        add(myAddress)
 
+        configFactory.withUserConfigs { configs ->
             // Contacts
             for (contact in configs.contacts.all()) {
                 if (contact.priority >= 0 && (!contact.blocked || contact.approved)) {
