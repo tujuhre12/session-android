@@ -1,19 +1,17 @@
 package org.thoughtcrime.securesms.pro
 
 import android.content.Context
-import com.squareup.phrase.Phrase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import network.loki.messenger.R
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.StringSubstitutionConstants.RELATIVE_TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.isCommunity
+import org.session.libsession.utilities.recipients.ProStatus
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
@@ -113,25 +111,29 @@ class ProStatusManager @Inject constructor(
         return if (isCurrentUserPro()) Int.MAX_VALUE else MAX_PIN_REGULAR
     }
 
-    fun getCurrentSubscriptionStatus(): ProAccountStatus {
+    fun getCurrentSubscriptionState(): SubscriptionState {
         //todo PRO implement properly
         //todo PRO need a way to differentiate originating store
 
-        val subscriptionStatus = prefs.getDebugSubscriptionStatus() ?: DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE
-        return  when(subscriptionStatus){
-            DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE -> ProAccountStatus.Pro.AutoRenewing(
-                showProBadge = true,
-                validUntil = Instant.now() + Duration.ofDays(14),
+        val subscriptionState = prefs.getDebugSubscriptionType() ?: DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE
+        return  when(subscriptionState){
+            DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE -> SubscriptionState.Active.AutoRenewing(
+                proStatus = ProStatus.Pro(
+                    visible = true,
+                    validUntil = Instant.now() + Duration.ofDays(14),
+                ),
                 type = ProSubscriptionDuration.THREE_MONTHS
             )
 
-            DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE -> ProAccountStatus.Pro.Expiring(
-                showProBadge = true,
-                validUntil = Instant.now() + Duration.ofDays(2),
+            DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE -> SubscriptionState.Active.Expiring(
+                proStatus = ProStatus.Pro(
+                    visible = true,
+                    validUntil = Instant.now() + Duration.ofDays(2),
+                ),
                 type = ProSubscriptionDuration.TWELVE_MONTHS
             )
 
-            else -> ProAccountStatus.Expired
+            else -> SubscriptionState.Expired
         }
     }
 

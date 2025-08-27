@@ -47,11 +47,11 @@ import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.ICON_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.RELATIVE_TIME_KEY
+import org.session.libsession.utilities.recipients.ProStatus
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.SetShowProBadge
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowPlanUpdate
-import org.thoughtcrime.securesms.pro.ProAccountStatus
+import org.thoughtcrime.securesms.pro.SubscriptionState
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.ui.CategoryCell
 import org.thoughtcrime.securesms.ui.Divider
@@ -81,7 +81,6 @@ import org.thoughtcrime.securesms.ui.theme.primaryYellow
 import org.thoughtcrime.securesms.util.NumberUtil
 import java.time.Duration
 import java.time.Instant
-import kotlin.math.exp
 
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -107,11 +106,11 @@ fun ProSettingsHome(
     onBack: () -> Unit,
 ) {
     BaseProSettingsScreen(
-        disabled = data.proStatus is ProAccountStatus.Expired,
+        disabled = data.subscriptionState is SubscriptionState.Expired,
         onBack = onBack,
     ) {
         // Pro Stats
-        if(data.proStatus is ProAccountStatus.Pro){
+        if(data.subscriptionState is SubscriptionState.Active){
             Spacer(Modifier.height(LocalDimensions.current.spacing))
             ProStats(
                 data = data.proStats,
@@ -120,20 +119,20 @@ fun ProSettingsHome(
         }
 
         // Pro account settings
-        if(data.proStatus is ProAccountStatus.Pro){
+        if(data.subscriptionState is SubscriptionState.Active){
             Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
             ProSettings(
-                data = data.proStatus,
+                data = data.subscriptionState,
                 expiry = data.proExpiryLabel,
                 sendCommand = sendCommand,
             )
         }
 
         // Manage Pro - Expired
-        if(data.proStatus is ProAccountStatus.Expired){
+        if(data.subscriptionState is SubscriptionState.Expired){
             Spacer(Modifier.height(LocalDimensions.current.spacing))
             ProManage(
-                data = data.proStatus,
+                data = data.subscriptionState,
                 sendCommand = sendCommand,
             )
         }
@@ -141,15 +140,15 @@ fun ProSettingsHome(
         // Features
         Spacer(Modifier.height(LocalDimensions.current.spacing))
         ProFeatures(
-            data = data.proStatus,
+            data = data.subscriptionState,
             sendCommand = sendCommand,
         )
 
         // Manage Pro - Pro
-        if(data.proStatus is ProAccountStatus.Pro){
+        if(data.subscriptionState is SubscriptionState.Active){
             Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
             ProManage(
-                data = data.proStatus,
+                data = data.subscriptionState,
                 sendCommand = sendCommand,
             )
         }
@@ -159,7 +158,7 @@ fun ProSettingsHome(
         CategoryCell(
             title = stringResource(R.string.sessionHelp),
         ) {
-            val iconColor = if(data.proStatus is ProAccountStatus.Expired) LocalColors.current.text
+            val iconColor = if(data.subscriptionState is SubscriptionState.Expired) LocalColors.current.text
             else LocalColors.current.accentText
 
             // Cell content
@@ -340,7 +339,7 @@ fun ProStatItem(
 @Composable
 fun ProSettings(
     modifier: Modifier = Modifier,
-    data: ProAccountStatus.Pro,
+    data: SubscriptionState.Active,
     expiry: CharSequence,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
 ){
@@ -375,7 +374,7 @@ fun ProSettings(
                         .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                         .format().toString()
                 ),
-                checked = data.showProBadge,
+                checked = data.proStatus.visible,
                 qaTag = R.string.qa_pro_settings_action_show_badge,
                 onCheckedChange = { sendCommand(SetShowProBadge(it)) }
             )
@@ -386,7 +385,7 @@ fun ProSettings(
 @Composable
 fun ProFeatures(
     modifier: Modifier = Modifier,
-    data: ProAccountStatus,
+    data: SubscriptionState,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
 ) {
     CategoryCell(
@@ -408,7 +407,7 @@ fun ProFeatures(
                 icon = R.drawable.ic_users_round_plus_custom,
                 iconGradientStart = primaryGreen,
                 iconGradientEnd = primaryBlue,
-                expired = data is ProAccountStatus.Expired
+                expired = data is SubscriptionState.Expired
             )
 
             // Longer messages
@@ -418,7 +417,7 @@ fun ProFeatures(
                 icon = R.drawable.ic_message_square,
                 iconGradientStart = primaryBlue,
                 iconGradientEnd = primaryPurple,
-                expired = data is ProAccountStatus.Expired
+                expired = data is SubscriptionState.Expired
             )
 
             // Animated pics
@@ -428,7 +427,7 @@ fun ProFeatures(
                 icon = R.drawable.ic_square_play,
                 iconGradientStart = primaryPurple,
                 iconGradientEnd = primaryPink,
-                expired = data is ProAccountStatus.Expired
+                expired = data is SubscriptionState.Expired
             )
 
             // Pro badges
@@ -442,7 +441,7 @@ fun ProFeatures(
                 icon = R.drawable.ic_rectangle_ellipsis,
                 iconGradientStart = primaryPink,
                 iconGradientEnd = primaryRed,
-                expired = data is ProAccountStatus.Expired,
+                expired = data is SubscriptionState.Expired,
                 showProBadge = true,
             )
 
@@ -453,7 +452,7 @@ fun ProFeatures(
                 icon = R.drawable.ic_pin,
                 iconGradientStart = primaryRed,
                 iconGradientEnd = primaryOrange,
-                expired = data is ProAccountStatus.Expired
+                expired = data is SubscriptionState.Expired
             )
 
             // More...
@@ -469,7 +468,7 @@ fun ProFeatures(
                 icon = R.drawable.ic_circle_plus,
                 iconGradientStart = primaryOrange,
                 iconGradientEnd = primaryYellow,
-                expired = data is ProAccountStatus.Expired,
+                expired = data is SubscriptionState.Expired,
                 onClick = {
                     sendCommand(ShowOpenUrlDialog("https://getsession.org/pro-roadmap"))
                 }
@@ -547,7 +546,7 @@ private fun ProFeatureItem(
 @Composable
 fun ProManage(
     modifier: Modifier = Modifier,
-    data: ProAccountStatus,
+    data: SubscriptionState,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
 ){
     CategoryCell(
@@ -561,7 +560,7 @@ fun ProManage(
             modifier = Modifier.fillMaxWidth(),
         ) {
             when(data){
-                is ProAccountStatus.Pro.AutoRenewing -> {
+                is SubscriptionState.Active.AutoRenewing -> {
                     IconActionRowItem(
                         title = annotatedStringResource(R.string.cancelPlan),
                         titleColor = LocalColors.current.danger,
@@ -585,7 +584,7 @@ fun ProManage(
                     )
                 }
 
-                is ProAccountStatus.Pro.Expiring -> {
+                is SubscriptionState.Active.Expiring -> {
                     IconActionRowItem(
                         title = annotatedStringResource(R.string.cancelPlan),
                         titleColor = LocalColors.current.danger,
@@ -598,7 +597,7 @@ fun ProManage(
                     )
                 }
 
-                is ProAccountStatus.Expired -> {
+                is SubscriptionState.Expired -> {
                     IconActionRowItem(
                         title = annotatedStringResource(
                             Phrase.from(LocalContext.current, R.string.proPlanRenew)
@@ -628,7 +627,7 @@ fun ProManage(
                     )
                 }
 
-                is ProAccountStatus.None -> {}
+                is SubscriptionState.NeverSubscribed -> {}
             }
         }
     }
@@ -642,9 +641,11 @@ fun PreviewProSettingsPro(
     PreviewTheme(colors) {
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsUIState(
-                proStatus = ProAccountStatus.Pro.AutoRenewing(
-                    showProBadge = true,
-                    validUntil = Instant.now() + Duration.ofDays(14),
+                subscriptionState = SubscriptionState.Active.AutoRenewing(
+                    proStatus = ProStatus.Pro(
+                        visible = true,
+                        validUntil = Instant.now() + Duration.ofDays(14),
+                    ),
                     type = ProSubscriptionDuration.THREE_MONTHS
                 ),
             ),
@@ -662,7 +663,7 @@ fun PreviewProSettingsExpired(
     PreviewTheme(colors) {
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsUIState(
-                proStatus = ProAccountStatus.Expired,
+                subscriptionState = SubscriptionState.Expired,
             ),
             sendCommand = {},
             onBack = {},
@@ -678,7 +679,7 @@ fun PreviewProSettingsNonPro(
     PreviewTheme(colors) {
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsUIState(
-                proStatus = ProAccountStatus.None,
+                subscriptionState = SubscriptionState.NeverSubscribed,
             ),
             sendCommand = {},
             onBack = {},

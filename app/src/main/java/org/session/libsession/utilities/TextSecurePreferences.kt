@@ -212,8 +212,8 @@ interface TextSecurePreferences {
     fun  getDebugMessageFeatures(): Set<ProStatusManager.MessageProFeature>
     fun  setDebugMessageFeatures(features: Set<ProStatusManager.MessageProFeature>)
 
-    fun getDebugSubscriptionStatus(): DebugMenuViewModel.DebugSubscriptionStatus?
-    fun setDebugSubscriptionStatus(status: DebugMenuViewModel.DebugSubscriptionStatus?)
+    fun getDebugSubscriptionType(): DebugMenuViewModel.DebugSubscriptionStatus?
+    fun setDebugSubscriptionType(status: DebugMenuViewModel.DebugSubscriptionStatus?)
 
     fun setSubscriptionProvider(provider: String)
     fun getSubscriptionProvider(): String?
@@ -1756,13 +1756,13 @@ class AppTextSecurePreferences @Inject constructor(
         setStringSetPreference(TextSecurePreferences.DEBUG_MESSAGE_FEATURES, features.map { it.name }.toSet())
     }
 
-    override fun getDebugSubscriptionStatus(): DebugMenuViewModel.DebugSubscriptionStatus? {
+    override fun getDebugSubscriptionType(): DebugMenuViewModel.DebugSubscriptionStatus? {
         return getStringPreference(TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS, null)?.let {
             DebugMenuViewModel.DebugSubscriptionStatus.valueOf(it)
         }
     }
 
-    override fun setDebugSubscriptionStatus(status: DebugMenuViewModel.DebugSubscriptionStatus?) {
+    override fun setDebugSubscriptionType(status: DebugMenuViewModel.DebugSubscriptionStatus?) {
         setStringPreference(TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS, status?.name)
     }
 

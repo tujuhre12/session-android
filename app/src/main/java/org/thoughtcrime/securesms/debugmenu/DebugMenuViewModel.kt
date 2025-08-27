@@ -85,12 +85,12 @@ class DebugMenuViewModel @Inject constructor(
             debugSubscriptionStatuses = setOf(
                 DebugSubscriptionStatus.AUTO_GOOGLE,
                 DebugSubscriptionStatus.EXPIRING_GOOGLE,
-                DebugSubscriptionStatus.EXPIRED_GOOGLE,
-                DebugSubscriptionStatus.AUTO_APPLE,
-                DebugSubscriptionStatus.EXPIRING_APPLE,
-                DebugSubscriptionStatus.EXPIRED_APPLE,
+                DebugSubscriptionStatus.EXPIRED_GOOGLE, //todo PRO uncomment below once we know how to differentiate store providers
+//                DebugSubscriptionStatus.AUTO_APPLE,
+//                DebugSubscriptionStatus.EXPIRING_APPLE,
+//                DebugSubscriptionStatus.EXPIRED_APPLE,
             ),
-            selectedDebugSubscriptionStatus = textSecurePreferences.getDebugSubscriptionStatus() ?: DebugSubscriptionStatus.AUTO_GOOGLE,
+            selectedDebugSubscriptionStatus = textSecurePreferences.getDebugSubscriptionType() ?: DebugSubscriptionStatus.AUTO_GOOGLE,
         )
     )
     val uiState: StateFlow<UIState>
@@ -291,7 +291,7 @@ class DebugMenuViewModel @Inject constructor(
             }
 
             is Commands.SetDebugSubscriptionStatus -> {
-                textSecurePreferences.setDebugSubscriptionStatus(command.status)
+                textSecurePreferences.setDebugSubscriptionType(command.status)
                 _uiState.update {
                     it.copy(selectedDebugSubscriptionStatus = command.status)
                 }
