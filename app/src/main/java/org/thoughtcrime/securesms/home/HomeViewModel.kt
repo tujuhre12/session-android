@@ -93,7 +93,10 @@ class HomeViewModel @Inject constructor(
                 conversationRepository.observeConversationList()
             }
             .map { convos ->
-                val (approved, unapproved) = convos.partition { it.recipient.approved }
+                val (approved, unapproved) = convos
+                    .asSequence()
+                    .filter { !it.recipient.blocked } // We don't display blocked convo at all
+                    .partition { it.recipient.approved }
                 val unreadUnapproved = unapproved
                     .count { it.unreadCount > 0 || it.unreadMentionCount > 0 }
                 unreadUnapproved to approved.sortedWith(CONVERSATION_COMPARATOR)
