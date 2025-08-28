@@ -451,9 +451,7 @@ public class MmsSmsDatabase extends Database {
 
   public Set<Address> getAllReferencedAddresses() {
     final String[] projection = new String[] { "DISTINCT " + MmsSmsColumns.ADDRESS };
-    final String selection =
-            "NOT " + MmsSmsColumns.IS_DELETED +
-                    " AND " + MmsSmsColumns.ADDRESS + " IS NOT NULL" +
+    final String selection = MmsSmsColumns.ADDRESS + " IS NOT NULL" +
                     " AND " + MmsSmsColumns.ADDRESS + " != ''";
 
     Set<Address> out = new HashSet<>();
