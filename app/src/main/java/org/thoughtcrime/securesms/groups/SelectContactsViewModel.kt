@@ -60,6 +60,10 @@ open class SelectContactsViewModel @AssistedInject constructor(
         ::filterContacts
     ).stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
+    val hasContacts: StateFlow<Boolean> = contacts
+            .map { it.isNotEmpty() }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
     // Output
     val currentSelected: Set<Address>
         get() = mutableSelectedContactAccountIDs.value
