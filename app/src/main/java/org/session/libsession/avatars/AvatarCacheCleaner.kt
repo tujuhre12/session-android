@@ -51,8 +51,7 @@ class AvatarCacheCleaner @Inject constructor(
             .toSet()
 
         // 5) Delete everything not wanted in cache/remote_files
-        val dir = File(application.cacheDir, "remote_files")
-        val files = dir.listFiles().orEmpty()
+        val files = RemoteFileDownloadWorker.listDownloadedFiles(application)
         var deleted = 0
         for (file in files) {
             if (file !in wantedFiles && file.delete()) deleted++
