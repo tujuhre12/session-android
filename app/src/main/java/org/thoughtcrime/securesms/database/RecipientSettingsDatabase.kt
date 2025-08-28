@@ -212,7 +212,6 @@ class RecipientSettingsDatabase @Inject constructor(
                     arrayOf(address.toString())
                 )
                 if (rows > 0) {
-                    cache.remove(address)
                     deleted += rows
                 }
             }
@@ -220,6 +219,13 @@ class RecipientSettingsDatabase @Inject constructor(
         } finally {
             database.endTransaction()
         }
+
+        // Notify after db transaction
+        for (address in orphans) {
+            cache.remove(address)
+            mutableChangeNotification.tryEmit(address)
+        }
+
         return deleted
     }
 
