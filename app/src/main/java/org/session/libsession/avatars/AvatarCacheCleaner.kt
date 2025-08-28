@@ -31,7 +31,7 @@ class AvatarCacheCleaner @Inject constructor(
      * Deletes avatar files under cache/remote_files that are no longer referenced
      * in the current config. Returns number of files deleted.
      */
-    suspend fun cleanUpAvatars(): Int = withContext(Dispatchers.IO) {
+    private suspend fun cleanUpAvatars(): Int = withContext(Dispatchers.IO) {
         // 1) Build the set of still-wanted Avatars from:
         // -> Config
 

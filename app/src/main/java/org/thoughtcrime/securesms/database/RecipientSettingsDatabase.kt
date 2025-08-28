@@ -177,7 +177,7 @@ class RecipientSettingsDatabase @Inject constructor(
 
     fun getAllRecipientAddresses(): Set<Address> {
         return readableDatabase.rawQuery(
-            "SELECT $COL_ADDRESS FROM $TABLE_NAME", emptyArray()
+            "SELECT $COL_ADDRESS FROM $TABLE_NAME"
         ).use { cursor ->
             buildSet {
                 while (cursor.moveToNext()) {
@@ -195,12 +195,9 @@ class RecipientSettingsDatabase @Inject constructor(
     fun cleanupRecipientSettings(addressesToKeep: Set<Address>): Int {
         if (addressesToKeep.isEmpty()) return 0
 
-        // Build a temporary lookup of strings
-        val keepSet = addressesToKeep.mapTo(hashSetOf()) { it.toString() }
-
         // Collect all rows, figure out orphans in memory
         val allRecipientAddresses = getAllRecipientAddresses()
-        val orphans = allRecipientAddresses.filter { it.toString() !in keepSet }
+        val orphans = allRecipientAddresses.filter { it !in addressesToKeep }
 
         if (orphans.isEmpty()) return 0
 
@@ -216,7 +213,6 @@ class RecipientSettingsDatabase @Inject constructor(
                 )
                 if (rows > 0) {
                     cache.remove(address)
-                    mutableChangeNotification.tryEmit(address)
                     deleted += rows
                 }
             }
