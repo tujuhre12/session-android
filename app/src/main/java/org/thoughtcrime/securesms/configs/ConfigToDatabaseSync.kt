@@ -154,7 +154,7 @@ class ConfigToDatabaseSync @Inject constructor(
 
             // Initiate cleanup in recipient_settings rows that no longer have any messages
             val addressesToKeep = mmsSmsDatabase.getAllReferencedAddresses()
-                .mapTo(mutableSetOf()) { Address.fromSerialized(it) }
+                .mapTo(mutableSetOf()) { fromSerialized(it) }
 
             val removed = recipientSettingsDatabase.cleanupRecipientSettings(addressesToKeep)
             Log.d(TAG, "Recipient settings pruned: $removed orphan rows")

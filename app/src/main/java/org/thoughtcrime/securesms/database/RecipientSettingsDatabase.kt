@@ -151,10 +151,10 @@ class RecipientSettingsDatabase @Inject constructor(
      * them from the cleanup.
      */
     fun getAllReferencedAvatarFiles(): Set<RemoteFile.Encrypted> {
-        val recipientAvatars = LinkedHashSet<RemoteFile.Encrypted>()
+        val recipientAvatars = HashSet<RemoteFile.Encrypted>()
         readableDatabase.rawQuery(
             """
-        SELECT $COL_PROFILE_PIC_URL, $COL_PROFILE_PIC_KEY
+        SELECT DISTINCT $COL_PROFILE_PIC_URL, $COL_PROFILE_PIC_KEY
         FROM $TABLE_NAME
         WHERE $COL_PROFILE_PIC_URL IS NOT NULL AND $COL_PROFILE_PIC_URL != ''
           AND $COL_PROFILE_PIC_KEY IS NOT NULL AND $COL_PROFILE_PIC_KEY != ''
