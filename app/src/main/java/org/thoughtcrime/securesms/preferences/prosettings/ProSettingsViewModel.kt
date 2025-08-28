@@ -4,6 +4,7 @@ import android.content.Context
 import android.icu.util.MeasureUnit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.media3.common.Label
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -69,7 +70,7 @@ class ProSettingsViewModel @Inject constructor(
                 subscriptionState = if(proStatusManager.isCurrentUserPro())
                     subscriptionState
                 else SubscriptionState.NeverSubscribed,
-                proExpiryLabel = when(subscriptionState){
+                subscriptionExpiryLabel = when(subscriptionState){
                     is SubscriptionState.Active.AutoRenewing ->
                         Phrase.from(context, R.string.proAutoRenew)
                         .put(RELATIVE_TIME_KEY, dateUtils.getExpiryString(subscriptionState.proStatus.validUntil))
@@ -79,6 +80,18 @@ class ProSettingsViewModel @Inject constructor(
                         Phrase.from(context, R.string.proExpiring)
                         .put(RELATIVE_TIME_KEY, dateUtils.getExpiryString(subscriptionState.proStatus.validUntil))
                         .format()
+
+                    else -> ""
+                },
+                subscriptionExpiryDate = when(subscriptionState){
+                    is SubscriptionState.Active -> {
+                        val newSubscriptionExpiryDate = ZonedDateTime.now()
+                            .plus(subscriptionState.type.duration)
+                            .toInstant()
+                            .toEpochMilli()
+
+                        dateUtils.getLocaleFormattedDate(newSubscriptionExpiryDate, proSettingsDateFormat)
+                    }
 
                     else -> ""
                 }
@@ -335,7 +348,8 @@ class ProSettingsViewModel @Inject constructor(
     data class ProSettingsUIState(
         val subscriptionState: SubscriptionState = SubscriptionState.NeverSubscribed,
         val proStats: ProStats = ProStats(),
-        val proExpiryLabel: CharSequence = ""
+        val subscriptionExpiryLabel: CharSequence = "", // eg: "Pro auto renewing in 3 days"
+        val subscriptionExpiryDate: CharSequence = "" // eg: "May 21st, 2025"
     )
 
     data class ProStats(
