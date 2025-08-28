@@ -52,15 +52,17 @@ open class SelectContactsViewModel @AssistedInject constructor(
     // Output: The search query
     val searchQuery: StateFlow<String> get() = mutableSearchQuery
 
+    private val contactsFlow = observeContacts()
+
     // Output: the contact items to display and select from
     val contacts: StateFlow<List<ContactItem>> = combine(
-        observeContacts(),
+        contactsFlow,
         mutableSearchQuery.debounce(100L),
         mutableSelectedContactAccountIDs,
         ::filterContacts
     ).stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    val hasContacts: StateFlow<Boolean> = contacts
+    val hasContacts: StateFlow<Boolean> = contactsFlow
             .map { it.isNotEmpty() }
             .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 

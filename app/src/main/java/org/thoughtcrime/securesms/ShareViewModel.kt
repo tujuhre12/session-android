@@ -70,7 +70,7 @@ class ShareViewModel @Inject constructor(
     ).stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     val hasAnyConversations: StateFlow<Boolean> =
-        contacts
+        conversationRepository.observeConversationList()
             .map { it.isNotEmpty() }
             .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
@@ -98,7 +98,7 @@ class ShareViewModel @Inject constructor(
                     recipient.address is Address.LegacyGroup -> !deprecationManager.isDeprecated
 
                     // if the recipient is a community, check if it can write
-                    recipient.data is RecipientData.Community -> recipient.data.openGroup.canWrite
+                    recipient.data is RecipientData.Community && !recipient.data.openGroup.canWrite -> false
 
                     else -> {
                         val name = if (recipient.isSelf) context.getString(R.string.noteToSelf)
