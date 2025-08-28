@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
@@ -19,6 +18,7 @@ import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
 import network.loki.messenger.libsession_util.util.Conversation
 import network.loki.messenger.libsession_util.util.UserPic
+import org.session.libsession.avatars.AvatarCacheCleaner
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.messaging.sending_receiving.notifications.PushRegistryV1
@@ -30,6 +30,7 @@ import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
+import org.session.libsession.utilities.allConfigAddresses
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
@@ -45,6 +46,7 @@ import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
@@ -83,6 +85,8 @@ class ConfigToDatabaseSync @Inject constructor(
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val lokiMessageDatabase: LokiMessageDatabase,
     private val messageNotifier: MessageNotifier,
+    private val recipientSettingsDatabase: RecipientSettingsDatabase,
+    private val avatarCacheCleaner: AvatarCacheCleaner,
     @param:ManagerScope private val scope: CoroutineScope,
 ) : OnAppStartupComponent {
     init {
@@ -148,6 +152,9 @@ class ConfigToDatabaseSync @Inject constructor(
                     }
                 }
             }
+
+            // Initiate cleanup in recipient_settings
+            pruneRecipientSettingsAndAvatars()
         }
 
         // If we created threads, we need to update the thread database with the creation date.
@@ -164,6 +171,20 @@ class ConfigToDatabaseSync @Inject constructor(
                     // No additional action needed for these types
                 }
             }
+        }
+    }
+
+    private fun pruneRecipientSettingsAndAvatars() {
+        val addressesToKeep: Set<Address> = buildSet {
+            addAll(configFactory.allConfigAddresses())
+            addAll(mmsSmsDatabase.getAllReferencedAddresses())
+        }
+
+        val removed = recipientSettingsDatabase.cleanupRecipientSettings(addressesToKeep)
+        Log.d(TAG, "Recipient settings pruned: $removed orphan rows")
+
+        if (removed > 0) {
+            avatarCacheCleaner.launchAvatarCleanup()
         }
     }
 
