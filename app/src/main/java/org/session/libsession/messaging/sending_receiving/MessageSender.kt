@@ -9,13 +9,13 @@ import kotlinx.coroutines.supervisorScope
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.Namespace
+import network.loki.messenger.libsession_util.protocol.SessionProtocol
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.deferred
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.applyExpiryMode
@@ -29,17 +29,13 @@ import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.open_groups.OpenGroupApi.Capability
 import org.session.libsession.messaging.open_groups.OpenGroupMessage
-import org.session.libsession.messaging.utilities.MessageWrapper
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeAPI.nowWithOffset
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.SnodeModule
 import org.session.libsession.snode.utilities.asyncPromise
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.SSKEnvironment
-import org.session.libsignal.crypto.PushTransportDetails
-import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Hex
@@ -47,7 +43,6 @@ import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.defaultRequiresAuth
 import org.session.libsignal.utilities.hasNamespaces
-import org.session.libsignal.utilities.hexEncodedPublicKey
 import java.util.concurrent.TimeUnit
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview as SignalLinkPreview
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel as SignalQuote
@@ -140,54 +135,46 @@ object MessageSender {
         // Set the timestamp on the content so it can be verified against envelope timestamp
         proto.setSigTimestampMs(message.sentTimestamp!!)
 
-        // Serialize the protobuf
-        val plaintext = PushTransportDetails.getPaddedMessageBody(proto.build().toByteArray())
+        val plainText = proto.build().toByteArray()
 
-        // Envelope information
-        val kind: SignalServiceProtos.Envelope.Type
-        val senderPublicKey: String
-        when (destination) {
+        val libsessionDestination = when (destination) {
             is Destination.Contact -> {
-                kind = SignalServiceProtos.Envelope.Type.SESSION_MESSAGE
-                senderPublicKey = ""
-            }
-            is Destination.LegacyClosedGroup -> {
-                kind = SignalServiceProtos.Envelope.Type.CLOSED_GROUP_MESSAGE
-                senderPublicKey = destination.groupPublicKey
-            }
-            is Destination.ClosedGroup -> {
-                kind = SignalServiceProtos.Envelope.Type.CLOSED_GROUP_MESSAGE
-                senderPublicKey = destination.publicKey
-            }
-            else -> throw IllegalStateException("Destination should not be open group.")
-        }
-
-        // Encrypt the serialized protobuf
-        val ciphertext = when (destination) {
-            is Destination.Contact -> MessageEncrypter.encrypt(plaintext, destination.publicKey)
-            is Destination.LegacyClosedGroup -> {
-                val encryptionKeyPair =
-                    MessagingModuleConfiguration.shared.storage.getLatestClosedGroupEncryptionKeyPair(
-                        destination.groupPublicKey
-                    )!!
-                MessageEncrypter.encrypt(plaintext, encryptionKeyPair.hexEncodedPublicKey)
-            }
-            is Destination.ClosedGroup -> {
-                val envelope = MessageWrapper.createEnvelope(kind, message.sentTimestamp!!, senderPublicKey, proto.build().toByteArray())
-                configFactory.withGroupConfigs(AccountId(destination.publicKey)) {
-                    it.groupKeys.encrypt(envelope.toByteArray())
+                if (isSyncMessage) {
+                    network.loki.messenger.libsession_util.protocol.Destination.Sync(
+                        myPubKey = AccountId(destination.publicKey).prefixedBytes,
+                        proSignature = null,
+                        sentTimestampMs = message.sentTimestamp!!
+                    )
+                } else {
+                    network.loki.messenger.libsession_util.protocol.Destination.Contact(
+                        recipientPubKey = AccountId(destination.publicKey).prefixedBytes,
+                        proSignature = null,
+                        sentTimestampMs = message.sentTimestamp!!
+                    )
                 }
             }
+
+            is Destination.ClosedGroup -> {
+                val groupId = AccountId(destination.publicKey)
+                network.loki.messenger.libsession_util.protocol.Destination.Group(
+                    ed25519PubKey = groupId.prefixedBytes,
+                    ed25519PrivKey = configFactory.withGroupConfigs(groupId) { configs ->
+                        configs.groupKeys.groupEncKey()
+                    },
+                    proSignature = null,
+                    sentTimestampMs = message.sentTimestamp!!
+                )
+            }
+
             else -> throw IllegalStateException("Destination should not be open group.")
         }
-        // Wrap the result using envelope information
-        val wrappedMessage = when (destination) {
-            is Destination.ClosedGroup -> {
-                // encrypted bytes from the above closed group encryption and envelope steps
-                ciphertext
-            }
-            else -> MessageWrapper.wrap(kind, message.sentTimestamp!!, senderPublicKey, ciphertext)
-        }
+
+        val wrappedMessage = SessionProtocol.encryptForDestination(
+            message = plainText,
+            myEd25519PrivKey = storage.getUserED25519KeyPair()!!.secretKey.data,
+            destination = libsessionDestination,
+            namespace = Namespace.DEFAULT(),
+        ) ?: plainText
         val base64EncodedData = Base64.encodeBytes(wrappedMessage)
         // Send the result
         return SnodeMessage(
@@ -371,8 +358,18 @@ object MessageSender {
                     if (message !is VisibleMessage || !message.isValid()) {
                         throw Error.InvalidMessage
                     }
-                    val messageBody = content.toByteArray()
-                    val plaintext = PushTransportDetails.getPaddedMessageBody(messageBody)
+
+                    val contentBytes = content.toByteArray()
+                    val plaintext = SessionProtocol.encryptForDestination(
+                        message = contentBytes,
+                        myEd25519PrivKey = userEdKeyPair.secretKey.data,
+                        destination = network.loki.messenger.libsession_util.protocol.Destination.Community(
+                            proSignature = null,
+                            sentTimestampMs = message.sentTimestamp!!,
+                        ),
+                        namespace = Namespace.DEFAULT(),
+                    ) ?: contentBytes
+
                     val openGroupMessage = OpenGroupMessage(
                         sender = message.sender,
                         sentTimestamp = message.sentTimestamp!!,
@@ -392,14 +389,20 @@ object MessageSender {
                     if (message !is VisibleMessage || !message.isValid()) {
                         throw Error.InvalidMessage
                     }
-                    val messageBody = content.toByteArray()
-                    val plaintext = PushTransportDetails.getPaddedMessageBody(messageBody)
-                    val ciphertext = MessageEncrypter.encryptBlinded(
-                        plaintext,
-                        destination.blindedPublicKey,
-                        destination.serverPublicKey
-                    )
-                    val base64EncodedData = Base64.encodeBytes(ciphertext)
+                    val contentBytes = content.toByteArray()
+                    val cipherText = SessionProtocol.encryptForDestination(
+                        message = contentBytes,
+                        myEd25519PrivKey = userEdKeyPair.secretKey.data,
+                        destination = network.loki.messenger.libsession_util.protocol.Destination.CommunityInbox(
+                            communityPubKey = Hex.fromStringCondensed(destination.serverPublicKey),
+                            recipientPubKey = AccountId(destination.blindedPublicKey).prefixedBytes,
+                            proSignature = null,
+                            sentTimestampMs = message.sentTimestamp!!,
+                        ),
+                        namespace = Namespace.DEFAULT(),
+                    ) ?: contentBytes
+
+                    val base64EncodedData = Base64.encodeBytes(cipherText)
                     OpenGroupApi.sendDirectMessage(base64EncodedData, destination.blindedPublicKey, destination.server).success {
                         message.openGroupServerMessageID = it.id
                         handleSuccessfulMessageSend(message, destination, openGroupSentTimestamp = TimeUnit.SECONDS.toMillis(it.postedAt))
