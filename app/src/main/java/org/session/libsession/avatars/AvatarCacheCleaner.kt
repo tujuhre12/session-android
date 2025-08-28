@@ -34,6 +34,7 @@ class AvatarCacheCleaner @Inject constructor(
     private suspend fun cleanUpAvatars(): Int = withContext(Dispatchers.IO) {
         // 1) Build the set of still-wanted Avatars from:
         // -> Config
+        // -> Recipient Settings DB
 
         // config
         val avatarsFromConfig: Set<RemoteFile> = recipientAvatarDownloadManager.getAllAvatars()
@@ -60,11 +61,8 @@ class AvatarCacheCleaner @Inject constructor(
         deleted
     }
 
-    fun launchAvatarCleanup(cancelInFlight: Boolean = false) {
+    fun launchAvatarCleanup() {
         coroutineScope.launch(Dispatchers.IO) {
-            if (cancelInFlight) {
-                RemoteFileDownloadWorker.cancelAll(application)
-            }
             val deleted = cleanUpAvatars()
             Log.d(TAG, "Avatar cache removed: $deleted files")
         }
