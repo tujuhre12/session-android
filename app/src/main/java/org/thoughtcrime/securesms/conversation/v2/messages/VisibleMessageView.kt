@@ -248,6 +248,7 @@ class VisibleMessageView : FrameLayout {
                 setThemedContent {
                     Row {
                         ProBadgeText(
+                            modifier = Modifier.weight(1f, fill = false),
                             text = sender.displayName(),
                             textStyle = LocalType.current.base.bold()
                                 .copy(color = LocalColors.current.text),
@@ -259,6 +260,7 @@ class VisibleMessageView : FrameLayout {
 
                             Text(
                                 text = "(${sender.address.blindedId.truncatedForDisplay()})",
+                                maxLines = 1,
                                 style = LocalType.current.base
                             )
                         }
