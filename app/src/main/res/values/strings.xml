@@ -906,8 +906,8 @@
     <string name="proBadges">Badges</string>
     <string name="proBadgesDescription">Show your support for {app_name} with an exclusive badge next to your display name.</string>
     <plurals name="proBadgesSent">
-        <item quantity="one">%1$d %2$s Badge Sent</item>
-        <item quantity="other">%1$d %2$s Badges Sent</item>
+        <item quantity="one">%1$s %2$s Badge Sent</item>
+        <item quantity="other">%1$s %2$s Badges Sent</item>
     </plurals>
     <string name="proBilledAnnually">{price} Billed Annually</string>
     <string name="proBilledMonthly">{price} Billed Monthly</string>
@@ -932,8 +932,8 @@
     <string name="proGroupActivated">Group Activated</string>
     <string name="proGroupActivatedDescription">This group has expanded capacity! It can support up to 300 members because a group admin has</string>
     <plurals name="proGroupsUpgraded">
-        <item quantity="one">%1$d Group Upgraded</item>
-        <item quantity="other">%1$d Groups Upgraded</item>
+        <item quantity="one">%1$s Group Upgraded</item>
+        <item quantity="other">%1$s Groups Upgraded</item>
     </plurals>
     <string name="proImportantDescription">Requesting a refund is final. If approved, your {pro} plan will be canceled immediately and you will lose access to all {pro} features.</string>
     <string name="proIncreasedAttachmentSizeFeature">Increased Attachment Size</string>
@@ -943,14 +943,14 @@
     <string name="proLongerMessages">Longer Messages</string>
     <string name="proLongerMessagesDescription">You can send messages up to 10,000 characters in all conversations.</string>
     <plurals name="proLongerMessagesSent">
-        <item quantity="one">%1$d Longer Message Sent</item>
-        <item quantity="other">%1$d Longer Messages Sent</item>
+        <item quantity="one">%1$s Longer Message Sent</item>
+        <item quantity="other">%1$s Longer Messages Sent</item>
     </plurals>
     <string name="proMessageInfoFeatures">This message used the following {app_pro} features:</string>
     <string name="proPercentOff">{percent}% Off</string>
     <plurals name="proPinnedConversations">
-        <item quantity="one">%1$d Pinned Conversation</item>
-        <item quantity="other">%1$d Pinned Conversations</item>
+        <item quantity="one">%1$s Pinned Conversation</item>
+        <item quantity="other">%1$s Pinned Conversations</item>
     </plurals>
     <string name="proPlanActivatedAuto">Your {app_pro} plan is active!\n\nYour plan will automatically renew for another <b>{current_plan}</b> on <b>{date}</b>. Updates to your plan take effect when {pro} is next renewed.</string>
     <string name="proPlanActivatedAutoShort">Your {app_pro} plan is active!\n\nYour plan will automatically renew for another <b>{current_plan}</b> on <b>{date}</b>.</string>

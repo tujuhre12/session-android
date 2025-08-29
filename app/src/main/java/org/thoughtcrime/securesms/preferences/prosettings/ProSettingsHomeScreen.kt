@@ -289,7 +289,8 @@ fun ProStats(
                     title = pluralStringResource(
                         R.plurals.proBadgesSent,
                         data.proBadges,
-                        NumberUtil.getFormattedNumber(data.proBadges.toLong())
+                        NumberUtil.getFormattedNumber(data.proBadges.toLong()),
+                        NonTranslatableStringConstants.PRO
                     ),
                     icon = R.drawable.ic_rectangle_ellipsis
 
