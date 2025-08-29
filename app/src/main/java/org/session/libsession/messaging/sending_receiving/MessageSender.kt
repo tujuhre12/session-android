@@ -138,44 +138,42 @@ object MessageSender {
 
         val plainText = PushTransportDetails.getPaddedMessageBody(proto.build().toByteArray())
 
-        val libsessionDestination = when (destination) {
+        val wrappedMessage = when (destination) {
             is Destination.Contact -> {
                 if (isSyncMessage) {
-                    network.loki.messenger.libsession_util.protocol.Destination.Sync(
-                        myPubKey = AccountId(destination.publicKey).prefixedBytes,
+                    SessionProtocol.encryptFor1o1(
+                        plaintext = plainText,
+                        myEd25519PrivKey = storage.getUserED25519KeyPair()!!.secretKey.data,
+                        timestampMs = message.sentTimestamp!!,
+                        recipientPubKey = AccountId(userPublicKey!!).prefixedBytes,
                         proSignature = null,
-                        sentTimestampMs = message.sentTimestamp!!
                     )
                 } else {
-                    network.loki.messenger.libsession_util.protocol.Destination.Contact(
+                    SessionProtocol.encryptFor1o1(
+                        plaintext = plainText,
+                        myEd25519PrivKey = storage.getUserED25519KeyPair()!!.secretKey.data,
+                        timestampMs = message.sentTimestamp!!,
                         recipientPubKey = AccountId(destination.publicKey).prefixedBytes,
                         proSignature = null,
-                        sentTimestampMs = message.sentTimestamp!!
                     )
                 }
             }
 
             is Destination.ClosedGroup -> {
                 val groupId = AccountId(destination.publicKey)
-                network.loki.messenger.libsession_util.protocol.Destination.Group(
-                    ed25519PubKey = groupId.prefixedBytes,
-                    ed25519PrivKey = configFactory.withGroupConfigs(groupId) { configs ->
-                        configs.groupKeys.groupEncKey()
-                    },
+                SessionProtocol.encryptForGroup(
+                    plaintext = plainText,
+                    myEd25519PrivKey = storage.getUserED25519KeyPair()!!.secretKey.data,
+                    timestampMs = message.sentTimestamp!!,
+                    groupEd25519PublicKey = groupId.prefixedBytes,
+                    groupEd25519PrivateKey = configFactory.withGroupConfigs(groupId) { it.groupKeys.groupEncKey() },
                     proSignature = null,
-                    sentTimestampMs = message.sentTimestamp!!
                 )
             }
 
             else -> throw IllegalStateException("Destination should not be open group.")
         }
 
-        val wrappedMessage = SessionProtocol.encryptForDestination(
-            message = plainText,
-            myEd25519PrivKey = storage.getUserED25519KeyPair()!!.secretKey.data,
-            destination = libsessionDestination,
-            namespace = Namespace.DEFAULT(),
-        ) ?: plainText
         val base64EncodedData = Base64.encodeBytes(wrappedMessage)
         // Send the result
         return SnodeMessage(
@@ -360,17 +358,7 @@ object MessageSender {
                         throw Error.InvalidMessage
                     }
 
-                    val contentBytes = content.toByteArray()
-                    val plaintext = SessionProtocol.encryptForDestination(
-                        message = contentBytes,
-                        myEd25519PrivKey = userEdKeyPair.secretKey.data,
-                        destination = network.loki.messenger.libsession_util.protocol.Destination.Community(
-                            proSignature = null,
-                            sentTimestampMs = message.sentTimestamp!!,
-                        ),
-                        namespace = Namespace.DEFAULT(),
-                    ) ?: contentBytes
-
+                    val plaintext = content.toByteArray()
                     val openGroupMessage = OpenGroupMessage(
                         sender = message.sender,
                         sentTimestamp = message.sentTimestamp!!,
@@ -391,17 +379,14 @@ object MessageSender {
                         throw Error.InvalidMessage
                     }
                     val contentBytes = content.toByteArray()
-                    val cipherText = SessionProtocol.encryptForDestination(
-                        message = contentBytes,
+                    val cipherText = SessionProtocol.encryptForCommunityInbox(
+                        plaintext = contentBytes,
                         myEd25519PrivKey = userEdKeyPair.secretKey.data,
-                        destination = network.loki.messenger.libsession_util.protocol.Destination.CommunityInbox(
-                            communityPubKey = Hex.fromStringCondensed(destination.serverPublicKey),
-                            recipientPubKey = AccountId(destination.blindedPublicKey).prefixedBytes,
-                            proSignature = null,
-                            sentTimestampMs = message.sentTimestamp!!,
-                        ),
-                        namespace = Namespace.DEFAULT(),
-                    ) ?: contentBytes
+                        timestampMs = message.sentTimestamp!!,
+                        recipientPubKey = AccountId(destination.blindedPublicKey).prefixedBytes,
+                        communityServerPubKey = Hex.fromStringCondensed(destination.serverPublicKey),
+                        proSignature = null
+                    )
 
                     val base64EncodedData = Base64.encodeBytes(cipherText)
                     OpenGroupApi.sendDirectMessage(base64EncodedData, destination.blindedPublicKey, destination.server).success {
