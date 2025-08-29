@@ -36,6 +36,7 @@ import org.session.libsession.snode.SnodeModule
 import org.session.libsession.snode.utilities.asyncPromise
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.SSKEnvironment
+import org.session.libsignal.crypto.PushTransportDetails
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Hex
@@ -135,7 +136,7 @@ object MessageSender {
         // Set the timestamp on the content so it can be verified against envelope timestamp
         proto.setSigTimestampMs(message.sentTimestamp!!)
 
-        val plainText = proto.build().toByteArray()
+        val plainText = PushTransportDetails.getPaddedMessageBody(proto.build().toByteArray())
 
         val libsessionDestination = when (destination) {
             is Destination.Contact -> {
