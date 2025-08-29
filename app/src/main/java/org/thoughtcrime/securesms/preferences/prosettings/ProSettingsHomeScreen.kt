@@ -123,7 +123,7 @@ fun ProSettingsHome(
             Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
             ProSettings(
                 data = data.subscriptionState,
-                expiry = data.proExpiryLabel,
+                expiry = data.subscriptionExpiryLabel,
                 sendCommand = sendCommand,
             )
         }
