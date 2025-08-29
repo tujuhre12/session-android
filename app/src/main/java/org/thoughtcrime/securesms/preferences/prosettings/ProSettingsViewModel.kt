@@ -24,6 +24,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.RELATIVE_TIME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.SELECTED_PLAN_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.thoughtcrime.securesms.pro.SubscriptionState
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
@@ -71,14 +72,16 @@ class ProSettingsViewModel @Inject constructor(
                 else SubscriptionState.NeverSubscribed,
                 subscriptionExpiryLabel = when(subscriptionState){
                     is SubscriptionState.Active.AutoRenewing ->
-                        Phrase.from(context, R.string.proAutoRenew)
-                        .put(RELATIVE_TIME_KEY, dateUtils.getExpiryString(subscriptionState.proStatus.validUntil))
-                        .format()
+                        Phrase.from(context, R.string.proAutoRenewTime)
+                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                            .put(TIME_KEY, dateUtils.getExpiryString(subscriptionState.proStatus.validUntil))
+                            .format()
 
                     is SubscriptionState.Active.Expiring ->
-                        Phrase.from(context, R.string.proExpiring)
-                        .put(RELATIVE_TIME_KEY, dateUtils.getExpiryString(subscriptionState.proStatus.validUntil))
-                        .format()
+                        Phrase.from(context, R.string.proExpiringTime)
+                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                            .put(TIME_KEY, dateUtils.getExpiryString(subscriptionState.proStatus.validUntil))
+                            .format()
 
                     else -> ""
                 },
