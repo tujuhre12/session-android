@@ -64,7 +64,7 @@ fun ProSettingsNavHost(
             }
         }
 
-        NavHost(navController = navController, startDestination = PlanConfirmation) {
+        NavHost(navController = navController, startDestination = Home) {
             // Home
             horizontalSlideComposable<Home> {
                 ProSettingsHomeScreen(

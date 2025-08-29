@@ -149,7 +149,7 @@ fun PlanConfirmation(
                 color = LocalColors.current.text,
             )
 
-            Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
+            Spacer(Modifier.height(LocalDimensions.current.spacing))
 
             //todo PRO the button text can change if the user was renewing vs expiring and/or/auto-renew
             AccentFillButtonRect(
