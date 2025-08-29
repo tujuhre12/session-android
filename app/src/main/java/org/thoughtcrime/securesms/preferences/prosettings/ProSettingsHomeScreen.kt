@@ -101,7 +101,7 @@ fun ProSettingsHomeScreen(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun ProSettingsHome(
-    data: ProSettingsViewModel.ProSettingsUIState,
+    data: ProSettingsViewModel.ProSettingsState,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ) {
@@ -640,13 +640,14 @@ fun PreviewProSettingsPro(
 ) {
     PreviewTheme(colors) {
         ProSettingsHome(
-            data = ProSettingsViewModel.ProSettingsUIState(
+            data = ProSettingsViewModel.ProSettingsState(
                 subscriptionState = SubscriptionState.Active.AutoRenewing(
                     proStatus = ProStatus.Pro(
                         visible = true,
                         validUntil = Instant.now() + Duration.ofDays(14),
                     ),
-                    type = ProSubscriptionDuration.THREE_MONTHS
+                    type = ProSubscriptionDuration.THREE_MONTHS,
+                    nonOriginatingSubscription = null
                 ),
             ),
             sendCommand = {},
@@ -662,7 +663,7 @@ fun PreviewProSettingsExpired(
 ) {
     PreviewTheme(colors) {
         ProSettingsHome(
-            data = ProSettingsViewModel.ProSettingsUIState(
+            data = ProSettingsViewModel.ProSettingsState(
                 subscriptionState = SubscriptionState.Expired,
             ),
             sendCommand = {},
@@ -678,7 +679,7 @@ fun PreviewProSettingsNonPro(
 ) {
     PreviewTheme(colors) {
         ProSettingsHome(
-            data = ProSettingsViewModel.ProSettingsUIState(
+            data = ProSettingsViewModel.ProSettingsState(
                 subscriptionState = SubscriptionState.NeverSubscribed,
             ),
             sendCommand = {},

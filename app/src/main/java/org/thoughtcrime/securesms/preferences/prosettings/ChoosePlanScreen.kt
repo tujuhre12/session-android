@@ -36,12 +36,16 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.CURRENT_PLAN_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.ICON_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.MONTHLY_PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRICE_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProPlan
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProPlanBadge
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.*
+import org.thoughtcrime.securesms.pro.SubscriptionState
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.ui.SpeechBubbleTooltip
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
@@ -62,13 +66,13 @@ import org.thoughtcrime.securesms.ui.theme.bold
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun UpdatePlanScreen(
+fun ChoosePlanScreen(
     viewModel: ProSettingsViewModel,
     onBack: () -> Unit,
 ) {
-    val planData by viewModel.proPlanUIState.collectAsState()
+    val planData by viewModel.choose.collectAsState()
 
-    UpdatePlan(
+    ChoosePlan(
         planData = planData,
         sendCommand = viewModel::onCommand,
         onBack = onBack,
@@ -77,8 +81,8 @@ fun UpdatePlanScreen(
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
-fun UpdatePlan(
-    planData: ProSettingsViewModel.ProPlanUIState,
+fun ChoosePlan(
+    planData: ProSettingsViewModel.ChoosePlanState,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ) {
@@ -93,9 +97,30 @@ fun UpdatePlan(
 
         Spacer(Modifier.height(LocalDimensions.current.spacing))
 
+        val context = LocalContext.current
+        val title = when(planData.subscriptionState) {
+            is SubscriptionState.Expired ->
+                Phrase.from(context.getText(R.string.proPlanRenewStart))
+                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                    .format()
+
+            is SubscriptionState.Active.Expiring -> Phrase.from(context.getText(R.string.proPlanActivatedNotAuto))
+                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                .put(DATE_KEY, "May 21st, 2025") //todo PRO implement properly
+                .format()
+
+            else -> Phrase.from(context.getText(R.string.proPlanActivatedAuto))
+                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                .put(CURRENT_PLAN_KEY, "3 months") //todo PRO implement properly
+                .put(DATE_KEY, "May 21st, 2025") //todo PRO implement properly
+                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                .format()
+        }
+
         Text(
             modifier = Modifier.fillMaxWidth(),
-            text = annotatedStringResource(planData.title),
+            text = annotatedStringResource(title),
             textAlign = TextAlign.Center,
             style = LocalType.current.base,
             color = LocalColors.current.text,
@@ -123,10 +148,16 @@ fun UpdatePlan(
 
         Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
 
+        val buttonLabel = when(planData.subscriptionState) {
+            is SubscriptionState.Expired -> context.getString(R.string.renew)
+            is SubscriptionState.Active.Expiring -> context.getString(R.string.updatePlan)
+            else -> context.getString(R.string.updatePlan)
+        }
+
         AccentFillButtonRect(
             modifier = Modifier.fillMaxWidth()
                 .widthIn(max = LocalDimensions.current.maxContentWidth),
-            text = planData.buttonLabel,
+            text = buttonLabel,
             enabled = planData.enableButton,
             onClick = {
                 sendCommand(GetProPlan)
@@ -377,9 +408,8 @@ private fun PreviewUpdatePlan(
 ) {
     PreviewTheme(colors) {
         val context = LocalContext.current
-        UpdatePlan(
-            planData = ProSettingsViewModel.ProPlanUIState(
-                title = "This is a title",
+        ChoosePlan(
+            planData = ProSettingsViewModel.ChoosePlanState(
                 enableButton = true,
                 plans = listOf(
                     ProPlan(
