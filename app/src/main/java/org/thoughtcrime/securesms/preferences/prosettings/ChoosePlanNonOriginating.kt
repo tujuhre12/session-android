@@ -40,7 +40,7 @@ fun ChoosePlanNonOriginating(
     val context = LocalContext.current
 
     val headerTitle = when(subscription) {
-        is SubscriptionState.Active.Expiring -> Phrase.from(context.getText(R.string.proPlanActivatedNotAuto))
+        is SubscriptionState.Active.Expiring -> Phrase.from(context.getText(R.string.proPlanExpireDate))
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .put(DATE_KEY, subscription.type.expiryFromNow())
             .format()

@@ -65,9 +65,7 @@ class ProSettingsViewModel @Inject constructor(
 
         _proSettingsUIState.update {
             ProSettingsState(
-                subscriptionState = if(proStatusManager.isCurrentUserPro())
-                    subscriptionState
-                else SubscriptionState.NeverSubscribed,
+                subscriptionState = subscriptionState,
                 subscriptionExpiryLabel = when(subscriptionState){
                     is SubscriptionState.Active.AutoRenewing ->
                         Phrase.from(context, R.string.proAutoRenewTime)
@@ -91,41 +89,13 @@ class ProSettingsViewModel @Inject constructor(
         }
 
         _choosePlanState.update {
-            // sort out the title and button label for the plan screen based on subscription status
-            val (title, buttonLabel) = when(subscriptionState) {
-                is SubscriptionState.Expired ->
-                    Phrase.from(context.getText(R.string.proPlanRenewStart))
-                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                        .format() to
-                            context.getString(R.string.renew)
-
-                is SubscriptionState.Active.Expiring -> Phrase.from(context.getText(R.string.proPlanActivatedNotAuto))
-                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                    .put(DATE_KEY, subscriptionState.type.expiryFromNow())
-                    .format() to
-                        context.getString(R.string.updatePlan)
-
-                is SubscriptionState.Active.AutoRenewing -> Phrase.from(context.getText(R.string.proPlanActivatedAuto))
-                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                    .put(CURRENT_PLAN_KEY, DateUtils.getLocalisedTimeDuration(
-                        context = context,
-                        amount = subscriptionState.type.duration.months,
-                        unit = MeasureUnit.MONTH
-                    ))
-                    .put(DATE_KEY, subscriptionState.type.expiryFromNow())
-                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                    .format() to
-                        context.getString(R.string.updatePlan)
-
-                else -> "" to ""
-            }
             val isActive = subscriptionState is SubscriptionState.Active
             val currentPlan12Months = isActive && subscriptionState.type == ProSubscriptionDuration.TWELVE_MONTHS
             val currentPlan3Months = isActive && subscriptionState.type == ProSubscriptionDuration.THREE_MONTHS
             val currentPlan1Month = isActive && subscriptionState.type == ProSubscriptionDuration.ONE_MONTH
 
             ChoosePlanState(
+                subscriptionState = subscriptionState,
                 enableButton = subscriptionState !is SubscriptionState.Active.AutoRenewing, // only the auto-renew can have a disabled state
                 plans = listOf(
                     ProPlan(

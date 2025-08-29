@@ -28,6 +28,12 @@ sealed interface ProSettingsDestination {
 
     @Serializable
     data object PlanConfirmation: ProSettingsDestination
+
+    @Serializable
+    data object CancelSubscription: ProSettingsDestination
+
+    @Serializable
+    data object RefundSubscription: ProSettingsDestination
 }
 
 @SuppressLint("RestrictedApi")
