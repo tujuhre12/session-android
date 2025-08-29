@@ -159,3 +159,51 @@ private fun PreviewBaseCellButton(
         )
     }
 }
+
+/**
+ * A reusable structure for Pro Settings screens for non originating steps
+ */
+@Composable
+fun BaseNonOriginatingProSettingsScreen(
+    disabled: Boolean,
+    onBack: () -> Unit,
+    buttonText: String,
+    dangerButton: Boolean,
+    onButtonClick: () -> Unit,
+    title: String? = null,
+    content: @Composable () -> Unit
+) {
+    BaseCellButtonProSettingsScreen(
+        disabled = disabled,
+        onBack = onBack,
+        buttonText = buttonText,
+        dangerButton = dangerButton,
+        onButtonClick = onButtonClick,
+        title = title,
+        content = content
+    )
+}
+
+@Preview
+@Composable
+private fun PreviewBaseNonOrig(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+) {
+    PreviewTheme(colors) {
+        BaseNonOriginatingProSettingsScreen(
+            disabled = false,
+            onBack = {},
+            title = "This is a title",
+            buttonText = "This is a button",
+            dangerButton = true,
+            onButtonClick = {},
+            content = {
+                Box(
+                    modifier = Modifier.padding(LocalDimensions.current.smallSpacing)
+                ) {
+                    Text("This is a cell button content screen~")
+                }
+            }
+        )
+    }
+}
