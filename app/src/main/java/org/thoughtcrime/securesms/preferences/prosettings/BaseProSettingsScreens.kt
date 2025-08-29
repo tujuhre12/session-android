@@ -105,7 +105,7 @@ fun BaseCellButtonProSettingsScreen(
     buttonText: String,
     dangerButton: Boolean,
     onButtonClick: () -> Unit,
-    title: String? = null,
+    title: CharSequence? = null,
     content: @Composable () -> Unit
 ) {
     BaseProSettingsScreen(
@@ -117,7 +117,7 @@ fun BaseCellButtonProSettingsScreen(
         if(!title.isNullOrEmpty()) {
             Text(
                 modifier = Modifier.fillMaxWidth(),
-                text = title,
+                text = annotatedStringResource(title),
                 textAlign = TextAlign.Center,
                 style = LocalType.current.base,
                 color = LocalColors.current.text,
@@ -190,7 +190,7 @@ fun BaseNonOriginatingProSettingsScreen(
     buttonText: String,
     dangerButton: Boolean,
     onButtonClick: () -> Unit,
-    headerTitle: String?,
+    headerTitle: CharSequence?,
     contentTitle: String?,
     contentDescription: CharSequence?,
     linkCellsInfo: String?,
@@ -328,7 +328,6 @@ private fun PreviewBaseNonOrig(
                     iconRes = R.drawable.ic_phone
                 )
             )
-
         )
     }
 }

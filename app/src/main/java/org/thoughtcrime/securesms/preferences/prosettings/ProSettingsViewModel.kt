@@ -22,13 +22,13 @@ import org.session.libsession.utilities.StringSubstitutionConstants.MONTHLY_PRIC
 import org.session.libsession.utilities.StringSubstitutionConstants.PERCENT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.RELATIVE_TIME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.SELECTED_PLAN_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.thoughtcrime.securesms.pro.SubscriptionState
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionCoordinator
+import org.thoughtcrime.securesms.pro.subscription.expiryFromNow
 import org.thoughtcrime.securesms.ui.SimpleDialogData
 import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.util.DateUtils
@@ -53,9 +53,7 @@ class ProSettingsViewModel @Inject constructor(
     val dialogState: StateFlow<DialogsState> = _dialogState
 
     private val _choosePlanState: MutableStateFlow<ChoosePlanState> = MutableStateFlow(ChoosePlanState())
-    val choose: StateFlow<ChoosePlanState> = _choosePlanState
-
-    private val proSettingsDateFormat = "MMMM d, yyyy"
+    val choosePlanState: StateFlow<ChoosePlanState> = _choosePlanState
 
     init {
         generateState()
@@ -86,15 +84,7 @@ class ProSettingsViewModel @Inject constructor(
                     else -> ""
                 },
                 subscriptionExpiryDate = when(subscriptionState){
-                    is SubscriptionState.Active -> {
-                        val newSubscriptionExpiryDate = ZonedDateTime.now()
-                            .plus(subscriptionState.type.duration)
-                            .toInstant()
-                            .toEpochMilli()
-
-                        dateUtils.getLocaleFormattedDate(newSubscriptionExpiryDate, proSettingsDateFormat)
-                    }
-
+                    is SubscriptionState.Active -> subscriptionState.type.expiryFromNow()
                     else -> ""
                 }
             )
@@ -112,17 +102,23 @@ class ProSettingsViewModel @Inject constructor(
 
                 is SubscriptionState.Active.Expiring -> Phrase.from(context.getText(R.string.proPlanActivatedNotAuto))
                     .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                    .put(DATE_KEY, "May 21st, 2025") //todo PRO implement properly
+                    .put(DATE_KEY, subscriptionState.type.expiryFromNow())
                     .format() to
                         context.getString(R.string.updatePlan)
 
-                else -> Phrase.from(context.getText(R.string.proPlanActivatedAuto))
+                is SubscriptionState.Active.AutoRenewing -> Phrase.from(context.getText(R.string.proPlanActivatedAuto))
                     .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                    .put(CURRENT_PLAN_KEY, "3 months") //todo PRO implement properly
-                    .put(DATE_KEY, "May 21st, 2025") //todo PRO implement properly
+                    .put(CURRENT_PLAN_KEY, DateUtils.getLocalisedTimeDuration(
+                        context = context,
+                        amount = subscriptionState.type.duration.months,
+                        unit = MeasureUnit.MONTH
+                    ))
+                    .put(DATE_KEY, subscriptionState.type.expiryFromNow())
                     .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                     .format() to
                         context.getString(R.string.updatePlan)
+
+                else -> "" to ""
             }
             val isActive = subscriptionState is SubscriptionState.Active
             val currentPlan12Months = isActive && subscriptionState.type == ProSubscriptionDuration.TWELVE_MONTHS
@@ -253,20 +249,16 @@ class ProSettingsViewModel @Inject constructor(
             Commands.GetProPlan -> {
                 // if we already have a current plan, ask for confirmation first
                 if(_proSettingsUIState.value.subscriptionState is SubscriptionState.Active){
-                    val newSubscriptionExpiryDate = ZonedDateTime.now()
-                        .plus(getSelectedPlan().durationType.duration)
-                        .toInstant()
-                        .toEpochMilli()
-                    val newSubscriptionExpiryString = dateUtils.getLocaleFormattedDate(
-                        newSubscriptionExpiryDate, proSettingsDateFormat
-                    )
+                    val newSubscriptionExpiryString = getSelectedPlan().durationType.expiryFromNow()
 
-                    val currentSubscriptionDuration = dateUtils.getLocalisedTimeDuration(
+                    val currentSubscriptionDuration = DateUtils.getLocalisedTimeDuration(
+                        context = context,
                         amount = (_proSettingsUIState.value.subscriptionState as SubscriptionState.Active).type.duration.months,
                         unit = MeasureUnit.MONTH
                     )
 
-                    val selectedSubscriptionDuration = dateUtils.getLocalisedTimeDuration(
+                    val selectedSubscriptionDuration = DateUtils.getLocalisedTimeDuration(
+                        context = context,
                         amount = getSelectedPlan().durationType.duration.months,
                         unit = MeasureUnit.MONTH
                     )

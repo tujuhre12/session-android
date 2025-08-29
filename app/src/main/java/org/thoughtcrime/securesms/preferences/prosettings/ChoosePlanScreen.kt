@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.preferences.prosettings
 
+import android.icu.util.MeasureUnit
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -47,6 +48,7 @@ import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.P
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.*
 import org.thoughtcrime.securesms.pro.SubscriptionState
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
+import org.thoughtcrime.securesms.pro.subscription.expiryFromNow
 import org.thoughtcrime.securesms.ui.SpeechBubbleTooltip
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.RadioButtonIndicator
@@ -62,6 +64,7 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.bold
+import org.thoughtcrime.securesms.util.DateUtils
 
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -70,13 +73,27 @@ fun ChoosePlanScreen(
     viewModel: ProSettingsViewModel,
     onBack: () -> Unit,
 ) {
-    val planData by viewModel.choose.collectAsState()
+    val planData by viewModel.choosePlanState.collectAsState()
 
-    ChoosePlan(
-        planData = planData,
-        sendCommand = viewModel::onCommand,
-        onBack = onBack,
-    )
+    // there are different UI depending on the state
+    when {
+       // there is an active subscription but from a different platform
+        (planData.subscriptionState as? SubscriptionState.Active)?.nonOriginatingSubscription != null ->
+            ChoosePlanNonOriginating(
+                subscription = planData.subscriptionState as SubscriptionState.Active,
+                sendCommand = viewModel::onCommand,
+                onBack = onBack,
+            )
+
+        //todo PRO handle the case here when there are no SubscriptionManager available (for example fdroid builds)
+
+        // default plan chooser
+        else -> ChoosePlan(
+            planData = planData,
+            sendCommand = viewModel::onCommand,
+            onBack = onBack,
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
@@ -107,15 +124,21 @@ fun ChoosePlan(
 
             is SubscriptionState.Active.Expiring -> Phrase.from(context.getText(R.string.proPlanActivatedNotAuto))
                 .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                .put(DATE_KEY, "May 21st, 2025") //todo PRO implement properly
+                .put(DATE_KEY, planData.subscriptionState.type.expiryFromNow())
                 .format()
 
-            else -> Phrase.from(context.getText(R.string.proPlanActivatedAuto))
+            is SubscriptionState.Active.AutoRenewing -> Phrase.from(context.getText(R.string.proPlanActivatedAuto))
                 .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                .put(CURRENT_PLAN_KEY, "3 months") //todo PRO implement properly
-                .put(DATE_KEY, "May 21st, 2025") //todo PRO implement properly
+                .put(CURRENT_PLAN_KEY, DateUtils.getLocalisedTimeDuration(
+                    context = context,
+                    amount = planData.subscriptionState.type.duration.months,
+                    unit = MeasureUnit.MONTH
+                ))
+                .put(DATE_KEY, planData.subscriptionState.type.expiryFromNow())
                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                 .format()
+
+            else -> ""
         }
 
         Text(
