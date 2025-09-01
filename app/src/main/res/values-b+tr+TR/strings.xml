@@ -274,7 +274,6 @@
     <string name="conversationsDeleted">Konuşma silindi</string>
     <string name="conversationsEmpty">{conversation_name}\'de ileti yok.</string>
     <string name="conversationsEnter">Giriş Tuşu</string>
-    <string name="conversationsEnterDescription">Sohbette yazarken enter tuşunun fonksiyonu.</string>
     <string name="conversationsGroups">Gruplar</string>
     <string name="conversationsMessageTrimming">İleti kırpma</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Toplulukları Kırp</string>

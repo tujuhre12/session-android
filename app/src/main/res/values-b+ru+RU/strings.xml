@@ -278,7 +278,6 @@
     <string name="conversationsDeleted">Беседа удалена</string>
     <string name="conversationsEmpty">Нет сообщений в {conversation_name}.</string>
     <string name="conversationsEnter">Введите ключ</string>
-    <string name="conversationsEnterDescription">Функция клавиши Enter при вводе текста в беседе.</string>
     <string name="conversationsGroups">Группы</string>
     <string name="conversationsMessageTrimming">Обрезка сообщений</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Обрезать сообщения в сообществах</string>

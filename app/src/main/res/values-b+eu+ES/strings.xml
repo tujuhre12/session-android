@@ -232,7 +232,6 @@
     <string name="conversationsDeleted">Elkarrizketa ezabatuta</string>
     <string name="conversationsEmpty">Ez dago mezurik {conversation_name} barruan.</string>
     <string name="conversationsEnter">Sartu Tekla</string>
-    <string name="conversationsEnterDescription">Sartu tekla funtzioa elkarrizketan idazten ari zarenean.</string>
     <string name="conversationsGroups">Taldeak</string>
     <string name="conversationsMessageTrimming">Mezuen ebaketa</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Komunitateen Ebaketak</string>

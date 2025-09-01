@@ -238,7 +238,6 @@
     <string name="conversationsDeleted">Sohbet hate jêbirin</string>
     <string name="conversationsEmpty">Ti peyam nîne di {conversation_name} de.</string>
     <string name="conversationsEnter">Bişkoka Enterê</string>
-    <string name="conversationsEnterDescription">Karwilaşa tuşî zimanê gava niqaşe.</string>
     <string name="conversationsGroups">Kom</string>
     <string name="conversationsMessageTrimming">Kesixîna Peyamê</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Evya gelek di jorîn rereken di ke vestîn destke.</string>

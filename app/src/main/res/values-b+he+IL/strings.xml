@@ -234,7 +234,6 @@
     <string name="conversationsDeleted">השיחה נמחקה</string>
     <string name="conversationsEmpty">אין הודעות ב-{conversation_name}.</string>
     <string name="conversationsEnter">הזן מקש</string>
-    <string name="conversationsEnterDescription">פונקציה של מקש ה-Enter בעת הקלדה בשיחה.</string>
     <string name="conversationsGroups">קבוצות</string>
     <string name="conversationsMessageTrimming">קיצוץ הודעה</string>
     <string name="conversationsMessageTrimmingTrimCommunities">חתוך Communities</string>

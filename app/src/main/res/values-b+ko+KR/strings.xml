@@ -271,7 +271,6 @@
     <string name="conversationsDeleted">대화를 삭제함</string>
     <string name="conversationsEmpty">{conversation_name}에는 메시지가 없습니다.</string>
     <string name="conversationsEnter">키 입력</string>
-    <string name="conversationsEnterDescription">대화에서 Enter 키 기능.</string>
     <string name="conversationsGroups">그룹</string>
     <string name="conversationsMessageTrimming">대화 줄이기</string>
     <string name="conversationsMessageTrimmingTrimCommunities">커뮤니티 정돈</string>

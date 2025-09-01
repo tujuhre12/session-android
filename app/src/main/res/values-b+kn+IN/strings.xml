@@ -232,7 +232,6 @@
     <string name="conversationsDeleted">ಸಂಭಾಷಣೆಯನ್ನು ಅಳಿಸಲಾಗಿದೆ</string>
     <string name="conversationsEmpty">{conversation_name} ನಲ್ಲಿ ಯಾವುದೇ ಸಂದೇಶಗಳಿಲ್ಲ.</string>
     <string name="conversationsEnter">ಎಂಟರ್ ಕೀ</string>
-    <string name="conversationsEnterDescription">ಸಂಭಾಷಣೆಯಲ್ಲಿ ಟೈಪಿಂಗ್‌ನಲ್ಲಿ ಎಂಟರ್ ಕೀಯ ತಂತ್ರಜ್ಞಾನ.</string>
     <string name="conversationsGroups">ಗುಂಪುಗಳು</string>
     <string name="conversationsMessageTrimming">ಸಂದೇಶಗಳ ಕತ್ತರಿಸಿ ಹಾಕುವಿಕೆ</string>
     <string name="conversationsMessageTrimmingTrimCommunities">ಸಮುದಾಯಗಳನ್ನು ಟ್ರಿಮ್ ಮಾಡಿ</string>

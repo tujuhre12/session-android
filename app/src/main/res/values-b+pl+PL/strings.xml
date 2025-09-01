@@ -281,7 +281,6 @@
     <string name="conversationsDeleted">Rozmowa usunięta</string>
     <string name="conversationsEmpty">W {conversation_name} nie ma żadnych wiadomości.</string>
     <string name="conversationsEnter">Klawisz Enter</string>
-    <string name="conversationsEnterDescription">Funkcja klawisza Enter podczas pisania wiadomości w konwersacji.</string>
     <string name="conversationsGroups">Grupy</string>
     <string name="conversationsMessageTrimming">Przycinanie wiadomości</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Przytnij społeczności</string>

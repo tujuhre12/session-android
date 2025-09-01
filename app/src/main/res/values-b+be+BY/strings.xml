@@ -234,7 +234,6 @@
     <string name="conversationsDeleted">Гутарка выдалена</string>
     <string name="conversationsEmpty">У {conversation_name} няма паведамленняў.</string>
     <string name="conversationsEnter">Увядзіце Key</string>
-    <string name="conversationsEnterDescription">Функцыя клавішы Enter пры наборы тэксту ў гутарцы.</string>
     <string name="conversationsGroups">Групы</string>
     <string name="conversationsMessageTrimming">Абрэзка паведамленняў</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Абрэжце супольніцтва</string>

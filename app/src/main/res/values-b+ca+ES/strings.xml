@@ -277,7 +277,6 @@
     <string name="conversationsDeleted">S\'ha suprimit la conversa</string>
     <string name="conversationsEmpty">No hi ha missatges a {conversation_name}.</string>
     <string name="conversationsEnter">Introdueix clau</string>
-    <string name="conversationsEnterDescription">Funció de la tecla d\'introducció durant l\'escriptura en una conversa.</string>
     <string name="conversationsGroups">Grups</string>
     <string name="conversationsMessageTrimming">Escapçament de missatges</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Limiteu comunitats</string>

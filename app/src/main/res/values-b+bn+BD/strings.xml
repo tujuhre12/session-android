@@ -232,7 +232,6 @@
     <string name="conversationsDeleted">কথোপকথন মুছে ফেলা হয়েছে</string>
     <string name="conversationsEmpty">{conversation_name} এ কোনো মেসেজ নেই।</string>
     <string name="conversationsEnter">কী লিখুন</string>
-    <string name="conversationsEnterDescription">কথোপকথনে টাইপ করার সময় এন্টার কী এর ফাংশন।</string>
     <string name="conversationsGroups">গ্রুপস</string>
     <string name="conversationsMessageTrimming">বার্তা সংক্ষিপ্তকরণ</string>
     <string name="conversationsMessageTrimmingTrimCommunities">কমিউনিটিস ট্রিম করুন</string>

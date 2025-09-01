@@ -232,7 +232,6 @@
     <string name="conversationsDeleted">ਗੱਲਬਾਤ ਮਿਟਾ ਦਿੱਤੀ ਗਈ</string>
     <string name="conversationsEmpty">{conversation_name} ਵਿੱਚ ਕੋਈ ਸੁਨੇਹੇ ਨਹੀਂ ਹਨ।</string>
     <string name="conversationsEnter">ਕੁੰਜੀ ਦਰਜ ਕਰੋ</string>
-    <string name="conversationsEnterDescription">ਗੱਲਬਾਤ ਵਿੱਚ ਲਿਖਣ ਵੇਲੇ ਐਂਟਰ ਕੀ ਦਾ ਫੰਕਸ਼ਨ।</string>
     <string name="conversationsGroups">ਗਰੁੱਪ</string>
     <string name="conversationsMessageTrimming">ਸੁਨੇਹਾ ਕਟਾਈ</string>
     <string name="conversationsMessageTrimmingTrimCommunities">ਕਮਿਊਨਿਟੀਆਂ ਟਰਿਮ ਕਰੋ</string>

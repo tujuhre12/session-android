@@ -232,7 +232,6 @@
     <string name="conversationsDeleted">گپ وڑی</string>
     <string name="conversationsEmpty">{conversation_name} میں کوئی پیغام نہیں.</string>
     <string name="conversationsEnter">کنجی درج بکنا</string>
-    <string name="conversationsEnterDescription">واژئے کُنجیء کارکردگی ہدباتءَ نیںّ گفتگوئے شتگ.</string>
     <string name="conversationsGroups">گروپاں</string>
     <string name="conversationsMessageTrimming">Message Trimming</string>
     <string name="conversationsMessageTrimmingTrimCommunities">کمیونٹیز کو تراشیں</string>

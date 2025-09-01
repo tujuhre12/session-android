@@ -273,7 +273,6 @@
     <string name="conversationsDeleted">Beszélgetés törölve</string>
     <string name="conversationsEmpty">A {conversation_name} beszélgetésben nincsenek további üzenetek.</string>
     <string name="conversationsEnter">Enter billentyű</string>
-    <string name="conversationsEnterDescription">Az Enter billentyű funkciója beszélgetés közben.</string>
     <string name="conversationsGroups">Csoportok</string>
     <string name="conversationsMessageTrimming">Üzenetek rövidítése</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Közösségek rövidítése</string>

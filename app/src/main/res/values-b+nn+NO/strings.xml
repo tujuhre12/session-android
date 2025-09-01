@@ -233,7 +233,6 @@
     <string name="conversationsDeleted">Konversasjonen sletta</string>
     <string name="conversationsEmpty">Det er ingen meldinger i {conversation_name}.</string>
     <string name="conversationsEnter">Skriv inn Tast</string>
-    <string name="conversationsEnterDescription">Funksjon for enter-tasten ved skriving i samtale.</string>
     <string name="conversationsGroups">Grupper</string>
     <string name="conversationsMessageTrimming">Meldingsbeskjæring</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Trim Samfunn</string>

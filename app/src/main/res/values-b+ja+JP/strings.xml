@@ -275,7 +275,6 @@
     <string name="conversationsDeleted">会話を削除しました</string>
     <string name="conversationsEmpty">{conversation_name} にはメッセージがありません。</string>
     <string name="conversationsEnter">キーを入力</string>
-    <string name="conversationsEnterDescription">会話中のEnterキーの機能</string>
     <string name="conversationsGroups">グループ</string>
     <string name="conversationsMessageTrimming">メッセージの削減</string>
     <string name="conversationsMessageTrimmingTrimCommunities">コミュニティをトリムする</string>

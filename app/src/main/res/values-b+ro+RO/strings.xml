@@ -279,7 +279,6 @@
     <string name="conversationsDeleted">Conversație ștearsă</string>
     <string name="conversationsEmpty">Nu există mesaje în {conversation_name}.</string>
     <string name="conversationsEnter">Introduceți tasta</string>
-    <string name="conversationsEnterDescription">Funcția tastei Enter când scrii într-o conversație.</string>
     <string name="conversationsGroups">Grupuri</string>
     <string name="conversationsMessageTrimming">Scurtarea mesajelor</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Ajustare comunități</string>

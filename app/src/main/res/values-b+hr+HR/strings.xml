@@ -233,7 +233,6 @@
     <string name="conversationsDeleted">Razgovor uklonjen</string>
     <string name="conversationsEmpty">Nema poruka u {conversation_name}.</string>
     <string name="conversationsEnter">Unesite ključ</string>
-    <string name="conversationsEnterDescription">Funkcija tipke enter pri pisanju u razgovoru.</string>
     <string name="conversationsGroups">Grupe</string>
     <string name="conversationsMessageTrimming">Skraćivanje poruka</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Sažimanje zajednica</string>

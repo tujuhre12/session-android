@@ -219,7 +219,6 @@
     <string name="conversationsDeleted">Conversa borrada</string>
     <string name="conversationsEmpty">Non hai mensaxes en {conversation_name}.</string>
     <string name="conversationsEnter">Introduza a clave</string>
-    <string name="conversationsEnterDescription">Función da tecla Enter ao escribir nunha conversa.</string>
     <string name="conversationsGroups">Grupos</string>
     <string name="conversationsMessageTrimming">Recorte das mensaxes</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Recortar Comunidades</string>

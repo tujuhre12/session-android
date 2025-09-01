@@ -232,7 +232,6 @@
     <string name="conversationsDeleted">Vestlus kustutatud</string>
     <string name="conversationsEmpty">{conversation_name} ei ole sõnumeid.</string>
     <string name="conversationsEnter">Sisesta Key</string>
-    <string name="conversationsEnterDescription">Enter-klahvi funktsioon vestluse ajal tippimisel.</string>
     <string name="conversationsGroups">Grupid</string>
     <string name="conversationsMessageTrimming">Sõnumi piiramine</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Lähenda kogukonnad</string>

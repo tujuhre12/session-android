@@ -233,7 +233,6 @@
     <string name="conversationsDeleted">Mazungumzo yamefutwa</string>
     <string name="conversationsEmpty">Hakuna jumbe kwenye {conversation_name}.</string>
     <string name="conversationsEnter">Ingiza Kitufe</string>
-    <string name="conversationsEnterDescription">Kazi ya kitufe cha kuingiza wakati wa kuandika katika mazungumzo.</string>
     <string name="conversationsGroups">Makundi</string>
     <string name="conversationsMessageTrimming">Ujumbe unapunguza</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Kata Community</string>

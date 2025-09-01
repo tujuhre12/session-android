@@ -238,7 +238,6 @@
     <string name="conversationsDeleted">Sgwrs wedi\'i dileu</string>
     <string name="conversationsEmpty">Nid oes negeseuon yn {conversation_name}.</string>
     <string name="conversationsEnter">Rhowch Allwedd</string>
-    <string name="conversationsEnterDescription">Swyddogaeth allwedd enter wrth deipio mewn sgwrs.</string>
     <string name="conversationsGroups">Grwpiau</string>
     <string name="conversationsMessageTrimming">Tocio Negeseuon</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Trimio Cymunedau</string>

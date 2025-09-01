@@ -265,7 +265,6 @@
     <string name="conversationsDeleted">تم حذف المحادثة</string>
     <string name="conversationsEmpty">لا توجد رسائل في {conversation_name}.</string>
     <string name="conversationsEnter">أدخل المفتاح</string>
-    <string name="conversationsEnterDescription">وظيفة مفتاح الإدخال عند الكتابة في محادثة.</string>
     <string name="conversationsGroups">مجموعات</string>
     <string name="conversationsMessageTrimming">تقليم الرسالة</string>
     <string name="conversationsMessageTrimmingTrimCommunities">تقليم المجتمعات</string>

@@ -233,7 +233,6 @@
     <string name="conversationsDeleted">Suhbat o\'chirildi</string>
     <string name="conversationsEmpty">{conversation_name} nomli suhbatda xabarlar yo\'q.</string>
     <string name="conversationsEnter">Tugmani kiritish</string>
-    <string name="conversationsEnterDescription">Suhbatda enter tugmasining vazifasi.</string>
     <string name="conversationsGroups">Guruhlar</string>
     <string name="conversationsMessageTrimming">Xabarni chetlatish</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Jamiyatlarni qisqartiring</string>

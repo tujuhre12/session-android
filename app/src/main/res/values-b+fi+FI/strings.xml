@@ -234,7 +234,6 @@
     <string name="conversationsDeleted">Keskustelu poistettu</string>
     <string name="conversationsEmpty">Keskustelussa {conversation_name} ei ole viestejä.</string>
     <string name="conversationsEnter">Syötä avain</string>
-    <string name="conversationsEnterDescription">Enter-näppäimen toiminto keskustelussa kirjoittaessa.</string>
     <string name="conversationsGroups">Ryhmät</string>
     <string name="conversationsMessageTrimming">Keskustelujen tiivistys</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Tiivistä yhteisöt</string>

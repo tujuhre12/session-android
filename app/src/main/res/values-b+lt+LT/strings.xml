@@ -234,7 +234,6 @@
     <string name="conversationsDeleted">Pokalbis ištrintas</string>
     <string name="conversationsEmpty">Nėra žinučių {conversation_name}.</string>
     <string name="conversationsEnter">Enter Key</string>
-    <string name="conversationsEnterDescription">Įveskite pokalbio metu naudojamo enter klavišo funkciją.</string>
     <string name="conversationsGroups">Grupės</string>
     <string name="conversationsMessageTrimming">Žinučių išvalymas</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Apkarpyti Communities</string>

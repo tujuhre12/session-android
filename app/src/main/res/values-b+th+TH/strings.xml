@@ -232,7 +232,6 @@
     <string name="conversationsDeleted">Conversation deleted</string>
     <string name="conversationsEmpty">ไม่มีข้อความใน {conversation_name}</string>
     <string name="conversationsEnter">ป้อน Key</string>
-    <string name="conversationsEnterDescription">ฟังก์ชันของปุ่ม Enter เมื่อพิมพ์ในบทสนทนา</string>
     <string name="conversationsGroups">กลุ่ม</string>
     <string name="conversationsMessageTrimming">ตัดข้อความให้สั้นลง</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Trim Communities</string>

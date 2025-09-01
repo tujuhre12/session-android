@@ -232,7 +232,6 @@
     <string name="conversationsDeleted">Ջնջված է</string>
     <string name="conversationsEmpty">{conversation_name}-ում հաղորդագրություններ չկան.</string>
     <string name="conversationsEnter">Մուտքագրել Key</string>
-    <string name="conversationsEnterDescription">Enter ստեղնի գործառույթը զրույցի ժամանակ:</string>
     <string name="conversationsGroups">Խմբեր</string>
     <string name="conversationsMessageTrimming">Նամակների կարճեցում</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Կարճացրեք համայնքները</string>

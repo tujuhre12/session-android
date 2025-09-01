@@ -277,7 +277,6 @@
     <string name="conversationsDeleted">Die Unterhaltung wurde gelöscht.</string>
     <string name="conversationsEmpty">Es sind keine Nachrichten in {conversation_name}.</string>
     <string name="conversationsEnter">Eingabetaste</string>
-    <string name="conversationsEnterDescription">Funktion der Eingabetaste beim Tippen in einer Unterhaltung.</string>
     <string name="conversationsGroups">Gruppen</string>
     <string name="conversationsMessageTrimming">Nachrichtenkürzung</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Communities kürzen</string>

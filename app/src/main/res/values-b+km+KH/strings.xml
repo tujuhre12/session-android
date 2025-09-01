@@ -231,7 +231,6 @@
     <string name="conversationsDeleted">ការសន្ទនាត្រូវបានលុប</string>
     <string name="conversationsEmpty">គ្មានសារណាមួយនៅក្នុង {conversation_name} ឡើយ។</string>
     <string name="conversationsEnter">បញ្ចូល Key</string>
-    <string name="conversationsEnterDescription">មុខងាររបស់ឃី enter នៅពេលវាយក្នុងការសន្ទនា។</string>
     <string name="conversationsGroups">ក្រុម</string>
     <string name="conversationsMessageTrimming">តម្រឹមសារ</string>
     <string name="conversationsMessageTrimmingTrimCommunities">បង្រួមសហគមន៍</string>

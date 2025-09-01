@@ -235,7 +235,6 @@
     <string name="conversationsDeleted">Konverzácia úspešne zmazaná</string>
     <string name="conversationsEmpty">V {conversation_name} nie sú žiadne správy.</string>
     <string name="conversationsEnter">Zadajte Kľúč</string>
-    <string name="conversationsEnterDescription">Funkcia klávesy Enter pri písaní v konverzácii.</string>
     <string name="conversationsGroups">Skupiny</string>
     <string name="conversationsMessageTrimming">Prečistenie správ</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Prečistiť komunity</string>

@@ -230,7 +230,6 @@
     <string name="conversationsDeleted">مکالمه حذف شد</string>
     <string name="conversationsEmpty">هیچ پیامی در {conversation_name} وجود ندارد.</string>
     <string name="conversationsEnter">کلید را وارد کنید</string>
-    <string name="conversationsEnterDescription">ویژگی کلید Enter در هنگام تایپ در یک مکالمه.</string>
     <string name="conversationsGroups">گروه‌ها</string>
     <string name="conversationsMessageTrimming">پیرایش پیام</string>
     <string name="conversationsMessageTrimmingTrimCommunities">کوتاه‌سازی انجمن‌ها</string>

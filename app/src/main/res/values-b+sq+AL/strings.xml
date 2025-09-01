@@ -232,7 +232,6 @@
     <string name="conversationsDeleted">Biseda u fshi</string>
     <string name="conversationsEmpty">Nuk ka mesazhe në {conversation_name}.</string>
     <string name="conversationsEnter">Jepni çelësin</string>
-    <string name="conversationsEnterDescription">Funksioni i tastit enter kur shkrini mesazhe.</string>
     <string name="conversationsGroups">Grupe</string>
     <string name="conversationsMessageTrimming">Shkurtim mesazhesh</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Pastro Communities</string>

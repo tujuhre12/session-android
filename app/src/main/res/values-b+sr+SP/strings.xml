@@ -233,7 +233,6 @@
     <string name="conversationsDeleted">Преписка је избрисана</string>
     <string name="conversationsEmpty">Нема порука у {conversation_name}.</string>
     <string name="conversationsEnter">Унесите кључ</string>
-    <string name="conversationsEnterDescription">Функција тастера ентер при куцању у разговору.</string>
     <string name="conversationsGroups">Групе</string>
     <string name="conversationsMessageTrimming">Скраћивање порука</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Скрати Заједницу</string>

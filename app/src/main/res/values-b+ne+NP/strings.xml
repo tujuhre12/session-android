@@ -232,7 +232,6 @@
     <string name="conversationsDeleted">वार्ता मेटियो</string>
     <string name="conversationsEmpty">{conversation_name} मा कुनै संदेशहरू छैनन्।</string>
     <string name="conversationsEnter">कुञ्जी प्रविष्ट गर्नुहोस्</string>
-    <string name="conversationsEnterDescription">समूह निमन्त्रणा सफल</string>
     <string name="conversationsGroups">समूहहरू</string>
     <string name="conversationsMessageTrimming">सन्देश ट्रिमिंग</string>
     <string name="conversationsMessageTrimmingTrimCommunities">समुदायहरू ट्रिम गर्नुहोस्</string>

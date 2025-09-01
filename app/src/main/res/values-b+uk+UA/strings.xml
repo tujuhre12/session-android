@@ -278,7 +278,6 @@
     <string name="conversationsDeleted">Розмову видалено</string>
     <string name="conversationsEmpty">Немає повідомлень в {conversation_name}.</string>
     <string name="conversationsEnter">Введіть Key</string>
-    <string name="conversationsEnterDescription">Функція клавіші Enter під час набору повідомлення.</string>
     <string name="conversationsGroups">Групи</string>
     <string name="conversationsMessageTrimming">Автовидалення повідомлень</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Автовидалення повідомлень спільнот</string>

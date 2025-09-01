@@ -232,7 +232,6 @@
     <string name="conversationsDeleted">Okuggya okwekeneenya</string>
     <string name="conversationsEmpty">Tewali bubaka mu {conversation_name}.</string>
     <string name="conversationsEnter">Yingiza Key</string>
-    <string name="conversationsEnterDescription">Enkola ya ki Enter okunyiga kulwokola message nga wandikira mu kwogereza.</string>
     <string name="conversationsGroups">Ebibinja</string>
     <string name="conversationsMessageTrimming">Tikka olubaka olwa teriiko ly’oteereza</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Fengereza Community</string>

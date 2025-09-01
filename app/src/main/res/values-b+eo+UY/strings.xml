@@ -260,7 +260,6 @@
     <string name="conversationsDeleted">Konversacio forviŝite</string>
     <string name="conversationsEmpty">Ne estas mesaĝoj en {conversation_name}.</string>
     <string name="conversationsEnter">Eniri ŝlosilon</string>
-    <string name="conversationsEnterDescription">Funkcio de la eniga klavo dum tajpado en konversacio.</string>
     <string name="conversationsGroups">Grupoj</string>
     <string name="conversationsMessageTrimming">Tondeto de mesaĝoj</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Oblikvi Komunumojn</string>

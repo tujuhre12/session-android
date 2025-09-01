@@ -252,7 +252,6 @@
     <string name="conversationsDeleted">Cuộc hội thoại đã được xoá</string>
     <string name="conversationsEmpty">Không có tin nhắn nào trong {conversation_name}.</string>
     <string name="conversationsEnter">Nhập Key</string>
-    <string name="conversationsEnterDescription">Chức năng của phím enter khi nhập nội dung trong cuộc trò chuyện.</string>
     <string name="conversationsGroups">Nhóm</string>
     <string name="conversationsMessageTrimming">Thu gọn tin nhắn</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Cắt bớt Communities</string>

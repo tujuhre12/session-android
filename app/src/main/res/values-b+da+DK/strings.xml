@@ -266,7 +266,6 @@
     <string name="conversationsDeleted">Samtale slettet</string>
     <string name="conversationsEmpty">Der er ingen beskeder i {conversation_name}.</string>
     <string name="conversationsEnter">Indtast nøgle</string>
-    <string name="conversationsEnterDescription">Funktion af enter-tasten, når du skriver i en samtale.</string>
     <string name="conversationsGroups">Grupper</string>
     <string name="conversationsMessageTrimming">Trimning af beskeder</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Trim Communities</string>

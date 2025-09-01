@@ -233,7 +233,6 @@
     <string name="conversationsDeleted">Perbualan dipadam</string>
     <string name="conversationsEmpty">Tiada mesej di dalam {conversation_name}.</string>
     <string name="conversationsEnter">Masukkan Key</string>
-    <string name="conversationsEnterDescription">Fungsi kekunci enter semasa menaip dalam perbualan.</string>
     <string name="conversationsGroups">Kumpulan</string>
     <string name="conversationsMessageTrimming">Pemangkasan Mesej</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Trim Komuniti</string>

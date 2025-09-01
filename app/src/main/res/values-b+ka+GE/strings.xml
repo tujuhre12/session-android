@@ -234,7 +234,6 @@
     <string name="conversationsDeleted">საუბარი წაშლილია</string>
     <string name="conversationsEmpty">{conversation_name}-ში არ არის შეტყობინებები.</string>
     <string name="conversationsEnter">შეიყვანეთ გასაღები</string>
-    <string name="conversationsEnterDescription">ფუნქცია, როცა კლავიატურაზე იყენებთ Enter ღილაკს საუბრის დროს.</string>
     <string name="conversationsGroups">ჯგუფები</string>
     <string name="conversationsMessageTrimming">deleteAfterGroupPR1MessageSound</string>
     <string name="conversationsMessageTrimmingTrimCommunities">თემების შემცირება</string>

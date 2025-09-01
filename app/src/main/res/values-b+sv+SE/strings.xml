@@ -277,7 +277,6 @@
     <string name="conversationsDeleted">Konversationen har raderats</string>
     <string name="conversationsEmpty">Det finns inga meddelanden i {conversation_name}.</string>
     <string name="conversationsEnter">Ange Key</string>
-    <string name="conversationsEnterDescription">Funktionen av Enter-tangenten när du skriver i en konversation.</string>
     <string name="conversationsGroups">Grupper</string>
     <string name="conversationsMessageTrimming">Trimma meddelanden</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Beskär gemenskaper</string>

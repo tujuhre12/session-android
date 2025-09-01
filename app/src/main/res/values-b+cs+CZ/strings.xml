@@ -281,7 +281,6 @@
     <string name="conversationsDeleted">Konverzace byla smazána</string>
     <string name="conversationsEmpty">V {conversation_name} nejsou žádné zprávy.</string>
     <string name="conversationsEnter">Zadejte klíč</string>
-    <string name="conversationsEnterDescription">Funkce klávesy Enter při psaní v konverzaci.</string>
     <string name="conversationsGroups">Skupiny</string>
     <string name="conversationsMessageTrimming">Pročištění zpráv</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Pročistit komunity</string>

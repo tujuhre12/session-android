@@ -234,7 +234,6 @@
     <string name="conversationsDeleted">Η συνομιλία διαγράφηκε</string>
     <string name="conversationsEmpty">Δεν υπάρχουν μηνύματα σε {conversation_name}.</string>
     <string name="conversationsEnter">Εισαγάγετε Key</string>
-    <string name="conversationsEnterDescription">Λειτουργία του πλήκτρου εισαγωγής κατά την πληκτρολόγηση σε συνομιλία.</string>
     <string name="conversationsGroups">Ομάδες</string>
     <string name="conversationsMessageTrimming">Περικοπή μηνυμάτων</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Περικοπή Κοινοτήτων</string>

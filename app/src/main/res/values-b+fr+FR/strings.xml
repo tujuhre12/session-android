@@ -277,7 +277,6 @@
     <string name="conversationsDeleted">Conversation supprimée</string>
     <string name="conversationsEmpty">Il n\'y a aucun message dans {conversation_name}.</string>
     <string name="conversationsEnter">Entrer une clé</string>
-    <string name="conversationsEnterDescription">Fonction de la touche Entrée lors de la saisie dans une conversation.</string>
     <string name="conversationsGroups">Groupes</string>
     <string name="conversationsMessageTrimming">Élagage des messages</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Purger les groupes</string>

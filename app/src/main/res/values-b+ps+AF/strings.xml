@@ -232,7 +232,6 @@
     <string name="conversationsDeleted">خبرتیا</string>
     <string name="conversationsEmpty">په {conversation_name} کې هیڅ پیغام نشته.</string>
     <string name="conversationsEnter">کیلي ولیکئ</string>
-    <string name="conversationsEnterDescription">د خبرو اترو په دوران کې د انټر کیلي دنده.</string>
     <string name="conversationsGroups">ډلې</string>
     <string name="conversationsMessageTrimming">پیغام تراشې</string>
     <string name="conversationsMessageTrimmingTrimCommunities">ټرم ټولنه</string>

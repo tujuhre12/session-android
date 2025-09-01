@@ -277,7 +277,6 @@
     <string name="conversationsDeleted">Danışıq silindi</string>
     <string name="conversationsEmpty">{conversation_name} danışığında heç bir mesaj yoxdur.</string>
     <string name="conversationsEnter">Enter düyməsi</string>
-    <string name="conversationsEnterDescription">Bir danışıqda yazarkən Enter düyməsinin funksiyası.</string>
     <string name="conversationsGroups">Qruplar</string>
     <string name="conversationsMessageTrimming">Mesajları kəs</string>
     <string name="conversationsMessageTrimmingTrimCommunities">İcmalarda kəsmə</string>

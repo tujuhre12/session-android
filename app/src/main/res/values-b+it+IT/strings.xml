@@ -277,7 +277,6 @@
     <string name="conversationsDeleted">Conversazione eliminata</string>
     <string name="conversationsEmpty">Non ci sono messaggi in {conversation_name}.</string>
     <string name="conversationsEnter">Inserisci chiave</string>
-    <string name="conversationsEnterDescription">Funzione del tasto invio quando si digita in una chat.</string>
     <string name="conversationsGroups">Gruppi</string>
     <string name="conversationsMessageTrimming">Sfoltitura dei messaggi</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Sfoltisci Comunità</string>

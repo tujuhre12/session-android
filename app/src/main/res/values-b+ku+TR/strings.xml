@@ -233,7 +233,6 @@
     <string name="conversationsDeleted">گفتوگۆ سڕایەوە</string>
     <string name="conversationsEmpty">هیچ پەیامێک نیە لە {conversation_name}.</string>
     <string name="conversationsEnter">کلیدەکە بنووسە</string>
-    <string name="conversationsEnterDescription">فەرمیۆنی لەگەڵ داخستنی کلیلەکەرە</string>
     <string name="conversationsGroups">گروپەکان</string>
     <string name="conversationsMessageTrimming">بڕینی نامە</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Trim Communities</string>

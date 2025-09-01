@@ -224,7 +224,6 @@
     <string name="conversationsDeleted">Saruna izdzēsta</string>
     <string name="conversationsEmpty">Nav ziņojumu {conversation_name}.</string>
     <string name="conversationsEnter">Ievadiet atslēgu</string>
-    <string name="conversationsEnterDescription">Enter taustiņa funkcija, rakstot sarunā.</string>
     <string name="conversationsGroups">Grupas</string>
     <string name="conversationsMessageTrimming">Ziņu apgriešana</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Apgriezt kopienas</string>

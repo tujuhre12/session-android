@@ -231,7 +231,6 @@
     <string name="conversationsDeleted">စကားပြောဆိုမှု ဖျက်ပြီးပါပြီ</string>
     <string name="conversationsEmpty">{conversation_name} တွင် မက်ဆေ့ချ် မရှိပါ။</string>
     <string name="conversationsEnter">ခြေလှမ်းရွေးချယ်ပါ</string>
-    <string name="conversationsEnterDescription">စကားပြောမှာ enter key ရဲ့လုပ်ဆောင်ချက်</string>
     <string name="conversationsGroups">အုပ်စုများ</string>
     <string name="conversationsMessageTrimming">မဇ်ဆေ့ဂ ှ</string>
     <string name="conversationsMessageTrimmingTrimCommunities">ဖြတ်တောက်မှု အသိုင်းအဝိုင်းများ</string>

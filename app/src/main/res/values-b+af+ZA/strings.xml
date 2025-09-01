@@ -233,7 +233,6 @@
     <string name="conversationsDeleted">Gesprek geskrap</string>
     <string name="conversationsEmpty">Daar is geen boodskappe in {conversation_name} nie.</string>
     <string name="conversationsEnter">Voer sleutel in</string>
-    <string name="conversationsEnterDescription">Funksie van die Enter-sleutel wanneer u \'n gesprek tik.</string>
     <string name="conversationsGroups">Groepe</string>
     <string name="conversationsMessageTrimming">Boodskap Snoei</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Trim Gemeenskappe</string>

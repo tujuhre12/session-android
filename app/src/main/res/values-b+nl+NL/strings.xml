@@ -277,7 +277,6 @@
     <string name="conversationsDeleted">Gesprek verwijderd</string>
     <string name="conversationsEmpty">Er zijn geen berichten in {conversation_name}.</string>
     <string name="conversationsEnter">Voer toets in</string>
-    <string name="conversationsEnterDescription">Functie van de entertoets bij het typen in een gesprek.</string>
     <string name="conversationsGroups">Groepen</string>
     <string name="conversationsMessageTrimming">Beperk bewaartermijn</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Communities opschonen</string>

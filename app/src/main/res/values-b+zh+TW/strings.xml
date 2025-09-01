@@ -275,7 +275,6 @@
     <string name="conversationsDeleted">對話已刪除</string>
     <string name="conversationsEmpty">{conversation_name} 中沒有訊息。</string>
     <string name="conversationsEnter">回車鍵</string>
-    <string name="conversationsEnterDescription">在對話中鍵入時回車鍵的功能。</string>
     <string name="conversationsGroups">群組</string>
     <string name="conversationsMessageTrimming">訊息清理</string>
     <string name="conversationsMessageTrimmingTrimCommunities">刪裁社群舊訊息</string>

@@ -232,7 +232,6 @@
     <string name="conversationsDeleted">Rikani Kukambirana</string>
     <string name="conversationsEmpty">Palibe mauthenga mu {conversation_name}.</string>
     <string name="conversationsEnter">Lemberani kiyi</string>
-    <string name="conversationsEnterDescription">Ntchito ya kiyi ya enter mukalemba mu kukambirana.</string>
     <string name="conversationsGroups">Magulu</string>
     <string name="conversationsMessageTrimming">Kusandulika mauthenga</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Chepetsani Community</string>

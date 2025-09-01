@@ -232,7 +232,6 @@
     <string name="conversationsDeleted">Разговорът е изтрит</string>
     <string name="conversationsEmpty">Няма съобщения в {conversation_name}.</string>
     <string name="conversationsEnter">Въведете ключ</string>
-    <string name="conversationsEnterDescription">Функция на клавиша Enter, когато пишете в разговор.</string>
     <string name="conversationsGroups">Групи</string>
     <string name="conversationsMessageTrimming">Съкращаване на съобщенията</string>
     <string name="conversationsMessageTrimmingTrimCommunities">Подрязване на Общности</string>
