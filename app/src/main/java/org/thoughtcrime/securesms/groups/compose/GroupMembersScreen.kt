@@ -16,6 +16,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.GroupMember
+import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.GroupMemberState
 import org.thoughtcrime.securesms.groups.GroupMembersViewModel
@@ -92,7 +93,7 @@ fun GroupMembers(
                 items(members) { member ->
                     // Each member's view
                     MemberItem(
-                        accountId = member.accountId,
+                        address = Address.fromSerialized(member.accountId.hexString),
                         onClick = { onMemberClicked(member.accountId) },
                         title = member.name,
                         subtitle = member.statusLabel,
@@ -102,6 +103,7 @@ fun GroupMembers(
                             LocalColors.current.textSecondary
                         },
                         showAsAdmin = member.showAsAdmin,
+                        showProBadge = member.showProBadge,
                         avatarUIData = member.avatarUIData
                     )
                 }
@@ -125,6 +127,7 @@ private fun EditGroupPreview() {
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = false,
+            showProBadge = true,
             clickable = true,
             statusLabel = "Invited",
             avatarUIData = AvatarUIData(
@@ -146,6 +149,7 @@ private fun EditGroupPreview() {
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = true,
+            showProBadge = true,
             clickable = true,
             statusLabel = "Promotion failed",
             avatarUIData = AvatarUIData(
@@ -167,6 +171,7 @@ private fun EditGroupPreview() {
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = false,
+            showProBadge = false,
             clickable = true,
             statusLabel = "",
             avatarUIData = AvatarUIData(

@@ -1,9 +1,13 @@
 package org.session.libsession.messaging.jobs
 
+import android.content.Context
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import dagger.hilt.android.qualifiers.ApplicationContext
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
@@ -11,6 +15,7 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.utilities.await
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.DecodedAudio
 import org.session.libsession.utilities.DownloadUtilities
 import org.session.libsession.utilities.InputStreamMediaDataSource
@@ -18,13 +23,21 @@ import org.session.libsignal.streams.AttachmentCipherInputStream
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageId
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.InputStream
 
-class AttachmentDownloadJob(val attachmentID: Long, val mmsMessageId: Long) : Job {
+class AttachmentDownloadJob @AssistedInject constructor(
+    @Assisted("attachmentID") val attachmentID: Long,
+    @Assisted val mmsMessageId: Long,
+    @param:ApplicationContext private val context: Context,
+    private val storage: StorageProtocol,
+    private val messageDataProvider: MessageDataProvider,
+    private val recipientRepository: RecipientRepository,
+) : Job {
     override var delegate: JobDelegate? = null
     override var id: String? = null
     override var failureCount: Int = 0
@@ -54,10 +67,12 @@ class AttachmentDownloadJob(val attachmentID: Long, val mmsMessageId: Long) : Jo
          * of whether the download is allowed, it does not check if the download has already taken
          * place.
          */
-        fun eligibleForDownload(threadID: Long,
-                                storage: StorageProtocol,
-                                messageDataProvider: MessageDataProvider,
-                                mmsId: Long): Boolean {
+        fun eligibleForDownload(
+            threadID: Long,
+            storage: StorageProtocol,
+            messageDataProvider: MessageDataProvider,
+            mmsId: Long
+        ): Boolean {
             val threadRecipient = storage.getRecipientForThread(threadID) ?: return false
 
             // if we are the sender we are always eligible
@@ -66,13 +81,11 @@ class AttachmentDownloadJob(val attachmentID: Long, val mmsMessageId: Long) : Jo
                 return true
             }
 
-            return storage.shouldAutoDownloadAttachments(threadRecipient)
+            return threadRecipient.autoDownloadAttachments == true
         }
     }
 
     override suspend fun execute(dispatcherName: String) {
-        val storage = MessagingModuleConfiguration.shared.storage
-        val messageDataProvider = MessagingModuleConfiguration.shared.messageDataProvider
         val threadID = storage.getThreadIdForMms(mmsMessageId)
 
         val handleFailure: (java.lang.Exception, attachmentId: AttachmentId?) -> Unit = { exception, attachment ->
@@ -124,10 +137,17 @@ class AttachmentDownloadJob(val attachmentID: Long, val mmsMessageId: Long) : Jo
             return
         }
 
-        if (!eligibleForDownload(threadID, storage, messageDataProvider, mmsMessageId)) {
+        if (!eligibleForDownload(
+                threadID = threadID,
+                storage = storage,
+                messageDataProvider = messageDataProvider,
+                mmsId = mmsMessageId
+            )) {
             handleFailure(Error.NoSender, null)
             return
         }
+
+        val threadRecipient = storage.getRecipientForThread(threadID)
 
         var tempFile: File? = null
         var attachment: DatabaseAttachment? = null
@@ -140,15 +160,14 @@ class AttachmentDownloadJob(val attachmentID: Long, val mmsMessageId: Long) : Jo
                 return
             }
             messageDataProvider.setAttachmentState(AttachmentState.DOWNLOADING, attachment.attachmentId, this.mmsMessageId)
-            val openGroup = storage.getOpenGroup(threadID)
-            val downloadedData = if (openGroup == null) {
+            val downloadedData = if (threadRecipient?.address !is Address.Community) {
                 Log.d("AttachmentDownloadJob", "downloading normal attachment")
                 DownloadUtilities.downloadFromFileServer(attachment.url).body
             } else {
                 Log.d("AttachmentDownloadJob", "downloading open group attachment")
                 val url = attachment.url.toHttpUrlOrNull()!!
                 val fileID = url.pathSegments.last()
-                OpenGroupApi.download(fileID, openGroup.room, openGroup.server).await()
+                OpenGroupApi.download(fileID, room = threadRecipient.address.room, server = threadRecipient.address.serverUrl).await()
             }
 
             tempFile = createTempFile().also { file ->
@@ -213,7 +232,7 @@ class AttachmentDownloadJob(val attachmentID: Long, val mmsMessageId: Long) : Jo
     }
 
     private fun createTempFile(): File {
-        val file = File.createTempFile("push-attachment", "tmp", MessagingModuleConfiguration.shared.context.cacheDir)
+        val file = File.createTempFile("push-attachment", "tmp", context.cacheDir)
         file.deleteOnExit()
         return file
     }
@@ -229,10 +248,21 @@ class AttachmentDownloadJob(val attachmentID: Long, val mmsMessageId: Long) : Jo
         return KEY
     }
 
-    class Factory : Job.Factory<AttachmentDownloadJob> {
+    class DeserializeFactory(private val factory: Factory) : Job.DeserializeFactory<AttachmentDownloadJob> {
 
         override fun create(data: Data): AttachmentDownloadJob {
-            return AttachmentDownloadJob(data.getLong(ATTACHMENT_ID_KEY), data.getLong(TS_INCOMING_MESSAGE_ID_KEY))
+            return factory.create(
+                attachmentID = data.getLong(ATTACHMENT_ID_KEY),
+                mmsMessageId = data.getLong(TS_INCOMING_MESSAGE_ID_KEY)
+            )
         }
+    }
+
+    @AssistedFactory
+    interface Factory {
+        fun create(
+            @Assisted("attachmentID") attachmentID: Long,
+            mmsMessageId: Long
+        ): AttachmentDownloadJob
     }
 }

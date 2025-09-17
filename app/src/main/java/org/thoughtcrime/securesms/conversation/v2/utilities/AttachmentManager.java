@@ -41,7 +41,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import network.loki.messenger.R;
-import org.session.libsession.utilities.recipients.Recipient;
+
+import org.session.libsession.utilities.Address;
 import org.session.libsignal.utilities.ListenableFuture;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.SettableFuture;
@@ -264,39 +265,76 @@ public class AttachmentManager {
                 .execute();
     }
 
-    public static void selectGallery(Activity activity, int requestCode, @NonNull Recipient recipient, @NonNull long threadId, @NonNull String body) {
-
+    public static void selectGallery(Activity activity, int requestCode, @NonNull Address recipient, @NonNull String body) {
         Context c = activity.getApplicationContext();
+        Runnable openGallery = () ->
+                activity.startActivityForResult(
+                        MediaSendActivity.buildGalleryIntent(activity, recipient, body),
+                        requestCode
+                );
 
-        Permissions.PermissionsBuilder builder = Permissions.with(activity);
+        // Android 14+ : if we already have partial OR full access, skip asking
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            if (Permissions.hasAll(activity, Manifest.permission.READ_MEDIA_IMAGES) ||
+                    Permissions.hasAll(activity, Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED)) {
+                openGallery.run();
+                return;
+            }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) { // API 34+
-            builder = builder.request(Manifest.permission.READ_MEDIA_VIDEO,
-                                    Manifest.permission.READ_MEDIA_IMAGES,
-                                    Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED)
+            Permissions.with(activity)
+                    .request(
+                            Manifest.permission.READ_MEDIA_IMAGES,
+                            Manifest.permission.READ_MEDIA_VIDEO,
+                            Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
+                    )
+                    .onAllGranted(openGallery) // full access granted
+                    .onSomeGranted(granted -> { // treat partial access as success
+                        if (granted.contains(Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED)) {
+                            openGallery.run();
+                        }
+                    })
                     .withPermanentDenialDialog(
                             Phrase.from(c, R.string.permissionsStorageDenied)
-                                    .put(APP_NAME_KEY, c.getString(R.string.app_name))
+                                    .put(APP_NAME_KEY, activity.getString(R.string.app_name))
                                     .format().toString()
-                    );
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {   // API 33
-            builder = builder.request(Manifest.permission.READ_MEDIA_VIDEO,
-                                    Manifest.permission.READ_MEDIA_IMAGES)
-                    .withPermanentDenialDialog(
-                            Phrase.from(c, R.string.permissionsStorageDenied)
-                                    .put(APP_NAME_KEY, c.getString(R.string.app_name))
-                                    .format().toString()
-                    );
-        } else {
-            builder = builder.request(Manifest.permission.READ_EXTERNAL_STORAGE)
-                    .withPermanentDenialDialog(
-                            Phrase.from(c, R.string.permissionsStorageDeniedLegacy)
-                                    .put(APP_NAME_KEY, c.getString(R.string.app_name))
-                                    .format().toString()
-                    );
+                    )
+                    .execute();
+            return;
         }
 
-        builder.onAllGranted(() -> activity.startActivityForResult(MediaSendActivity.buildGalleryIntent(activity, recipient, threadId, body), requestCode))
+        // Android 13
+        if (Build.VERSION.SDK_INT == Build.VERSION_CODES.TIRAMISU) {
+            if (Permissions.hasAll(activity,
+                    Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_VIDEO)) {
+                openGallery.run();
+                return;
+            }
+            Permissions.with(activity)
+                    .request(Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_VIDEO)
+                    .onAllGranted(openGallery)
+                    .withPermanentDenialDialog(
+                            Phrase.from(c, R.string.permissionsStorageDenied)
+                                    .put(APP_NAME_KEY, activity.getString(R.string.app_name))
+                                    .format().toString()
+                    )
+                    .execute();
+            return;
+        }
+
+        // Android 12 and below
+        if (Permissions.hasAll(activity, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+            openGallery.run();
+            return;
+        }
+
+        Permissions.with(activity)
+                .request(Manifest.permission.READ_EXTERNAL_STORAGE)
+                .onAllGranted(openGallery)
+                .withPermanentDenialDialog(
+                        Phrase.from(c, R.string.permissionsStorageDeniedLegacy)
+                                .put(APP_NAME_KEY, activity.getString(R.string.app_name))
+                                .format().toString()
+                )
                 .execute();
     }
 
@@ -318,7 +356,7 @@ public class AttachmentManager {
         return captureUri;
     }
 
-    public void capturePhoto(Activity activity, int requestCode, Recipient recipient, @NonNull long threadId, @NonNull String body) {
+    public void capturePhoto(Activity activity, int requestCode, Address recipient, @NonNull String body) {
 
         String cameraPermissionDeniedTxt = Phrase.from(context, R.string.permissionsCameraDenied)
                 .put(APP_NAME_KEY, context.getString(R.string.app_name))
@@ -328,7 +366,7 @@ public class AttachmentManager {
                 .request(Manifest.permission.CAMERA)
                 .withPermanentDenialDialog(cameraPermissionDeniedTxt)
                 .onAllGranted(() -> {
-                    Intent captureIntent = MediaSendActivity.buildCameraIntent(activity, recipient, threadId, body);
+                    Intent captureIntent = MediaSendActivity.buildCameraIntent(activity, recipient, body);
                     if (captureIntent.resolveActivity(activity.getPackageManager()) != null) {
                         activity.startActivityForResult(captureIntent, requestCode);
                     }
