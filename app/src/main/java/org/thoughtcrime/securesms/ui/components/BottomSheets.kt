@@ -1,5 +1,8 @@
 package org.thoughtcrime.securesms.ui.components
 
+import android.app.Activity
+import android.graphics.Color
+import android.os.Build
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
@@ -20,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
@@ -67,12 +71,20 @@ fun BaseBottomSheet(
         // make sure the status and navigation bars follow our theme color's light vs dark
         val view = LocalView.current
         val isLight = LocalColors.current.isLight
-        (view.parent as? DialogWindowProvider)?.window?.let { window ->
-            SideEffect {
+
+        DisposableEffect(Unit) {
+            val window = (view.parent as? DialogWindowProvider)?.window
+            if (window != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val prev = window.isNavigationBarContrastEnforced
+                window.isNavigationBarContrastEnforced = false
                 // Set status bar color
                 WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = isLight
                 // Set navigation bar color
                 WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = isLight
+                
+                onDispose { window.isNavigationBarContrastEnforced = prev }
+            } else {
+                onDispose { }
             }
         }
 
