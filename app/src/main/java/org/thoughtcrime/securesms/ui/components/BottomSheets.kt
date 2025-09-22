@@ -81,7 +81,7 @@ fun BaseBottomSheet(
                 WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = isLight
                 // Set navigation bar color
                 WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = isLight
-                
+
                 onDispose { window.isNavigationBarContrastEnforced = prev }
             } else {
                 onDispose { }
