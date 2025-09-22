@@ -59,12 +59,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.NonTranslatableStringConstants.NETWORK_NAME
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.ShowProBadgeCTA
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.home.PathActivity
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
@@ -107,6 +109,7 @@ import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.components.AcccentOutlineCopyButton
 import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
+import org.thoughtcrime.securesms.ui.components.AnnotatedTextWithIcon
 import org.thoughtcrime.securesms.ui.components.AppBarCloseIcon
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.BaseBottomSheet
@@ -116,6 +119,7 @@ import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.qaTag
+import org.thoughtcrime.securesms.ui.safeContentWidth
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -252,8 +256,10 @@ fun Settings(
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             // name
-            ProBadgeText(
+            AnnotatedTextWithIcon(
                 modifier = Modifier.qaTag(R.string.AccessibilityId_displayName)
+                    .fillMaxWidth()
+                    .safeContentWidth()
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
@@ -261,7 +267,10 @@ fun Settings(
                         sendCommand(ShowUsernameDialog)
                     },
                 text = uiState.username,
-                showBadge = uiState.showProBadge,
+                iconRes = if(uiState.showProBadge) R.drawable.ic_pro_badge else null,
+                onIconClick = null,
+                iconSize = 58.sp to 24.sp,
+                style = LocalType.current.h5,
             )
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
