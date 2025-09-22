@@ -66,7 +66,6 @@ import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.NonTranslatableStringConstants.NETWORK_NAME
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.ShowProBadgeCTA
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.home.PathActivity
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
@@ -269,7 +268,7 @@ fun Settings(
                 text = uiState.username,
                 iconRes = if(uiState.showProBadge) R.drawable.ic_pro_badge else null,
                 onIconClick = null,
-                iconSize = 58.sp to 24.sp,
+                iconSize = 53.sp to 24.sp,
                 style = LocalType.current.h5,
             )
 
