@@ -254,6 +254,7 @@ fun ProStats(
             verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
         ){
             Row(
+                verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsSpacing)
             ) {
                 // groups updated
@@ -281,6 +282,7 @@ fun ProStats(
             }
 
             Row(
+                verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsSpacing)
             ) {
                 // Pro Badges
@@ -325,7 +327,7 @@ fun ProStatItem(
         Image(
             painter = painterResource(id = icon),
             contentDescription = null,
-            modifier = Modifier.size(LocalDimensions.current.iconRowItem),
+            modifier = Modifier.size(LocalDimensions.current.iconMedium2),
             colorFilter = ColorFilter.tint(LocalColors.current.accent)
         )
 
