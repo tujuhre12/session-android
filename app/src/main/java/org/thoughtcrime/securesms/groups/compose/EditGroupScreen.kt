@@ -43,6 +43,7 @@ import com.squareup.phrase.Phrase
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.GroupMember
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsignal.utilities.AccountId
@@ -342,11 +343,11 @@ private fun MemberActionSheet(
 @Composable
 fun EditMemberItem(
     member: GroupMemberState,
-    onClick: (accountId: AccountId) -> Unit,
+    onClick: (address: Address) -> Unit,
     modifier: Modifier = Modifier
 ) {
     MemberItem(
-        accountId = member.accountId,
+        address = Address.fromSerialized(member.accountId.hexString),
         title = member.name,
         subtitle = member.statusLabel,
         subtitleColor = if (member.highlightStatus) {
@@ -355,6 +356,7 @@ fun EditMemberItem(
             LocalColors.current.textSecondary
         },
         showAsAdmin = member.showAsAdmin,
+        showProBadge = member.showProBadge,
         avatarUIData = member.avatarUIData,
         onClick = if(member.clickable) onClick else null,
         modifier = modifier
@@ -391,6 +393,7 @@ private fun EditGroupPreviewSheet() {
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = false,
+            showProBadge = true,
             clickable = true,
             statusLabel = "Invited"
         )
@@ -412,6 +415,7 @@ private fun EditGroupPreviewSheet() {
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = true,
+            showProBadge = true,
             clickable = true,
             statusLabel = "Promotion failed"
         )
@@ -433,6 +437,7 @@ private fun EditGroupPreviewSheet() {
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = false,
+            showProBadge = false,
             clickable = true,
             statusLabel = ""
         )
@@ -485,6 +490,7 @@ private fun EditGroupEditNamePreview(
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = false,
+            showProBadge = true,
             clickable = true,
             statusLabel = "Invited"
         )
@@ -506,6 +512,7 @@ private fun EditGroupEditNamePreview(
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = true,
+            showProBadge = true,
             clickable = true,
             statusLabel = "Promotion failed"
         )
@@ -527,6 +534,7 @@ private fun EditGroupEditNamePreview(
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = false,
+            showProBadge = false,
             clickable = true,
             statusLabel = ""
         )

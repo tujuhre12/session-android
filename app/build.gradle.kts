@@ -12,6 +12,7 @@ plugins {
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.dependency.analysis)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.protobuf.compiler)
 
     id("generate-ip-country-data")
     id("rename-apk")
@@ -47,6 +48,7 @@ val getGitHash = providers
 
 val firebaseEnabledVariants = listOf("play", "fdroid")
 val nonPlayVariants = listOf("fdroid", "website") + if (huaweiEnabled) listOf("huawei") else emptyList()
+val nonDebugBuildTypes = listOf("release", "qa", "automaticQa")
 
 fun VariantDimension.devNetDefaultOn(defaultOn: Boolean) {
     val fqEnumClass = "org.session.libsession.utilities.Environment"
@@ -84,6 +86,23 @@ kotlin {
     }
 }
 
+protobuf {
+    protoc {
+        artifact = libs.protoc.get().toString()
+    }
+
+    plugins {
+        generateProtoTasks {
+            all().forEach {
+                it.builtins {
+                    create("java") {
+                    }
+                }
+            }
+        }
+    }
+}
+
 android {
     namespace = "network.loki.messenger"
     useLibrary("org.apache.http.legacy")
@@ -112,10 +131,6 @@ android {
     buildFeatures {
         viewBinding = true
         buildConfig = true
-    }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.kotlinComposeCompilerVersion.get()
     }
 
     defaultConfig {
@@ -206,6 +221,14 @@ android {
             maybeCreate(variant).apply {
                 java.srcDirs("$nonPlayCommonDir/kotlin")
                 resources.srcDirs("$nonPlayCommonDir/resources")
+            }
+        }
+
+        val nonDebugDir = "src/nonDebug"
+        nonDebugBuildTypes.forEach { buildType ->
+            maybeCreate(buildType).apply {
+                java.srcDirs("$nonDebugDir/kotlin")
+                resources.srcDirs("$nonDebugDir/resources")
             }
         }
     }
@@ -329,6 +352,7 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.fragment.ktx)
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.interpolator)
 
     // Add firebase dependencies to specific variants
     for (variant in firebaseEnabledVariants) {
@@ -355,14 +379,12 @@ dependencies {
     implementation(libs.android)
     implementation(libs.photoview)
     implementation(libs.glide)
-    implementation(libs.compose)
-    implementation(libs.eventbus)
+    implementation(libs.glide.compose)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.gif)
     implementation(libs.android.image.cropper)
     implementation(libs.subsampling.scale.image.view) {
         exclude(group = "com.android.support", module = "support-annotations")
-    }
-    implementation(libs.tooltips) {
-        exclude(group = "com.android.support", module = "appcompat-v7")
     }
     implementation(libs.stream)
     implementation(libs.androidx.sqlite.ktx)
@@ -450,6 +472,8 @@ dependencies {
     implementation(libs.zxing.core)
 
     implementation(libs.androidx.biometric)
+
+    debugImplementation(libs.sqlite.web.viewer)
 }
 
 fun getLastCommitTimestamp(): String {
