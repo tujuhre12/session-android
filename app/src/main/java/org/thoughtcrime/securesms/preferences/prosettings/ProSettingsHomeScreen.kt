@@ -257,16 +257,15 @@ fun ProStats(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsSpacing)
             ) {
-                // groups updated
+                // Long Messages
                 ProStatItem(
                     modifier = Modifier.weight(1f),
                     title = pluralStringResource(
-                        R.plurals.proGroupsUpgraded,
-                        data.groupsUpdated,
-                        NumberUtil.getFormattedNumber(data.groupsUpdated.toLong())
+                        R.plurals.proLongerMessagesSent,
+                        data.longMessages,
+                        NumberUtil.getFormattedNumber(data.longMessages.toLong())
                     ),
-                    icon = R.drawable.ic_users_group_custom
-
+                    icon = R.drawable.ic_message_square
                 )
 
                 // Pinned Convos
@@ -298,26 +297,32 @@ fun ProStats(
 
                 )
 
-                // Long Messages
+                // groups updated
                 ProStatItem(
                     modifier = Modifier.weight(1f),
                     title = pluralStringResource(
-                        R.plurals.proLongerMessagesSent,
-                        data.longMessages,
-                        NumberUtil.getFormattedNumber(data.longMessages.toLong())
+                        R.plurals.proGroupsUpgraded,
+                        data.groupsUpdated,
+                        NumberUtil.getFormattedNumber(data.groupsUpdated.toLong())
                     ),
-                    icon = R.drawable.ic_message_square
+                    icon = R.drawable.ic_users_group_custom,
+                    disabled = true,
+                    tooltip = "TEMP~!" //todo PRO use real string
+
                 )
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProStatItem(
     modifier: Modifier = Modifier,
     title: String,
-    @DrawableRes icon: Int
+    @DrawableRes icon: Int,
+    disabled: Boolean = false,
+    tooltip: String? = null,
 ){
     Row(
         modifier = modifier,
@@ -328,14 +333,40 @@ fun ProStatItem(
             painter = painterResource(id = icon),
             contentDescription = null,
             modifier = Modifier.size(LocalDimensions.current.iconMedium2),
-            colorFilter = ColorFilter.tint(LocalColors.current.accent)
+            colorFilter = ColorFilter.tint(
+                if(disabled) LocalColors.current.textSecondary else LocalColors.current.accent
+            )
         )
 
         Text(
+            modifier = Modifier.weight(1f),
             text = title,
             style = LocalType.current.h9,
-            color = LocalColors.current.text
+            color = if(disabled) LocalColors.current.textSecondary else LocalColors.current.text
         )
+
+        if(tooltip != null){
+            val tooltipState = rememberTooltipState(isPersistent = true)
+            val scope = rememberCoroutineScope()
+            SpeechBubbleTooltip(
+                text = tooltip,
+                tooltipState = tooltipState
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.ic_circle_help),
+                    contentDescription = null,
+                    colorFilter = ColorFilter.tint(LocalColors.current.textSecondary),
+                    modifier = Modifier
+                        .size(LocalDimensions.current.iconXSmall)
+                        .clickable {
+                            scope.launch {
+                                if (tooltipState.isVisible) tooltipState.dismiss() else tooltipState.show()
+                            }
+                        }
+                        .qaTag("Tooltip")
+                )
+            }
+        }
     }
 }
 
@@ -403,15 +434,15 @@ fun ProFeatures(
                 .padding(LocalDimensions.current.smallSpacing),
             verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
         ) {
-            // Larger Groups
-            ProFeatureItem(
+            // Larger Groups (HIDDEN FOR NOW, UNCOMMENT WHEN READY)
+           /* ProFeatureItem(
                 title = stringResource(R.string.proLargerGroups),
                 subtitle = annotatedStringResource(R.string.proLargerGroupsDescription),
                 icon = R.drawable.ic_users_round_plus_custom,
                 iconGradientStart = primaryGreen,
                 iconGradientEnd = primaryBlue,
                 expired = data is SubscriptionState.Expired
-            )
+            )*/
 
             // Longer messages
             ProFeatureItem(
@@ -423,13 +454,23 @@ fun ProFeatures(
                 expired = data is SubscriptionState.Expired
             )
 
+            // Unlimited pins
+            ProFeatureItem(
+                title = stringResource(R.string.proUnlimitedPins),
+                subtitle = annotatedStringResource(R.string.proUnlimitedPinsDescription),
+                icon = R.drawable.ic_pin,
+                iconGradientStart = primaryPurple,
+                iconGradientEnd = primaryPink,
+                expired = data is SubscriptionState.Expired
+            )
+
             // Animated pics
             ProFeatureItem(
                 title = stringResource(R.string.proAnimatedDisplayPictures),
                 subtitle = annotatedStringResource(R.string.proAnimatedDisplayPicturesDescription),
                 icon = R.drawable.ic_square_play,
-                iconGradientStart = primaryPurple,
-                iconGradientEnd = primaryPink,
+                iconGradientStart = primaryPink,
+                iconGradientEnd = primaryRed,
                 expired = data is SubscriptionState.Expired
             )
 
@@ -442,20 +483,10 @@ fun ProFeatures(
                         .format().toString()
                 ),
                 icon = R.drawable.ic_rectangle_ellipsis,
-                iconGradientStart = primaryPink,
-                iconGradientEnd = primaryRed,
-                expired = data is SubscriptionState.Expired,
-                showProBadge = true,
-            )
-
-            // Unlimited pins
-            ProFeatureItem(
-                title = stringResource(R.string.proUnlimitedPins),
-                subtitle = annotatedStringResource(R.string.proUnlimitedPinsDescription),
-                icon = R.drawable.ic_pin,
                 iconGradientStart = primaryRed,
                 iconGradientEnd = primaryOrange,
-                expired = data is SubscriptionState.Expired
+                expired = data is SubscriptionState.Expired,
+                showProBadge = true,
             )
 
             // More...
