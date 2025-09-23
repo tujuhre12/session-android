@@ -173,7 +173,7 @@ fun ProSettingsHome(
                     ),
                     subtitle = annotatedStringResource(
                         Phrase.from(LocalContext.current, R.string.proFaqDescription)
-                            .put(APP_NAME_KEY, stringResource(R.string.app_name))
+                            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                             .format().toString()
                     ),
                     icon = R.drawable.ic_square_arrow_up_right,
@@ -307,7 +307,7 @@ fun ProStats(
                     ),
                     icon = R.drawable.ic_users_group_custom,
                     disabled = true,
-                    tooltip = "TEMP~!" //todo PRO use real string
+                    tooltip = stringResource(R.string.proLargerGroupsTooltip)
 
                 )
             }

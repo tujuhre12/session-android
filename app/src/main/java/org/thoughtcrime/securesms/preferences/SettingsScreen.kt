@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -66,6 +67,7 @@ import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.NonTranslatableStringConstants.NETWORK_NAME
+import org.session.libsession.utilities.recipients.ProStatus
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.home.PathActivity
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
@@ -90,6 +92,8 @@ import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowUse
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.UpdateUsername
 import org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActivity
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsActivity
+import org.thoughtcrime.securesms.pro.SubscriptionState
+import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
 import org.thoughtcrime.securesms.tokenpage.TokenPageActivity
 import org.thoughtcrime.securesms.ui.AccountIdHeader
@@ -104,6 +108,7 @@ import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.LoadingDialog
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.PathDot
+import org.thoughtcrime.securesms.ui.ProBadge
 import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.components.AcccentOutlineCopyButton
@@ -117,6 +122,8 @@ import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
+import org.thoughtcrime.securesms.ui.proBadgeColorDisabled
+import org.thoughtcrime.securesms.ui.proBadgeColorStandard
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.safeContentWidth
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -134,6 +141,8 @@ import org.thoughtcrime.securesms.ui.theme.primaryYellow
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
 import org.thoughtcrime.securesms.util.push
+import java.time.Duration
+import java.time.Instant
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -266,9 +275,16 @@ fun Settings(
                         sendCommand(ShowUsernameDialog)
                     },
                 text = uiState.username,
-                iconRes = if(uiState.showProBadge) R.drawable.ic_pro_badge else null,
-                onIconClick = null,
                 iconSize = 53.sp to 24.sp,
+                content = if(uiState.showProBadge){{
+                    ProBadge(
+                        modifier = Modifier.padding(start = 4.dp)
+                            .qaTag(stringResource(R.string.qa_pro_badge_icon)),
+                        colors = if(uiState.subscriptionState is SubscriptionState.Active)
+                            proBadgeColorStandard()
+                        else proBadgeColorDisabled()
+                    )
+                }} else null,
                 style = LocalType.current.h5,
             )
 
@@ -964,6 +980,20 @@ private fun SettingsScreenPreview() {
                 isPro = false,
                 isPostPro = true,
                 showProBadge = true,
+                subscriptionState = SubscriptionState.Active.AutoRenewing(
+                    proStatus = ProStatus.Pro(
+                        visible = true,
+                        validUntil = Instant.now() + Duration.ofDays(14),
+                    ),
+                    type = ProSubscriptionDuration.THREE_MONTHS,
+                    nonOriginatingSubscription = SubscriptionState.Active.NonOriginatingSubscription(
+                        device = "iPhone",
+                        store = "Apple App Store",
+                        platform = "Apple",
+                        platformAccount = "Apple Account",
+                        urlSubscription = "https://www.apple.com/account/subscriptions",
+                    )
+                ),
                 username = "Atreyu",
                 accountID = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
                 hasPath = true,
@@ -976,6 +1006,49 @@ private fun SettingsScreenPreview() {
             onBack = {},
 
         )
+    }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@SuppressLint("UnusedContentLambdaTargetStateParameter")
+@Preview
+@Composable
+private fun SettingsScreenProExpiredPreview() {
+    PreviewTheme {
+        Settings (
+            uiState = SettingsViewModel.UIState(
+                showLoader = false,
+                avatarDialogState = SettingsViewModel.AvatarDialogState.NoAvatar,
+                recoveryHidden = false,
+                showUrlDialog = null,
+                showAvatarDialog = false,
+                showAvatarPickerOptionCamera = false,
+                showAvatarPickerOptions = false,
+                showAnimatedProCTA = false,
+                avatarData = AvatarUIData(
+                    listOf(
+                        AvatarUIElement(
+                            name = "TO",
+                            color = primaryBlue
+                        )
+                    )
+                ),
+                isPro = false,
+                isPostPro = true,
+                showProBadge = true,
+                subscriptionState = SubscriptionState.Expired,
+                username = "Atreyu",
+                accountID = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
+                hasPath = true,
+                version = "1.26.0",
+            ),
+            sendCommand = {},
+            onGalleryPicked = {},
+            onCameraPicked = {},
+            startAvatarSelection = {},
+            onBack = {},
+
+            )
     }
 }
 

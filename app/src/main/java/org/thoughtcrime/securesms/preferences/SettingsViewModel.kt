@@ -44,6 +44,7 @@ import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSi
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.pro.SubscriptionState
 import org.thoughtcrime.securesms.profiles.ProfileMediaConstraints
 import org.thoughtcrime.securesms.reviews.InAppReviewManager
 import org.thoughtcrime.securesms.util.AnimatedImageUtils
@@ -89,6 +90,7 @@ class SettingsViewModel @Inject constructor(
         isPro = proStatusManager.isCurrentUserPro(),
         isPostPro = proStatusManager.isPostPro(),
         showProBadge = proStatusManager.shouldShowProBadge(selfRecipient.value.address),
+        subscriptionState = proStatusManager.getCurrentSubscriptionState(),
     ))
     val uiState: StateFlow<UIState>
         get() = _uiState
@@ -599,7 +601,8 @@ class SettingsViewModel @Inject constructor(
         val usernameDialog: UsernameDialogData? = null,
         val isPro: Boolean,
         val isPostPro: Boolean,
-        val showProBadge: Boolean
+        val showProBadge: Boolean,
+        val subscriptionState: SubscriptionState,
     )
 
     sealed interface Commands {
