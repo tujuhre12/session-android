@@ -91,6 +91,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.times
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -268,6 +269,7 @@ fun ItemButton(
     subtitle: String? = null,
     @StringRes subtitleQaTag: Int? = null,
     enabled: Boolean = true,
+    minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
@@ -278,6 +280,7 @@ fun ItemButton(
         subtitle = subtitle,
         subtitleQaTag = subtitleQaTag,
         enabled = enabled,
+        minHeight = minHeight,
         icon = {
             Icon(
                 painter = painterResource(id = iconRes),
