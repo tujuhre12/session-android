@@ -109,7 +109,10 @@ class SettingsViewModel @Inject constructor(
 
         viewModelScope.launch {
             proStatusManager.proStatus.collect { isPro ->
-                _uiState.update { it.copy(isPro = isPro) }
+                _uiState.update { it.copy(
+                    isPro = isPro,
+                    showProBadge = proStatusManager.shouldShowProBadge(selfRecipient.value.address),
+                ) }
             }
         }
 
