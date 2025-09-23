@@ -332,7 +332,7 @@ fun ProStatItem(
         Image(
             painter = painterResource(id = icon),
             contentDescription = null,
-            modifier = Modifier.size(LocalDimensions.current.iconMedium2),
+            modifier = Modifier.size(32.dp),
             colorFilter = ColorFilter.tint(
                 if(disabled) LocalColors.current.textSecondary else LocalColors.current.accent
             )
