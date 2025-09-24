@@ -68,6 +68,7 @@ import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.NonTranslatableStringConstants.NETWORK_NAME
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.recipients.ProStatus
@@ -279,7 +280,7 @@ fun Settings(
                     },
                 text = uiState.username,
                 iconSize = 53.sp to 24.sp,
-                content = if(uiState.showProBadge){{
+                content = if(uiState.isPro){{
                     ProBadge(
                         modifier = Modifier.padding(start = 4.dp)
                             .qaTag(stringResource(R.string.qa_pro_badge_icon)),
@@ -504,9 +505,9 @@ fun Buttons(
                                 is SubscriptionState.Active -> Phrase.from(LocalContext.current,R.string.sessionProBeta)
                                     .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                                     .format().toString()
-                                //todo PRO use the proper string here
-                                is SubscriptionState.NeverSubscribed -> Phrase.from(LocalContext.current,R.string.proMessageInfoFeatures)
-                                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+
+                                is SubscriptionState.NeverSubscribed -> Phrase.from(LocalContext.current,R.string.upgradeSession)
+                                    .put(APP_NAME_KEY, stringResource(R.string.app_name))
                                     .format().toString()
 
                                 is SubscriptionState.Expired -> Phrase.from(LocalContext.current,R.string.proRenewBeta)
@@ -996,9 +997,8 @@ private fun SettingsScreenPreview() {
                         )
                     )
                 ),
-                isPro = false,
+                isPro = true,
                 isPostPro = true,
-                showProBadge = true,
                 subscriptionState = SubscriptionState.Active.AutoRenewing(
                     proStatus = ProStatus.Pro(
                         visible = true,
@@ -1054,7 +1054,6 @@ private fun SettingsScreenNoProPreview() {
                 ),
                 isPro = false,
                 isPostPro = true,
-                showProBadge = false,
                 subscriptionState = SubscriptionState.NeverSubscribed,
                 username = "Atreyu",
                 accountID = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
@@ -1095,9 +1094,8 @@ private fun SettingsScreenProExpiredPreview() {
                         )
                     )
                 ),
-                isPro = false,
+                isPro = true,
                 isPostPro = true,
-                showProBadge = true,
                 subscriptionState = SubscriptionState.Expired,
                 username = "Atreyu",
                 accountID = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",

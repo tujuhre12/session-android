@@ -89,7 +89,6 @@ class SettingsViewModel @Inject constructor(
         recoveryHidden = prefs.getHidePassword(),
         isPro = proStatusManager.isCurrentUserPro(),
         isPostPro = proStatusManager.isPostPro(),
-        showProBadge = proStatusManager.shouldShowProBadge(selfRecipient.value.address),
         subscriptionState = proStatusManager.getCurrentSubscriptionState(),
     ))
     val uiState: StateFlow<UIState>
@@ -113,7 +112,6 @@ class SettingsViewModel @Inject constructor(
             proStatusManager.proStatus.collect { isPro ->
                 _uiState.update { it.copy(
                     isPro = isPro,
-                    showProBadge = proStatusManager.shouldShowProBadge(selfRecipient.value.address),
                 ) }
             }
         }
@@ -601,7 +599,6 @@ class SettingsViewModel @Inject constructor(
         val usernameDialog: UsernameDialogData? = null,
         val isPro: Boolean,
         val isPostPro: Boolean,
-        val showProBadge: Boolean,
         val subscriptionState: SubscriptionState,
     )
 
