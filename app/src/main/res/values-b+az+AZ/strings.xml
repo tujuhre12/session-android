@@ -924,7 +924,6 @@
     <string name="proFeatureListLoadsMore">Üstəgəl, daha çox eksklüziv özəlliklər</string>
     <string name="proFeatureListLongerMessages">10,000 xarakterə qədər mesajlar</string>
     <string name="proFeatureListPinnedConversations">Limitsiz danışığı sancın</string>
-    <string name="proFeatures">{pro} özəllikləri</string>
     <string name="proGroupActivated">Qrup aktivləşdirildi</string>
     <string name="proGroupActivatedDescription">Bu qurun tutumu artıb! Qrup admininin sayəsində artıq 300 nəfərə qədər üzvü dəstəkləyə bilər</string>
     <plurals name="proGroupsUpgraded">

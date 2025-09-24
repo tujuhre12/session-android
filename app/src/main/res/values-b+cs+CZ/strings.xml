@@ -972,7 +972,6 @@
     <string name="proFeatureListLoadsMore">A další exkluzivních funkce</string>
     <string name="proFeatureListLongerMessages">Zprávy až do 10000 znaků</string>
     <string name="proFeatureListPinnedConversations">Připněte neomezený počet konverzací</string>
-    <string name="proFeatures">Funkce {pro}</string>
     <string name="proGroupActivated">Skupina aktivována</string>
     <string name="proGroupActivatedDescription">Tato skupina má navýšenou kapacitu! Může podporovat až 300 členů, protože správce skupiny má</string>
     <plurals name="proGroupsUpgraded">
