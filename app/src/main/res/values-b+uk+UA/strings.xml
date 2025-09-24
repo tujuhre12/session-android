@@ -962,7 +962,6 @@
     <string name="proFeatureListLoadsMore">Та велика кількість ексклюзивних можливостей</string>
     <string name="proFeatureListLongerMessages">Повідомлення до 10 000 символів</string>
     <string name="proFeatureListPinnedConversations">Закріплюйте необмежену кількість бесід</string>
-    <string name="proFeatures">Можливості {pro}</string>
     <string name="proGroupActivated">Групу активовано</string>
     <string name="proGroupActivatedDescription">У цієї групи розширено можливості! Тепер вона може вміщати до 300 учасників, тому що адміністратор групи має</string>
     <string name="proImportantDescription">Вимагання повернення грошей закінчено. В разі схвалення твою підписку {pro} негайно скасують і ти втратиш всі можливості {pro}.</string>
