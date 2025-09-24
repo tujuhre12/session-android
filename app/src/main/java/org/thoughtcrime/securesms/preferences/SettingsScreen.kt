@@ -63,10 +63,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.squareup.phrase.Phrase
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.NonTranslatableStringConstants.NETWORK_NAME
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.recipients.ProStatus
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.home.PathActivity
@@ -312,6 +315,7 @@ fun Settings(
                 recoveryHidden = uiState.recoveryHidden,
                 hasPaths = uiState.hasPath,
                 postPro = uiState.isPostPro,
+                subscriptionState = uiState.subscriptionState,
                 sendCommand = sendCommand
             )
 
@@ -451,6 +455,7 @@ fun Buttons(
     recoveryHidden: Boolean,
     hasPaths: Boolean,
     postPro: Boolean,
+    subscriptionState: SubscriptionState,
     sendCommand: (SettingsViewModel.Commands) -> Unit,
 ) {
     Column(
@@ -494,7 +499,21 @@ fun Buttons(
             Column {
                 if(postPro){
                     ItemButton(
-                        text = annotatedStringResource(NonTranslatableStringConstants.APP_PRO),
+                        text = annotatedStringResource(
+                            when(subscriptionState){
+                                is SubscriptionState.Active -> Phrase.from(LocalContext.current,R.string.sessionProBeta)
+                                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                                    .format().toString()
+                                //todo PRO use the proper string here
+                                is SubscriptionState.NeverSubscribed -> Phrase.from(LocalContext.current,R.string.proMessageInfoFeatures)
+                                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                                    .format().toString()
+
+                                is SubscriptionState.Expired -> Phrase.from(LocalContext.current,R.string.proRenewBeta)
+                                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                    .format().toString()
+                            }
+                        ),
                         icon = {
                             Image(
                                 modifier = Modifier.size(LocalDimensions.current.iconLargeAvatar)
@@ -1006,6 +1025,49 @@ private fun SettingsScreenPreview() {
             onBack = {},
 
         )
+    }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@SuppressLint("UnusedContentLambdaTargetStateParameter")
+@Preview
+@Composable
+private fun SettingsScreenNoProPreview() {
+    PreviewTheme {
+        Settings (
+            uiState = SettingsViewModel.UIState(
+                showLoader = false,
+                avatarDialogState = SettingsViewModel.AvatarDialogState.NoAvatar,
+                recoveryHidden = false,
+                showUrlDialog = null,
+                showAvatarDialog = false,
+                showAvatarPickerOptionCamera = false,
+                showAvatarPickerOptions = false,
+                showAnimatedProCTA = false,
+                avatarData = AvatarUIData(
+                    listOf(
+                        AvatarUIElement(
+                            name = "TO",
+                            color = primaryBlue
+                        )
+                    )
+                ),
+                isPro = false,
+                isPostPro = true,
+                showProBadge = false,
+                subscriptionState = SubscriptionState.NeverSubscribed,
+                username = "Atreyu",
+                accountID = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
+                hasPath = true,
+                version = "1.26.0",
+            ),
+            sendCommand = {},
+            onGalleryPicked = {},
+            onCameraPicked = {},
+            startAvatarSelection = {},
+            onBack = {},
+
+            )
     }
 }
 
