@@ -47,9 +47,9 @@ import java.time.Duration
 class WebRtcCallActivity : ScreenLockActionBarActivity() {
 
     companion object {
+        private val TAG = Log.tag(WebRtcCallActivity::class.java)
         const val ACTION_FULL_SCREEN_INTENT = "fullscreen-intent"
         const val ACTION_ANSWER = "answer"
-        const val ACTION_END = "end-call"
         const val ACTION_START_CALL = "start-call"
 
         const val EXTRA_RECIPIENT_ADDRESS = "RECIPIENT_ID"
@@ -181,7 +181,7 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
     }
 
     private fun handleIntent(intent: Intent) {
-        Log.d("", "Web RTC activity handle intent ${intent.action}")
+        Log.d(TAG, "Web RTC activity handle intent ${intent.action}")
         if (intent.action == ACTION_START_CALL && intent.hasExtra(EXTRA_RECIPIENT_ADDRESS)) {
             viewModel.createCall(IntentCompat.getParcelableExtra(intent, EXTRA_RECIPIENT_ADDRESS, Address::class.java)!!)
         }
@@ -311,7 +311,7 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
                 viewModel.connectionState
                     .collect { s ->
                         if (s == State.Disconnected) {
-                            Log.d("", "*** Received a Disconnected State in webrtc activity - finishing.")
+                            Log.d(TAG, "Received a Disconnected State in webrtc activity - finishing.")
                             finish()
                         }
                     }
