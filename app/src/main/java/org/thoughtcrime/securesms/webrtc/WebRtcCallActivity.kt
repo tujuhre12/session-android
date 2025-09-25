@@ -1,11 +1,9 @@
 package org.thoughtcrime.securesms.webrtc
 
 import android.Manifest
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
-import android.content.IntentFilter
 import android.content.res.ColorStateList
 import android.graphics.Outline
 import android.media.AudioManager
@@ -20,7 +18,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.core.content.IntentCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -41,9 +38,9 @@ import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.setThemedContent
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
-import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_CONNECTED
 import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager.AudioDevice.SPEAKER_PHONE
+import org.thoughtcrime.securesms.webrtc.data.State
 import java.time.Duration
 
 @AndroidEntryPoint
@@ -66,7 +63,6 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
     private val viewModel by viewModels<CallViewModel>()
     private lateinit var binding: ActivityWebrtcBinding
     private var uiJob: Job? = null
-    private var hangupReceiver: BroadcastReceiver? = null
 
     private val CALL_DURATION_FORMAT_HOURS = "HH:mm:ss"
     private val CALL_DURATION_FORMAT_MINS = "mm:ss"
@@ -135,16 +131,6 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
         binding.declineCallButton.setOnClickListener {
             denyCall()
         }
-
-        hangupReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                Log.d("", "Received hangup broadcast in webrtc activity - finishing.")
-                finish()
-            }
-        }
-
-        LocalBroadcastManager.getInstance(this)
-            .registerReceiver(hangupReceiver!!, IntentFilter(ACTION_END))
 
         binding.enableCameraButton.setOnClickListener {
             Permissions.with(this)
@@ -240,9 +226,6 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        hangupReceiver?.let { receiver ->
-            LocalBroadcastManager.getInstance(this).unregisterReceiver(receiver)
-        }
 
         orientationManager.destroy()
     }
@@ -321,6 +304,17 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
                 viewModel.callState.collect { data ->
                     updateControls(data)
                 }
+            }
+
+
+            launch {
+                viewModel.connectionState
+                    .collect { s ->
+                        if (s == State.Disconnected) {
+                            Log.d("", "*** Received a Disconnected State in webrtc activity - finishing.")
+                            finish()
+                        }
+                    }
             }
 
             // Observing recipient's name
