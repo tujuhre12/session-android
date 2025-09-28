@@ -25,7 +25,6 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -96,6 +95,7 @@ import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowUse
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.UpdateUsername
 import org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActivity
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsActivity
+import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.SubscriptionState
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
@@ -144,6 +144,7 @@ import org.thoughtcrime.securesms.ui.theme.primaryGreen
 import org.thoughtcrime.securesms.ui.theme.primaryYellow
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
+import org.thoughtcrime.securesms.util.State
 import org.thoughtcrime.securesms.util.push
 import java.time.Duration
 import java.time.Instant
@@ -284,7 +285,7 @@ fun Settings(
                     ProBadge(
                         modifier = Modifier.padding(start = 4.dp)
                             .qaTag(stringResource(R.string.qa_pro_badge_icon)),
-                        colors = if(uiState.subscriptionState is SubscriptionState.Active)
+                        colors = if(uiState.subscriptionState is SubscriptionType.Active)
                             proBadgeColorStandard()
                         else proBadgeColorDisabled()
                     )
@@ -501,16 +502,16 @@ fun Buttons(
                 if(postPro){
                     ItemButton(
                         text = annotatedStringResource(
-                            when(subscriptionState){
-                                is SubscriptionState.Active -> Phrase.from(LocalContext.current,R.string.sessionProBeta)
+                            when(subscriptionState.type){
+                                is SubscriptionType.Active -> Phrase.from(LocalContext.current,R.string.sessionProBeta)
                                     .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                                     .format().toString()
 
-                                is SubscriptionState.NeverSubscribed -> Phrase.from(LocalContext.current,R.string.upgradeSession)
+                                is SubscriptionType.NeverSubscribed -> Phrase.from(LocalContext.current,R.string.upgradeSession)
                                     .put(APP_NAME_KEY, stringResource(R.string.app_name))
                                     .format().toString()
 
-                                is SubscriptionState.Expired -> Phrase.from(LocalContext.current,R.string.proRenewBeta)
+                                is SubscriptionType.Expired -> Phrase.from(LocalContext.current,R.string.proRenewBeta)
                                     .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                     .format().toString()
                             }
@@ -999,19 +1000,21 @@ private fun SettingsScreenPreview() {
                 ),
                 isPro = true,
                 isPostPro = true,
-                subscriptionState = SubscriptionState.Active.AutoRenewing(
-                    proStatus = ProStatus.Pro(
-                        visible = true,
-                        validUntil = Instant.now() + Duration.ofDays(14),
-                    ),
-                    type = ProSubscriptionDuration.THREE_MONTHS,
-                    nonOriginatingSubscription = SubscriptionState.Active.NonOriginatingSubscription(
-                        device = "iPhone",
-                        store = "Apple App Store",
-                        platform = "Apple",
-                        platformAccount = "Apple Account",
-                        urlSubscription = "https://www.apple.com/account/subscriptions",
-                    )
+                subscriptionState = SubscriptionState(
+                    type = SubscriptionType.Active.AutoRenewing(
+                        proStatus = ProStatus.Pro(
+                            visible = true,
+                            validUntil = Instant.now() + Duration.ofDays(14),
+                        ),
+                        duration = ProSubscriptionDuration.THREE_MONTHS,
+                        nonOriginatingSubscription = SubscriptionType.Active.NonOriginatingSubscription(
+                            device = "iPhone",
+                            store = "Apple App Store",
+                            platform = "Apple",
+                            platformAccount = "Apple Account",
+                            urlSubscription = "https://www.apple.com/account/subscriptions",
+                        )),
+                    refreshState = State.Success(Unit),
                 ),
                 username = "Atreyu",
                 accountID = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
@@ -1054,7 +1057,10 @@ private fun SettingsScreenNoProPreview() {
                 ),
                 isPro = false,
                 isPostPro = true,
-                subscriptionState = SubscriptionState.NeverSubscribed,
+                subscriptionState = SubscriptionState(
+                    type = SubscriptionType.NeverSubscribed,
+                    refreshState = State.Success(Unit),
+                ),
                 username = "Atreyu",
                 accountID = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
                 hasPath = true,
@@ -1096,7 +1102,10 @@ private fun SettingsScreenProExpiredPreview() {
                 ),
                 isPro = true,
                 isPostPro = true,
-                subscriptionState = SubscriptionState.Expired,
+                subscriptionState = SubscriptionState(
+                    type = SubscriptionType.NeverSubscribed,
+                    refreshState = State.Success(Unit),
+                ),
                 username = "Atreyu",
                 accountID = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
                 hasPath = true,

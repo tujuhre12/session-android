@@ -37,7 +37,6 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.recipients.isPro
-import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsignal.utilities.ExternalStorageUtil.getImageDir
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.NoExternalStorageException
@@ -47,6 +46,7 @@ import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.SubscriptionState
+import org.thoughtcrime.securesms.pro.getDefaultSubscriptionStateData
 import org.thoughtcrime.securesms.profiles.ProfileMediaConstraints
 import org.thoughtcrime.securesms.reviews.InAppReviewManager
 import org.thoughtcrime.securesms.util.AnimatedImageUtils
@@ -91,7 +91,7 @@ class SettingsViewModel @Inject constructor(
         recoveryHidden = prefs.getHidePassword(),
         isPro = selfRecipient.value.proStatus.isPro(),
         isPostPro = proStatusManager.isPostPro(),
-        subscriptionState = proStatusManager.getCurrentSubscriptionState(),
+        subscriptionState = getDefaultSubscriptionStateData(),
     ))
     val uiState: StateFlow<UIState>
         get() = _uiState
@@ -108,6 +108,13 @@ class SettingsViewModel @Inject constructor(
                         )
                     }
                 }
+        }
+
+        // observe subscription status
+        viewModelScope.launch {
+            proStatusManager.subscriptionState.collect {
+                _uiState.update { it.copy(subscriptionState = it.subscriptionState) }
+            }
         }
 
         // set default dialog ui
