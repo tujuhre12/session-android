@@ -24,6 +24,7 @@ import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.util.State
 import java.time.Duration
@@ -99,7 +100,7 @@ class ProStatusManager @Inject constructor(
 
                 DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> SubscriptionType.Expired
             },
-            refreshState = State.Success(Unit),
+            refreshState = State.Error(Exception()),
         )
 
     }.stateIn(GlobalScope, SharingStarted.Eagerly,
@@ -198,5 +199,7 @@ class ProStatusManager @Inject constructor(
         const val MAX_CHARACTER_PRO = 10000 // max characters in a message for pro users
         private const val MAX_CHARACTER_REGULAR = 2000 // max characters in a message for non pro users
         private const val MAX_PIN_REGULAR = 5 // max pinned conversation for non pro users
+
+        const val URL_PRO_SUPPORT = "https://getsession.org/pro-form"
     }
 }

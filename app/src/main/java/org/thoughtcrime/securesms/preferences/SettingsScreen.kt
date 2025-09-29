@@ -12,6 +12,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -25,6 +26,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -500,34 +502,79 @@ fun Buttons(
         Cell {
             Column {
                 if(postPro){
-                    ItemButton(
-                        text = annotatedStringResource(
-                            when(subscriptionState.type){
-                                is SubscriptionType.Active -> Phrase.from(LocalContext.current,R.string.sessionProBeta)
-                                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                                    .format().toString()
-
-                                is SubscriptionType.NeverSubscribed -> Phrase.from(LocalContext.current,R.string.upgradeSession)
-                                    .put(APP_NAME_KEY, stringResource(R.string.app_name))
-                                    .format().toString()
-
-                                is SubscriptionType.Expired -> Phrase.from(LocalContext.current,R.string.proRenewBeta)
-                                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                                    .format().toString()
-                            }
-                        ),
-                        icon = {
-                            Image(
-                                modifier = Modifier.size(LocalDimensions.current.iconLargeAvatar)
-                                    .align(Alignment.Center),
-                                painter = painterResource(R.drawable.ic_pro_badge),
-                                contentDescription = null,
-                            )
-                        },
-                        modifier = Modifier.qaTag(R.string.qa_settings_item_pro),
-                        colors = accentTextButtonColors()
+                    Row(
+                        modifier = Modifier.fillMaxWidth()
+                            .padding(end = LocalDimensions.current.smallSpacing),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        activity?.push<ProSettingsActivity>()
+                        ItemButton(
+                            text = annotatedStringResource(
+                                when (subscriptionState.type) {
+                                    is SubscriptionType.Active -> Phrase.from(
+                                        LocalContext.current,
+                                        R.string.sessionProBeta
+                                    )
+                                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                                        .format().toString()
+
+                                    is SubscriptionType.NeverSubscribed -> Phrase.from(
+                                        LocalContext.current,
+                                        R.string.upgradeSession
+                                    )
+                                        .put(APP_NAME_KEY, stringResource(R.string.app_name))
+                                        .format().toString()
+
+                                    is SubscriptionType.Expired -> Phrase.from(
+                                        LocalContext.current,
+                                        R.string.proRenewBeta
+                                    )
+                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                        .format().toString()
+                                }
+                            ),
+                            icon = {
+                                Image(
+                                    modifier = Modifier.size(LocalDimensions.current.iconLargeAvatar)
+                                        .align(Alignment.Center),
+                                    painter = painterResource(R.drawable.ic_pro_badge),
+                                    contentDescription = null,
+                                )
+                            },
+                            modifier = Modifier.qaTag(R.string.qa_settings_item_pro)
+                                .weight(1f, fill = false),
+                            colors = accentTextButtonColors()
+                        ) {
+                            activity?.push<ProSettingsActivity>()
+                        }
+
+                        when(subscriptionState.refreshState){
+                            is State.Loading -> {
+                                Box(
+                                    modifier = Modifier.size(LocalDimensions.current.itemButtonIconSpacing)
+                                ) {
+                                    SmallCircularProgressIndicator(
+                                        modifier = Modifier.align(Alignment.Center)
+                                    )
+                                }
+                            }
+
+                            is State.Error -> {
+                                Box(
+                                    modifier = Modifier.size(LocalDimensions.current.itemButtonIconSpacing)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_triangle_alert),
+                                        tint = LocalColors.current.warning,
+                                        contentDescription = stringResource(id = R.string.qa_icon_error),
+                                        modifier = Modifier
+                                            .size(LocalDimensions.current.iconMedium)
+                                            .align(Alignment.Center),
+                                    )
+                                }
+                            }
+
+                            else -> {}
+                        }
                     }
                     Divider()
                 }
@@ -1059,7 +1106,7 @@ private fun SettingsScreenNoProPreview() {
                 isPostPro = true,
                 subscriptionState = SubscriptionState(
                     type = SubscriptionType.NeverSubscribed,
-                    refreshState = State.Success(Unit),
+                    refreshState = State.Loading,
                 ),
                 username = "Atreyu",
                 accountID = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
@@ -1104,7 +1151,7 @@ private fun SettingsScreenProExpiredPreview() {
                 isPostPro = true,
                 subscriptionState = SubscriptionState(
                     type = SubscriptionType.NeverSubscribed,
-                    refreshState = State.Success(Unit),
+                    refreshState = State.Error(Exception()),
                 ),
                 username = "Atreyu",
                 accountID = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",

@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberTooltipState
@@ -52,15 +54,18 @@ import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.SetShowProBadge
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowPlanUpdate
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.SubscriptionState
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
+import org.thoughtcrime.securesms.ui.ActionRowItem
 import org.thoughtcrime.securesms.ui.CategoryCell
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.IconActionRowItem
 import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.SpeechBubbleTooltip
 import org.thoughtcrime.securesms.ui.SwitchActionRowItem
+import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.components.iconExternalLink
 import org.thoughtcrime.securesms.ui.components.inlineContentMap
@@ -202,7 +207,7 @@ fun ProSettingsHome(
                     iconColor = iconColor,
                     qaTag = R.string.qa_pro_settings_action_support,
                     onClick = {
-                        sendCommand(ShowOpenUrlDialog("https://getsession.org/pro-form"))
+                        sendCommand(ShowOpenUrlDialog(ProStatusManager.URL_PRO_SUPPORT))
                     }
                 )
             }
@@ -393,10 +398,50 @@ fun ProSettings(
         Column(
             modifier = Modifier.fillMaxWidth(),
         ) {
-            IconActionRowItem(
+            val chevronIcon: @Composable BoxScope.() -> Unit = {
+                Icon(
+                    modifier = Modifier.align(Alignment.Center)
+                        .size(LocalDimensions.current.iconMedium)
+                        .qaTag(R.string.qa_action_item_icon),
+                    painter = painterResource(id = R.drawable.ic_chevron_right),
+                    contentDescription = null,
+                    tint = LocalColors.current.text
+                )
+            }
+
+            val (subtitle, subColor, icon) = when(subscriptionRefreshState){
+                is State.Loading -> Triple<CharSequence, Color, @Composable BoxScope.() -> Unit>(
+                        Phrase.from(LocalContext.current, R.string.proPlanLoadingEllipsis)
+                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                        .format().toString(),
+                            LocalColors.current.text,
+                    { SmallCircularProgressIndicator(modifier = Modifier.align(Alignment.Center)) }
+                    )
+                
+                is State.Error -> Triple<CharSequence, Color, @Composable BoxScope.() -> Unit>(
+                        Phrase.from(LocalContext.current, R.string.errorLoadingProPlan)
+                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                        .format().toString(),
+                            LocalColors.current.warning, chevronIcon
+                    )
+
+                is State.Success<*> -> Triple<CharSequence, Color, @Composable BoxScope.() -> Unit>(
+                        expiry,
+                            LocalColors.current.text, chevronIcon
+                )
+            }
+
+            ActionRowItem(
                 title = annotatedStringResource(R.string.updatePlan),
-                subtitle = annotatedStringResource(expiry),
-                icon = R.drawable.ic_chevron_right,
+                subtitle = annotatedStringResource(subtitle),
+                subtitleColor = subColor,
+                endContent = {
+                    Box(
+                        modifier = Modifier.size(LocalDimensions.current.itemButtonIconSpacing)
+                    ) {
+                        icon()
+                    }
+                },
                 qaTag = R.string.qa_pro_settings_action_update_plan,
                 onClick = { sendCommand(ShowPlanUpdate) }
             )
@@ -690,6 +735,58 @@ fun PreviewProSettingsPro(
                         nonOriginatingSubscription = null
                     ),
                     refreshState = State.Success(Unit),
+                ),
+            ),
+            sendCommand = {},
+            onBack = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewProSettingsProLoading(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+) {
+    PreviewTheme(colors) {
+        ProSettingsHome(
+            data = ProSettingsViewModel.ProSettingsState(
+                subscriptionState = SubscriptionState(
+                    type = SubscriptionType.Active.AutoRenewing(
+                        proStatus = ProStatus.Pro(
+                            visible = true,
+                            validUntil = Instant.now() + Duration.ofDays(14),
+                        ),
+                        duration = ProSubscriptionDuration.THREE_MONTHS,
+                        nonOriginatingSubscription = null
+                    ),
+                    refreshState = State.Loading,
+                ),
+            ),
+            sendCommand = {},
+            onBack = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewProSettingsProError(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+) {
+    PreviewTheme(colors) {
+        ProSettingsHome(
+            data = ProSettingsViewModel.ProSettingsState(
+                subscriptionState = SubscriptionState(
+                    type = SubscriptionType.Active.AutoRenewing(
+                        proStatus = ProStatus.Pro(
+                            visible = true,
+                            validUntil = Instant.now() + Duration.ofDays(14),
+                        ),
+                        duration = ProSubscriptionDuration.THREE_MONTHS,
+                        nonOriginatingSubscription = null
+                    ),
+                    refreshState = State.Error(Exception()),
                 ),
             ),
             sendCommand = {},

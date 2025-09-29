@@ -112,8 +112,8 @@ class SettingsViewModel @Inject constructor(
 
         // observe subscription status
         viewModelScope.launch {
-            proStatusManager.subscriptionState.collect {
-                _uiState.update { it.copy(subscriptionState = it.subscriptionState) }
+            proStatusManager.subscriptionState.collect { state ->
+                _uiState.update { it.copy(subscriptionState = state) }
             }
         }
 
