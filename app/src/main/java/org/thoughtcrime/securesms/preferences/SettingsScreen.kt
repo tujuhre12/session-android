@@ -336,26 +336,30 @@ fun Settings(
         // DIALOGS AND SHEETS
         //  Simple dialogs
         if (uiState.showSimpleDialog != null) {
-            val buttons = mutableListOf<DialogButtonData>()
-            if(uiState.showSimpleDialog.positiveText != null) {
-                buttons.add(
-                    DialogButtonData(
-                        text = GetString(uiState.showSimpleDialog.positiveText),
-                        color = if (uiState.showSimpleDialog.positiveStyleDanger) LocalColors.current.danger
-                        else LocalColors.current.text,
-                        qaTag = uiState.showSimpleDialog.positiveQaTag,
-                        onClick = uiState.showSimpleDialog.onPositive
-                    )
-                )
-            }
-            if(uiState.showSimpleDialog.negativeText != null){
-                buttons.add(
-                    DialogButtonData(
-                        text = GetString(uiState.showSimpleDialog.negativeText),
-                        qaTag = uiState.showSimpleDialog.negativeQaTag,
-                        onClick = uiState.showSimpleDialog.onNegative
-                    )
-                )
+            val colors = LocalColors.current
+            val buttons = remember(uiState.showSimpleDialog) {
+                buildList {
+                    uiState.showSimpleDialog.positiveText?.let { positiveText ->
+                        add(
+                            DialogButtonData(
+                                text = GetString(positiveText),
+                                color = if (uiState.showSimpleDialog.positiveStyleDanger) colors.danger
+                                else colors.text,
+                                qaTag = uiState.showSimpleDialog.positiveQaTag,
+                                onClick = uiState.showSimpleDialog.onPositive
+                            )
+                        )
+                    }
+                    uiState.showSimpleDialog.negativeText?.let { negativeText ->
+                        add(
+                            DialogButtonData(
+                                text = GetString(negativeText),
+                                qaTag = uiState.showSimpleDialog.negativeQaTag,
+                                onClick = uiState.showSimpleDialog.onNegative
+                            )
+                        )
+                    }
+                }
             }
 
             AlertDialog(
