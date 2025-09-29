@@ -32,6 +32,8 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.utilities.await
+import org.session.libsession.utilities.NonTranslatableStringConstants
+import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.VERSION_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
@@ -44,12 +46,14 @@ import org.thoughtcrime.securesms.attachments.AvatarUploadManager
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.SubscriptionState
 import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.getDefaultSubscriptionStateData
 import org.thoughtcrime.securesms.profiles.ProfileMediaConstraints
 import org.thoughtcrime.securesms.reviews.InAppReviewManager
+import org.thoughtcrime.securesms.ui.SimpleDialogData
 import org.thoughtcrime.securesms.util.AnimatedImageUtils
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
@@ -581,7 +585,38 @@ class SettingsViewModel @Inject constructor(
                 }
                 showUrlDialog( "https://session.foundation/donate#app")
             }
+
+            is Commands.ShowProError -> {
+                _uiState.update {
+                    it.copy(
+                        showSimpleDialog = SimpleDialogData(
+                            title = Phrase.from(context.getText(R.string.proStatusError))
+                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                .format().toString(),
+                            message = Phrase.from(context.getText(R.string.proStatusRefreshNetworkError))
+                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                .format(),
+                            positiveText = context.getString(R.string.retry),
+                            negativeText = context.getString(R.string.helpSupport),
+                            positiveStyleDanger = false,
+                            showXIcon = true,
+                            onPositive = { refreshSubscriptionData() },
+                            onNegative = {
+                                showUrlDialog(ProStatusManager.URL_PRO_SUPPORT)
+                            }
+                        )
+                    )
+                }
+            }
+
+            is Commands.HideSimpleDialog -> {
+                _uiState.update { it.copy(showSimpleDialog = null) }
+            }
         }
+    }
+
+    private fun refreshSubscriptionData(){
+        //todo PRO implement properly
     }
 
     sealed class AvatarDialogState() {
@@ -630,6 +665,7 @@ class SettingsViewModel @Inject constructor(
         val showAvatarPickerOptions: Boolean = false,
         val showAnimatedProCTA: Boolean = false,
         val usernameDialog: UsernameDialogData? = null,
+        val showSimpleDialog: SimpleDialogData? = null,
         val isPro: Boolean,
         val isPostPro: Boolean,
         val subscriptionState: SubscriptionState,
@@ -655,7 +691,11 @@ class SettingsViewModel @Inject constructor(
         data object ShowAnimatedProCTA: Commands
         data object HideAnimatedProCTA: Commands
 
+        data object HideSimpleDialog: Commands
+
         data object OnDonateClicked: Commands
+
+        data object ShowProError: Commands
 
         data class ClearData(val clearNetwork: Boolean): Commands
     }

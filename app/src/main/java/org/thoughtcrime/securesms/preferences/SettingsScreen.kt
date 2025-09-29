@@ -12,7 +12,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -26,7 +25,6 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -78,27 +76,11 @@ import org.thoughtcrime.securesms.home.PathActivity
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.TempAvatar
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.UserAvatar
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ClearData
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideAnimatedProCTA
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideAvatarPickerOptions
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideClearDataDialog
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideUrlDialog
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideUsernameDialog
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.OnAvatarDialogDismissed
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.OnDonateClicked
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.RemoveAvatar
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.SaveAvatar
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.SetUsername
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowAnimatedProCTA
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowAvatarDialog
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowClearDataDialog
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowUrlDialog
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowUsernameDialog
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.UpdateUsername
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.*
 import org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActivity
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsActivity
-import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.SubscriptionState
+import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
 import org.thoughtcrime.securesms.tokenpage.TokenPageActivity
@@ -352,6 +334,41 @@ fun Settings(
         }
 
         // DIALOGS AND SHEETS
+        //  Simple dialogs
+        if (uiState.showSimpleDialog != null) {
+            val buttons = mutableListOf<DialogButtonData>()
+            if(uiState.showSimpleDialog.positiveText != null) {
+                buttons.add(
+                    DialogButtonData(
+                        text = GetString(uiState.showSimpleDialog.positiveText),
+                        color = if (uiState.showSimpleDialog.positiveStyleDanger) LocalColors.current.danger
+                        else LocalColors.current.text,
+                        qaTag = uiState.showSimpleDialog.positiveQaTag,
+                        onClick = uiState.showSimpleDialog.onPositive
+                    )
+                )
+            }
+            if(uiState.showSimpleDialog.negativeText != null){
+                buttons.add(
+                    DialogButtonData(
+                        text = GetString(uiState.showSimpleDialog.negativeText),
+                        qaTag = uiState.showSimpleDialog.negativeQaTag,
+                        onClick = uiState.showSimpleDialog.onNegative
+                    )
+                )
+            }
+
+            AlertDialog(
+                onDismissRequest = {
+                    // hide dialog
+                    sendCommand(HideSimpleDialog)
+                },
+                title = annotatedStringResource(uiState.showSimpleDialog.title),
+                text = annotatedStringResource(uiState.showSimpleDialog.message),
+                showCloseButton = uiState.showSimpleDialog.showXIcon,
+                buttons = buttons
+            )
+        }
 
         // loading
         if(uiState.showLoader) {
@@ -569,7 +586,15 @@ fun Buttons(
                         modifier = Modifier.qaTag(R.string.qa_settings_item_pro),
                         colors = accentTextButtonColors()
                     ) {
-                        activity?.push<ProSettingsActivity>()
+                       // there is a special case when we have a subscription error
+                       // but also no pro account
+                       if(subscriptionState.refreshState is State.Error &&
+                           subscriptionState.type is SubscriptionType.NeverSubscribed
+                       ){
+                           sendCommand(SettingsViewModel.Commands.ShowProError)
+                       } else {
+                           activity?.push<ProSettingsActivity>()
+                       }
                     }
 
                     Divider()
