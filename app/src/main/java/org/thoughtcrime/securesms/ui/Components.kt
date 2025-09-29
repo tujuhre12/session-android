@@ -307,6 +307,7 @@ fun ItemButton(
     text: AnnotatedString,
     icon: @Composable BoxScope.() -> Unit,
     modifier: Modifier = Modifier,
+    endIcon: @Composable (BoxScope.() -> Unit)? = null,
     subtitle: String? = null,
     @StringRes subtitleQaTag: Int? = null,
     enabled: Boolean = true,
@@ -338,7 +339,7 @@ fun ItemButton(
 
         Column(
             modifier = Modifier
-                .fillMaxWidth()
+                .weight(1f, fill = false)
                 .align(Alignment.CenterVertically)
         ) {
             Text(
@@ -350,11 +351,20 @@ fun ItemButton(
             subtitle?.let {
                 Text(
                     text = it,
-                    modifier = Modifier
-                        .fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth()
                         .qaTag(subtitleQaTag),
                     style = LocalType.current.small,
                 )
+            }
+        }
+
+        endIcon?.let{
+            Spacer(Modifier.width(LocalDimensions.current.smallSpacing))
+
+            Box(
+                modifier = Modifier.size(LocalDimensions.current.itemButtonIconSpacing)
+            ) {
+                endIcon()
             }
         }
     }

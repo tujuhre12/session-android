@@ -502,80 +502,76 @@ fun Buttons(
         Cell {
             Column {
                 if(postPro){
-                    Row(
-                        modifier = Modifier.fillMaxWidth()
-                            .padding(end = LocalDimensions.current.smallSpacing),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        ItemButton(
-                            text = annotatedStringResource(
-                                when (subscriptionState.type) {
-                                    is SubscriptionType.Active -> Phrase.from(
-                                        LocalContext.current,
-                                        R.string.sessionProBeta
-                                    )
-                                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                                        .format().toString()
-
-                                    is SubscriptionType.NeverSubscribed -> Phrase.from(
-                                        LocalContext.current,
-                                        R.string.upgradeSession
-                                    )
-                                        .put(APP_NAME_KEY, stringResource(R.string.app_name))
-                                        .format().toString()
-
-                                    is SubscriptionType.Expired -> Phrase.from(
-                                        LocalContext.current,
-                                        R.string.proRenewBeta
-                                    )
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                                        .format().toString()
-                                }
-                            ),
-                            icon = {
-                                Image(
-                                    modifier = Modifier.size(LocalDimensions.current.iconLargeAvatar)
-                                        .align(Alignment.Center),
-                                    painter = painterResource(R.drawable.ic_pro_badge),
-                                    contentDescription = null,
+                   ItemButton(
+                        text = annotatedStringResource(
+                            when (subscriptionState.type) {
+                                is SubscriptionType.Active -> Phrase.from(
+                                    LocalContext.current,
+                                    R.string.sessionProBeta
                                 )
-                            },
-                            modifier = Modifier.qaTag(R.string.qa_settings_item_pro)
-                                .weight(1f, fill = false),
-                            colors = accentTextButtonColors()
-                        ) {
-                            activity?.push<ProSettingsActivity>()
-                        }
+                                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                                    .format().toString()
 
-                        when(subscriptionState.refreshState){
-                            is State.Loading -> {
-                                Box(
-                                    modifier = Modifier.size(LocalDimensions.current.itemButtonIconSpacing)
-                                ) {
-                                    SmallCircularProgressIndicator(
-                                        modifier = Modifier.align(Alignment.Center)
-                                    )
-                                }
+                                is SubscriptionType.NeverSubscribed -> Phrase.from(
+                                    LocalContext.current,
+                                    R.string.upgradeSession
+                                )
+                                    .put(APP_NAME_KEY, stringResource(R.string.app_name))
+                                    .format().toString()
+
+                                is SubscriptionType.Expired -> Phrase.from(
+                                    LocalContext.current,
+                                    R.string.proRenewBeta
+                                )
+                                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                    .format().toString()
                             }
+                        ),
+                        icon = {
+                            Image(
+                                modifier = Modifier.size(LocalDimensions.current.iconLargeAvatar)
+                                    .align(Alignment.Center),
+                                painter = painterResource(R.drawable.ic_pro_badge),
+                                contentDescription = null,
+                            )
+                        },
+                       endIcon = {
+                           when(subscriptionState.refreshState){
+                               is State.Loading -> {
+                                   Box(
+                                       modifier = Modifier.size(LocalDimensions.current.itemButtonIconSpacing)
+                                   ) {
+                                       SmallCircularProgressIndicator(
+                                           modifier = Modifier.align(Alignment.Center),
+                                           color = LocalColors.current.text
+                                       )
+                                   }
+                               }
 
-                            is State.Error -> {
-                                Box(
-                                    modifier = Modifier.size(LocalDimensions.current.itemButtonIconSpacing)
-                                ) {
-                                    Icon(
-                                        painter = painterResource(id = R.drawable.ic_triangle_alert),
-                                        tint = LocalColors.current.warning,
-                                        contentDescription = stringResource(id = R.string.qa_icon_error),
-                                        modifier = Modifier
-                                            .size(LocalDimensions.current.iconMedium)
-                                            .align(Alignment.Center),
-                                    )
-                                }
-                            }
+                               is State.Error -> {
+                                   Box(
+                                       modifier = Modifier.size(LocalDimensions.current.itemButtonIconSpacing)
+                                   ) {
+                                       Icon(
+                                           painter = painterResource(id = R.drawable.ic_triangle_alert),
+                                           tint = LocalColors.current.warning,
+                                           contentDescription = stringResource(id = R.string.qa_icon_error),
+                                           modifier = Modifier
+                                               .size(LocalDimensions.current.iconMedium)
+                                               .align(Alignment.Center),
+                                       )
+                                   }
+                               }
 
-                            else -> {}
-                        }
+                               else -> null
+                           }
+                       },
+                        modifier = Modifier.qaTag(R.string.qa_settings_item_pro),
+                        colors = accentTextButtonColors()
+                    ) {
+                        activity?.push<ProSettingsActivity>()
                     }
+
                     Divider()
                 }
 

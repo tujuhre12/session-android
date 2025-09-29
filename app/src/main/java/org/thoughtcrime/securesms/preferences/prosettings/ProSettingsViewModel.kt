@@ -228,6 +228,7 @@ class ProSettingsViewModel @Inject constructor(
                                     positiveText = context.getString(R.string.retry),
                                     negativeText = context.getString(R.string.helpSupport),
                                     positiveStyleDanger = false,
+                                    showXIcon = true,
                                     onPositive = { refreshSubscriptionData() },
                                     onNegative = {
                                         onCommand(ShowOpenUrlDialog(ProStatusManager.URL_PRO_SUPPORT))
