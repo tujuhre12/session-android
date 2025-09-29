@@ -100,7 +100,7 @@ class ProStatusManager @Inject constructor(
 
                 DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> SubscriptionType.Expired
             },
-            refreshState = State.Error(Exception()),
+            refreshState = State.Loading,
         )
 
     }.stateIn(GlobalScope, SharingStarted.Eagerly,

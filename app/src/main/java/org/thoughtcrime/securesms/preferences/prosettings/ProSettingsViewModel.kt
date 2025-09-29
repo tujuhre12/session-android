@@ -331,6 +331,53 @@ class ProSettingsViewModel @Inject constructor(
                     it.copy(showSimpleDialog = null)
                 }
             }
+
+            Commands.OnHeaderClicked -> {
+                when(_proSettingsUIState.value.subscriptionState.refreshState){
+                    // if we are in a loading or refresh state we should show a dialog instead
+                    is State.Loading -> {
+                        _dialogState.update {
+                            it.copy(
+                                showSimpleDialog = SimpleDialogData(
+                                    title = Phrase.from(context.getText(R.string.proStatusLoading))
+                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                        .format().toString(),
+                                    message = Phrase.from(context.getText(R.string.proStatusLoadingDescription))
+                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                        .format(),
+                                    positiveText = context.getString(R.string.okay),
+                                    positiveStyleDanger = false,
+                                )
+                            )
+                        }
+                    }
+
+                    is State.Error -> {
+                        _dialogState.update {
+                            it.copy(
+                                showSimpleDialog = SimpleDialogData(
+                                    title = Phrase.from(context.getText(R.string.proStatusError))
+                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                        .format().toString(),
+                                    message = Phrase.from(context.getText(R.string.proStatusRefreshNetworkError))
+                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                        .format(),
+                                    positiveText = context.getString(R.string.retry),
+                                    negativeText = context.getString(R.string.helpSupport),
+                                    positiveStyleDanger = false,
+                                    showXIcon = true,
+                                    onPositive = { refreshSubscriptionData() },
+                                    onNegative = {
+                                        onCommand(ShowOpenUrlDialog(ProStatusManager.URL_PRO_SUPPORT))
+                                    }
+                                )
+                            )
+                        }
+                    }
+
+                    else -> {}
+                }
+            }
         }
     }
 
@@ -366,6 +413,8 @@ class ProSettingsViewModel @Inject constructor(
         data class SelectProPlan(val plan: ProPlan): Commands
         data object GetProPlan: Commands
         data object ConfirmProPlan: Commands
+
+        data object OnHeaderClicked: Commands
     }
 
     data class ProSettingsState(

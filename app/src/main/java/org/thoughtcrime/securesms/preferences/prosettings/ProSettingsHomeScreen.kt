@@ -51,9 +51,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.ICON_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.recipients.ProStatus
 import org.session.libsession.utilities.recipients.shouldShowProBadge
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.SetShowProBadge
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowPlanUpdate
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.*
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.SubscriptionState
@@ -65,6 +63,7 @@ import org.thoughtcrime.securesms.ui.IconActionRowItem
 import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.SpeechBubbleTooltip
 import org.thoughtcrime.securesms.ui.SwitchActionRowItem
+import org.thoughtcrime.securesms.ui.components.ExtraSmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.components.iconExternalLink
@@ -113,10 +112,64 @@ fun ProSettingsHome(
     onBack: () -> Unit,
 ) {
     val subscriptionType = data.subscriptionState.type
+    val context = LocalContext.current
 
     BaseProSettingsScreen(
         disabled = subscriptionType is SubscriptionType.Expired,
         onBack = onBack,
+        onHeaderClick = {
+            // add a click handling if the subscription state is loading or errored
+            if(data.subscriptionState.refreshState !is State.Success<*>){
+                sendCommand(OnHeaderClicked)
+            } else null
+        },
+        extraHeaderContent = {
+            // display extra content if the subscription state is loading or errored
+            when(data.subscriptionState.refreshState){
+                is State.Loading -> {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxsSpacing)
+                    ) {
+                        Text(
+                            text = Phrase.from(context.getText(R.string.proStatusLoadingSubtitle))
+                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                .format().toString(),
+                            style = LocalType.current.base,
+                            color = LocalColors.current.text
+
+                        )
+
+                        ExtraSmallCircularProgressIndicator()
+                    }
+                }
+
+                is State.Error -> {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
+                    ) {
+                        Text(
+                            text = Phrase.from(context.getText(R.string.proErrorRefreshingStatus))
+                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                .format().toString(),
+                            style = LocalType.current.base,
+                            color = LocalColors.current.warning
+
+                        )
+
+                        Image(
+                            modifier = Modifier.size(LocalDimensions.current.iconXSmall),
+                            painter = painterResource(id = R.drawable.ic_triangle_alert),
+                            colorFilter = ColorFilter.tint(LocalColors.current.warning),
+                            contentDescription = null,
+                        )
+                    }
+                }
+
+                else -> null
+            }
+        }
     ) {
         // Pro Stats
         if(subscriptionType is SubscriptionType.Active){
