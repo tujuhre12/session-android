@@ -46,6 +46,7 @@ import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.SubscriptionState
+import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.getDefaultSubscriptionStateData
 import org.thoughtcrime.securesms.profiles.ProfileMediaConstraints
 import org.thoughtcrime.securesms.reviews.InAppReviewManager
@@ -377,17 +378,38 @@ class SettingsViewModel @Inject constructor(
 
     private fun clearData(clearNetwork: Boolean) {
         val currentClearState = uiState.value.clearDataDialog
+        val isPro = selfRecipient.value.proStatus.isPro()
         // show loading
         _uiState.update { it.copy(clearDataDialog = ClearDataState.Clearing) }
 
         // only clear locally is clearNetwork is false or we are in an error state
         viewModelScope.launch(Dispatchers.Default) {
-            if (!clearNetwork || currentClearState == ClearDataState.Error) {
-                clearDataDeviceOnly()
-            } else if(currentClearState == ClearDataState.Default){
-                _uiState.update { it.copy(clearDataDialog = ClearDataState.ConfirmNetwork) }
-            } else { // clear device and network
-                clearDataDeviceAndNetwork()
+            when{
+                // we have already confirmed the deletion
+                currentClearState is ClearDataState.ConfirmedClearDataState -> {
+                    if(clearNetwork){
+                        clearDataDeviceAndNetwork()
+                    } else {
+                        clearDataDeviceOnly()
+                    }
+                }
+
+                // we need special confirmations for pro users
+                isPro -> {
+                    if(!clearNetwork || currentClearState == ClearDataState.Error){
+                        _uiState.update { it.copy(clearDataDialog = ClearDataState.ConfirmedClearDataState.ConfirmDevicePro) }
+                    } else {
+                        _uiState.update { it.copy(clearDataDialog = ClearDataState.ConfirmedClearDataState.ConfirmNetworkPro) }
+                    }
+                }
+
+                else -> {
+                    if(!clearNetwork || currentClearState == ClearDataState.Error){
+                        clearDataDeviceOnly()
+                    } else {
+                        _uiState.update { it.copy(clearDataDialog = ClearDataState.ConfirmedClearDataState.ConfirmNetwork) }
+                    }
+                }
             }
         }
     }
@@ -576,8 +598,13 @@ class SettingsViewModel @Inject constructor(
         data object Hidden: ClearDataState
         data object Default: ClearDataState
         data object Clearing: ClearDataState
-        data object ConfirmNetwork: ClearDataState
         data object Error: ClearDataState
+
+        sealed interface ConfirmedClearDataState: ClearDataState {
+            data object ConfirmNetwork : ConfirmedClearDataState
+            data object ConfirmNetworkPro : ConfirmedClearDataState
+            data object ConfirmDevicePro : ConfirmedClearDataState
+        }
     }
 
     data class UsernameDialogData(

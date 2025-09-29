@@ -686,6 +686,7 @@ fun ShowClearDataDialog(
     sendCommand: (SettingsViewModel.Commands) -> Unit
 ) {
     var deleteOnNetwork by remember { mutableStateOf(false)}
+    val context = LocalContext.current
 
     AlertDialog(
         modifier = modifier,
@@ -693,11 +694,28 @@ fun ShowClearDataDialog(
             // hide dialog
             sendCommand(HideClearDataDialog)
         },
-        title = stringResource(R.string.clearDataAll),
+        title = annotatedStringResource(R.string.clearDataAll),
         text = when(state){
-            is SettingsViewModel.ClearDataState.Error -> stringResource(R.string.clearDataErrorDescriptionGeneric)
-            is SettingsViewModel.ClearDataState.ConfirmNetwork -> stringResource(R.string.clearDeviceAndNetworkConfirm)
-            else -> stringResource(R.string.clearDataAllDescription)
+            is SettingsViewModel.ClearDataState.Clearing -> null
+            is SettingsViewModel.ClearDataState.Error -> annotatedStringResource(R.string.clearDataErrorDescriptionGeneric)
+            is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmNetwork -> annotatedStringResource(R.string.clearDeviceAndNetworkConfirm)
+            is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmDevicePro -> {
+                annotatedStringResource(
+                    Phrase.from(context.getText(R.string.proClearAllDataDevice))
+                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                        .format()
+                )
+            }
+            is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmNetworkPro -> {
+                annotatedStringResource(
+                    Phrase.from(context.getText(R.string.proClearAllDataNetwork))
+                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                        .format()
+                )
+            }
+            else -> annotatedStringResource(R.string.clearDataAllDescription)
         },
         content = {
             when(state) {
@@ -734,7 +752,10 @@ fun ShowClearDataDialog(
         },
         buttons = when(state){
             is SettingsViewModel.ClearDataState.Default,
-                 is SettingsViewModel.ClearDataState.ConfirmNetwork -> {
+                 is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmDevicePro,
+                 is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmNetwork,
+                 is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmNetworkPro,
+                      -> {
                 listOf(
                     DialogButtonData(
                         text = GetString(stringResource(id = R.string.clear)),
