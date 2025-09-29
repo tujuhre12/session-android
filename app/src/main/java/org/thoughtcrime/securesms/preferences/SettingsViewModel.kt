@@ -49,7 +49,6 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.SubscriptionState
-import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.pro.getDefaultSubscriptionStateData
 import org.thoughtcrime.securesms.profiles.ProfileMediaConstraints
 import org.thoughtcrime.securesms.reviews.InAppReviewManager
@@ -61,6 +60,7 @@ import org.thoughtcrime.securesms.util.BitmapDecodingException
 import org.thoughtcrime.securesms.util.BitmapUtil
 import org.thoughtcrime.securesms.util.ClearDataUtils
 import org.thoughtcrime.securesms.util.NetworkConnectivity
+import org.thoughtcrime.securesms.util.State
 import org.thoughtcrime.securesms.util.mapToStateFlow
 import java.io.File
 import java.io.IOException
@@ -586,26 +586,50 @@ class SettingsViewModel @Inject constructor(
                 showUrlDialog( "https://session.foundation/donate#app")
             }
 
-            is Commands.ShowProError -> {
-                _uiState.update {
-                    it.copy(
-                        showSimpleDialog = SimpleDialogData(
-                            title = Phrase.from(context.getText(R.string.proStatusError))
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                                .format().toString(),
-                            message = Phrase.from(context.getText(R.string.proStatusRefreshNetworkError))
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                                .format(),
-                            positiveText = context.getString(R.string.retry),
-                            negativeText = context.getString(R.string.helpSupport),
-                            positiveStyleDanger = false,
-                            showXIcon = true,
-                            onPositive = { refreshSubscriptionData() },
-                            onNegative = {
-                                showUrlDialog(ProStatusManager.URL_PRO_SUPPORT)
-                            }
-                        )
-                    )
+            is Commands.ShowProErrorOrLoading -> {
+                when(_uiState.value.subscriptionState.refreshState){
+                    // if we are in a loading or refresh state we should show a dialog instead
+                    is State.Loading -> {
+                        _uiState.update {
+                            it.copy(
+                                showSimpleDialog = SimpleDialogData(
+                                    title = Phrase.from(context.getText(R.string.proStatusLoading))
+                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                        .format().toString(),
+                                    message = Phrase.from(context.getText(R.string.proStatusLoadingDescription))
+                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                        .format(),
+                                    positiveText = context.getString(R.string.okay),
+                                    positiveStyleDanger = false,
+                                )
+                            )
+                        }
+                    }
+
+                    is State.Error -> {
+                        _uiState.update {
+                            it.copy(
+                                showSimpleDialog = SimpleDialogData(
+                                    title = Phrase.from(context.getText(R.string.proStatusError))
+                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                        .format().toString(),
+                                    message = Phrase.from(context.getText(R.string.proStatusRefreshNetworkError))
+                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                        .format(),
+                                    positiveText = context.getString(R.string.retry),
+                                    negativeText = context.getString(R.string.helpSupport),
+                                    positiveStyleDanger = false,
+                                    showXIcon = true,
+                                    onPositive = { refreshSubscriptionData() },
+                                    onNegative = {
+                                        showUrlDialog(ProStatusManager.URL_PRO_SUPPORT)
+                                    }
+                                )
+                            )
+                        }
+                    }
+
+                    else -> {}
                 }
             }
 
@@ -695,7 +719,7 @@ class SettingsViewModel @Inject constructor(
 
         data object OnDonateClicked: Commands
 
-        data object ShowProError: Commands
+        data object ShowProErrorOrLoading: Commands
 
         data class ClearData(val clearNetwork: Boolean): Commands
     }
