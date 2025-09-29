@@ -5,6 +5,7 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -26,6 +27,7 @@ import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -387,8 +389,23 @@ fun ProStatItem(
     disabled: Boolean = false,
     tooltip: String? = null,
 ){
+    val scope = rememberCoroutineScope()
+    val tooltipState = rememberTooltipState(isPersistent = true)
+
     Row(
-        modifier = modifier,
+        modifier = modifier.then(
+            // make the component clickable is there is an edit action
+            if (tooltip != null) Modifier.clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = {
+                    scope.launch {
+                        if (tooltipState.isVisible) tooltipState.dismiss() else tooltipState.show()
+                    }
+                }
+            )
+            else Modifier
+        ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
     ){
@@ -409,8 +426,6 @@ fun ProStatItem(
         )
 
         if(tooltip != null){
-            val tooltipState = rememberTooltipState(isPersistent = true)
-            val scope = rememberCoroutineScope()
             SpeechBubbleTooltip(
                 text = tooltip,
                 tooltipState = tooltipState
