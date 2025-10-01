@@ -1,24 +1,30 @@
 package org.thoughtcrime.securesms.util
 
 import android.content.Context
+import android.icu.text.MeasureFormat
+import android.icu.util.Measure
+import android.icu.util.MeasureUnit
 import android.text.format.DateFormat
-import  android.text.format.DateUtils as AndroidxDateUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
-import java.text.SimpleDateFormat
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.*
-import java.util.concurrent.TimeUnit
-import javax.inject.Inject
-import javax.inject.Singleton
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.DATE_FORMAT_PREF
 import org.session.libsession.utilities.TextSecurePreferences.Companion.TIME_FORMAT_PREF
 import org.session.libsignal.utilities.Log
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.Period
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+import java.util.concurrent.TimeUnit
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlin.math.max
+import android.text.format.DateUtils as AndroidxDateUtils
 
 enum class RelativeDay { TODAY, YESTERDAY, TOMORROW }
 
@@ -110,21 +116,12 @@ class DateUtils @Inject constructor(
         ).toString()
     }
 
-    // Format a given timestamp with a specific pattern
-    fun formatTime(timestamp: Long, pattern: String, locale: Locale = Locale.getDefault()): String {
-        val formatter = DateTimeFormatter.ofPattern(pattern, locale)
-
-        return Instant.ofEpochMilli(timestamp)
-            .atZone(ZoneId.systemDefault())
-            .format(formatter)
-    }
+    // Method to get a date in a locale-aware fashion or with a specific pattern
+    fun getLocaleFormattedDate(timestamp: Long): String =
+        formatTime(timestamp, userDateFormat)
 
     fun getLocaleFormattedDateTime(timestamp: Long): String =
         formatTime(timestamp, defaultDateTimeFormat)
-
-    // Method to get a date in a locale-aware fashion or with a specific pattern
-    fun getLocaleFormattedDate(timestamp: Long, specificPattern: String = ""): String =
-        formatTime(timestamp, specificPattern.takeIf { it.isNotEmpty() } ?: userDateFormat)
 
     // Method to get a time in a locale-aware fashion (i.e., 13:25 or 1:25 PM)
     fun getLocaleFormattedTime(timestamp: Long): String =
@@ -202,6 +199,29 @@ class DateUtils @Inject constructor(
                 date1.hour == date2.hour
     }
 
+    fun getExpiryString(instant: Instant?): String {
+        val now = Instant.now()
+        val timeRemaining = Duration.between(now, instant)
+
+        // Instant has passed
+        if (timeRemaining.isNegative || timeRemaining.isZero) {
+            return context.getString(R.string.proExpired)
+        }
+
+        val totalHours = max(timeRemaining.toHours(), 1)
+        val locale = context.resources.configuration.locales[0]
+        val format = MeasureFormat.getInstance(locale, MeasureFormat.FormatWidth.WIDE)
+
+        return if (totalHours >= 24) {
+            // More than one full day remaining - show days
+            val days = timeRemaining.toDays()
+            format.format(Measure(days, MeasureUnit.DAY))
+        } else {
+            // Less than 24 hours remaining - show hours
+            format.format(Measure(totalHours, MeasureUnit.HOUR))
+        }
+    }
+
     // Helper methods
     private fun toLocalDate(timestamp: Long): LocalDate =
         Instant.ofEpochMilli(timestamp).atZone(ZoneId.systemDefault()).toLocalDate()
@@ -220,4 +240,53 @@ class DateUtils @Inject constructor(
 
     private fun getLocalizedPattern(template: String, locale: Locale): String =
         DateFormat.getBestDateTimePattern(locale, template)
+
+    companion object {
+        fun Long.asEpochSeconds(): ZonedDateTime? {
+            if (this <= 0) return null
+
+            return Instant.ofEpochSecond(this).atZone(ZoneId.of("UTC"))
+        }
+
+        fun Long.secondsToInstant(): Instant? {
+            if (this <= 0) return null
+
+            return Instant.ofEpochSecond(this)
+        }
+
+        fun Long.millsToInstant(): Instant? {
+            if (this <= 0) return null
+
+            return Instant.ofEpochMilli(this)
+        }
+
+        fun Long.asEpochMillis(): ZonedDateTime? {
+            if (this <= 0) return null
+
+            return Instant.ofEpochMilli(this).atZone(ZoneId.of("UTC"))
+        }
+
+        fun Instant.toEpochSeconds(): Long {
+            return this.toEpochMilli() / 1000
+        }
+
+        fun getLocalisedTimeDuration(context: Context, amount: Int, unit: MeasureUnit): String {
+            val locale = context.resources.configuration.locales[0]
+            val format = MeasureFormat.getInstance(locale, MeasureFormat.FormatWidth.WIDE)
+            return format.format(Measure(amount, unit))
+        }
+
+        // Format a given timestamp with a specific pattern
+        fun formatTime(timestamp: Long, pattern: String, locale: Locale = Locale.getDefault()): String {
+            val formatter = DateTimeFormatter.ofPattern(pattern, locale)
+
+            return Instant.ofEpochMilli(timestamp)
+                .atZone(ZoneId.systemDefault())
+                .format(formatter)
+        }
+
+        // Method to get a date in a locale-aware fashion or with a specific pattern
+        fun getLocaleFormattedDate(timestamp: Long, specificPattern: String): String =
+            formatTime(timestamp, specificPattern)
+    }
 }

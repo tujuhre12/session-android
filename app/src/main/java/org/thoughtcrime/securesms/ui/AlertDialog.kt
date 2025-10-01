@@ -291,12 +291,14 @@ fun DialogButton(
 
 @Composable
 fun DialogBg(
+    modifier: Modifier = Modifier,
+    bgColor: Color = LocalColors.current.backgroundSecondary,
     content: @Composable BoxScope.() -> Unit
 ){
     Box(
-        modifier = Modifier
+        modifier = modifier
             .background(
-                color = LocalColors.current.backgroundSecondary,
+                color = bgColor,
                 shape = MaterialTheme.shapes.small
             )
             .border(

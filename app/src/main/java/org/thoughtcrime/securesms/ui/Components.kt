@@ -2,7 +2,6 @@ package org.thoughtcrime.securesms.ui
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.appcompat.content.res.AppCompatResources
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearEasing
@@ -19,7 +18,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -29,6 +27,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
@@ -38,7 +38,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -64,6 +63,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
@@ -78,8 +78,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -89,32 +88,24 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.times
-import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideSubcomposition
-import com.bumptech.glide.integration.compose.RequestState
-import com.squareup.phrase.Phrase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import org.session.libsession.utilities.NonTranslatableStringConstants
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
-import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
+import org.thoughtcrime.securesms.ui.components.SessionSwitch
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
-import org.thoughtcrime.securesms.ui.components.TertiaryFillButtonRect
 import org.thoughtcrime.securesms.ui.components.TitledRadioButton
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
-import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
-import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.ui.theme.primaryGreen
 import org.thoughtcrime.securesms.ui.theme.primaryOrange
@@ -126,13 +117,54 @@ import org.thoughtcrime.securesms.ui.theme.transparentButtonColors
 import kotlin.math.roundToInt
 
 @Composable
+fun AccountIdHeader(
+    modifier: Modifier = Modifier,
+    text: String = stringResource(R.string.accountId),
+    textStyle: TextStyle = LocalType.current.base,
+    textPaddingValues: PaddingValues = PaddingValues(
+        horizontal = LocalDimensions.current.contentSpacing,
+        vertical = LocalDimensions.current.xxsSpacing
+    )
+){
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+    ){
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(1.dp)
+                .background(color = LocalColors.current.borders)
+        )
+
+        Text(
+            modifier = Modifier
+                .border(
+                    shape = MaterialTheme.shapes.large
+                )
+                .padding(textPaddingValues)
+            ,
+            text = text,
+            style = textStyle.copy(color = LocalColors.current.textSecondary)
+        )
+
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(1.dp)
+                .background(color = LocalColors.current.borders)
+        )
+    }
+}
+
+@Composable
 fun PathDot(
     modifier: Modifier = Modifier,
     dotSize: Dp = LocalDimensions.current.iconMedium,
     glowSize: Dp = LocalDimensions.current.xxsSpacing,
     color: Color = primaryGreen
 ) {
-    val fullSize = dotSize + 2*glowSize
+    val fullSize = dotSize + 2 * glowSize
     Box(
         modifier = modifier.size(fullSize),
         contentAlignment = Alignment.Center
@@ -180,6 +212,7 @@ fun PreviewPathDot(){
     }
 }
 
+
 data class RadioOption<T>(
     val value: T,
     val title: GetString,
@@ -226,230 +259,37 @@ fun <T> OptionsCard(card: OptionsCardData<T>, onOptionSelected: (T) -> Unit) {
 }
 
 @Composable
-fun LargeItemButtonWithDrawable(
-    @StringRes textId: Int,
-    @DrawableRes icon: Int,
+fun ItemButton(
+    text: AnnotatedString,
+    @DrawableRes iconRes: Int,
     modifier: Modifier = Modifier,
-    subtitle: String? = null,
-    @StringRes subtitleQaTag: Int? = null,
-    colors: ButtonColors = transparentButtonColors(),
-    shape: Shape = RectangleShape,
-    onClick: () -> Unit
-) {
-    ItemButtonWithDrawable(
-        textId, icon, modifier,
-        subtitle = subtitle,
-        subtitleQaTag = subtitleQaTag,
-        textStyle = LocalType.current.h8,
-        colors = colors,
-        shape = shape,
-        onClick = onClick
-    )
-}
-
-@Composable
-fun ItemButtonWithDrawable(
-    @StringRes textId: Int,
-    @DrawableRes icon: Int,
-    modifier: Modifier = Modifier,
-    subtitle: String? = null,
-    @StringRes subtitleQaTag: Int? = null,
-    textStyle: TextStyle = LocalType.current.xl,
-    colors: ButtonColors = transparentButtonColors(),
-    shape: Shape = RectangleShape,
-    onClick: () -> Unit
-) {
-    ItemButton(
-        annotatedStringText = AnnotatedString(stringResource(textId)),
-        modifier = modifier,
-        icon = {
-            Image(
-                painter = painterResource(id = icon),
-                contentDescription = null,
-                modifier = Modifier.align(Alignment.Center)
-            )
-        },
-        textStyle = textStyle,
-        subtitle = subtitle,
-        subtitleQaTag = subtitleQaTag,
-        colors = colors,
-        shape = shape,
-        onClick = onClick
-    )
-}
-
-@Composable
-fun LargeItemButton(
-    @StringRes textId: Int,
-    @DrawableRes icon: Int,
-    modifier: Modifier = Modifier,
+    textStyle: TextStyle = LocalType.current.h8,
+    iconTint: Color? = null,
+    iconSize: Dp = LocalDimensions.current.iconMedium,
     subtitle: String? = null,
     @StringRes subtitleQaTag: Int? = null,
     enabled: Boolean = true,
-    colors: ButtonColors = transparentButtonColors(),
-    shape: Shape = RectangleShape,
-    onClick: () -> Unit
-) {
-    ItemButton(
-        textId = textId,
-        icon = icon,
-        modifier = modifier,
-        subtitle = subtitle,
-        subtitleQaTag = subtitleQaTag,
-        enabled = enabled,
-        minHeight = LocalDimensions.current.minLargeItemButtonHeight,
-        textStyle = LocalType.current.h8,
-        colors = colors,
-        shape = shape,
-        onClick = onClick
-    )
-}
-
-@Composable
-fun LargeItemButton(
-    text: String,
-    @DrawableRes icon: Int,
-    modifier: Modifier = Modifier,
-    subtitle: String? = null,
-    @StringRes subtitleQaTag: Int? = null,
-    enabled: Boolean = true,
+    minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
 ) {
     ItemButton(
         text = text,
-        icon = icon,
         modifier = modifier,
         subtitle = subtitle,
         subtitleQaTag = subtitleQaTag,
         enabled = enabled,
-        minHeight = LocalDimensions.current.minLargeItemButtonHeight,
-        textStyle = LocalType.current.h8,
-        colors = colors,
-        shape = shape,
-        onClick = onClick
-    )
-}
-
-@Composable
-fun LargeItemButton(
-    annotatedStringText: AnnotatedString,
-    icon: @Composable BoxScope.() -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    colors: ButtonColors = transparentButtonColors(),
-    shape: Shape = RectangleShape,
-    onClick: () -> Unit
-) {
-    ItemButton(
-        modifier = modifier,
-        annotatedStringText = annotatedStringText,
-        icon = icon,
-        enabled = enabled,
-        minHeight = LocalDimensions.current.minLargeItemButtonHeight,
-        textStyle = LocalType.current.h8,
-        colors = colors,
-        shape = shape,
-        onClick = onClick
-    )
-}
-
-@Composable
-fun ItemButton(
-    text: String,
-    @DrawableRes icon: Int,
-    modifier: Modifier,
-    subtitle: String? = null,
-    @StringRes subtitleQaTag: Int? = null,
-    enabled: Boolean = true,
-    minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
-    textStyle: TextStyle = LocalType.current.xl,
-    colors: ButtonColors = transparentButtonColors(),
-    shape: Shape = RectangleShape,
-    onClick: () -> Unit
-) {
-    ItemButton(
-        annotatedStringText = AnnotatedString(text),
-        modifier = modifier,
+        minHeight = minHeight,
         icon = {
             Icon(
-                painter = painterResource(id = icon),
+                painter = painterResource(id = iconRes),
                 contentDescription = null,
+                tint = iconTint ?: colors.contentColor,
                 modifier = Modifier.align(Alignment.Center)
+                    .size(iconSize)
             )
         },
-        minHeight = minHeight,
-        textStyle = textStyle,
-        shape = shape,
-        colors = colors,
-        subtitle = subtitle,
-        subtitleQaTag = subtitleQaTag,
-        enabled = enabled,
-        onClick = onClick,
-    )
-}
-
-/**
- * Courtesy [ItemButton] implementation that takes a [DrawableRes] for the [icon]
- */
-@Composable
-fun ItemButton(
-    @StringRes textId: Int,
-    @DrawableRes icon: Int,
-    modifier: Modifier = Modifier,
-    subtitle: String? = null,
-    @StringRes subtitleQaTag: Int? = null,
-    enabled: Boolean = true,
-    minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
-    textStyle: TextStyle = LocalType.current.xl,
-    colors: ButtonColors = transparentButtonColors(),
-    shape: Shape = RectangleShape,
-    onClick: () -> Unit
-) {
-    ItemButton(
-        annotatedStringText = AnnotatedString(stringResource(textId)),
-        modifier = modifier,
-        icon = icon,
-        minHeight = minHeight,
-        textStyle = textStyle,
-        shape = shape,
-        colors = colors,
-        subtitle = subtitle,
-        subtitleQaTag = subtitleQaTag,
-        enabled = enabled,
-        onClick = onClick
-    )
-}
-
-@Composable
-fun ItemButton(
-    annotatedStringText: AnnotatedString,
-    icon: Int,
-    modifier: Modifier,
-    subtitle: String? = null,
-    @StringRes subtitleQaTag: Int? = null,
-    enabled: Boolean = true,
-    minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
-    textStyle: TextStyle = LocalType.current.xl,
-    colors: ButtonColors = transparentButtonColors(),
-    shape: Shape = RectangleShape,
-    onClick: () -> Unit
-) {
-    ItemButton(
-        annotatedStringText = annotatedStringText,
-        modifier = modifier,
-        subtitle = subtitle,
-        subtitleQaTag = subtitleQaTag,
-        enabled = enabled,
-        icon = {
-            Icon(
-                painter = painterResource(id = icon),
-                contentDescription = null,
-                modifier = Modifier.align(Alignment.Center)
-            )
-        },
-        minHeight = minHeight,
         textStyle = textStyle,
         colors = colors,
         shape = shape,
@@ -462,57 +302,69 @@ fun ItemButton(
  *
  * A button to be used in a list of buttons, usually in a [Cell] or [Card]
  */
-// THIS IS THE FINAL DEEP LEVEL ANNOTATED STRING BUTTON
 @Composable
 fun ItemButton(
-    annotatedStringText: AnnotatedString,
+    text: AnnotatedString,
     icon: @Composable BoxScope.() -> Unit,
     modifier: Modifier = Modifier,
+    endIcon: @Composable (BoxScope.() -> Unit)? = null,
     subtitle: String? = null,
     @StringRes subtitleQaTag: Int? = null,
     enabled: Boolean = true,
-    minHeight: Dp = LocalDimensions.current.minLargeItemButtonHeight,
-    textStyle: TextStyle = LocalType.current.xl,
+    minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
+    textStyle: TextStyle = LocalType.current.h8,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
 ) {
     TextButton(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth()
+            .heightIn(min = minHeight),
         colors = colors,
         onClick = onClick,
-        contentPadding = PaddingValues(),
+        contentPadding = PaddingValues(
+            start = LocalDimensions.current.smallSpacing,
+            end = LocalDimensions.current.smallSpacing
+        ),
         enabled = enabled,
         shape = shape,
     ) {
         Box(
-            modifier = Modifier
-                .padding(horizontal = LocalDimensions.current.xxsSpacing)
-                .size(minHeight)
-                .align(Alignment.CenterVertically),
-            content = icon
-        )
+            modifier = Modifier.size(LocalDimensions.current.itemButtonIconSpacing)
+        ) {
+            icon()
+        }
+
+        Spacer(Modifier.width(LocalDimensions.current.smallSpacing))
 
         Column(
             modifier = Modifier
-                .fillMaxWidth()
+                .weight(1f, fill = false)
                 .align(Alignment.CenterVertically)
         ) {
             Text(
-                annotatedStringText,
-                Modifier
-                    .fillMaxWidth(),
+                text,
+                Modifier.fillMaxWidth(),
                 style = textStyle
             )
 
             subtitle?.let {
                 Text(
                     text = it,
-                    modifier = Modifier
-                        .fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth()
                         .qaTag(subtitleQaTag),
                     style = LocalType.current.small,
                 )
+            }
+        }
+
+        endIcon?.let{
+            Spacer(Modifier.width(LocalDimensions.current.smallSpacing))
+
+            Box(
+                modifier = Modifier.size(LocalDimensions.current.itemButtonIconSpacing)
+            ) {
+                endIcon()
             }
         }
     }
@@ -523,20 +375,8 @@ fun ItemButton(
 fun PreviewItemButton() {
     PreviewTheme {
         ItemButton(
-            textId = R.string.groupCreate,
-            icon = R.drawable.ic_users_group_custom,
-            onClick = {}
-        )
-    }
-}
-
-@Preview
-@Composable
-fun PreviewLargeItemButton() {
-    PreviewTheme {
-        LargeItemButton(
-            textId = R.string.groupCreate,
-            icon = R.drawable.ic_users_group_custom,
+            text = annotatedStringResource(R.string.groupCreate),
+            iconRes = R.drawable.ic_users_group_custom,
             onClick = {}
         )
     }
@@ -545,13 +385,28 @@ fun PreviewLargeItemButton() {
 @Composable
 fun Cell(
     modifier: Modifier = Modifier,
+    dropShadow: Boolean = false,
+    bgColor: Color = LocalColors.current.backgroundSecondary,
     content: @Composable () -> Unit
 ) {
     Box(
         modifier = modifier
+            .then(
+                if(dropShadow)
+                    Modifier.dropShadow(
+                        shape = MaterialTheme.shapes.small,
+                        shadow = Shadow(
+                            radius = 4.dp,
+                            color = LocalColors.current.text,
+                            alpha = 0.25f,
+                            offset = DpOffset(0.dp, 4.dp)
+                        )
+                    )
+                else Modifier
+            )
             .clip(MaterialTheme.shapes.small)
             .background(
-                color = LocalColors.current.backgroundSecondary,
+                color = bgColor,
             )
             .wrapContentHeight()
             .fillMaxWidth()
@@ -575,6 +430,48 @@ fun getCellBottomShape() = RoundedCornerShape(
     bottomEnd = LocalDimensions.current.shapeSmall,
     bottomStart = LocalDimensions.current.shapeSmall
 )
+
+@Composable
+fun CategoryCell(
+    modifier: Modifier = Modifier,
+    title: String? = null,
+    titleIcon: @Composable (() -> Unit)? = null,
+    dropShadow: Boolean = false,
+    content: @Composable () -> Unit,
+
+){
+    Column(
+        modifier = modifier.fillMaxWidth()
+    ) {
+        if(!title.isNullOrEmpty() || titleIcon != null) {
+            Row(
+                modifier = Modifier.padding(
+                    start = LocalDimensions.current.smallSpacing,
+                    bottom = LocalDimensions.current.smallSpacing
+                ),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
+            ) {
+                if (!title.isNullOrEmpty()) {
+                    Text(
+                        text = title,
+                        style = LocalType.current.base,
+                        color = LocalColors.current.textSecondary
+                    )
+                }
+
+                titleIcon?.invoke()
+            }
+        }
+
+       Cell(
+           modifier = Modifier.fillMaxWidth(),
+           dropShadow = dropShadow
+       ){
+            content()
+       }
+    }
+}
 
 @Composable
 fun BottomFadingEdgeBox(
@@ -629,453 +526,13 @@ private fun BottomFadingEdgeBoxPreview() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SessionProCTA(
-    content: @Composable () -> Unit,
-    text: String,
-    features: List<CTAFeature>,
+fun Divider(
     modifier: Modifier = Modifier,
-    onUpgrade: () -> Unit,
-    onCancel: () -> Unit,
-){
-    BasicAlertDialog(
-        modifier = modifier,
-        onDismissRequest = onCancel,
-        content = {
-            DialogBg {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    // hero image
-                    BottomFadingEdgeBox(
-                        fadingEdgeHeight = 70.dp,
-                        fadingColor = LocalColors.current.backgroundSecondary,
-                        content = { _ ->
-                            content()
-                        },
-                    )
-
-                    // content
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(LocalDimensions.current.smallSpacing)
-                    ) {
-                        // title
-                        Row(
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
-
-                        ) {
-                            Text(
-                                text = stringResource(R.string.upgradeTo),
-                                style = LocalType.current.h5
-                            )
-
-                            Image(
-                                painter = painterResource(id = R.drawable.ic_pro_badge),
-                                contentScale = ContentScale.FillHeight,
-                                contentDescription = NonTranslatableStringConstants.APP_PRO,
-                            )
-                        }
-
-                        Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
-
-                        // main message
-                        Text(
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            text = text,
-                            textAlign = TextAlign.Center,
-                            style = LocalType.current.base.copy(
-                                color = LocalColors.current.textSecondary
-                            )
-                        )
-
-                        Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
-
-                        // features
-                        features.forEachIndexed { index, feature ->
-                            ProCTAFeature(data = feature)
-                            if(index < features.size - 1){
-                                Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
-                            }
-                        }
-
-                        Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
-
-                        // buttons
-                        Row(
-                            Modifier.height(IntrinsicSize.Min),
-                            horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsSpacing),
-                        ) {
-                            AccentFillButtonRect(
-                                modifier = Modifier.weight(1f).shimmerOverlay(),
-                                text = stringResource(R.string.theContinue),
-                                onClick = onUpgrade
-                            )
-
-                            TertiaryFillButtonRect(
-                                modifier = Modifier.weight(1f),
-                                text = stringResource(R.string.cancel),
-                                onClick = onCancel
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    )
-}
-
-sealed interface CTAFeature {
-    val text: String
-
-    data class Icon(
-        override val text: String,
-        @DrawableRes val icon: Int = R.drawable.ic_circle_check,
-    ): CTAFeature
-
-    data class RainbowIcon(
-        override val text: String,
-        @DrawableRes val icon: Int = R.drawable.ic_pro_sparkle_custom,
-    ): CTAFeature
-}
-
-@Composable
-fun SimpleSessionProCTA(
-    @DrawableRes heroImage: Int,
-    text: String,
-    features: List<CTAFeature>,
-    modifier: Modifier = Modifier,
-    onUpgrade: () -> Unit,
-    onCancel: () -> Unit,
-){
-    SessionProCTA(
-        modifier = modifier,
-        text = text,
-        features = features,
-        onUpgrade = onUpgrade,
-        onCancel = onCancel,
-        content = { CTAImage(heroImage = heroImage) }
-    )
-}
-
-@Composable
-fun CTAImage(
-    @DrawableRes heroImage: Int,
-){
-    Image(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(LocalColors.current.accent),
-        contentScale = ContentScale.FillWidth,
-        painter = painterResource(id = heroImage),
-        contentDescription = null,
-    )
-}
-
-@OptIn(ExperimentalGlideComposeApi::class)
-@Composable
-fun AnimatedSessionProCTA(
-    @DrawableRes heroImageBg: Int,
-    @DrawableRes heroImageAnimatedFg: Int,
-    text: String,
-    features: List<CTAFeature>,
-    modifier: Modifier = Modifier,
-    onUpgrade: () -> Unit,
-    onCancel: () -> Unit,
-){
-    SessionProCTA(
-        modifier = modifier,
-        text = text,
-        features = features,
-        onUpgrade = onUpgrade,
-        onCancel = onCancel,
-        content = {
-            CTAAnimatedImages(
-                heroImageBg = heroImageBg,
-                heroImageAnimatedFg = heroImageAnimatedFg
-            )
-        })
-}
-
-@OptIn(ExperimentalGlideComposeApi::class)
-@Composable
-fun CTAAnimatedImages(
-    @DrawableRes heroImageBg: Int,
-    @DrawableRes heroImageAnimatedFg: Int,
-){
-    Image(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(LocalColors.current.accent),
-        contentScale = ContentScale.FillWidth,
-        painter = painterResource(id = heroImageBg),
-        contentDescription = null,
-    )
-
-    GlideSubcomposition(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(IntrinsicSize.Min),
-        model = heroImageAnimatedFg,
-    ){
-        when (state) {
-            is RequestState.Success -> {
-                Image(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentScale = ContentScale.FillWidth,
-                    painter = painter,
-                    contentDescription = null,
-                )
-            }
-
-            else -> {}
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SessionProActivatedCTA(
-    content: @Composable () -> Unit,
-    text: String,
-    modifier: Modifier = Modifier,
-    onCancel: () -> Unit,
-){
-    BasicAlertDialog(
-        modifier = modifier,
-        onDismissRequest = onCancel,
-        content = {
-            DialogBg {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    // hero image
-                    BottomFadingEdgeBox(
-                        fadingEdgeHeight = 70.dp,
-                        fadingColor = LocalColors.current.backgroundSecondary,
-                        content = { _ ->
-                            content()
-                        },
-                    )
-
-                    // content
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(LocalDimensions.current.smallSpacing)
-                    ) {
-                        // title
-                        Row(
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
-
-                        ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.ic_pro_badge),
-                                contentScale = ContentScale.FillHeight,
-                                contentDescription = NonTranslatableStringConstants.APP_PRO,
-                            )
-
-                            Text(
-                                text = stringResource(R.string.proActivated),
-                                style = LocalType.current.h5
-                            )
-                        }
-
-                        Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
-
-                        // already have pro
-                        Row(
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
-
-                        ) {
-                            Text(
-                                text = stringResource(R.string.proAlreadyPurchased),
-                                style = LocalType.current.base.copy(color = LocalColors.current.textSecondary)
-                            )
-
-                            Image(
-                                modifier = Modifier.height(LocalType.current.base.lineHeight.value.dp),
-                                painter = painterResource(id = R.drawable.ic_pro_badge),
-                                contentDescription = NonTranslatableStringConstants.APP_PRO,
-                            )
-                        }
-
-                        Spacer(Modifier.height(2.dp))
-
-                        // main message
-                        Text(
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            text = text,
-                            textAlign = TextAlign.Center,
-                            style = LocalType.current.base.copy(
-                                color = LocalColors.current.textSecondary
-                            )
-                        )
-
-                        Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
-
-                        // buttons
-                        TertiaryFillButtonRect(
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            text = stringResource(R.string.close),
-                            onClick = onCancel
-                        )
-                    }
-                }
-            }
-        }
-    )
-}
-
-@Composable
-fun SimpleSessionProActivatedCTA(
-    @DrawableRes heroImage: Int,
-    text: String,
-    modifier: Modifier = Modifier,
-    onCancel: () -> Unit,
-){
-    SessionProActivatedCTA(
-        modifier = modifier,
-        text = text,
-        onCancel = onCancel,
-        content = { CTAImage(heroImage = heroImage) }
-    )
-}
-
-@OptIn(ExperimentalGlideComposeApi::class)
-@Composable
-fun AnimatedSessionProActivatedCTA(
-    @DrawableRes heroImageBg: Int,
-    @DrawableRes heroImageAnimatedFg: Int,
-    text: String,
-    modifier: Modifier = Modifier,
-    onCancel: () -> Unit,
-){
-    SessionProActivatedCTA(
-        modifier = modifier,
-        text = text,
-        onCancel = onCancel,
-        content = {
-            CTAAnimatedImages(
-                heroImageBg = heroImageBg,
-                heroImageAnimatedFg = heroImageAnimatedFg
-            )
-        })
-}
-
-/**
- * Added here for reusability since multiple screens need this dialog
- */
-@Composable
-fun PinProCTA(
-    overTheLimit: Boolean,
-    onUpgrade: () -> Unit,
-    onCancel: () -> Unit,
-    modifier: Modifier = Modifier,
-){
-    val context = LocalContext.current
-    SimpleSessionProCTA(
-        modifier = modifier,
-        heroImage = R.drawable.cta_hero_pins,
-        text = if(overTheLimit)
-            Phrase.from(context,R.string.proCallToActionPinnedConversations)
-                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                .format()
-                .toString()
-                else
-            Phrase.from(context,R.string.proCallToActionPinnedConversationsMoreThan)
-                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                .format()
-                .toString(),
-        features = listOf(
-            CTAFeature.Icon(stringResource(R.string.proFeatureListPinnedConversations)),
-            CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
-            CTAFeature.RainbowIcon(stringResource(R.string.proFeatureListLoadsMore)),
-        ),
-        onUpgrade = onUpgrade,
-        onCancel = onCancel
-    )
-}
-
-@Preview
-@Composable
-private fun PreviewProCTA(
-    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+    paddingValues: PaddingValues = PaddingValues(horizontal = LocalDimensions.current.smallSpacing)
 ) {
-    PreviewTheme(colors) {
-        SimpleSessionProCTA(
-            heroImage = R.drawable.cta_hero_char_limit,
-            text = "This is a description of this Pro feature",
-            features = listOf(
-                CTAFeature.Icon("Feature one"),
-                CTAFeature.Icon("Feature two", R.drawable.ic_eye),
-                CTAFeature.RainbowIcon("Feature three"),
-            ),
-            onUpgrade = {},
-            onCancel = {}
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun PreviewProActivatedCTA(
-    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
-) {
-    PreviewTheme(colors) {
-        SimpleSessionProActivatedCTA(
-            heroImage = R.drawable.cta_hero_char_limit,
-            text = "This is a description of this Pro feature",
-            onCancel = {}
-        )
-    }
-}
-
-@Composable
-fun ProCTAFeature(
-    data: CTAFeature,
-    modifier: Modifier = Modifier
-){
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = LocalDimensions.current.xxxsSpacing),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxsSpacing)
-    ) {
-        when(data){
-            is CTAFeature.Icon -> {
-                Image(
-                    painter = painterResource(id = data.icon),
-                    colorFilter = ColorFilter.tint(LocalColors.current.accentText ),
-                    contentDescription = null,
-                    modifier = Modifier.align(Alignment.CenterVertically)
-                )
-            }
-            is CTAFeature.RainbowIcon -> {
-                AnimatedGradientDrawable(
-                    vectorRes = data.icon
-                )
-            }
-        }
-
-        Text(
-            text = data.text,
-            style = LocalType.current.base
-        )
-    }
-}
-
-@Composable
-fun Divider(modifier: Modifier = Modifier, startIndent: Dp = 0.dp) {
     HorizontalDivider(
-        modifier = modifier
-            .padding(horizontal = LocalDimensions.current.smallSpacing)
-            .padding(start = startIndent),
+        modifier = modifier.padding(paddingValues),
         color = LocalColors.current.borders,
     )
 }
@@ -1166,6 +623,7 @@ fun LoadingArcOr(loading: Boolean, content: @Composable () -> Unit) {
 fun SpeechBubbleTooltip(
     text: CharSequence,
     modifier: Modifier = Modifier,
+    maxWidth: Dp = LocalDimensions.current.maxTooltipWidth,
     tooltipState: TooltipState = rememberTooltipState(),
     content: @Composable () -> Unit,
 ) {
@@ -1176,23 +634,22 @@ fun SpeechBubbleTooltip(
                 tooltip = {
             val bubbleColor = LocalColors.current.backgroundBubbleReceived
 
-            Column {
-                Card(
-                    shape = MaterialTheme.shapes.medium,
-                    colors = CardDefaults.cardColors(containerColor = bubbleColor),
-                    elevation = CardDefaults.elevatedCardElevation(4.dp)
-                ) {
-                    Text(
-                        text = annotatedStringResource(text),
-                        modifier = Modifier.padding(
-                            horizontal = LocalDimensions.current.xsSpacing,
-                            vertical = LocalDimensions.current.xxsSpacing
-                        ),
-                        style = LocalType.current.small,
-                        color = LocalColors.current.text
-                    )
-                }
-
+            Card(
+                modifier = Modifier.widthIn(max = maxWidth),
+                shape = MaterialTheme.shapes.medium,
+                colors = CardDefaults.cardColors(containerColor = bubbleColor),
+                elevation = CardDefaults.elevatedCardElevation(4.dp)
+            ) {
+                Text(
+                    text = annotatedStringResource(text),
+                    modifier = Modifier.padding(
+                        horizontal = LocalDimensions.current.xsSpacing,
+                        vertical = LocalDimensions.current.xxsSpacing
+                    ),
+                    textAlign = TextAlign.Center,
+                    style = LocalType.current.small,
+                    color = LocalColors.current.text
+                )
             }
         }
     ) {
@@ -1544,4 +1001,179 @@ fun AnimatedGradientDrawable(
                 )
             }
     )
+}
+
+
+@Composable
+fun ActionRowItem(
+    title: AnnotatedString,
+    onClick: () -> Unit,
+    @StringRes qaTag: Int,
+    modifier: Modifier = Modifier,
+    subtitle: AnnotatedString? = null,
+    titleColor: Color = LocalColors.current.text,
+    subtitleColor: Color = LocalColors.current.text,
+    textStyle: TextStyle = LocalType.current.h8,
+    subtitleStyle: TextStyle = LocalType.current.small,
+    minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
+    paddingValues: PaddingValues = PaddingValues(horizontal = LocalDimensions.current.smallSpacing),
+    endContent: @Composable (() -> Unit)? = null
+){
+    Row(
+        modifier = modifier.heightIn(min = minHeight)
+            .clickable { onClick() }
+            .padding(paddingValues)
+            .qaTag(qaTag),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(vertical = LocalDimensions.current.xsSpacing)
+                .align(Alignment.CenterVertically)
+        ) {
+            Text(
+                title,
+                Modifier
+                    .fillMaxWidth()
+                    .qaTag(R.string.qa_action_item_title),
+                style = textStyle,
+                color = titleColor
+            )
+
+            subtitle?.let {
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = it,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .qaTag(R.string.qa_action_item_subtitle),
+                    style = subtitleStyle,
+                    color = subtitleColor
+                )
+            }
+        }
+
+        endContent?.invoke()
+    }
+}
+
+@Composable
+fun IconActionRowItem(
+    title: AnnotatedString,
+    onClick: () -> Unit,
+    @DrawableRes icon: Int,
+    @StringRes qaTag: Int,
+    modifier: Modifier = Modifier,
+    subtitle: AnnotatedString? = null,
+    titleColor: Color = LocalColors.current.text,
+    subtitleColor: Color = LocalColors.current.text,
+    textStyle: TextStyle = LocalType.current.h8,
+    subtitleStyle: TextStyle = LocalType.current.small,
+    iconColor: Color = LocalColors.current.text,
+    iconSize: Dp = LocalDimensions.current.iconMedium,
+    minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
+    paddingValues: PaddingValues = PaddingValues(horizontal = LocalDimensions.current.smallSpacing),
+){
+    ActionRowItem(
+        modifier = modifier,
+        title = title,
+        onClick = onClick,
+        qaTag = qaTag,
+        subtitle = subtitle,
+        titleColor = titleColor,
+        subtitleColor = subtitleColor,
+        textStyle = textStyle,
+        subtitleStyle = subtitleStyle,
+        minHeight = minHeight,
+        paddingValues = paddingValues,
+        endContent = {
+            Box(
+                modifier = Modifier.size(LocalDimensions.current.itemButtonIconSpacing)
+            ) {
+                Icon(
+                    modifier = Modifier.align(Alignment.Center)
+                        .size(iconSize)
+                        .qaTag(R.string.qa_action_item_icon),
+                    painter = painterResource(id = icon),
+                    contentDescription = null,
+                    tint = iconColor
+                )
+            }
+        }
+    )
+}
+
+@Composable
+fun SwitchActionRowItem(
+    title: AnnotatedString,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    @StringRes qaTag: Int,
+    modifier: Modifier = Modifier,
+    subtitle: AnnotatedString? = null,
+    titleColor: Color = LocalColors.current.text,
+    subtitleColor: Color = LocalColors.current.text,
+    textStyle: TextStyle = LocalType.current.h8,
+    subtitleStyle: TextStyle = LocalType.current.small,
+    paddingValues: PaddingValues = PaddingValues(horizontal = LocalDimensions.current.smallSpacing),
+    minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
+){
+    ActionRowItem(
+        modifier = modifier,
+        title = title,
+        qaTag = qaTag,
+        onClick = { onCheckedChange(!checked) },
+        subtitle = subtitle,
+        titleColor = titleColor,
+        subtitleColor = subtitleColor,
+        textStyle = textStyle,
+        subtitleStyle = subtitleStyle,
+        paddingValues = paddingValues,
+        minHeight = minHeight,
+        endContent = {
+            SessionSwitch(
+                checked = checked,
+                onCheckedChange = onCheckedChange
+            )
+        }
+    )
+}
+
+@Preview
+@Composable
+fun PreviewActionRowItems(){
+    PreviewTheme {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            IconActionRowItem(
+                title = annotatedStringResource("This is an action row item"),
+                subtitle = annotatedStringResource("With a subtitle and icon"),
+                onClick = {},
+                icon = R.drawable.ic_message_square,
+                qaTag = 0
+            )
+
+            IconActionRowItem(
+                title = annotatedStringResource("This is an action row item"),
+                subtitle = annotatedStringResource("With a subtitle and icon"),
+                titleColor = LocalColors.current.danger,
+                subtitleColor = LocalColors.current.danger,
+                onClick = {},
+                icon = R.drawable.ic_triangle_alert,
+                iconColor = LocalColors.current.danger,
+                qaTag = 0
+            )
+
+            SwitchActionRowItem(
+                title = annotatedStringResource("This is an action row item"),
+                subtitle = annotatedStringResource("With a subtitle and a switch"),
+                checked = true,
+                onCheckedChange = {},
+                qaTag = 0
+            )
+        }
+    }
 }

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -31,6 +32,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Shape
@@ -252,37 +254,79 @@ fun SessionOutlinedTextField(
 @Composable
 fun AnnotatedTextWithIcon(
     text: String,
-    @DrawableRes iconRes: Int,
+    @DrawableRes iconRes: Int?,
     modifier: Modifier = Modifier,
     style: TextStyle = LocalType.current.base,
     color: Color = Color.Unspecified,
-    iconSize: TextUnit = 12.sp
+    iconSize: Pair<TextUnit, TextUnit> = 12.sp to 12.sp,
+    iconPaddingValues: PaddingValues = PaddingValues(start = style.lineHeight.value.dp * 0.2f),
+    onIconClick: (() -> Unit)? = null
 ) {
-    val myId = "inlineContent"
-    val annotated = buildAnnotatedString {
-        append(text)
-        appendInlineContent(myId, "[icon]")
-    }
+    AnnotatedTextWithIcon(
+        text = text,
+        content = if(iconRes != null){
+            {
+                var iconModifier: Modifier = Modifier
+                if (onIconClick != null) {
+                    iconModifier = iconModifier.clickable {
+                        onIconClick()
+                    }
+                }
 
-    val inlineContent = mapOf(
-        Pair(
-            myId,
-            InlineTextContent(
-                Placeholder(
-                    width = iconSize,
-                    height = iconSize,
-                    placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter
-                )
-            ) {
                 Icon(
+                    modifier = iconModifier.fillMaxSize()
+                        .padding(iconPaddingValues),
                     painter = painterResource(id = iconRes),
                     contentDescription = null,
-                    modifier = Modifier.padding(1.dp),
                     tint = color
                 )
             }
-        )
+        } else null,
+        modifier = modifier,
+        style = style,
+        color = color,
+        iconSize = iconSize,
     )
+}
+
+@Composable
+fun AnnotatedTextWithIcon(
+    text: String,
+    content: @Composable (() -> Unit)?,
+    modifier: Modifier = Modifier,
+    style: TextStyle = LocalType.current.base,
+    color: Color = Color.Unspecified,
+    iconSize: Pair<TextUnit, TextUnit> = 12.sp to 12.sp,
+) {
+    var inlineContent: Map<String, InlineTextContent> = mapOf()
+
+    var annotated = buildAnnotatedString {
+        append(text)
+    }
+
+    if(content != null) {
+        val myId = "inlineContent"
+
+        annotated = buildAnnotatedString {
+            append(text)
+            appendInlineContent(myId, "[icon]")
+        }
+
+        inlineContent = mapOf(
+            Pair(
+                myId,
+                InlineTextContent(
+                    Placeholder(
+                        width = iconSize.first,
+                        height = iconSize.second,
+                        placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter
+                    )
+                ) {
+                   content()
+                }
+            )
+        )
+    }
 
     Text(
         text = annotated,

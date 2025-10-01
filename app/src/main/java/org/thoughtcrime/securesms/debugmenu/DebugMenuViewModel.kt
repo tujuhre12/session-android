@@ -13,6 +13,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -23,6 +25,8 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
+import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.Environment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.upsertContact
@@ -30,10 +34,12 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.hexEncodedPublicKey
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities
 import org.thoughtcrime.securesms.database.AttachmentDatabase
-import org.thoughtcrime.securesms.database.RecipientDatabase
-import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
+import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.tokenpage.TokenPageNotificationManager
 import org.thoughtcrime.securesms.util.ClearDataUtils
 import java.time.ZonedDateTime
@@ -42,16 +48,18 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DebugMenuViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val textSecurePreferences: TextSecurePreferences,
     private val tokenPageNotificationManager: TokenPageNotificationManager,
     private val configFactory: ConfigFactory,
     private val storage: StorageProtocol,
     private val deprecationManager: LegacyGroupDeprecationManager,
     private val clearDataUtils: ClearDataUtils,
-    private val threadDb: ThreadDatabase,
-    private val recipientDatabase: RecipientDatabase,
+    private val recipientDatabase: RecipientSettingsDatabase,
     private val attachmentDatabase: AttachmentDatabase,
+    private val conversationRepository: ConversationRepository,
+    private val databaseInspector: DatabaseInspector,
+    subscriptionManagers: Set<@JvmSuppressWildcards SubscriptionManager>,
 ) : ViewModel() {
     private val TAG = "DebugMenu"
 
@@ -64,7 +72,7 @@ class DebugMenuViewModel @Inject constructor(
             showLoadingDialog = false,
             showDeprecatedStateWarningDialog = false,
             hideMessageRequests = textSecurePreferences.hasHiddenMessageRequests(),
-            hideNoteToSelf = textSecurePreferences.hasHiddenNoteToSelf(),
+            hideNoteToSelf = configFactory.withUserConfigs { it.userProfile.getNtsPriority() == PRIORITY_HIDDEN },
             forceDeprecationState = deprecationManager.deprecationStateOverride.value,
             availableDeprecationState = listOf(null) + LegacyGroupDeprecationManager.DeprecationState.entries.toList(),
             deprecatedTime = deprecationManager.deprecatedTime.value,
@@ -73,11 +81,38 @@ class DebugMenuViewModel @Inject constructor(
             forceOtherUsersAsPro = textSecurePreferences.forceOtherUsersAsPro(),
             forceIncomingMessagesAsPro = textSecurePreferences.forceIncomingMessagesAsPro(),
             forcePostPro = textSecurePreferences.forcePostPro(),
-            forceShortTTl = textSecurePreferences.forcedShortTTL()
+            forceShortTTl = textSecurePreferences.forcedShortTTL(),
+            messageProFeature = textSecurePreferences.getDebugMessageFeatures(),
+            dbInspectorState = DatabaseInspectorState.NOT_AVAILABLE,
+            debugSubscriptionStatuses = setOf(
+                DebugSubscriptionStatus.AUTO_GOOGLE,
+                DebugSubscriptionStatus.EXPIRING_GOOGLE,
+                DebugSubscriptionStatus.AUTO_APPLE,
+                DebugSubscriptionStatus.EXPIRING_APPLE,
+                DebugSubscriptionStatus.EXPIRED,
+            ),
+            selectedDebugSubscriptionStatus = textSecurePreferences.getDebugSubscriptionType() ?: DebugSubscriptionStatus.AUTO_GOOGLE,
+            debugProPlans = subscriptionManagers.asSequence()
+                .flatMap { it.availablePlans.asSequence().map { plan -> DebugProPlan(it, plan) } }
+                .toList(),
         )
     )
     val uiState: StateFlow<UIState>
         get() = _uiState
+
+    init {
+        if (databaseInspector.available) {
+            viewModelScope.launch {
+                databaseInspector.enabled.collectLatest { started ->
+                    _uiState.update { currentState ->
+                        currentState.copy(
+                            dbInspectorState = if (started) DatabaseInspectorState.STARTED else DatabaseInspectorState.STOPPED
+                        )
+                    }
+                }
+            }
+        }
+    }
 
     private var temporaryEnv: Environment? = null
 
@@ -137,7 +172,6 @@ class DebugMenuViewModel @Inject constructor(
             }
 
             is Commands.HideNoteToSelf -> {
-                textSecurePreferences.setHasHiddenNoteToSelf(command.hide)
                 configFactory.withMutableUserConfigs {
                     it.userProfile.setNtsPriority(if(command.hide) PRIORITY_HIDDEN else PRIORITY_VISIBLE)
                 }
@@ -192,7 +226,7 @@ class DebugMenuViewModel @Inject constructor(
                         configFactory.withMutableUserConfigs { configs ->
                             for ((index, key) in keys.withIndex()) {
                                 configs.contacts.upsertContact(
-                                    accountId = key.x25519KeyPair.hexEncodedPublicKey
+                                    key.x25519KeyPair.hexEncodedPublicKey.toAddress() as Address.Standard,
                                 ) {
                                     name = "${command.prefix}$index"
                                     approved = true
@@ -239,6 +273,36 @@ class DebugMenuViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(forceShortTTl = command.set)
                 }
+            }
+
+            is Commands.SetMessageProFeature -> {
+                val features = _uiState.value.messageProFeature.toMutableSet()
+                if(command.set) features.add(command.feature) else features.remove(command.feature)
+                textSecurePreferences.setDebugMessageFeatures(features)
+                _uiState.update {
+                    it.copy(messageProFeature = features)
+                }
+            }
+
+            Commands.ToggleDatabaseInspector -> {
+                if (databaseInspector.available) {
+                    if (databaseInspector.enabled.value) {
+                        databaseInspector.stop()
+                    } else {
+                        databaseInspector.start()
+                    }
+                }
+            }
+
+            is Commands.SetDebugSubscriptionStatus -> {
+                textSecurePreferences.setDebugSubscriptionType(command.status)
+                _uiState.update {
+                    it.copy(selectedDebugSubscriptionStatus = command.status)
+                }
+            }
+
+            is Commands.PurchaseDebugPlan -> {
+                command.plan.apply { manager.purchasePlan(plan) }
             }
         }
     }
@@ -299,17 +363,18 @@ class DebugMenuViewModel @Inject constructor(
 
         // clear trusted downloads for all recipients
         viewModelScope.launch {
-            val conversations: List<ThreadRecord> = threadDb.approvedConversationList.use { openCursor ->
-                threadDb.readerFor(openCursor).run { generateSequence { next }.toList() }
-            }
+            val conversations: List<ThreadRecord> = conversationRepository.observeConversationList()
+                .first()
 
             conversations.filter { !it.recipient.isLocalNumber }.forEach {
-                recipientDatabase.setAutoDownloadAttachments(it.recipient, false)
+                recipientDatabase.save(it.recipient.address) {
+                    it.copy()
+                }
             }
 
             // set all attachments back to pending
             attachmentDatabase.allAttachments.forEach {
-                attachmentDatabase.setTransferState(it.mmsId, it.attachmentId, AttachmentState.PENDING.value)
+                attachmentDatabase.setTransferState(it.attachmentId, AttachmentState.PENDING.value)
             }
 
             Toast.makeText(context, "Cleared!", Toast.LENGTH_LONG).show()
@@ -334,13 +399,32 @@ class DebugMenuViewModel @Inject constructor(
         val forceCurrentUserAsPro: Boolean,
         val forceOtherUsersAsPro: Boolean,
         val forceIncomingMessagesAsPro: Boolean,
+        val messageProFeature: Set<ProStatusManager.MessageProFeature>,
         val forcePostPro: Boolean,
         val forceShortTTl: Boolean,
         val forceDeprecationState: LegacyGroupDeprecationManager.DeprecationState?,
         val availableDeprecationState: List<LegacyGroupDeprecationManager.DeprecationState?>,
         val deprecatedTime: ZonedDateTime,
         val deprecatingStartTime: ZonedDateTime,
+        val dbInspectorState: DatabaseInspectorState,
+        val debugSubscriptionStatuses: Set<DebugSubscriptionStatus>,
+        val selectedDebugSubscriptionStatus: DebugSubscriptionStatus,
+        val debugProPlans: List<DebugProPlan>,
     )
+
+    enum class DatabaseInspectorState {
+        NOT_AVAILABLE,
+        STARTED,
+        STOPPED,
+    }
+
+    enum class DebugSubscriptionStatus(val label: String) {
+        AUTO_GOOGLE("Auto Renewing (Google, 3 months)"),
+        EXPIRING_GOOGLE("Expiring/Cancelled (Google, 12 months)"),
+        AUTO_APPLE("Auto Renewing (Apple, 1 months)"),
+        EXPIRING_APPLE("Expiring/Cancelled (Apple, 1 months)"),
+        EXPIRED("Expired"),
+    }
 
     sealed class Commands {
         object ChangeEnvironment : Commands()
@@ -356,6 +440,7 @@ class DebugMenuViewModel @Inject constructor(
         data class ForceIncomingMessagesAsPro(val set: Boolean) : Commands()
         data class ForcePostPro(val set: Boolean) : Commands()
         data class ForceShortTTl(val set: Boolean) : Commands()
+        data class SetMessageProFeature(val feature: ProStatusManager.MessageProFeature, val set: Boolean) : Commands()
         data class ShowDeprecationChangeDialog(val state: LegacyGroupDeprecationManager.DeprecationState?) : Commands()
         object HideDeprecationChangeDialog : Commands()
         object OverrideDeprecationState : Commands()
@@ -363,5 +448,8 @@ class DebugMenuViewModel @Inject constructor(
         data class OverrideDeprecatingStartTime(val time: ZonedDateTime) : Commands()
         object ClearTrustedDownloads: Commands()
         data class GenerateContacts(val prefix: String, val count: Int): Commands()
+        data object ToggleDatabaseInspector : Commands()
+        data class SetDebugSubscriptionStatus(val status: DebugSubscriptionStatus) : Commands()
+        data class PurchaseDebugPlan(val plan: DebugProPlan) : Commands()
     }
 }
