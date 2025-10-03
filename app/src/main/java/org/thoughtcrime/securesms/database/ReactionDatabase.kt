@@ -94,7 +94,7 @@ class ReactionDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) 
           $ROW_ID INTEGER PRIMARY KEY,
           $MESSAGE_ID INTEGER NOT NULL,
           $IS_MMS INTEGER NOT NULL,
-          $AUTHOR_ID INTEGER NOT NULL REFERENCES ${RecipientSettingsDatabase.TABLE_NAME} (${RecipientSettingsDatabase.COL_ADDRESS}) ON DELETE CASCADE,
+          $AUTHOR_ID TEXT NOT NULL,
           $EMOJI TEXT NOT NULL,
           $SERVER_ID TEXT NOT NULL,
           $COUNT INTEGER NOT NULL,
@@ -107,8 +107,8 @@ class ReactionDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) 
 
       // Copy data from the old table to the new table
       """
-        INSERT INTO ${TABLE_NAME}_new ($ROW_ID, $MESSAGE_ID, $IS_MMS, $AUTHOR_ID, $EMOJI, $SERVER_ID, $COUNT, $SORT_ID, $DATE_SENT, $DATE_RECEIVED)
-        SELECT $ROW_ID, $MESSAGE_ID, $IS_MMS, ${AUTHOR_ID}, $EMOJI, $SERVER_ID, $COUNT, $SORT_ID, $DATE_SENT, $DATE_RECEIVED
+        INSERT OR REPLACE INTO ${TABLE_NAME}_new ($ROW_ID, $MESSAGE_ID, $IS_MMS, $AUTHOR_ID, $EMOJI, $SERVER_ID, $COUNT, $SORT_ID, $DATE_SENT, $DATE_RECEIVED)
+        SELECT $ROW_ID, $MESSAGE_ID, $IS_MMS, $AUTHOR_ID, $EMOJI, $SERVER_ID, $COUNT, $SORT_ID, $DATE_SENT, $DATE_RECEIVED
         FROM $TABLE_NAME
       """,
 
