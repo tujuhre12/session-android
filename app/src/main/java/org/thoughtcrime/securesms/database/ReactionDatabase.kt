@@ -116,9 +116,9 @@ class ReactionDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) 
       """)
 
       // Drop the old table and their triggers
-      db.rawExecSQL("DROP TABLE $TABLE_NAME")
       db.rawExecSQL("DROP TRIGGER IF EXISTS reactions_sms_delete")
       db.rawExecSQL("DROP TRIGGER IF EXISTS reactions_mms_delete")
+      db.rawExecSQL("DROP TABLE IF EXISTS $TABLE_NAME")
 
       // Rename the new table to the original table name
       db.rawExecSQL("ALTER TABLE ${TABLE_NAME}_new RENAME TO $TABLE_NAME")
